@@ -47,7 +47,7 @@
     </div>
     <form method="post" action="/directory/user/password" class="stack" style="margin-top:12px" autocomplete="off">{{ csrf() }}<input type="hidden" name="dn" value="{{ dn }}">
       <div class="field"><label for="npw">{{ t('New password') }}</label><input id="npw" type="password" name="password" minlength="8" required autocomplete="new-password"></div>
-      <label class="check"><input type="checkbox" name="mustChange"> {{ t('User must change the password at next sign-in') }}</label>
+      <label class="check" data-advanced><input type="checkbox" name="mustChange"> {{ t('User must change the password at next sign-in') }}</label> {{ info('The user must pick a new password at the next sign-in.') }}
       <p class="alert warn small">{{ t('A password reset cannot be undone.') }}</p>
       <button class="btn" type="submit">{{ t('Reset password') }}</button>
     </form>
@@ -69,15 +69,15 @@
     <h2>{{ t('Move or rename') }}</h2>
     <form method="post" action="/directory/move" class="stack">{{ csrf() }}<input type="hidden" name="dn" value="{{ dn }}">
       <div class="field"><label for="np">{{ t('New parent') }}</label><input id="np" name="newParentDn" value="{{ dn.split(',', 1)[1] if ',' in dn else '' }}" required spellcheck="false"></div>
-      <div class="field"><label for="nr">{{ t('New name') }} <span class="optional">({{ t('optional, for example CN=New name') }})</span></label><input id="nr" name="newRdn" spellcheck="false"></div>
+      <div class="field" data-advanced><label for="nr">{{ t('New name') }} <span class="optional">({{ t('optional, for example CN=New name') }})</span> {{ info('A new relative name such as CN=New name renames the object. Leave empty to keep the current name.') }}</label><input id="nr" name="newRdn" spellcheck="false"></div>
       <button class="btn" type="submit">{{ t('Move') }}</button>
     </form>
   </section>
   <section class="card">
     <h2>{{ t('Delete') }}</h2>
     <form method="post" action="/directory/delete" class="stack">{{ csrf() }}<input type="hidden" name="dn" value="{{ dn }}">
-      <label class="check"><input type="checkbox" name="recursive"> {{ t('Also delete everything inside') }}</label>
-      <label class="check"><input type="checkbox" name="force"> {{ t('Override protection from accidental deletion') }}</label>
+      <label class="check" data-advanced><input type="checkbox" name="recursive"> {{ t('Also delete everything inside') }}</label> {{ info('Deletes every object inside this container too. Without it, deleting a non-empty container fails.') }}
+      <label class="check" data-advanced><input type="checkbox" name="force"> {{ t('Override protection from accidental deletion') }}</label> {{ info('Deletes even when the object is protected from accidental deletion.') }}
       {{ super_confirm(dn, delete_token, 'Delete', undo_note) }}
     </form>
   </section>

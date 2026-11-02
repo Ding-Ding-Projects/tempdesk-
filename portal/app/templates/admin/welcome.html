@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf with context %}
+{% from "macros.html" import csrf, info with context %}
 {% block title %}{{ ta('First-run setup') }}{% endblock %}
 {% block content %}
 <h1>{{ t('First-run setup') }}</h1>
@@ -16,7 +16,7 @@
   {% elif s.id == 'expiry' %}
     <p class="hint">{{ t('Pick what guests can choose. Minutes 0 means permanent.') }}</p>
     <div class="stack tight" data-rows>{% for c in doc.expiryChoices or [] %}<div class="cluster" data-row><input name="exp_id" value="{{ c.id }}" aria-label="{{ ta('Id') }}" style="flex:0 1 110px"><input name="exp_label" value="{{ c.label }}" aria-label="{{ ta('Label') }}" style="flex:1 1 180px"><input name="exp_minutes" type="number" min="0" value="{{ c.minutes }}" aria-label="{{ ta('Minutes') }}" style="flex:0 1 130px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div>{% endfor %}</div>
-    <label class="check"><input type="checkbox" name="allowPermanent" {% if doc.allowPermanent %}checked{% endif %}> {{ t('Allow permanent guest accounts') }}</label>
+    <label class="check" data-advanced><input type="checkbox" name="allowPermanent" {% if doc.allowPermanent %}checked{% endif %}> {{ t('Allow permanent guest accounts') }}</label> {{ info('Lets guests pick an account that never expires. Staff can still delete it at any time.') }}
   {% elif s.id == 'wifi' %}
     {% if wifi %}<p>{{ t('Existing profiles') }}: {% for w in wifi %}<span class="chip">{{ w.ssid }}</span> {% endfor %}</p>{% endif %}
     <div class="form-grid"><div class="field"><label for="ss">{{ t('Network name (SSID)') }}</label><input id="ss" name="ssid" maxlength="32"></div>
@@ -24,7 +24,7 @@
       <div class="field"><label for="ky">{{ t('Key') }}</label><input id="ky" type="password" name="key" autocomplete="new-password"></div></div>
     <p class="hint">{{ t('Leave the name empty to continue without adding a network.') }}</p>
   {% elif s.id == 'allowlist' %}
-    <label class="check"><input type="checkbox" name="enabled" {% if allow.enabled %}checked{% endif %}> {{ t('Enforce the allowlist') }}</label>
+    <label class="check" data-advanced><input type="checkbox" name="enabled" {% if allow.enabled %}checked{% endif %}> {{ t('Enforce the allowlist') }}</label> {{ info('When on, guests can start only the programs in this list.') }}
     <div class="field"><label for="ap">{{ t('Programs, one file name per line') }}</label><textarea id="ap" name="apps" class="code" style="min-height:180px">{{ (allow.apps or [])|join('\n') }}</textarea></div>
   {% elif s.id == 'done' %}
     <p>{{ t('Setup is complete. The guest portal is ready for visitors.') }}</p>

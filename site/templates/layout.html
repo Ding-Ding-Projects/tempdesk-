@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" data-motion="full">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{TITLE}}</title>
+<meta name="td-root" content="{{ROOT}}">
+<meta name="td-title" content="{{TITLE_KEY}}">
+<meta name="description" content="{{DESC}}">
+<meta name="theme-color" content="#0B1110">
+<link rel="icon" href="{{ROOT}}assets/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://ding-ding-projects.github.io/tempdesk-/{{URL}}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TempDesk">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESC}}">
+<meta property="og:url" content="https://ding-ding-projects.github.io/tempdesk-/{{URL}}">
+<meta property="og:image" content="https://ding-ding-projects.github.io/tempdesk-/assets/social-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="TempDesk: Shared computers. Disposable sign-ins.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{TITLE}}">
+<meta name="twitter:description" content="{{DESC}}">
+<meta name="twitter:image" content="https://ding-ding-projects.github.io/tempdesk-/assets/social-preview.png">
+<meta name="twitter:image:alt" content="TempDesk: Shared computers. Disposable sign-ins.">
+<link rel="stylesheet" href="{{ROOT}}assets/site.css">
+<script>/* apply saved theme and motion before first paint */try{var d=document.documentElement,t=localStorage.getItem('td.theme'),m=localStorage.getItem('td.motion'),s=localStorage.getItem('td.size');if(t&&t!=='system')d.setAttribute('data-theme',t);if(m)d.setAttribute('data-motion',m);if(s)d.style.setProperty('--text-scale',s);}catch(e){}</script>
+{{EXTRA_HEAD}}</head>
+<body>
+<a class="skip" href="#main" data-i18n="common.skip">Skip to content</a>
+<div class="page">
+<header class="topbar">
+  <a class="logo" href="{{ROOT}}" aria-label="TempDesk home">
+    <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="4" width="28" height="20" rx="7" fill="var(--primary)"></rect><rect x="11" y="25.5" width="10" height="3" rx="1.5" fill="var(--primary)"></rect><circle cx="16" cy="14" r="5" fill="var(--ground)"></circle></svg>
+    TempDesk
+  </a>
+  <nav class="topnav" aria-label="Main">
+    <a class="navlink" href="{{ROOT}}docs/" data-i18n="nav.docs">Docs</a>
+    <a class="btn btn-inverse btn-get" href="{{ROOT}}#deploy" data-i18n="nav.getStarted">Get started</a>
+  </nav>
+</header>
+<main id="main">
+{{BODY}}
+</main>
+<footer class="foot">
+  <span data-i18n="foot.license">MIT licensed.</span>
+  <a href="{{ROOT}}docs/" data-i18n="nav.docs">Docs</a>
+  <a href="{{ROOT}}answer-file.html" data-i18n="nav.builder">Answer file builder</a>
+  <a href="{{ROOT}}tools/base64.html" data-i18n="nav.base64">Base64 toolkit</a>
+  <a href="https://github.com/Ding-Ding-Projects/tempdesk-">GitHub</a>
+  <span data-i18n="foot.local">This site keeps your settings in your browser only.</span>
+</footer>
+</div>
+<script src="{{ROOT}}assets/wording.js"></script>
+<script src="{{ROOT}}assets/site.js"></script>
+{{EXTRA_SCRIPTS}}</body>
+</html>

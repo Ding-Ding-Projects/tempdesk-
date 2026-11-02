@@ -1,7 +1,7 @@
 // Base64 toolkit page. Runs entirely in the browser: nothing is uploaded.
 (function () {
   'use strict';
-  var doc = document, TD = window.TD || {}, B = window.TDBase64;
+  var doc = document, TD = window.TD || {}, B = window.TempDeskBase64;
   var app = doc.querySelector('[data-b64-app]'); if (!app || !B) return;
   var t = TD.t || function (k) { return k; };
   function $(s) { return doc.querySelector(s); }
@@ -16,7 +16,8 @@
   function dir() { return app.querySelector('input[name="b64dir"]:checked').value; }
   function opts() {
     var w = wrapSel.value === 'custom' ? parseInt(len.value, 10) || 0 : parseInt(wrapSel.value, 10);
-    return { alphabet: alpha.value, pad: pad.checked, lineLength: w, eol: '\r\n', strict: strict.checked };
+    var variant = alpha.value === 'url' ? 'url' : (w === 76 && wrapSel.value === '76' ? 'mime' : 'standard');
+    return { variant: variant, pad: pad.checked, lineLength: w, eol: '\r\n', strict: strict.checked };
   }
   wrapSel.addEventListener('change', function () { app.querySelector('[data-b64-custom]').hidden = wrapSel.value !== 'custom'; });
 
@@ -47,7 +48,7 @@
   function showError(e) { err.textContent = e ? (e.message || String(e)) : ''; if (e && typeof e.offset === 'number' && dir() === 'decode') { try { inp.focus(); inp.setSelectionRange(e.offset, e.offset + 1); } catch (x) { /* ignore */ } } }
   function preview(bytes) {
     lastBytes = bytes;
-    var d = B.detect(bytes);
+    var d = B.detectType(bytes); d.text = d.kind === 'text'; d.label = d.kind === 'text' ? 'Text' : d.kind.charAt(0).toUpperCase() + d.kind.slice(1);
     typeEl.textContent = d.label + ' (' + d.mime + '), ' + bytes.length + ' bytes';
     prev.textContent = '';
     if (/^image\/(png|jpeg|gif|webp)$/.test(d.mime) && bytes.length < 8 * 1024 * 1024) {
@@ -57,8 +58,7 @@
     } else if (d.text) {
       prev.textContent = B.bytesToText(bytes.subarray(0, 20000), cs.value);
     } else {
-      var hex = []; for (var i = 0; i < Math.min(bytes.length, 512); i++) hex.push(bytes[i].toString(16).padStart(2, '0'));
-      prev.textContent = hex.join(' ');
+      prev.textContent = B.hexDump(bytes, 512);
     }
     return d;
   }
@@ -67,7 +67,7 @@
     try {
       var o = opts();
       if (dir() === 'encode') { var b = B.textToBytes(inp.value, cs.value); out.value = B.encode(b, o); preview(b); }
-      else { var bytes = B.decode(inp.value, o); var d = preview(bytes); out.value = d.text ? B.bytesToText(bytes, cs.value) : '[' + d.label + ', ' + bytes.length + ' bytes: use Save as file]'; }
+      else { var bytes = B.decode(inp.value, { variant: o.variant, strict: o.strict }); var d = preview(bytes); out.value = d.text ? B.bytesToText(bytes, cs.value) : '[' + d.label + ', ' + bytes.length + ' bytes: use Save as file]'; }
       snapshot(dir() === 'encode' ? t('Encode') : t('Decode'));
     } catch (e) { showError(e); }
   }
@@ -86,13 +86,12 @@
     showError(null);
     try {
       var bytes = lastBytes || B.textToBytes(inp.value, cs.value);
-      var mime = B.detect(bytes).mime;
-      out.value = B.buildDataUrl(mime, B.encode(bytes, { alphabet: 'standard', pad: true })); snapshot(t('Make data: URL'));
+      out.value = B.buildDataUrl(bytes, B.detectType(bytes).mime); snapshot(t('Make data: URL'));
     } catch (e) { showError(e); }
   });
   btn('parseurl').addEventListener('click', function () {
     showError(null);
-    try { var p = B.parseDataUrl(inp.value); var d = preview(p.bytes); out.value = d.text ? B.bytesToText(p.bytes, cs.value) : '[' + p.mime + ', ' + p.bytes.length + ' bytes]'; snapshot(t('Parse data: URL')); }
+    try { var p = B.parseDataUrl(inp.value, { strict: strict.checked }); var d = preview(p.bytes); out.value = d.text ? B.bytesToText(p.bytes, cs.value) : '[' + p.mime + ', ' + p.bytes.length + ' bytes]'; snapshot(t('Parse data: URL')); }
     catch (e) { showError(e); }
   });
   btn('json').addEventListener('click', function () {
@@ -107,9 +106,9 @@
   function processFile(file) {
     return new Promise(function (resolve, reject) {
       var encoding = dir() === 'encode', o = opts(), offset = 0, parts = [], enc = B.createEncoder(o), decodedChunks = [];
+      var dec = B.createDecoder({ variant: o.variant, strict: o.strict });
       job = { paused: false, cancelled: false, resume: null };
-      var textCarry = '';
-      function step() {
+            function step() {
         if (job.cancelled) { reject(new Error('Cancelled')); return; }
         if (job.paused) { job.resume = step; return; }
         if (offset >= file.size) { finish(); return; }
@@ -118,10 +117,7 @@
           var bytes = new Uint8Array(buf);
           if (encoding) parts.push(enc.push(bytes));
           else {
-            var txt = textCarry + new TextDecoder('latin1').decode(bytes).replace(/[\s]/g, '');
-            var usable = txt.length - (txt.length % 4); if (offset + CHUNK >= file.size) usable = txt.length;
-            textCarry = txt.slice(usable);
-            decodedChunks.push(B.decode(txt.slice(0, usable), { strict: o.strict }));
+            decodedChunks.push(dec.push(new TextDecoder('latin1').decode(bytes)));
           }
           offset += bytes.length;
           progress.style.width = Math.round(offset / file.size * 100) + '%';
@@ -131,16 +127,17 @@
       }
       function finish() {
         if (encoding) {
-          parts.push(enc.finish());
+          parts.push(enc.end());
           var text = parts.join('');
           // SHA-256 round trip: decode the output again and compare with the original file.
-          Promise.all([file.arrayBuffer().then(sha256), sha256(B.decode(text, { strict: false }))]).then(function (h) {
+          Promise.all([file.arrayBuffer().then(sha256), sha256(B.decode(text, { variant: o.variant, strict: false }))]).then(function (h) {
             resolve({ name: file.name + '.b64.txt', blob: new Blob([text], { type: 'text/plain' }), verified: h[0] === h[1], hash: h[0], text: text.length < 2000000 ? text : null });
           });
         } else {
+          try { decodedChunks.push(dec.end()); } catch (e) { reject(e); return; }
           var total = decodedChunks.reduce(function (a, c) { return a + c.length; }, 0), all = new Uint8Array(total), at = 0;
           decodedChunks.forEach(function (c) { all.set(c, at); at += c.length; });
-          sha256(all).then(function (h) { resolve({ name: file.name.replace(/\.(b64|txt)+$/i, '') + '.bin', blob: new Blob([all]), verified: true, hash: h, bytes: all }); });
+          sha256(all).then(function (h) { resolve({ name: B.suggestName(file.name, B.detectType(all)), blob: new Blob([all]), verified: true, hash: h, bytes: all }); });
         }
       }
       step();

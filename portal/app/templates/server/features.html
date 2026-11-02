@@ -30,7 +30,7 @@
         <thead><tr><th data-col="installed">{{ t("Installed") }}</th><th data-col="displayName">{{ t("Display name") }}</th><th data-col="name">{{ t("Name") }}</th><th data-col="featureType">{{ t("Type") }}</th></tr></thead>
         <tbody>
         {% for f in features %}
-          <tr><td>{{ "Yes" if f.installed in [true,"True"] else "No" }}</td><td>{{ f.displayName }}</td><td>{{ f.name }}</td><td>{{ f.featureType }}</td></tr>
+          <tr data-ctx><td>{{ "Yes" if f.installed in [true,"True"] else "No" }}</td><td>{{ f.displayName }}</td><td>{{ f.name }}</td><td>{{ f.featureType }}</td></tr>
         {% endfor %}
         </tbody>
       </table>

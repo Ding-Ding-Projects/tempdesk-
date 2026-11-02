@@ -45,7 +45,7 @@
         <thead><tr><th data-col="displayName">{{ t("Name") }}</th><th data-col="direction">{{ t("Direction") }}</th><th data-col="action">{{ t("Action") }}</th><th data-col="enabled">{{ t("Enabled") }}</th><th data-no-sort></th></tr></thead>
         <tbody>
         {% for r in rules %}
-          <tr>
+          <tr data-ctx>
             <td>{{ r.displayName }}</td><td>{{ r.direction }}</td><td>{{ r.action }}</td><td>{{ r.enabled }}</td>
             <td>
               <form method="post" action="/server/firewall/rules/{{ r.name | urlencode }}/delete" class="srv-inline">

@@ -395,7 +395,35 @@ OVERRIDES = {
     ('Security-Malware-Windows-Defender', 'TrustedImageIdentifier'): {'type': 'string'},
     ('Security-Malware-Windows-Defender', 'DisableAntiSpyware'): {'type': 'boolean'},
     ('Microsoft-Windows-Deployment', 'Reseal/Mode'): {'type': 'enum'},
+    # the Key page lists the NonWinPE passes (copy error); every sibling and the parent say windowsPE
+    ('Microsoft-Windows-PnpCustomizationsWinPE', 'DriverPaths/PathAndCredentials/Key'): {'passes': ['windowsPE']},
 }
+
+# Settings stored as text in the parse but documented as numbers with a range or a numeric unit.
+# Each entry: (component, path) -> overrides. Listed in README.md under "Re-typed settings".
+RETYPE = {
+    ('Microsoft-Windows-Devices-Lights-WinRT', 'WinDLDefaultBrightness'): {'min': 0, 'max': 100},
+    ('Microsoft-Windows-Devices-Lights-WinRT', 'WinDLDefaultEffectSpeed'): {'min': 1, 'max': 10},
+    ('Microsoft-Windows-Sensors-Core', 'DefaultOnlookerDetectionDimOverride'): {'min': 0, 'max': 100, 'default': '50'},
+    ('Microsoft-Windows-Sensors-Core', 'DefaultOnlookerDetectionDistance'): {'min': 1200, 'default': '3000'},
+    ('Microsoft-Windows-Sensors-Core', 'DefaultWakeDetectionDistance'): {'min': 0, 'default': '450'},
+    ('Microsoft-Windows-Sensors-Core', 'DefaultLockDetectionDistance'): {'min': 0, 'default': '1200'},
+    ('Microsoft-Windows-Sensors-Core', 'DefaultOnlookerNotPresentTimeout'): {'min': 0, 'default': '5000'},
+    ('Microsoft-Windows-Sensors-Core', 'DefaultOnlookerPresentTimeout'): {'min': 0, 'default': '2000'},
+    ('Microsoft-Windows-Sensors-Core', 'DefaultSensorExtensionReadingTimeout'): {'min': 0, 'default': '5000'},
+    ('Microsoft-Windows-Sensors-Core', 'DefaultSensorExtensionProcessReadingTimeout'): {'min': 0, 'default': '500'},
+    ('Security-Malware-Windows-Defender', 'Scan/ScheduleTime'): {'min': 0, 'max': 1440, 'default': '120'},
+    ('Security-Malware-Windows-Defender', 'SignatureUpdateInterval'): {'min': 1, 'max': 24, 'default': '24'},
+    ('Microsoft-Windows-NetworkLoadBalancing-Core', 'Clusters/Cluster/IdentityHeartbeatPeriod'): {'min': 10000, 'default': '10000'},
+    ('Microsoft-Windows-NetworkLoadBalancing-Core', 'Clusters/Cluster/MembershipHeartbeatPeriod'): {'min': 0, 'default': '1000'},
+    ('Microsoft-Windows-NetworkLoadBalancing-Core', 'Clusters/Cluster/MembershipHeartbeatLossTolerance'): {'min': 0, 'default': '5'},
+    ('Microsoft-Windows-NetworkLoadBalancing-Core', 'Clusters/Cluster/Portrules/Portrule/LoadWeight'): {'min': 0},
+    ('Microsoft-Windows-Embedded-UnifiedWriteFilter', 'OverlayCriticalThreshold'): {'min': 0, 'default': '1024'},
+    ('Microsoft-Windows-Embedded-UnifiedWriteFilter', 'OverlayWarningThreshold'): {'min': 0, 'default': '512'},
+}
+for key, o in RETYPE.items():
+    OVERRIDES[key] = dict(o, type='integer')
+RETYPED = []
 
 def walk_settings(ss):
     for s in ss:
@@ -406,9 +434,15 @@ def walk_settings(ss):
 def apply_overrides(comp):
     for s in walk_settings(comp['settings']):
         o = OVERRIDES.get((comp['name'], s['path']))
+        if o and (comp['name'], s['path']) in RETYPE:
+            RETYPED.append((comp['name'], s['path'], s['type'], o))
+            s.pop('rangeNote', None)
+            s.pop('suggestions', None)
         if o:
             for k, v in o.items():
                 s[k] = v
+            if 'passes' in o:
+                comp['passes'] = [p for p in PASSES if any(p in x.get('passes', []) for x in walk_settings(comp['settings']))]
             if s['type'] in ('string', 'integer', 'password') and 'values' in s and 'values' not in o:
                 del s['values']
             s['reviewed'] = True
@@ -495,6 +529,11 @@ for cname, tree in raw.get('grafts', {}).items():
 for c in components:
     apply_overrides(c)
     finish(c)
+missing_retype = set(RETYPE) - {(a, b) for a, b, _, _ in RETYPED}
+assert not missing_retype, missing_retype
+for a, b, was, o in RETYPED:
+    rng = ('%s to %s' % (o.get('min', ''), o.get('max', ''))).strip()
+    print('RETYPE | %s | %s | %s -> integer | %s' % (a, b, was, rng))
 missing_popular = [n for n in POPULAR if n.lower() not in byname]
 assert not missing_popular, missing_popular
 components.sort(key=lambda c: c['name'].lower())

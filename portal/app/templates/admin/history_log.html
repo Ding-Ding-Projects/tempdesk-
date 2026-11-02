@@ -1,11 +1,11 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf with context %}
+{% from "macros.html" import csrf, info with context %}
 {% block title %}{{ ta('Undo history') }}{% endblock %}
 {% block content %}
 <div class="page-head"><h1>{{ t('Undo history') }}</h1><a class="btn" href="?export=json" download>{{ t('JSON') }}</a></div>
 <p class="muted">{{ t('Every change made in the Admin console is recorded in a Git repository on the portal data volume. Size: {size} KB.', size=(repo_size // 1024)) }}{% if not git %} <span class="chip warn">{{ t('Git is not available: records are kept as files only.') }}</span>{% endif %}</p>
 <form method="get" class="card form-grid">
-  <div class="field"><label for="hs">{{ t('Show') }}</label><select id="hs" name="scope"><option value="all">{{ t('Everyone') }}</option><option value="mine" {% if scope == 'mine' %}selected{% endif %}>{{ t('Only my actions') }}</option></select></div>
+  <div class="field" data-advanced><label for="hs">{{ t('Show') }} {{ info('Everyone shows all administrators\' actions. Only my actions shows yours.') }}</label><select id="hs" name="scope"><option value="all">{{ t('Everyone') }}</option><option value="mine" {% if scope == 'mine' %}selected{% endif %}>{{ t('Only my actions') }}</option></select></div>
   <div class="field"><label for="hu">{{ t('User') }}</label><select id="hu" name="user"><option value="">{{ t('Any') }}</option>{% for u in users %}<option {% if f.get('user') == u %}selected{% endif %}>{{ u }}</option>{% endfor %}</select></div>
   <div class="field"><label for="ha">{{ t('Action') }}</label><select id="ha" name="action"><option value="">{{ t('Any') }}</option>{% for a in actions %}<option {% if f.get('action') == a %}selected{% endif %}>{{ a }}</option>{% endfor %}</select></div>
   <div class="field"><label for="hq">{{ t('Search') }}</label><input id="hq" type="search" name="q" value="{{ f.get('q', '') }}"></div>

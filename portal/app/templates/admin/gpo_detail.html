@@ -12,9 +12,9 @@
     <h2>{{ t('Properties') }}</h2>
     <form method="post" action="/gpo/{{ gid|urlencode }}/update" class="stack">{{ csrf() }}
       <div class="field"><label for="dn">{{ t('Name') }}</label><input id="dn" name="displayName" value="{{ g.displayName }}" required></div>
-      <div class="field"><label for="st">{{ t('Status') }}</label><select id="st" name="status">{% for s in statuses %}<option value="{{ s }}" {% if g.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+      <div class="field" data-advanced><label for="st">{{ t('Status') }} {{ info('Turns the computer half, the user half or the whole policy off without deleting any settings.') }}</label><select id="st" name="status">{% for s in statuses %}<option value="{{ s }}" {% if g.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
       <div class="field"><label for="cm">{{ t('Comment') }}</label><textarea id="cm" name="comment" rows="3">{{ g.comment or '' }}</textarea></div>
-      {% if has_cap('wmifilters') %}<div class="field"><label for="wf">{{ t('WMI filter') }}</label><select id="wf" name="wmiFilter"><option value="">{{ t('None') }}</option>{% for w in wmifilters %}<option value="{{ w.name }}" {% if g.wmiFilter == w.name %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>{% endif %}
+      {% if has_cap('wmifilters') %}<div class="field" data-advanced><label for="wf">{{ t('WMI filter') }} {{ info('A WMI filter limits the policy to computers where the WQL query returns a result.') }}</label><select id="wf" name="wmiFilter"><option value="">{{ t('None') }}</option>{% for w in wmifilters %}<option value="{{ w.name }}" {% if g.wmiFilter == w.name %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select></div>{% endif %}
       <button class="btn filled" type="submit">{{ t('Save') }}</button>
     </form>
   </section>
@@ -29,10 +29,10 @@
 <section class="card rise">
   {{ search_box(tv, regex_error, 'Filter links') }}
   {% if tv.rows %}<div class="table-wrap"><table><thead><tr>{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}<th><span class="sr-only">{{ t('Actions') }}</span></th></tr></thead><tbody>
-    {% for l in tv.rows %}<tr><td class="mono small break">{{ l.target }}</td>
+    {% for l in tv.rows %}<tr data-ctx><td class="mono small break">{{ l.target }}</td>
       <td colspan="3"><form method="post" action="/gpo/{{ gid|urlencode }}/links" class="cluster">{{ csrf() }}<input type="hidden" name="target" value="{{ l.target }}"><input type="hidden" name="op" value="update">
         <label class="check"><input type="checkbox" name="enabled" {% if l.enabled %}checked{% endif %}> {{ t('Enabled') }}</label>
-        <label class="check"><input type="checkbox" name="enforced" {% if l.enforced %}checked{% endif %}> {{ t('Enforced') }}</label>
+        <label class="check" data-advanced><input type="checkbox" name="enforced" {% if l.enforced %}checked{% endif %}> {{ t('Enforced') }}</label> {{ info('An enforced link applies even where inheritance is blocked, and wins over policies linked lower down.') }}
         <label class="sr-only" for="o-{{ loop.index }}">{{ t('Order') }}</label><input id="o-{{ loop.index }}" type="number" name="order" value="{{ l.order }}" min="1" style="width:90px;min-height:40px">
         <button class="btn sm tonal" type="submit">{{ t('Save') }}</button></form></td>
       <td class="actions"><form method="post" action="/gpo/{{ gid|urlencode }}/links">{{ csrf() }}<input type="hidden" name="target" value="{{ l.target }}"><input type="hidden" name="op" value="remove"><button class="btn sm danger" type="submit">{{ t('Remove') }}</button></form></td></tr>{% endfor %}
@@ -40,8 +40,8 @@
   <h2 style="margin-top:16px">{{ t('Add a link') }}</h2>
   <form method="post" action="/gpo/{{ gid|urlencode }}/links" class="form-grid">{{ csrf() }}<input type="hidden" name="op" value="add">
     <div class="field"><label for="lt">{{ t('Target OU or domain DN') }}</label><input id="lt" name="target" required spellcheck="false"></div>
-    <label class="check"><input type="checkbox" name="enabled" checked> {{ t('Enabled') }}</label><label class="check"><input type="checkbox" name="enforced"> {{ t('Enforced') }}</label>
-    <div class="field"><label for="lo">{{ t('Order') }} <span class="optional">({{ t('optional') }})</span></label><input id="lo" type="number" name="order" min="1"></div>
+    <label class="check"><input type="checkbox" name="enabled" checked> {{ t('Enabled') }}</label><span class="cluster" data-advanced><label class="check"><input type="checkbox" name="enforced"> {{ t('Enforced') }}</label> {{ info('An enforced link applies even where inheritance is blocked, and wins over policies linked lower down.') }}</span>
+    <div class="field" data-advanced><label for="lo">{{ t('Order') }} <span class="optional">({{ t('optional') }})</span> {{ info('Lower numbers are processed last and so win when two policies set the same value. 1 is the highest precedence.') }}</label><input id="lo" type="number" name="order" min="1"></div>
     <div class="field" style="justify-content:flex-end"><button class="btn filled" type="submit">{{ t('Add link') }}</button></div>
   </form>
 </section>
@@ -50,7 +50,7 @@
   {% if tab == 'registry' %}<form method="get" class="cluster" style="margin-bottom:12px"><input type="hidden" name="tab" value="registry"><div class="field" style="flex:1 1 300px"><label for="rk">{{ t('Registry key to list') }}</label><input id="rk" name="key" value="{{ key }}" class="mono"></div><button class="btn tonal" type="submit">{{ t('List') }}</button></form>{% endif %}
   {{ search_box(tv, regex_error, 'Filter values') }}
   {% if tv.rows %}<div class="table-wrap"><table><thead><tr>{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}<th><span class="sr-only">{{ t('Actions') }}</span></th></tr></thead><tbody>
-    {% for r in tv.rows %}<tr>{% for k, l in tv.columns %}<td class="small break {{ 'mono' if k in ('key','valueName','value') }}">{{ r[k] if r[k] is not none else '' }}</td>{% endfor %}
+    {% for r in tv.rows %}<tr data-ctx>{% for k, l in tv.columns %}<td class="small break {{ 'mono' if k in ('key','valueName','value') }}">{{ r[k] if r[k] is not none else '' }}</td>{% endfor %}
       <td class="actions"><form method="post" action="/gpo/{{ gid|urlencode }}/registry">{{ csrf() }}<input type="hidden" name="kind" value="{{ tab }}"><input type="hidden" name="op" value="delete"><input type="hidden" name="key" value="{{ r.key }}"><input type="hidden" name="valueName" value="{{ r.valueName }}"><input type="hidden" name="context" value="{{ r.context or '' }}"><button class="btn sm danger" type="submit">{{ t('Remove') }}</button></form></td></tr>{% endfor %}
   </tbody></table></div>{% else %}{{ empty('No values here', 'Add a value below, or list a different key.') }}{% endif %}
   <h2 style="margin-top:16px">{{ t('Set a value') }}</h2>
@@ -60,8 +60,8 @@
     <div class="field"><label for="ty">{{ t('Type') }}</label><select id="ty" name="type">{% for ty in reg_types %}<option>{{ ty }}</option>{% endfor %}</select></div>
     <div class="field"><label for="v">{{ t('Value') }} {{ info('DWord and QWord accept decimal or 0x hex. MultiString takes one string per line.') }}</label><textarea id="v" name="value" rows="2" class="mono"></textarea></div>
     {% if tab == 'preferences' %}
-    <div class="field"><label for="ctx">{{ t('Context') }}</label><select id="ctx" name="context"><option>Computer</option><option>User</option></select></div>
-    <div class="field"><label for="ac">{{ t('Action') }}</label><select id="ac" name="action">{% for a in ['Update','Create','Replace','Delete'] %}<option>{{ a }}</option>{% endfor %}</select></div>
+    <div class="field" data-advanced><label for="ctx">{{ t('Context') }} {{ info('Computer preferences apply when the PC starts; User preferences apply when someone signs in.') }}</label><select id="ctx" name="context"><option>Computer</option><option>User</option></select></div>
+    <div class="field" data-advanced><label for="ac">{{ t('Action') }} {{ info('Create adds the value only if missing. Replace deletes and recreates it. Update changes it or creates it. Delete removes it.') }}</label><select id="ac" name="action">{% for a in ['Update','Create','Replace','Delete'] %}<option>{{ a }}</option>{% endfor %}</select></div>
     {% endif %}
     <div class="field" style="justify-content:flex-end"><button class="btn filled" type="submit">{{ t('Save value') }}</button></div>
   </form>
@@ -70,14 +70,14 @@
 <section class="card rise">
   {{ search_box(tv, regex_error, 'Filter permissions') }}
   {% if tv.rows %}<div class="table-wrap"><table><thead><tr>{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}</tr></thead><tbody>
-    {% for p in tv.rows %}<tr><td>{{ p.trustee }}</td><td>{{ p.permission }}</td><td>{{ t('Yes') if p.denied else t('No') }}</td></tr>{% endfor %}</tbody></table></div>
+    {% for p in tv.rows %}<tr data-ctx><td>{{ p.trustee }}</td><td>{{ p.permission }}</td><td>{{ t('Yes') if p.denied else t('No') }}</td></tr>{% endfor %}</tbody></table></div>
   {% else %}{{ empty('No permissions listed', 'The agent returned no permission entries for this policy.') }}{% endif %}
   <h2 style="margin-top:16px">{{ t('Grant or change a permission') }}</h2>
   <form method="post" action="/gpo/{{ gid|urlencode }}/permissions" class="form-grid">{{ csrf() }}
     <div class="field"><label for="tr">{{ t('Trustee') }}</label><input id="tr" name="trustee" required></div>
-    <div class="field"><label for="tt">{{ t('Trustee type') }}</label><select id="tt" name="trusteeType"><option>Group</option><option>User</option><option>Computer</option></select></div>
-    <div class="field"><label for="pm">{{ t('Permission') }}</label><select id="pm" name="permission">{% for p in perms %}<option>{{ p }}</option>{% endfor %}</select></div>
-    <label class="check"><input type="checkbox" name="replace" checked> {{ t('Replace existing permission') }}</label>
+    <div class="field" data-advanced><label for="tt">{{ t('Trustee type') }} {{ info('Whether the trustee name is a user, a group or a computer account.') }}</label><select id="tt" name="trusteeType"><option>Group</option><option>User</option><option>Computer</option></select></div>
+    <div class="field" data-advanced><label for="pm">{{ t('Permission') }} {{ info('GpoApply makes the policy apply to the trustee. GpoEdit lets them change it. None removes the permission.') }}</label><select id="pm" name="permission">{% for p in perms %}<option>{{ p }}</option>{% endfor %}</select></div>
+    <label class="check" data-advanced><input type="checkbox" name="replace" checked> {{ t('Replace existing permission') }}</label> {{ info('When on, the new permission replaces any existing one for this trustee instead of adding to it.') }}
     <div class="field" style="justify-content:flex-end"><button class="btn filled" type="submit">{{ t('Save') }}</button></div>
   </form>
 </section>

@@ -34,6 +34,7 @@ The build context is the repository root, so the image also bundles `docs/*.md` 
 | `TRUSTED_PROXY` | Comma separated IPs or networks whose `X-Forwarded-For` is trusted. Unset: the direct peer address is used. |
 | `COOKIE_SECURE` | `auto` (default: Secure only when the request is HTTPS), `true` or `false` |
 | `PORTAL_DATA_DIR` | Default `/data`. Admin console state: personal wording, logo, onboarding, version history, undo repository. |
+| `PORTAL_STATE_DIR` | Default: `PORTAL_DATA_DIR`. SQLite file with sessions, rate-limit windows and the encrypted one-time store. |
 | `GUEST_CREATE_LIMIT`, `GUEST_CREATE_WINDOW_SECONDS` | Portal side create limit per client address (default 10 per 10 minutes) |
 
 ### Plain HTTP
@@ -45,7 +46,8 @@ The agent speaks plain HTTP by default. In that case keys, admin sign-ins, guest
 - Guest credentials are never put in a URL or a log. After a create, the browser is redirected (POST, redirect, GET) and the credentials wait in a server-side one-time store keyed by a random id in an HttpOnly cookie. The first view consumes them; the page is sent with `Cache-Control: no-store`.
 - Every form carries a signed double-submit CSRF token (itsdangerous signature bound to an HttpOnly cookie value).
 - Per address rate limits in the portal (creates, sign-in checks, admin sign-ins), on top of the agent's own limits.
-- Admin sessions are kept server side. The cookie holds only a signed random id (HttpOnly, SameSite=Strict, Secure on HTTPS); the agent bearer token never reaches the browser.
+- Admin sessions are kept server side in SQLite and survive restarts. The cookie holds only a signed random id (HttpOnly, SameSite=Strict, Secure on HTTPS); the agent bearer token never reaches the browser and is encrypted at rest (AES-256-GCM, key derived from SESSION_SECRET).
+- One-time credentials are encrypted at rest too, deleted on first view and expire after 10 minutes.
 - Headers: a Content Security Policy with no inline script, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, a restrictive `Permissions-Policy`.
 - Destructive actions need a server-checked two-key confirmation: type the name, and hold the button for 1.5 seconds (which releases a signed token for that exact action and target).
 - Group Policy reports are shown in a sandboxed `iframe` with its own CSP, so scripts in a report never run.

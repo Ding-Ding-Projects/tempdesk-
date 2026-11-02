@@ -35,7 +35,7 @@
   <section class="card"><h2>{{ name }} <span class="chip">{{ t('raw') }}</span></h2>
     <textarea name="raw::{{ name }}" class="code" style="min-height:140px" spellcheck="false" aria-label="{{ name }}">{{ text }}</textarea></section>
   {% endfor %}
-  <section class="card"><div class="field"><label for="ns">{{ t('Add a section') }} <span class="optional">({{ t('optional') }})</span></label><input id="ns" name="new_section" placeholder="Registry Values"></div></section>
+  <section class="card"><div class="field" data-advanced><label for="ns">{{ t('Add a section') }} <span class="optional">({{ t('optional') }})</span> {{ info('Adds an empty section to the security template, for example Registry Values, to edit in raw form.') }}</label><input id="ns" name="new_section" placeholder="Registry Values"></div></section>
   <p class="hint">{{ t('A policy backup is taken first, so Undo can restore it.') }}</p>
   <div class="form-actions"><button class="btn filled lg" type="submit">{{ t('Save security settings') }}</button></div>
 </form>

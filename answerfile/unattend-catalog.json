@@ -1307,16 +1307,18 @@
     {
      "path": "WinDLDefaultBrightness",
      "name": "WinDLDefaultBrightness",
-     "type": "string",
+     "type": "integer",
      "passes": [
       "offlineServicing",
       "generalize",
       "specialize",
       "auditSystem"
      ],
-     "rangeNote": "0-100",
      "help": "The brightness of the default RGB lighting effect run by the Dynamic Lighting Background Controller.",
-     "doc": "microsoft-windows-devices-lights-winrt-windldefaultbrightness"
+     "doc": "microsoft-windows-devices-lights-winrt-windldefaultbrightness",
+     "min": 0,
+     "max": 100,
+     "reviewed": true
     },
     {
      "path": "WinDLDefaultEffectMainColor",
@@ -1426,16 +1428,18 @@
     {
      "path": "WinDLDefaultEffectSpeed",
      "name": "WinDLDefaultEffectSpeed",
-     "type": "string",
+     "type": "integer",
      "passes": [
       "offlineServicing",
       "generalize",
       "specialize",
       "auditSystem"
      ],
-     "rangeNote": "1-10",
      "help": "The speed of the default RGB lighting effect run by the Dynamic Lighting Background Controller.",
-     "doc": "microsoft-windows-devices-lights-winrt-windldefaulteffectspeed"
+     "doc": "microsoft-windows-devices-lights-winrt-windldefaulteffectspeed",
+     "min": 1,
+     "max": 10,
+     "reviewed": true
     },
     {
      "path": "WinDLDefaultEffectType",
@@ -3806,12 +3810,15 @@
     {
      "path": "OverlayCriticalThreshold",
      "name": "OverlayCriticalThreshold",
-     "type": "string",
+     "type": "integer",
      "passes": [
       "specialize"
      ],
      "help": "The critical threshold size, in MB, for the UWF overlay.",
-     "doc": "microsoft-windows-embedded-unifiedwritefilter-overlaycriticalthreshold"
+     "doc": "microsoft-windows-embedded-unifiedwritefilter-overlaycriticalthreshold",
+     "min": 0,
+     "default": "1024",
+     "reviewed": true
     },
     {
      "path": "OverlayFlags",
@@ -3857,12 +3864,15 @@
     {
      "path": "OverlayWarningThreshold",
      "name": "OverlayWarningThreshold",
-     "type": "string",
+     "type": "integer",
      "passes": [
       "specialize"
      ],
      "help": "The overlay warning threshold size, in MB, for UWF.",
-     "doc": "microsoft-windows-embedded-unifiedwritefilter-overlaywarningthreshold"
+     "doc": "microsoft-windows-embedded-unifiedwritefilter-overlaywarningthreshold",
+     "min": 0,
+     "default": "512",
+     "reviewed": true
     },
     {
      "path": "ProtectedVolumeList",
@@ -7638,13 +7648,16 @@
          {
           "path": "Clusters/Cluster/IdentityHeartbeatPeriod",
           "name": "IdentityHeartbeatPeriod",
-          "type": "string",
+          "type": "integer",
           "passes": [
            "specialize"
           ],
           "itemPath": "IdentityHeartbeatPeriod",
           "help": "The recurrence interval for transmitting identity heartbeats between the Network Load Balancing cluster hosts.",
-          "doc": "microsoft-windows-networkloadbalancing-core-clusters-cluster-identityheartbeatperiod"
+          "doc": "microsoft-windows-networkloadbalancing-core-clusters-cluster-identityheartbeatperiod",
+          "min": 10000,
+          "default": "10000",
+          "reviewed": true
          },
          {
           "path": "Clusters/Cluster/InitialHostState",
@@ -7719,24 +7732,30 @@
          {
           "path": "Clusters/Cluster/MembershipHeartbeatLossTolerance",
           "name": "MembershipHeartbeatLossTolerance",
-          "type": "string",
+          "type": "integer",
           "passes": [
            "specialize"
           ],
           "itemPath": "MembershipHeartbeatLossTolerance",
           "help": "The number of lost heartbeat messages before setup considers the Network Load Balancing cluster host to be inactive and initiates convergence.",
-          "doc": "microsoft-windows-networkloadbalancing-core-clusters-cluster-membershipheartbeatlosstolerance"
+          "doc": "microsoft-windows-networkloadbalancing-core-clusters-cluster-membershipheartbeatlosstolerance",
+          "min": 0,
+          "default": "5",
+          "reviewed": true
          },
          {
           "path": "Clusters/Cluster/MembershipHeartbeatPeriod",
           "name": "MembershipHeartbeatPeriod",
-          "type": "string",
+          "type": "integer",
           "passes": [
            "specialize"
           ],
           "itemPath": "MembershipHeartbeatPeriod",
           "help": "In milliseconds a period between sending Network Load Balancing cluster heartbeat messages.",
-          "doc": "microsoft-windows-networkloadbalancing-core-clusters-cluster-membershipheartbeatperiod"
+          "doc": "microsoft-windows-networkloadbalancing-core-clusters-cluster-membershipheartbeatperiod",
+          "min": 0,
+          "default": "1000",
+          "reviewed": true
          },
          {
           "path": "Clusters/Cluster/MulticastSpoofEnabled",
@@ -7911,13 +7930,15 @@
               {
                "path": "Clusters/Cluster/Portrules/Portrule/LoadWeight",
                "name": "LoadWeight",
-               "type": "string",
+               "type": "integer",
                "passes": [
                 "specialize"
                ],
                "itemPath": "LoadWeight",
                "help": "The number for the load.",
-               "doc": "microsoft-windows-networkloadbalancing-core-clusters-cluster-portrules-portrule-loadweight"
+               "doc": "microsoft-windows-networkloadbalancing-core-clusters-cluster-portrules-portrule-loadweight",
+               "min": 0,
+               "reviewed": true
               },
               {
                "path": "Clusters/Cluster/Portrules/Portrule/Mode",
@@ -8471,12 +8492,12 @@
           "name": "Key",
           "type": "string",
           "passes": [
-           "offlineServicing",
-           "auditSystem"
+           "windowsPE"
           ],
           "itemPath": "Key",
           "help": "The unique string to identify the device-driver path.",
-          "doc": "microsoft-windows-pnpcustomizationswinpe-driverpaths-pathandcredentials-key"
+          "doc": "microsoft-windows-pnpcustomizationswinpe-driverpaths-pathandcredentials-key",
+          "reviewed": true
          },
          {
           "path": "DriverPaths/PathAndCredentials/Path",
@@ -9528,30 +9549,34 @@
     {
      "path": "DefaultWakeDetectionDistance",
      "name": "DefaultWakeDetectionDistance",
-     "type": "string",
+     "type": "integer",
      "passes": [
       "offlineServicing",
       "specialize",
       "oobeSystem"
      ],
-     "default": "450mm",
+     "default": "450",
      "help": "The distance options the user can choose for Wake detection.",
      "nameInferred": true,
-     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultwakedetectiondistance"
+     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultwakedetectiondistance",
+     "min": 0,
+     "reviewed": true
     },
     {
      "path": "DefaultLockDetectionDistance",
      "name": "DefaultLockDetectionDistance",
-     "type": "string",
+     "type": "integer",
      "passes": [
       "offlineServicing",
       "specialize",
       "oobeSystem"
      ],
-     "default": "1200mm",
+     "default": "1200",
      "help": "The distance options the user can choose for Lock detection.",
      "nameInferred": true,
-     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultlockdetectiondistance"
+     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultlockdetectiondistance",
+     "min": 0,
+     "reviewed": true
     },
     {
      "path": "CapableDistancesInMillimeters",
@@ -9737,16 +9762,18 @@
     {
      "path": "DefaultOnlookerDetectionDistance",
      "name": "DefaultOnlookerDetectionDistance",
-     "type": "string",
+     "type": "integer",
      "passes": [
       "offlineServicing",
       "specialize",
       "oobeSystem"
      ],
-     "default": "3000mm",
+     "default": "3000",
      "help": "The onlooker detection distance.",
      "nameInferred": true,
-     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultonlookerdetectiondistance"
+     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultonlookerdetectiondistance",
+     "min": 1200,
+     "reviewed": true
     },
     {
      "path": "DefaultOnlookerDetectionAction",
@@ -9782,66 +9809,76 @@
       "oobeSystem"
      ],
      "default": "50",
-     "rangeNote": "0-100",
      "help": "The default onlooker detection brightness dim override.",
      "nameInferred": true,
-     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultonlookerdetectiondimoverride"
+     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultonlookerdetectiondimoverride",
+     "min": 0,
+     "max": 100,
+     "reviewed": true
     },
     {
      "path": "DefaultOnlookerNotPresentTimeout",
      "name": "DefaultOnlookerNotPresentTimeout",
-     "type": "string",
+     "type": "integer",
      "passes": [
       "offlineServicing",
       "specialize",
       "oobeSystem"
      ],
-     "default": "5000ms",
+     "default": "5000",
      "help": "How long onlookers must be absent for before onlooker detection is deactivated.",
      "nameInferred": true,
-     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultonlookernotpresenttimeout"
+     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultonlookernotpresenttimeout",
+     "min": 0,
+     "reviewed": true
     },
     {
      "path": "DefaultOnlookerPresentTimeout",
      "name": "DefaultOnlookerPresentTimeout",
-     "type": "string",
+     "type": "integer",
      "passes": [
       "offlineServicing",
       "specialize",
       "oobeSystem"
      ],
-     "default": "2000ms",
+     "default": "2000",
      "help": "How long an onlooker must be present for before onlooker detection is activated.",
      "nameInferred": true,
-     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultonlookerpresenttimeout"
+     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultonlookerpresenttimeout",
+     "min": 0,
+     "reviewed": true
     },
     {
      "path": "DefaultSensorExtensionReadingTimeout",
      "name": "DefaultSensorExtensionReadingTimeout",
-     "type": "string",
+     "type": "integer",
      "passes": [
       "offlineServicing",
       "specialize",
       "oobeSystem"
      ],
-     "default": "5000ms",
+     "default": "5000",
      "help": "The default sensor extension timeout.",
      "nameInferred": true,
-     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultsensorextensionreadingtimeout"
+     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultsensorextensionreadingtimeout",
+     "min": 0,
+     "reviewed": true
     },
     {
      "path": "DefaultSensorExtensionProcessReadingTimeout",
      "name": "DefaultSensorExtensionProcessReadingTimeout",
-     "type": "string",
+     "type": "integer",
      "passes": [
       "offlineServicing",
       "specialize",
       "oobeSystem"
      ],
-     "default": "500ms",
+     "default": "500",
      "help": "The default sensor extension process reading timeout.",
      "nameInferred": true,
-     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultsensorextensionprocessreadingtimeout"
+     "doc": "microsoft-windows-sensors-core-humanpresencesetting-defaultsensorextensionprocessreadingtimeout",
+     "min": 0,
+     "reviewed": true
     }
    ],
    "detail": "full"
@@ -20979,7 +21016,10 @@
        ],
        "default": "120",
        "help": "The time of day when Microsoft Defender will run a scheduled full scan in order to complete remediation.",
-       "doc": "security-malware-windows-defender-scan-scheduletime"
+       "doc": "security-malware-windows-defender-scan-scheduletime",
+       "min": 0,
+       "max": 1440,
+       "reviewed": true
       }
      ],
      "help": "Sets the scheduled scan that Microsoft Defender runs.",
@@ -20996,7 +21036,10 @@
      ],
      "default": "24",
      "help": "The interval at which to check for definition updates.",
-     "doc": "security-malware-windows-defender-signatureupdateinterval"
+     "doc": "security-malware-windows-defender-signatureupdateinterval",
+     "min": 1,
+     "max": 24,
+     "reviewed": true
     },
     {
      "path": "ThreatSeverityDefaultAction",

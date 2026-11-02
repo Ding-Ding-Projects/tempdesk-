@@ -25,7 +25,7 @@
         </tr></thead>
         <tbody>
         {% for p in processes %}
-          <tr>
+          <tr data-ctx>
             <td>{{ p.pid }}</td>
             <td>{{ p.name }}</td>
             <td data-sort="{{ p.cpu or 0 }}">{{ "%.1f"|format(p.cpu or 0) }}</td>

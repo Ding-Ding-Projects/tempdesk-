@@ -7,7 +7,7 @@
   {% if error %}<div class="srv-err">{{ error }}</div>{% endif %}
   <div class="srv-tablewrap"><table class="srv-table">
     <thead><tr><th>{{ t("Scope") }}</th><th>{{ t("Name") }}</th><th>{{ t("Range") }}</th><th>{{ t("State") }}</th></tr></thead>
-    <tbody>{% for s in scopes %}<tr><td>{{ s.scopeId }}</td><td>{{ s.name }}</td><td>{{ s.startRange }} - {{ s.endRange }}</td><td>{{ s.state }}</td></tr>{% endfor %}</tbody>
+    <tbody>{% for s in scopes %}<tr data-ctx><td>{{ s.scopeId }}</td><td>{{ s.name }}</td><td>{{ s.startRange }} - {{ s.endRange }}</td><td>{{ s.state }}</td></tr>{% endfor %}</tbody>
   </table></div>
 </div>
 {% endblock %}

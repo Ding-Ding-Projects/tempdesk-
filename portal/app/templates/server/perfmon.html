@@ -18,7 +18,7 @@
     <div class="srv-toolbar"><input class="srv-search" data-srv-search placeholder="{{ ta('Search counter sets') }}"></div>
     <div class="srv-tablewrap"><table class="srv-table">
       <thead><tr><th data-col="counterSetName">{{ t("Counter set") }}</th><th data-col="description">{{ t("Description") }}</th></tr></thead>
-      <tbody>{% for s in counter_sets %}<tr><td>{{ s.counterSetName }}</td><td>{{ s.description }}</td></tr>{% endfor %}</tbody>
+      <tbody>{% for s in counter_sets %}<tr data-ctx><td>{{ s.counterSetName }}</td><td>{{ s.description }}</td></tr>{% endfor %}</tbody>
     </table></div>
   </div>
 </div>

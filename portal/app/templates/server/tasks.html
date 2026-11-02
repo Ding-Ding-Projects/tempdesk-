@@ -30,7 +30,7 @@
       <thead><tr><th data-col="name">{{ t("Name") }}</th><th data-col="path">{{ t("Path") }}</th><th data-col="state">{{ t("State") }}</th><th data-no-sort></th></tr></thead>
       <tbody>{% for tk in tasks %}
         {% set seg = (tk.path | replace('\\','') ) or 'root' %}
-        <tr><td>{{ tk.name }}</td><td>{{ tk.path }}</td><td>{{ tk.state }}</td>
+        <tr data-ctx><td>{{ tk.name }}</td><td>{{ tk.path }}</td><td>{{ tk.state }}</td>
           <td>
             {% for op in ["run","enable","disable"] %}
             <form method="post" action="/server/tasks/{{ seg | urlencode }}/{{ tk.name | urlencode }}/{{ op }}" class="srv-inline">

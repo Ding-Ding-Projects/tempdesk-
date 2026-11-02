@@ -26,13 +26,13 @@ COPY portal/app ./app
 # Offline docs browser and changelog viewer.
 # The wildcard keeps the build working before a CHANGELOG.md exists.
 COPY docs CHANGEL[O]G.m[d] ./bundled-docs/
-# Base64 codec shared with the website (a vendored copy already exists in app/static/js;
-# this keeps the image in step when the site module is present).
-COPY site/assets/zip.js ./app/static/js/zip.js
+# Base64 codec and zip writer shared with the website: the image always takes the
+# site copies (the files in app/static/js are kept in step for local runs and tests).
+COPY site/assets/base64.js site/assets/zip.js ./app/static/js/
 
-RUN mkdir -p /data && chown tempdesk:tempdesk /data && chmod 700 /data
+RUN mkdir -p /data /state && chown tempdesk:tempdesk /data /state && chmod 700 /data /state
 USER tempdesk
-VOLUME ["/data"]
+VOLUME ["/data", "/state"]
 
 EXPOSE 8080 8081
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

@@ -14,7 +14,7 @@
     </div>
     <div class="srv-tablewrap"><table class="srv-table">
       <thead><tr><th data-col="status">{{ t("Status") }}</th><th data-col="friendlyName">{{ t("Name") }}</th><th data-col="class">{{ t("Class") }}</th><th data-no-sort></th></tr></thead>
-      <tbody>{% for d in devices %}<tr>
+      <tbody>{% for d in devices %}<tr data-ctx>
         <td>{{ d.status }}</td><td>{{ d.friendlyName }}</td><td>{{ d.class }}</td>
         <td>
           {% for op in ["enable","disable"] %}

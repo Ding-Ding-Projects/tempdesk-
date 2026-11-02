@@ -1,12 +1,12 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf with context %}
+{% from "macros.html" import csrf, info with context %}
 {% block title %}{{ ta('CSV import') }}{% endblock %}
 {% block content %}
 <h1>{{ t('CSV import') }}</h1>
 <p class="muted">{{ t('Upload a CSV file. Every row is checked first and shown in a preview with a dry run. Nothing is created until you apply.') }}</p>
 <form class="card lg stack rise" method="post" action="/import/preview" enctype="multipart/form-data" style="max-width:760px">{{ csrf() }}
   <fieldset><legend>{{ t('What to create') }}</legend><div class="segmented"><label><input type="radio" name="kind" value="guests" {% if not ou %}checked{% endif %}>{{ t('Guest accounts') }}</label><label><input type="radio" name="kind" value="users" {% if ou %}checked{% endif %}>{{ t('Users in an OU') }}</label></div></fieldset>
-  <div class="field"><label for="ou">{{ t('Target OU (for users)') }}</label><input id="ou" name="ou" value="{{ ou }}" spellcheck="false"></div>
+  <div class="field" data-advanced><label for="ou">{{ t('Target OU (for users)') }} {{ info('Distinguished name of the OU that receives new user accounts, for example OU=Staff,DC=corp,DC=example. Not used for guests.') }}</label><input id="ou" name="ou" value="{{ ou }}" spellcheck="false"></div>
   <div class="field"><label for="cf">{{ t('CSV file') }}</label><input id="cf" type="file" name="file" accept=".csv,text/csv" required></div>
   <p class="hint">{{ t('Templates') }}: <a href="/import/template?kind=guests" download>{{ t('guest accounts') }}</a> · <a href="/import/template?kind=users" download>{{ t('users') }}</a></p>
   <button class="btn filled" type="submit">{{ t('Check and preview') }}</button></form>

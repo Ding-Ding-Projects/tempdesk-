@@ -1,7 +1,6 @@
 {
   "name": "tempdesk-site",
   "private": true,
-  "type": "module",
   "description": "TempDesk public website. No runtime dependencies; build with node build.mjs.",
   "scripts": {
     "build": "node build.mjs",

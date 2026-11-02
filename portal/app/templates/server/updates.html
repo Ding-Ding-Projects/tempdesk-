@@ -22,7 +22,7 @@
         <thead><tr><th data-no-sort><input type="checkbox" data-srv-selectall></th><th data-col="title">{{ t("Available update") }}</th><th data-col="severity">{{ t("Severity") }}</th></tr></thead>
         <tbody>
         {% for u in (updates.available if updates else []) %}
-          <tr><td><input type="checkbox" name="ids" value="{{ u.id }}" data-srv-check></td><td>{{ u.title }}</td><td>{{ u.severity }}</td></tr>
+          <tr data-ctx><td><input type="checkbox" name="ids" value="{{ u.id }}" data-srv-check></td><td>{{ u.title }}</td><td>{{ u.severity }}</td></tr>
         {% endfor %}
         </tbody>
       </table>

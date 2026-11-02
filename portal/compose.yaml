@@ -7,17 +7,20 @@ services:
       dockerfile: portal/Dockerfile
     image: tempdesk-portal:latest
     env_file: .env.guest
-    environment:
-      PORTAL_MODE: guest
-      PORT: "8080"
     ports:
       - "0.0.0.0:8080:8080"   # reachable from the LAN by owner decision
     read_only: true
     tmpfs:
       - /tmp
+    environment:
+      PORTAL_MODE: guest
+      PORT: "8080"
+      PORTAL_STATE_DIR: /state
     volumes:
       # Same data volume, read only: the guest portal only reads the org logo.
       - tempdesk-portal-data:/data:ro
+      # Own writable volume for sessions, rate limits and the encrypted one-time store.
+      - tempdesk-guest-state:/state
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
     restart: unless-stopped
@@ -43,3 +46,4 @@ services:
 
 volumes:
   tempdesk-portal-data:
+  tempdesk-guest-state:

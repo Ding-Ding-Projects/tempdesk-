@@ -1,0 +1,79 @@
+// Copies the shared modules the desktop app reuses from the website and the answer file
+// generator into src/vendor/, writes build-info.json (version, commit, build UTC time), copies the
+// i18n catalogs, and stages the payload (server/, agent/, client/, samba/, portal/, streaming/)
+// and the docs into .bundle/ for packaging. One code path for the website and the desktop app.
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+const { execFileSync } = require('child_process');
+const crypto = require('crypto');
+
+const APP = path.resolve(__dirname, '..');
+const REPO = path.resolve(APP, '..', '..');
+const VENDOR = path.join(APP, 'src', 'vendor');
+const BUNDLE = path.join(REPO, '.bundle');
+
+function copy(src, dst, required) {
+  if (!fs.existsSync(src)) { if (required) throw new Error('Missing shared module: ' + path.relative(REPO, src)); console.warn('skip (not present yet): ' + path.relative(REPO, src)); return false; }
+  fs.mkdirSync(path.dirname(dst), { recursive: true });
+  fs.cpSync(src, dst, { recursive: true });
+  return true;
+}
+const SKIP_DIR = new Set(['__pycache__', '.pytest_cache', 'node_modules', 'bin', 'obj', 'secrets', '.venv']);
+function copyTree(src, dst) {
+  if (!fs.existsSync(src)) return 0;
+  let n = 0;
+  for (const e of fs.readdirSync(src, { withFileTypes: true })) {
+    if (SKIP_DIR.has(e.name)) continue;
+    if (/^\.env(\.|$)/.test(e.name) && e.name !== '.env.example') continue;
+    if (e.name.endsWith('.pyc')) continue;
+    const s = path.join(src, e.name), d = path.join(dst, e.name);
+    if (e.isDirectory()) n += copyTree(s, d);
+    else { fs.mkdirSync(path.dirname(d), { recursive: true }); fs.copyFileSync(s, d); n++; }
+  }
+  return n;
+}
+
+function main() {
+  fs.rmSync(VENDOR, { recursive: true, force: true });
+  fs.mkdirSync(VENDOR, { recursive: true });
+  // Shared with the website (same code path).
+  copy(path.join(REPO, 'site', 'assets', 'answer.js'), path.join(VENDOR, 'answer.js'), true);
+  copy(path.join(REPO, 'site', 'assets', 'base64.js'), path.join(VENDOR, 'base64.js'), true);
+  copy(path.join(REPO, 'site', 'assets', 'wording.js'), path.join(VENDOR, 'wording.js'), true);
+  copy(path.join(REPO, 'site', 'assets', 'zip.js'), path.join(VENDOR, 'zip.js'), false);
+  copy(path.join(REPO, 'site', 'assets', 'history.js'), path.join(VENDOR, 'history.js'), false);
+  copy(path.join(REPO, 'site', 'assets', 'builder.css'), path.join(VENDOR, 'builder.css'), false);
+  copy(path.join(REPO, 'site', 'assets', 'canvas'), path.join(VENDOR, 'canvas'), false);
+  copy(path.join(REPO, 'answerfile', 'generate.mjs'), path.join(VENDOR, 'answerfile', 'generate.mjs'), false);
+  copy(path.join(REPO, 'answerfile', 'rules.mjs'), path.join(VENDOR, 'answerfile', 'rules.mjs'), false);
+  copy(path.join(REPO, 'answerfile', 'unattend-catalog.json'), path.join(VENDOR, 'answerfile', 'unattend-catalog.json'), false);
+  // The canvas modules are ES modules; the classic scripts load as globals.
+  fs.writeFileSync(path.join(VENDOR, 'package.json'), '{ "type": "commonjs" }\n');
+  if (fs.existsSync(path.join(VENDOR, 'canvas'))) fs.writeFileSync(path.join(VENDOR, 'canvas', 'package.json'), '{ "type": "module" }\n');
+  copy(path.join(REPO, 'deployer', 'i18n'), path.join(VENDOR, 'i18n'), true);
+  copy(path.join(REPO, 'CHANGELOG.md'), path.join(VENDOR, 'CHANGELOG.md'), false);
+
+  // Provenance baked at build time.
+  const pkg = JSON.parse(fs.readFileSync(path.join(APP, 'package.json'), 'utf8'));
+  let commit = process.env.GITHUB_SHA || '';
+  if (!commit) { try { commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO }).toString().trim(); } catch (e) { commit = 'unknown'; } }
+  const info = { version: process.env.TEMPDESK_VERSION || pkg.version, commit: commit.slice(0, 40), builtUtc: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), runNumber: process.env.GITHUB_RUN_NUMBER || '' };
+  fs.writeFileSync(path.join(VENDOR, 'build-info.json'), JSON.stringify(info, null, 2) + '\n');
+
+  // Payload and docs for packaging.
+  fs.rmSync(BUNDLE, { recursive: true, force: true });
+  let n = 0;
+  for (const f of ['server', 'agent', 'client', 'samba', 'portal', 'streaming']) n += copyTree(path.join(REPO, f), path.join(BUNDLE, 'payload', f));
+  for (const f of ['README.md', 'CHANGELOG.md', 'LICENSE']) if (fs.existsSync(path.join(REPO, f))) { fs.mkdirSync(path.join(BUNDLE, 'docs'), { recursive: true }); fs.copyFileSync(path.join(REPO, f), path.join(BUNDLE, 'docs', f)); }
+  copyTree(path.join(REPO, 'docs'), path.join(BUNDLE, 'docs', 'docs'));
+  for (const f of ['agent/README.md', 'samba/README.md', 'portal/README.md', 'streaming/README.md', 'server/apphost/README.md', 'deployer/FEATURES.md']) {
+    const s = path.join(REPO, f);
+    if (fs.existsSync(s)) { const d = path.join(BUNDLE, 'docs', f); fs.mkdirSync(path.dirname(d), { recursive: true }); fs.copyFileSync(s, d); }
+  }
+  const hash = crypto.createHash('sha256').update(JSON.stringify(info)).digest('hex').slice(0, 12);
+  console.log('Bundle ready: version ' + info.version + ', commit ' + info.commit.slice(0, 12) + ', ' + n + ' payload files (' + hash + ')');
+}
+
+main();

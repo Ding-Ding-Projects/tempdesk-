@@ -17,8 +17,8 @@
     <div class="field"><label for="ss">{{ t('Network name (SSID)') }}</label><input id="ss" name="ssid" value="{{ edit.ssid if edit else '' }}" required maxlength="32"></div>
     <div class="field"><label for="au">{{ t('Security') }}</label><select id="au" name="auth">{% for a in auths %}<option value="{{ a }}" {% if edit and edit.auth == a %}selected{% endif %}>{{ a }}</option>{% endfor %}</select></div>
     <div class="field"><label for="ky">{{ t('Key') }} {{ info('8 to 63 characters. Leave empty when editing to keep the current key.') }}</label><input id="ky" name="key" type="password" autocomplete="new-password" minlength="8" maxlength="63" placeholder="{{ ta('Unchanged') if edit else '' }}"></div>
-    <label class="check"><input type="checkbox" name="hidden" {% if edit and edit.hidden %}checked{% endif %}> {{ t('Hidden network') }}</label>
-    <label class="check"><input type="checkbox" name="autoConnect" {% if not edit or edit.autoConnect %}checked{% endif %}> {{ t('Connect automatically') }}</label>
+    <label class="check" data-advanced><input type="checkbox" name="hidden" {% if edit and edit.hidden %}checked{% endif %}> {{ t('Hidden network') }}</label> {{ info('Tick this for a network that does not broadcast its name, so PCs still connect to it.') }}
+    <label class="check" data-advanced><input type="checkbox" name="autoConnect" {% if not edit or edit.autoConnect %}checked{% endif %}> {{ t('Connect automatically') }}</label> {{ info('PCs join this network automatically when it is in range.') }}
     <p class="hint">{{ t('Changing the key cannot be undone, because old keys are never stored.') }}</p>
     <div class="form-actions"><button class="btn filled" type="submit">{{ t('Save') }}</button>{% if edit %}<a class="btn" href="/wifi">{{ t('Cancel') }}</a>{% endif %}</div>
   </form></section>

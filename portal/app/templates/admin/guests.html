@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel, local_time with context %}
+{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel, local_time, info with context %}
 {% block title %}{{ ta('Guests') }}{% endblock %}
 {% block content %}
 <div class="page-head"><h1>{{ t('Guests') }}</h1><a class="btn" href="/import">{{ t('CSV import') }}</a></div>
@@ -13,7 +13,7 @@
         {% for c in choices %}<option value="{{ c.id }}">{{ c.label }}</option>{% endfor %}
         <option value="custom">{{ t('Custom number of minutes') }}</option>
       </select></div>
-    <div class="field" id="g-min-wrap" hidden><label for="g-min">{{ t('Minutes (0 = permanent)') }}</label><input id="g-min" type="number" name="minutes" min="0" max="525600" inputmode="numeric"></div>
+    <div class="field" data-advanced id="g-min-wrap" hidden><label for="g-min">{{ t('Minutes (0 = permanent)') }} {{ info('Minutes from now until the account expires. 0 creates an account that never expires.') }}</label><input id="g-min" type="number" name="minutes" min="0" max="525600" inputmode="numeric"></div>
     <div class="field" style="justify-content:flex-end"><button class="btn filled" type="submit">{{ t('Create') }}</button></div>
   </form>
 </section>

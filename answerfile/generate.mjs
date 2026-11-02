@@ -22,6 +22,8 @@
 //     }
 //   }
 // Inside a list item the keys are paths relative to the list item element.
+// Optional model.servicing: [{ action, permanence, identity:{name, version, processorArchitecture, publicKeyToken,
+// language, versionScope}, sources:[{location, permanence}], selections:[{name, state}] }] maps to <servicing>.
 
 export const UNATTEND_NS = 'urn:schemas-microsoft-com:unattend';
 export const WCM_NS = 'http://schemas.microsoft.com/WMIConfig/2002/State';
@@ -259,6 +261,38 @@ function emitListItem(w, depth, s, item, ctx, rel) {
   if (extra.length && ctx.options.strict) throw new Error(`${ctx.where}: unknown item settings in ${rel}: ${extra.join(', ')}`);
 }
 
+const PKG_ACTIONS = ['install', 'configure', 'remove', 'stage'];
+
+/**
+ * Write <servicing>. Each package: { action, permanence?, identity: {name, version, processorArchitecture,
+ * publicKeyToken, language, versionScope?}, sources?: [{location, permanence?}], selections?: [{name, state}] }.
+ * Missing identity fields default to the model architecture, the catalog token and language "neutral".
+ */
+function emitServicing(w, packages, arch, token, language) {
+  w.line(1, '<servicing>');
+  packages.forEach((p, i) => {
+    if (!p || typeof p !== 'object') throw new Error(`servicing package ${i} must be an object`);
+    if (!PKG_ACTIONS.includes(p.action)) throw new Error(`servicing package ${i}: action must be one of ${PKG_ACTIONS.join(', ')}`);
+    const id = { processorArchitecture: arch, publicKeyToken: token, language, ...(p.identity || {}) };
+    if (!id.name || !id.version) throw new Error(`servicing package ${i}: identity needs name and version`);
+    let attrs = ` action="${escAttr(p.action)}"`;
+    if (p.permanence) attrs += ` permanence="${escAttr(p.permanence)}"`;
+    w.line(2, `<package${attrs}>`);
+    let idAttrs = ['name', 'version', 'processorArchitecture', 'publicKeyToken', 'language'].map((k) => ` ${k}="${escAttr(id[k])}"`).join('');
+    if (id.versionScope) idAttrs += ` versionScope="${escAttr(id.versionScope)}"`;
+    w.line(3, `<assemblyIdentity${idAttrs} />`);
+    for (const src of p.sources || []) {
+      w.line(3, `<source location="${escAttr(src.location)}"${src.permanence ? ` permanence="${escAttr(src.permanence)}"` : ''} />`);
+    }
+    for (const sel of p.selections || []) {
+      const state = sel.state === true || /^true$/i.test(String(sel.state)) ? 'true' : 'false';
+      w.line(3, `<selection name="${escAttr(sel.name)}" state="${state}" />`);
+    }
+    w.line(2, '</package>');
+  });
+  w.line(1, '</servicing>');
+}
+
 /**
  * Build an unattend XML document.
  * options: { strict: true (throw on unknown components or paths), hidePasswords: true,
@@ -276,6 +310,7 @@ export function buildXml(model, catalog, options = {}) {
   const versionScope = attrs.versionScope || 'nonSxS';
   w.lines.push('<?xml version="1.0" encoding="utf-8"?>');
   w.line(0, `<unattend xmlns="${UNATTEND_NS}">`);
+  if (Array.isArray(model.servicing) && model.servicing.length) emitServicing(w, model.servicing, arch, token, language);
   const passNames = Object.keys(passes);
   for (const p of passNames) if (!PASS_ORDER.includes(p)) throw new Error('unknown configuration pass: ' + p);
   for (const pass of PASS_ORDER) {
@@ -307,85 +342,10 @@ export function buildXml(model, catalog, options = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// Validation for builders (does not throw)
+// Validation (rules table lives in rules.mjs)
 // ---------------------------------------------------------------------------
 
-/** Check a model against the catalog. Returns [{level:'error'|'warning', where, message}]. */
-export function validateModel(model, catalog) {
-  const issues = [];
-  const add = (level, where, message) => issues.push({ level, where, message });
-  const checkScope = (settingsIndex, values, where, pass) => {
-    for (const [key, val] of Object.entries(values || {})) {
-      if (key === '_action') continue;
-      const s = settingsIndex.get(key);
-      if (!s) {
-        add('error', `${where}/${key}`, 'unknown setting');
-        continue;
-      }
-      if (pass && s.passes && !s.passes.includes(pass)) add('warning', `${where}/${key}`, `not documented for the ${pass} pass (valid: ${s.passes.join(', ')})`);
-      if (s.deprecated) add('warning', `${where}/${key}`, 'deprecated setting');
-      if (s.type === 'list') {
-        if (!Array.isArray(val)) {
-          add('error', `${where}/${key}`, 'list setting needs an array');
-          continue;
-        }
-        const childIndex = new Map();
-        const walk = (list) => {
-          for (const c of list) {
-            childIndex.set(relPath(c), c);
-            if (c.children) walk(c.children);
-          }
-        };
-        walk(s.listItem.settings);
-        const keys = new Set();
-        val.forEach((item, i) => {
-          checkScope(childIndex, item, `${where}/${key}[${i}]`, pass);
-          if (s.listItem.keyed && s.listItem.key) {
-            const k = item[s.listItem.key];
-            if (!hasValue(k)) add(s.listItem.keyStyle === 'keyValue' ? 'error' : 'warning', `${where}/${key}[${i}]`, `missing key ${s.listItem.key}`);
-            else if (keys.has(String(k))) add('error', `${where}/${key}[${i}]`, `duplicate key ${k}`);
-            else keys.add(String(k));
-          }
-        });
-        continue;
-      }
-      if (!hasValue(val)) continue;
-      const text = scalarToText(val);
-      if ((s.type === 'enum' || s.type === 'boolean') && s.values && s.values.length) {
-        const ok = s.values.some((v) => v.value.toLowerCase() === text.toLowerCase());
-        if (!ok) add(s.type === 'boolean' ? 'error' : 'warning', `${where}/${key}`, `value ${text} is not one of ${s.values.map((v) => v.value).join(', ')}`);
-      }
-      if (s.type === 'integer') {
-        if (!/^-?\d+$/.test(text)) add('error', `${where}/${key}`, 'expected an integer');
-        else {
-          const n = Number(text);
-          if (s.min !== undefined && n < s.min) add('error', `${where}/${key}`, `below minimum ${s.min}`);
-          if (s.max !== undefined && n > s.max) add('error', `${where}/${key}`, `above maximum ${s.max}`);
-        }
-      }
-      if (s.maxLength !== undefined && text.length > s.maxLength) add('error', `${where}/${key}`, `longer than ${s.maxLength} characters`);
-    }
-  };
-  for (const [pass, comps] of Object.entries((model && model.passes) || {})) {
-    if (!PASS_ORDER.includes(pass)) {
-      add('error', pass, 'unknown configuration pass');
-      continue;
-    }
-    for (const [compName, values] of Object.entries(comps || {})) {
-      const e = indexCatalog(catalog).byName.get(compName.toLowerCase());
-      if (!e) {
-        add('error', `${pass}/${compName}`, 'unknown component');
-        continue;
-      }
-      if (!e.comp.passes.includes(pass)) add('warning', `${pass}/${compName}`, `component has no settings documented for ${pass}`);
-      // top-level scope: settings outside list items, keyed by full path
-      const top = new Map();
-      for (const [p, s] of e.byPath) if (s.itemPath === undefined) top.set(p, s);
-      checkScope(top, values, `${pass}/${e.comp.name}`, pass);
-    }
-  }
-  return issues;
-}
+export { validateModel, RULES, describeRules } from './rules.mjs';
 
 // ---------------------------------------------------------------------------
 // Tiny XML parser (enough for answer files: elements, attributes, text, CDATA,
@@ -554,6 +514,38 @@ function findChildSetting(settings, name) {
   return settings.find((c) => c.name === name) || settings.find((c) => c.name.toLowerCase() === name.toLowerCase()) || null;
 }
 
+function readServicing(el, model, unknown) {
+  model.servicing = model.servicing || [];
+  el.children.forEach((pkgEl) => {
+    const pi = model.servicing.length;
+    const xp = `/unattend/servicing/package[${pi + 1}]`;
+    if (localName(pkgEl.name) !== 'package') {
+      unknown.push(`/unattend/servicing/${localName(pkgEl.name)}`);
+      return;
+    }
+    const p = { action: pkgEl.attrs.action };
+    if (pkgEl.attrs.permanence !== undefined) p.permanence = pkgEl.attrs.permanence;
+    for (const c of pkgEl.children) {
+      const n = localName(c.name);
+      if (n === 'assemblyIdentity') {
+        p.identity = {};
+        for (const k of ['name', 'version', 'processorArchitecture', 'publicKeyToken', 'language', 'versionScope']) {
+          if (c.attrs[k] !== undefined) p.identity[k] = c.attrs[k];
+        }
+      } else if (n === 'source') {
+        const src = { location: c.attrs.location };
+        if (c.attrs.permanence !== undefined) src.permanence = c.attrs.permanence;
+        (p.sources = p.sources || []).push(src);
+      } else if (n === 'selection') {
+        (p.selections = p.selections || []).push({ name: c.attrs.name, state: /^true$/i.test(String(c.attrs.state || '').trim()) });
+      } else {
+        unknown.push(`${xp}/${n}`);
+      }
+    }
+    model.servicing.push(p);
+  });
+}
+
 /**
  * Parse an existing answer file into the model.
  * Returns { model, unknown: [xpath...], warnings: [text...] }.
@@ -636,6 +628,10 @@ export function parseXml(xmlText, catalog) {
     const name = localName(el.name);
     if (name === 'offlineImage') {
       model.offlineImage = { source: attrLocal(el, 'source') };
+      continue;
+    }
+    if (name === 'servicing') {
+      readServicing(el, model, unknown);
       continue;
     }
     if (name !== 'settings') {

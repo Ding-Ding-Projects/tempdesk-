@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { StringDecoder } = require('string_decoder');
-const B64 = require('../shared/base64.js');
+const B64 = require('../vendor/base64.js');
 
 const ENCODE_CHUNK = B64.ENCODE_CHUNK || 3 * 256 * 1024; // multiple of 3
 const DECODE_CHUNK = B64.DECODE_CHUNK || 4 * 256 * 1024; // multiple of 4

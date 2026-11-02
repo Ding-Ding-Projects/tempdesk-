@@ -642,7 +642,7 @@ async function renderHistory() {
         h('span', { class: 'msg' }, [h('span', { text: msgText(e.msg) }), h('br'), h('small', { text: new Date(e.t).toLocaleString() + ' · #' + e.id + ' · ' + t('hist.kind.' + e.kind) })]),
         btn('hist.diffCurrent', () => { diffBox.replaceChildren(h('h3', { text: t('hist.diffWith', ['#' + e.id]) }), diffView(xmlOf(e.state), cur)); diffBox.scrollIntoView({ block: 'nearest' }); }, 'btn-ghost btn-sm'),
         idx < entries.length - 1 ? btn('hist.diffPrev', () => { const prev = history.byId(e.back !== null && e.back !== undefined ? e.back : e.id - 1) || entries[idx + 1]; diffBox.replaceChildren(h('h3', { text: t('hist.diffPrevTitle', ['#' + e.id]) }), diffView(xmlOf(prev.state), xmlOf(e.state))); }, 'btn-ghost btn-sm') : null,
-        e === history.head() ? h('small', { text: t('hist.current') }) : btn('hist.restore', () => { const r = history.restore(e.id); if (r) { applyState(r.state); S.toast(t('hist.restored')); } }, 'btn-primary btn-sm')
+        e === history.head() ? h('small', { text: t('hist.current') }) : btn('hist.restoreBtn', () => { const r = history.restore(e.id); if (r) { applyState(r.state); S.toast(t('hist.restored')); } }, 'btn-primary btn-sm')
       ]);
       ul.appendChild(li);
     });
@@ -753,19 +753,6 @@ async function sha256Hex(bytes) {
   const d = await crypto.subtle.digest('SHA-256', bytes);
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
-// Zip layout: autounattend.xml and TempDesk/ at the root; FirstLogon.ps1, Continue-Setup.ps1 and
-// SetupStatus.ps1 directly in TempDesk/; payload folders as TempDesk/server, agent, client, portal.
-export function kitLayout(manifest, portalsMode) {
-  const out = [];
-  manifest.files.forEach((f) => {
-    const p = f.path;
-    if (p.startsWith('server/firstboot/')) { if (/^server\/firstboot\/[^/]+\.ps1$/.test(p)) out.push({ src: p, dest: 'TempDesk/' + p.slice('server/firstboot/'.length), sha256: f.sha256 }); return; }
-    const top = p.split('/')[0];
-    if (top === 'portal' && portalsMode !== 'native') return;
-    if (['server', 'agent', 'client', 'portal'].includes(top)) out.push({ src: p, dest: 'TempDesk/' + p, sha256: f.sha256 });
-  });
-  return out;
-}
 async function downloadZip() {
   if (!confirmProblems()) return;
   const btnEl = document.getElementById('b-dl-zip');
@@ -778,7 +765,7 @@ async function downloadZip() {
       if (!r.ok) throw new Error(t('dl.noManifest'));
       const manifest = await r.json();
       files.push({ name: 'TempDesk/firstboot.json', data: A.buildFirstboot(model.server) });
-      const plan = kitLayout(manifest, model.server.portalsMode);
+      const plan = A.kitLayout(manifest, model.server.portalsMode);
       for (const item of plan) {
         const fr = await fetch(ROOT + 'payload/' + item.src.split('/').map(encodeURIComponent).join('/'), { cache: 'no-cache' });
         if (!fr.ok) throw new Error(t('dl.fileMissing', [item.src]));

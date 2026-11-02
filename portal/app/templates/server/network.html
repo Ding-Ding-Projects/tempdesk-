@@ -33,7 +33,7 @@
     <h2>{{ t("Routes") }}</h2>
     <div class="srv-tablewrap"><table class="srv-table">
       <thead><tr><th>{{ t("Destination") }}</th><th>{{ t("Next hop") }}</th><th>{{ t("Metric") }}</th></tr></thead>
-      <tbody>{% for r in routes %}<tr><td>{{ r.destinationPrefix }}</td><td>{{ r.nextHop }}</td><td>{{ r.routeMetric }}</td></tr>{% endfor %}</tbody>
+      <tbody>{% for r in routes %}<tr data-ctx><td>{{ r.destinationPrefix }}</td><td>{{ r.nextHop }}</td><td>{{ r.routeMetric }}</td></tr>{% endfor %}</tbody>
     </table></div>
   </section>
 </div>

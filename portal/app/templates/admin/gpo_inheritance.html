@@ -1,11 +1,11 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf with context %}
+{% from "macros.html" import csrf, info with context %}
 {% block title %}{{ ta('Block inheritance') }}{% endblock %}
 {% block content %}
 <h1>{{ t('Block inheritance') }}</h1>
 <form class="card lg stack rise" method="post" action="/gpo/inheritance" style="max-width:640px">{{ csrf() }}
   <p class="muted">{{ t('When inheritance is blocked, policies linked higher up do not apply to this OU unless they are enforced.') }}</p>
   <div class="field"><label for="t">{{ t('OU or domain distinguished name') }}</label><input id="t" name="target" value="{{ target }}" required spellcheck="false"></div>
-  <label class="check"><input type="checkbox" name="blocked" checked> {{ t('Block inheritance') }}</label>
+  <label class="check" data-advanced><input type="checkbox" name="blocked" checked> {{ t('Block inheritance') }}</label> {{ info('Stops policies linked to parent containers from applying here, except links that are enforced.') }}
   <button class="btn filled" type="submit">{{ t('Save') }}</button></form>
 {% endblock %}

@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf, json_tree with context %}
+{% from "macros.html" import csrf, json_tree, info with context %}
 {% block title %}{{ c.name }}{% endblock %}
 {% block content %}
 {% set sub = submitted or {} %}
@@ -18,9 +18,9 @@
       {% if p.sets %}<span class="hint">{{ p.sets|join(', ') }}</span>{% endif %}
     </div>{% endif %}
   {% endfor %}
-  <label class="check"><input type="checkbox" name="whatIf" {% if sub.get('whatIf') == 'on' or (destructive and not sub) %}checked{% endif %}> {{ t('WhatIf: show what would happen without changing anything') }}</label>
+  <label class="check" data-advanced><input type="checkbox" name="whatIf" {% if sub.get('whatIf') == 'on' or (destructive and not sub) %}checked{% endif %}> {{ t('WhatIf: show what would happen without changing anything') }}</label> {{ info('Runs the cmdlet with -WhatIf, so it reports what it would change without changing anything.') }}
   {% if destructive %}
-  <div class="field"><label for="cf">{{ t('Type {name} to confirm', name=c.name) }}</label><input id="cf" name="confirm" autocomplete="off" spellcheck="false" class="mono"><span class="hint">{{ t('This cmdlet removes, clears, resets, restores or disables something. It cannot be undone from here.') }}</span></div>
+  <div class="field" data-advanced><label for="cf">{{ t('Type {name} to confirm', name=c.name) }} {{ info('The agent refuses destructive cmdlets unless this field exactly matches the cmdlet name.') }}</label><input id="cf" name="confirm" autocomplete="off" spellcheck="false" class="mono"><span class="hint">{{ t('This cmdlet removes, clears, resets, restores or disables something. It cannot be undone from here.') }}</span></div>
   {% else %}<p class="hint">{{ t('Cmdlet runs are recorded in the history but cannot be undone automatically.') }}</p>{% endif %}
   <button class="btn filled" type="submit">{{ t('Run') }}</button>
 </form>

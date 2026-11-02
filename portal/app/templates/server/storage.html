@@ -9,14 +9,14 @@
     <h2>{{ t("Disks") }}</h2>
     <div class="srv-tablewrap"><table class="srv-table">
       <thead><tr><th>#</th><th>{{ t("Name") }}</th><th>{{ t("Size") }}</th><th>{{ t("Style") }}</th><th>{{ t("Status") }}</th></tr></thead>
-      <tbody>{% for d in disks %}<tr><td>{{ d.number }}</td><td>{{ d.friendlyName }}</td><td>{{ ((d.sizeBytes or 0)/1073741824)|round(1) }} GB</td><td>{{ d.partitionStyle }}</td><td>{{ d.operationalStatus }}</td></tr>{% endfor %}</tbody>
+      <tbody>{% for d in disks %}<tr data-ctx><td>{{ d.number }}</td><td>{{ d.friendlyName }}</td><td>{{ ((d.sizeBytes or 0)/1073741824)|round(1) }} GB</td><td>{{ d.partitionStyle }}</td><td>{{ d.operationalStatus }}</td></tr>{% endfor %}</tbody>
     </table></div>
   </section>
   <section class="srv-card">
     <h2>{{ t("Volumes") }}</h2>
     <div class="srv-tablewrap"><table class="srv-table">
       <thead><tr><th>{{ t("Drive") }}</th><th>{{ t("Label") }}</th><th>{{ t("File system") }}</th><th>{{ t("Free") }}</th><th></th></tr></thead>
-      <tbody>{% for v in volumes %}<tr>
+      <tbody>{% for v in volumes %}<tr data-ctx>
         <td>{{ v.driveLetter }}</td><td>{{ v.label }}</td><td>{{ v.fileSystem }}</td>
         <td>{{ ((v.freeBytes or 0)/1073741824)|round(1) }} GB</td>
         <td><form method="post" action="/server/storage/volumes/{{ v.id | urlencode }}/format" class="srv-inline">
@@ -37,7 +37,7 @@
     </form>
     <div class="srv-tablewrap"><table class="srv-table">
       <thead><tr><th>{{ t("Name") }}</th><th>{{ t("Path") }}</th><th>{{ t("State") }}</th><th></th></tr></thead>
-      <tbody>{% for s in shares %}<tr>
+      <tbody>{% for s in shares %}<tr data-ctx>
         <td>{{ s.name }}</td><td>{{ s.path }}</td><td>{{ s.shareState }}</td>
         <td><form method="post" action="/server/storage/shares/delete" class="srv-inline">
           <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">

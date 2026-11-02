@@ -22,7 +22,7 @@
     </div>
     <div class="srv-tablewrap"><table class="srv-table">
       <thead><tr><th data-col="subject">{{ t("Subject") }}</th><th data-col="notAfter">{{ t("Expires") }}</th><th data-col="thumbprint">{{ t("Thumbprint") }}</th><th data-no-sort></th></tr></thead>
-      <tbody>{% for c in certificates %}<tr>
+      <tbody>{% for c in certificates %}<tr data-ctx>
         <td>{{ c.subject }}</td><td>{{ c.notAfter }}</td><td><code>{{ c.thumbprint }}</code></td>
         <td>
           <a class="srv-btn" href="/server/certificates/{{ c.thumbprint }}/export?store={{ store | urlencode }}">{{ t("Export") }}</a>

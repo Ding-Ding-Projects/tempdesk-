@@ -24,7 +24,7 @@
         </tr></thead>
         <tbody>
         {% for s in services %}
-          <tr>
+          <tr data-ctx>
             <td data-sort="{{ s.status }}"><span class="srv-dot {{ 'ok' if s.status == 'Running' else 'off' }}"></span> {{ s.status }}</td>
             <td>{{ s.displayName }}</td>
             <td>{{ s.name }}</td>

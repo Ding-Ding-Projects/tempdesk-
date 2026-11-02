@@ -1,0 +1,75 @@
+<div class="content" style="max-width:1100px">
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="../" data-i18n="nav.home">Home</a><span aria-hidden="true">/</span><span data-i18n="nav.base64">Base64 toolkit</span></nav>
+  <h1 data-i18n="b64.title">Base64 toolkit</h1>
+  <p class="lede" data-i18n="b64.lead">Encode and decode text and files of any size. Everything runs in this browser and nothing is uploaded.</p>
+  <span class="b-local"><span class="dot" aria-hidden="true"></span><span data-i18n="b.local">Runs entirely in your browser. Nothing is uploaded.</span></span>
+
+  <section class="b-sec" id="b64-options" style="margin-top:20px" aria-labelledby="b64-opt-h">
+    <header><h2 id="b64-opt-h" data-i18n="b64.options">Options</h2>
+      <div class="inline"><button type="button" class="btn btn-ghost btn-sm" data-b64-undo data-i18n="tb.undo">Undo</button><button type="button" class="btn btn-ghost btn-sm" data-b64-redo data-i18n="tb.redo">Redo</button></div></header>
+    <div class="grid2">
+      <div class="field" data-palette-field="Direction"><label for="b64-dir" data-i18n="b64.direction">Direction</label>
+        <select id="b64-dir"><option value="encode" data-i18n="b64.encode">Encode to Base64</option><option value="decode" data-i18n="b64.decode">Decode from Base64</option></select></div>
+      <div class="field" data-palette-field="Variant"><label for="b64-variant" data-i18n="b64.variant">Variant</label>
+        <select id="b64-variant"><option value="standard" data-i18n="b64.v.standard">Standard (RFC 4648 section 4)</option><option value="url" data-i18n="b64.v.url">URL and file name safe (RFC 4648 section 5)</option><option value="mime" data-i18n="b64.v.mime">MIME (76 characters per line, CRLF)</option></select></div>
+      <div class="field" data-palette-field="Line breaks"><label for="b64-wrap" data-i18n="b64.wrap">Line breaks</label>
+        <select id="b64-wrap"><option value="none" data-i18n="b64.wrap.none">None</option><option value="mime" data-i18n="b64.wrap.mime">Every 76 characters (MIME)</option><option value="custom" data-i18n="b64.wrap.custom">Custom length</option></select></div>
+      <div class="field" id="b64-linelen-wrap" hidden><label for="b64-linelen" data-i18n="b64.lineLen">Line length</label><input id="b64-linelen" type="number" min="4" step="4" value="64" inputmode="numeric"></div>
+      <div class="field"><label for="b64-eol" data-i18n="b64.eol">Line ending</label><select id="b64-eol"><option value="crlf">CRLF (\r\n)</option><option value="lf">LF (\n)</option></select></div>
+      <div class="field" data-palette-field="Decoder"><label for="b64-strict" data-i18n="b64.decoder">Decoder</label>
+        <select id="b64-strict"><option value="strict" data-i18n="b64.strict">Strict: reject anything outside the alphabet</option><option value="lenient" data-i18n="b64.lenient">Lenient: ignore whitespace, allow missing padding</option></select></div>
+      <div class="field" data-palette-field="Text encoding"><label for="b64-textenc" data-i18n="b64.textEnc">Text encoding</label>
+        <select id="b64-textenc"><option value="utf-8">UTF-8</option><option value="utf-16le">UTF-16 LE</option><option value="utf-16be">UTF-16 BE</option><option value="latin1">Latin-1 (ISO-8859-1)</option></select></div>
+      <label class="check"><input type="checkbox" id="b64-pad" checked><span data-i18n="b64.pad">Padding (=)</span></label>
+    </div>
+  </section>
+
+  <section class="b-sec" id="b64-text" style="margin-top:14px" aria-labelledby="b64-text-h">
+    <header><h2 id="b64-text-h" data-i18n="b64.textTitle">Text and data: URLs</h2></header>
+    <div class="grid2">
+      <div class="field"><label for="b64-in" data-i18n="b64.input">Input</label><textarea id="b64-in" rows="8" spellcheck="false"></textarea></div>
+      <div class="field"><label for="b64-out" data-i18n="b64.output">Output</label><textarea id="b64-out" rows="8" spellcheck="false" readonly></textarea></div>
+    </div>
+    <p class="meter-label" id="b64-counts" aria-live="polite"></p>
+    <p class="notice warn" id="b64-err" role="alert" hidden></p>
+    <p class="meter-label" id="b64-detected" aria-live="polite"></p>
+    <div class="cta" style="margin-top:8px">
+      <button type="button" class="btn btn-ghost btn-sm" id="b64-swap" data-i18n="b64.swap">Swap input and output</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="b64-clear" data-i18n="b64.clear">Clear</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="b64-paste" data-i18n="b64.paste">Paste from clipboard</button>
+      <label class="btn btn-ghost btn-sm" for="b64-in-file" data-i18n="b64.openFile">Open file</label><input type="file" id="b64-in-file" class="sr-only">
+      <button type="button" class="btn btn-ghost btn-sm" id="b64-copy" data-i18n="tb.copy">Copy</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="b64-save" data-i18n="b64.saveFile">Save as file</button>
+    </div>
+    <div class="grid2" style="margin-top:12px">
+      <div class="field"><label for="b64-mime" data-i18n="b64.mime">MIME type for data: URL (empty = detect)</label><input id="b64-mime" type="text" placeholder="image/png" spellcheck="false"></div>
+      <div class="cta" style="align-self:end"><button type="button" class="btn btn-primary btn-sm" id="b64-dataurl" data-i18n="b64.buildData">Build data: URL</button><button type="button" class="btn btn-ghost btn-sm" id="b64-parse" data-i18n="b64.parseData">Parse data: URL</button></div>
+    </div>
+    <div class="cta" style="margin-top:12px"><label class="check"><input type="checkbox" id="b64-json-payload"><span data-i18n="b64.jsonPayload">Include the payload in the JSON record</span></label><button type="button" class="btn btn-ghost btn-sm" id="b64-json" data-i18n="b64.jsonRecord">Export JSON record</button></div>
+    <div id="b64-preview" style="margin-top:12px"></div>
+  </section>
+
+  <section class="b-sec" id="b64-files" style="margin-top:14px" aria-labelledby="b64-files-h">
+    <header><h2 id="b64-files-h" data-i18n="b64.filesTitle">Files of any size</h2></header>
+    <p class="help" style="color:var(--muted)" data-i18n="b64.filesHelp">Files are read in chunks (3-byte aligned when encoding, 4-character aligned when decoding), so memory stays constant. Every result is checked by hashing it again with SHA-256 before it is marked done.</p>
+    <div id="b64-drop" class="notice" style="text-align:center;padding:28px;border-style:dashed">
+      <p data-i18n="b64.drop">Drop files here, or choose them.</p>
+      <div class="cta" style="justify-content:center">
+        <label class="btn btn-primary btn-sm" for="b64-files-enc" data-i18n="b64.pickEnc">Choose files to encode</label><input type="file" id="b64-files-enc" class="sr-only" multiple>
+        <label class="btn btn-ghost btn-sm" for="b64-files-dec" data-i18n="b64.pickDec">Choose Base64 files to decode</label><input type="file" id="b64-files-dec" class="sr-only" multiple>
+        <label class="sr-only" for="b64-drop-dir" data-i18n="b64.dropDir">Dropped files are</label>
+        <select id="b64-drop-dir" style="width:auto"><option value="encode" data-i18n="b64.dropEnc">Dropped files: encode</option><option value="decode" data-i18n="b64.dropDec">Dropped files: decode</option></select>
+      </div>
+    </div>
+    <div id="b64-jobs" class="list-ed" style="margin-top:12px" aria-live="polite"></div>
+  </section>
+
+  <section class="b-sec" id="b64-history" style="margin-top:14px" aria-labelledby="b64-hist-h">
+    <header><h2 id="b64-hist-h" data-i18n="tab.history">History</h2></header>
+    <p class="help" style="color:var(--muted)" data-i18n="b64.histHelp">Every conversion is recorded here with unlimited undo and redo. Contents are not stored unless you allow it below.</p>
+    <label class="check"><input type="checkbox" id="b64-keep"><span data-i18n="b64.keep">Store text payloads in history on this device</span></label>
+    <p class="meter-label" id="b64-storage"></p>
+    <div class="cta"><button type="button" class="btn btn-ghost btn-sm" id="b64-hist-export" data-i18n="hist.export">Export history</button><button type="button" class="btn btn-coral btn-sm" id="b64-hist-clear" data-i18n="hist.clear">Clear history</button></div>
+    <ul class="hist-list" id="b64-hist" style="margin-top:12px"></ul>
+  </section>
+</div>

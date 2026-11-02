@@ -460,3 +460,18 @@ dialog h2 { margin-top: 0; }
   .cred.masked { letter-spacing: .05em; }
   a { color: #000; text-decoration: none; }
 }
+
+/* Color picker */
+.colorpicker { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.cp-wheel { position: relative; flex: 0 0 auto; touch-action: none; }
+.cp-wheel canvas { position: absolute; inset: 0; border-radius: 50%; cursor: crosshair; }
+.cp-square { position: absolute; border-radius: var(--r-xs); cursor: crosshair; touch-action: none; }
+.cp-knob { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 2px 6px rgba(0,0,0,.4); pointer-events: none; }
+.cp-knob.small { width: 16px; height: 16px; margin: -8px 0 0 -8px; }
+.cp-wheel > .cp-knob:focus-visible, .cp-square:focus-visible { outline: none; box-shadow: var(--focus); }
+.cp-wheel > .cp-knob { pointer-events: auto; cursor: grab; }
+.cp-fields { display: grid; grid-template-columns: repeat(2, minmax(90px, 1fr)); gap: 8px; flex: 1 1 200px; }
+.cp-field { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: .875rem; }
+.cp-field input { min-height: 44px; }
+.cp-swatch { width: 64px; height: 64px; border-radius: var(--r-md); border: 1px solid var(--outline-strong); }
+.colorpicker > .hint, .colorpicker > .error-text { flex-basis: 100%; margin: 0; }

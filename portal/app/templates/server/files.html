@@ -48,7 +48,7 @@
         </tr></thead>
         <tbody>
         {% for e in (listing.entries if listing else []) %}
-          <tr>
+          <tr data-ctx>
             <td>
               {% if e.isDirectory %}
               <a href="/server/files?path={{ e.path | urlencode }}{{ '\\' if not e.path.endswith('\\') else '' }}">&#128193; {{ e.name }}</a>

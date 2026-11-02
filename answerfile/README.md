@@ -7,7 +7,8 @@ Windows answer files (`autounattend.xml` and `unattend.xml`):
 | --- | --- |
 | `unattend-catalog.json` | Machine-readable catalog of every component and setting in the Microsoft *Unattended Windows Setup Reference*, with paraphrased help text. |
 | `catalog.schema.json` | JSON Schema (draft 2020-12) for the catalog. |
-| `generate.mjs` | Dependency-free ES module: `buildXml`, `parseXml`, `validateModel`, password encoding and a tiny XML parser. Runs in browsers and in Node 18+. |
+| `generate.mjs` | Dependency-free ES module: `buildXml`, `parseXml`, password encoding, `<servicing>` packages and a tiny XML parser. Runs in browsers and in Node 18+. Re-exports `validateModel`. |
+| `rules.mjs` | Validation rules table (56 rules with ids, severity and messages) and `validateModel`. |
 | `tests/` | `node --test` suites for the catalog and the generator. |
 | `tools/` | Python scripts that download the reference and rebuild the catalog. |
 
@@ -25,7 +26,7 @@ Windows 8.1 reference (<https://learn.microsoft.com/en-us/previous-versions/wind
 | Components | 99 (88 from the current reference, 11 found only in the archive) |
 | Settings (every element, including containers and lists) | 1,288 |
 | Leaf settings (values a user types or picks) | 1,029 |
-| By type | 577 string, 202 boolean, 133 enum, 99 integer, 18 password, 205 container, 54 list |
+| By type | 562 string, 202 boolean, 133 enum, 114 integer, 18 password, 205 container, 54 list |
 | Components with full detail | 98 (every leaf has type, passes, help, and values for enum and boolean) |
 | The 40 most used components (`popular: true`) | all 40 fully detailed |
 | Deprecated components | 17 (`deprecated: true`) |
@@ -143,10 +144,28 @@ const model = {
 Values: booleans may be `true`/`false`; integers may be numbers; enum values are strings as listed in `values`.
 For `keyValue` lists put the attribute value in `Key`. An item may set `_action` to write a different `wcm:action`.
 
+Packages go in `model.servicing` and map to `<servicing>`, written before the `<settings>` passes as the
+unattend schema requires:
+
+```js
+model.servicing = [{
+  action: 'configure',                       // install | configure | remove | stage
+  permanence: 'removable',                   // optional: removable | permanent | temporary
+  identity: { name: 'Microsoft-Windows-Foundation-Package', version: '10.0.26100.1',
+              processorArchitecture: 'amd64', publicKeyToken: '31bf3856ad364e35', language: '' },
+  sources: [{ location: 'D:\\Updates\\kb.cab', permanence: 'permanent' }],   // optional
+  selections: [{ name: 'IIS-WebServerRole', state: true }, { name: 'SMB1Protocol', state: false }],
+}];
+```
+
+`identity` fields that are left out default to the model architecture, the catalog public key token and
+`language="neutral"`. `parseXml` reads `<servicing>` back into the same shape, so packages and optional feature
+selections no longer appear in `unknown`.
+
 ```js
 import { buildXml, parseXml, validateModel } from './generate.mjs';
 const catalog = await (await fetch('unattend-catalog.json')).json();
-const issues = validateModel(model, catalog);   // [{level, where, message}] for inline UI errors
+const issues = validateModel(model, catalog, { diskSizesMB: { 0: 61440 } }); // [{id, level, where, message}]
 const xml = buildXml(model, catalog);            // throws on unknown components or settings
 const { model: loaded, unknown, warnings } = parseXml(xml, catalog);
 ```
@@ -176,6 +195,78 @@ Round trips are stable: `buildXml(parseXml(buildXml(m)).model)` gives identical 
 instructions, entities). It rejects input that is not well-formed and refuses DOCTYPE declarations.
 
 Other exports: `encodePassword`, `decodePassword`, `findComponent`, `findSetting`, `componentsForPass`, `XmlError`.
+
+## Validation rules
+
+`validateModel(model, catalog, options)` runs every rule in `RULES` (in `rules.mjs`) and returns
+`[{id, level, where, message}]` with errors first. `where` is `pass/Component/path[index]/...`, so a builder can
+place the message next to the control. Options: `diskSizesMB` (`{DiskID: MB}`, enables `disk.fit`), `disable`
+(rule ids to skip) and `severity` (`{ruleId: 'error'|'warning'|'info'}`). `describeRules()` returns the table
+without the check functions. Each rule has a test in `tests/rules.test.mjs` with one model that triggers it and
+one that does not.
+
+Partition numbers for the disk rules follow CreatePartition `Order`, skipping an Extended container, which is how
+Windows Setup numbers new partitions. When a disk has no CreatePartition items (the existing layout is kept), the
+partition reference rules are skipped.
+
+| Rule id | Severity | Checks |
+| --- | --- | --- |
+| `pass.unknown` | error | Unknown configuration pass |
+| `component.unknown` | error | Component not in the catalog |
+| `component.passNotAllowed` | warning | Component has no settings for this pass |
+| `setting.unknown` | error | Setting not in the catalog |
+| `setting.passNotAllowed` | error | Setting placed in a pass the reference does not allow |
+| `setting.deprecated` | warning | Deprecated setting |
+| `value.list` | error | List setting needs an array of items |
+| `value.boolean` | error | Boolean value must be true or false |
+| `value.enum` | warning | Value is not one of the documented choices |
+| `value.integer` | error | Value must be an integer |
+| `value.range` | error | Integer outside the documented range |
+| `value.maxLength` | error | Text longer than the documented maximum |
+| `list.keyMissing` | error | List item has no key |
+| `list.keyDuplicate` | error | Two list items share a key |
+| `list.orderUnique` | error | Ordered list items need unique Order values |
+| `join.exclusive` | error | JoinDomain and JoinWorkgroup are mutually exclusive |
+| `join.credentials` | error | Domain join needs credentials or a provisioned account |
+| `join.credentialsIncomplete` | warning | Join credentials are incomplete |
+| `join.ouWithoutDomain` | warning | MachineObjectOU without JoinDomain |
+| `computerName.length` | error | ComputerName longer than 15 bytes |
+| `computerName.digits` | error | ComputerName cannot be only digits |
+| `computerName.chars` | error | ComputerName contains a character Windows rejects |
+| `autologon.password` | error | AutoLogon enabled without a password |
+| `autologon.logonCount` | error | AutoLogon enabled without LogonCount |
+| `autologon.username` | error | AutoLogon enabled without Username |
+| `password.blankAdministrator` | warning | Blank built-in Administrator password |
+| `command.willReboot` | error | RunSynchronous WillReboot must be Always, OnRequest or Never |
+| `command.missing` | error | Command item without a command line |
+| `productKey.format` | error | Product key must be five groups of five characters |
+| `productKey.alphabet` | warning | Product key uses characters Windows keys never contain |
+| `disk.extendCount` | error | Only one partition per disk can extend |
+| `disk.extendLast` | error | The extending partition must be created last |
+| `disk.extendWithSize` | error | Extend and Size cannot both be set |
+| `disk.sizeRequired` | error | Partition needs Size or Extend |
+| `disk.efiSize` | error | EFI system partition must be at least 100 MB |
+| `disk.efiFormat` | error | EFI system partition must be FAT32 |
+| `disk.msrCount` | error | GPT disks need exactly one MSR partition |
+| `disk.gptNoExtended` | error | Extended and Logical partitions are MBR only |
+| `disk.mbrActive` | error | MBR layouts need an Active partition |
+| `disk.activeOnGpt` | warning | Active has no effect on GPT disks |
+| `disk.mbrPrimaryLimit` | error | MBR disks hold at most four primary or extended partitions |
+| `disk.modifyTarget` | error | ModifyPartition refers to a partition that is not created |
+| `disk.letterDuplicate` | error | Drive letter used twice |
+| `disk.fit` | error | Partitions do not fit the declared disk size |
+| `install.target` | error | InstallTo must reference an existing disk and partition |
+| `install.toAndAvailable` | error | InstallTo and InstallToAvailablePartition are exclusive |
+| `servicing.action` | error | Package action must be install, configure, remove or stage |
+| `servicing.identity` | error | Package identity is incomplete |
+| `servicing.version` | error | Package version must have four numeric parts |
+| `servicing.publicKeyToken` | error | Package publicKeyToken must be 16 hex digits |
+| `servicing.permanence` | error | Permanence must be removable, permanent or temporary |
+| `servicing.sourceLocation` | error | Package source needs a location |
+| `servicing.installNeedsSource` | warning | Installing a package usually needs a source |
+| `servicing.selection` | error | Feature selection needs a name and a true or false state |
+| `servicing.selectionDuplicate` | error | Feature selected twice in one package |
+| `servicing.selectionWithoutConfigure` | warning | Feature selections apply to install or configure actions |
 
 ## How the builders use it
 
@@ -211,11 +302,39 @@ first descriptive sentence. Where the page states a rule only in prose, a short 
 ## Known gaps
 
 - The current reference does not list editions per component, so `appliesTo` is set only for archive components.
-- Types for the less used components come from automatic reading of the pages. Some values documented as
-  "string" that only accept numbers stay `string`; check `suggestions` and `rangeNote`.
-- Cross-setting rules (JoinDomain versus JoinWorkgroup, partition sizes, the 0 to 3 partition ID rules) are in
-  the help text but not enforced by `validateModel`.
-- Package and driver sections of an answer file (`<package>`, `servicing`) are not modeled; `parseXml` reports them in `unknown`.
+- Types for the less used components come from automatic reading of the pages. Settings the reference itself calls
+  strings (TAPI dialing codes, the SMTP port, lookup tables, CIDR values) stay `string`; see `rangeNote`.
+- `disk.fit` needs the target disk sizes from the builder, because an answer file does not record them.
+- Package names and feature names are not checked against a list; the reference does not publish one per edition.
+
+## Re-typed settings
+
+These settings were read as text but the reference documents them as numbers with a range or a numeric unit, so
+they are now `integer` (`reviewed: true`). Defaults written with units such as `450mm` are stored as plain numbers.
+
+| Component | Setting | Range now in the catalog | Documented as |
+| --- | --- | --- | --- |
+| Devices-Lights-WinRT | WinDLDefaultBrightness | 0 to 100 | percentage |
+| Devices-Lights-WinRT | WinDLDefaultEffectSpeed | 1 to 10 | speed scale |
+| Sensors-Core | DefaultOnlookerDetectionDimOverride | 0 to 100, default 50 | percentage |
+| Sensors-Core | DefaultOnlookerDetectionDistance | at least 1200, default 3000 | millimeters |
+| Sensors-Core | DefaultWakeDetectionDistance | default 450 | millimeters |
+| Sensors-Core | DefaultLockDetectionDistance | default 1200 | millimeters |
+| Sensors-Core | DefaultOnlookerNotPresentTimeout | default 5000 | milliseconds |
+| Sensors-Core | DefaultOnlookerPresentTimeout | default 2000 | milliseconds |
+| Sensors-Core | DefaultSensorExtensionReadingTimeout | default 5000 | milliseconds |
+| Sensors-Core | DefaultSensorExtensionProcessReadingTimeout | default 500 | milliseconds |
+| Security-Malware-Windows-Defender | Scan/ScheduleTime | 0 to 1440, default 120 | minutes past midnight |
+| Security-Malware-Windows-Defender | SignatureUpdateInterval | 1 to 24, default 24 | hours |
+| NetworkLoadBalancing-Core | Clusters/Cluster/IdentityHeartbeatPeriod | at least 10000 | milliseconds |
+| NetworkLoadBalancing-Core | Clusters/Cluster/MembershipHeartbeatPeriod | default 1000 | milliseconds |
+| NetworkLoadBalancing-Core | Clusters/Cluster/MembershipHeartbeatLossTolerance | default 5 | count |
+| NetworkLoadBalancing-Core | Clusters/Cluster/Portrules/Portrule/LoadWeight | at least 0 | number |
+| Embedded-UnifiedWriteFilter | OverlayCriticalThreshold | default 1024 | MB |
+| Embedded-UnifiedWriteFilter | OverlayWarningThreshold | default 512 | MB |
+
+Also corrected: PnpCustomizationsWinPE `DriverPaths/PathAndCredentials/Key` is valid in `windowsPE` like its
+siblings (its page lists the NonWinPE passes by mistake).
 
 ## Source and attribution
 

@@ -1,0 +1,138 @@
+{
+  "features": [
+    {
+      "id": "guest-sign-ins",
+      "title": "Guest sign-ins",
+      "summary": "People create their own temporary Windows account in the guest portal and sign in at any shared PC as a standard user.",
+      "facts": [["Who creates it", "The guest, from the guest portal, without staff"], ["Rights", "Standard user, never an administrator"], ["Password", "Shown once, generated with 14 characters by default"]],
+      "sections": [
+        {"title": "How it works", "body": "The guest portal asks for an optional display name and how long the sign-in should last. The TempDesk Agent creates the account in the guest OU (`OU=Guests,OU=TempDesk`), adds it to the `TempDesk Guests` group, sets the expiry on the account itself (`accountExpires`) and returns the user name and password once. The guest then signs in at any TempDesk PC with `DOMAIN\\guest-xxxxxx`."},
+        {"title": "Limits that protect the domain", "body": "- A per-address limit (`guestCreatePerHour`, default 20) and a global cap of active guests (`guestMaxActive`, default 200).\n- Guests cannot change their password and cannot reach any admin route, even with a stolen session token.\n- Guests can check their own status or delete their own account with their password, if the owner allows it (`allowSelfDelete`)."},
+        {"title": "Choices offered", "body": "Expiry choices come from the settings document (1 hour, 4 hours, 1 day, 1 week, and optionally permanent until deleted). Administrators can also create guests with any duration and extend them from the admin console."}
+      ],
+      "links": [["API: guest routes", "docs/api.html#guest-routes-guest-key"]]
+    },
+    {
+      "id": "expiry-cleanup",
+      "title": "Expiry and cleanup",
+      "summary": "A warning, a sign-out at the end, then the account and the local profile are deleted. Nothing is left behind.",
+      "facts": [["Warning", "10 minutes before expiry by default"], ["Sign-out", "Checked every 2 minutes on each PC"], ["Deletion", "Account reaper every 5 minutes, profile cleanup at startup and hourly"]],
+      "sections": [
+        {"title": "Three independent safety nets", "body": "1. **Session watcher** (`client/Watch-GuestSession.ps1`): Active Directory blocks new sign-ins after expiry but does not end open sessions, so the watcher warns the guest and then signs the session out once the account has expired, been disabled or deleted.\n2. **Guest reaper** (`server/Invoke-GuestReaper.ps1` and the agent): deletes expired accounts that live in the guest OU and carry the `TempDesk guest` description. Nothing else is touched.\n3. **Profile cleanup** (`client/Remove-GuestProfiles.ps1`): removes local profiles of guests whose account is gone, disabled or expired, using Win32_UserProfile so the folder and registry entries both go."},
+        {"title": "What is never removed", "body": "Profiles that are loaded, special or system profiles, and any account outside the guest OU. Profile names must also start with the guest prefix before they are considered."}
+      ],
+      "links": [["Client scripts", "docs/index.html"]]
+    },
+    {
+      "id": "allowlist",
+      "title": "App allowlist",
+      "summary": "Guests run only the programs you list. Everything is enforced by Group Policy for standard users.",
+      "facts": [["Policy", "TempDesk - Guest User Policy"], ["Mechanism", "RestrictRun list for the guest group"], ["Admin rights for guests", "0"]],
+      "sections": [
+        {"title": "How it works", "body": "The admin console edits one list of executable names (for example `msedge.exe`, `chrome.exe`, `WINWORD.EXE`). The agent writes it to the guest user GPO as the `RestrictRun` list, so Windows Explorer starts only those programs for guests. Turn the list off to allow everything a standard user can run."},
+        {"title": "Why guests are standard users", "body": "Nothing in TempDesk grants guests administrator rights. Installers that need elevation fail for guests; machine-wide apps are installed by startup scripts that run as SYSTEM instead."}
+      ],
+      "links": [["API: allowlist", "docs/api.html#admin-routes-tempdesk-settings-and-presetup"]]
+    },
+    {
+      "id": "preset-apps",
+      "title": "Preset apps",
+      "summary": "Chrome, VS Code, Git, Node.js, Python, Claude desktop and Claude Code, Codex desktop and CLI, and Desktop Material are ready on every PC.",
+      "facts": [["Machine-wide", "Installed at startup as SYSTEM with winget"], ["Per user", "Installed in the background at sign-in"], ["Editable", "Presetup > Startup scripts in the admin console"]],
+      "sections": [
+        {"title": "Installed at startup (machine-wide)", "body": "`client/defaults/startup/10-Install-GoogleChrome.ps1` installs Google Chrome from the Chrome Enterprise MSI (from SYSVOL if you put it there, otherwise from Google) and refuses an MSI whose Authenticode signature is not Google's.\n\n`client/defaults/startup/20-Install-DeveloperTools.ps1` installs with winget in machine scope: Git, Visual Studio Code, GitHub CLI, Node.js LTS, Python 3.13, PowerShell 7, .NET 8 and .NET 10 Desktop Runtimes, the Visual C++ Redistributable, 7-Zip, Notepad++, Claude Code (CLI) and the Codex CLI (npm package `@openai/codex`). Packages that are already installed are skipped, so later boots are quick."},
+        {"title": "Installed at sign-in (per user)", "body": "`client/defaults/logon/20-Install-UserApps.ps1` re-launches itself hidden so sign-in is not delayed, then installs Claude (desktop), Codex (desktop, from the Microsoft Store) and Desktop Material (checked against the SHA-256 digest GitHub publishes for the asset). These go into the guest's own profile and disappear with it."},
+        {"title": "Make it yours", "body": "Every script is visible and editable in the admin console. Add your own `.ps1` or `.cmd` files; they run in name order."}
+      ],
+      "links": [["Answer file builder: apps section", "answer-file.html"]]
+    },
+    {
+      "id": "wifi-profiles",
+      "title": "Wi-Fi profiles",
+      "summary": "Publish Wi-Fi networks once and every TempDesk PC connects before anyone signs in.",
+      "facts": [["Auth", "WPA2-Personal, WPA3-Personal (SAE) or open"], ["Stored", "SYSVOL TempDesk\\wifi, readable by Domain Computers and Domain Admins only"], ["Keys returned by the API", "Never"]],
+      "sections": [
+        {"title": "How it works", "body": "The admin console writes each network as WLAN profile XML to SYSVOL. The computer startup script installs every published profile with `netsh wlan add profile` and removes profiles that were deleted. Because the folder is readable only by computers and domain admins, guests cannot read the keys."}
+      ],
+      "links": [["API: Wi-Fi", "docs/api.html#admin-routes-tempdesk-settings-and-presetup"]]
+    },
+    {
+      "id": "admin-console",
+      "title": "Admin console",
+      "summary": "Every directory object, every Group Policy setting and the server itself, managed in a browser.",
+      "facts": [["Directory", "Any object, any attribute"], ["Group Policy", "Every Administrative Template setting and the security settings"], ["Server", "Windows Admin Center style tools"]],
+      "sections": [
+        {"title": "Directory", "body": "Browse the tree, search with LDAP filters, create, edit, move and delete any object, reset passwords, unlock and enable accounts and manage group membership. Binary values are shown as base64. Objects protected from accidental deletion need an explicit force."},
+        {"title": "Group Policy", "body": "Create and link GPOs, edit status, permissions, WMI filters and inheritance, back up and restore. **Administrative Templates** are read from the central store (ADMX and en-US ADML) and shown as real forms: enabled, disabled or not configured, with every element (text, number, list, enum, check box). **Security settings** edit GptTmpl.inf (password and lockout policy, Kerberos, user rights, audit, security options) through a built-in catalog instead of raw text."},
+        {"title": "Server management", "body": "Overview with live CPU, memory, disk and network charts; services, processes, event logs, files, firewall, roles and features, Windows Update, storage and shares, network adapters, registry, scheduled tasks, certificates, devices, DNS and DHCP, performance counters, and a PowerShell console that needs a fresh password confirmation. Anything without its own page can be done with the cmdlet runner."},
+        {"title": "Safety", "body": "Every admin call is written to the Windows event log with the acting user. Destructive operations need a confirmation value checked by the server, not only by the browser."}
+      ],
+      "links": [["API reference", "docs/api.html"]]
+    },
+    {
+      "id": "app-streaming",
+      "title": "App streaming",
+      "summary": "Stream published Windows apps to any browser tab, or download a Remote Desktop file for a native window.",
+      "facts": [["In the browser", "Apache Guacamole 1.6.0 with encrypted JSON auth"], ["Native", ".rdp RemoteApp files"], ["App host", "Windows Server 2025 with Desktop Experience, never the DC"]],
+      "sections": [
+        {"title": "How it works", "body": "Guests pick an app in the portal. For the browser, the portal builds a short-lived, signed and encrypted payload naming one RDP connection with the guest's own credentials and exchanges it for a Guacamole session. Guacamole stores no users, connections or passwords. For Windows, the portal hands out a `.rdp` file and only the app window appears."},
+        {"title": "Licensing", "body": "Guest sessions on an RD Session Host need RDS CALs (Per User) after a 120-day grace period. For a single kiosk-style use, a Windows 11 Pro or Enterprise PC can serve RemoteApps to one session at a time without CALs."}
+      ],
+      "links": [["Streaming guide", "docs/streaming.html"], ["App host guide", "docs/apphost.html"]]
+    },
+    {
+      "id": "tempdesk-lite",
+      "title": "TempDesk Lite",
+      "summary": "No Windows Server license: a Samba 4 domain controller in Docker on a Linux host with the same API.",
+      "facts": [["Domain controller", "Samba 4 Active Directory"], ["Deployed by", "The Deployer, over SSH"], ["API", "Same contract as the Windows agent"]],
+      "sections": [
+        {"title": "What is the same", "body": "Guest sign-ins, expiry and cleanup, Wi-Fi profiles, scripts, the allowlist, directory editing, Group Policy registry settings, Administrative Templates and security settings all work through the same API, so the portals do not care which backend they talk to."},
+        {"title": "What differs", "body": "The Samba agent reports its capabilities in `/health`. It has no Windows cmdlet runner, Group Policy preferences or WMI filters, and adds an allowlisted `samba-tool` runner instead. The portal hides any section whose capability is missing."}
+      ],
+      "links": [["API: health and capabilities", "docs/api.html#health-and-public-settings"]]
+    },
+    {
+      "id": "answer-file-builder",
+      "title": "Answer file builder",
+      "summary": "Build autounattend.xml for the TempDesk server, guest PCs that join the domain, or any Windows install, right in your browser.",
+      "facts": [["Modes", "TempDesk server, Guest PC, Custom, plus every unattend setting"], ["Tools", "Setup flow, disk layout, command timeline, deployment map"], ["Privacy", "Runs in your browser, nothing is uploaded"]],
+      "sections": [
+        {"title": "Three friendly modes", "body": "**TempDesk server** builds Windows Server 2025 Core media with a static IP, the forest, DSRM password and portals choice, and downloads a kit with `autounattend.xml`, `TempDesk/firstboot.json` and the whole payload. **Guest PC** builds Windows 11 media that joins the domain in specialize with Microsoft-Windows-UnattendedJoin. **Custom** covers general Windows and Windows Server installs."},
+        {"title": "Everything else", "body": "The All settings view renders the unattend settings catalog as forms with search, filters and set indicators. Import an existing answer file (unknown parts are kept), save presets, compare versions, undo anything, and print a checklist."}
+      ],
+      "links": [["Open the builder", "answer-file.html"]]
+    },
+    {
+      "id": "deployer",
+      "title": "Deployer app",
+      "summary": "A Windows app that builds the install media, watches the unattended setup over the network and finishes the job.",
+      "facts": [["Watches", "setup-status.json over WinRM"], ["Targets", "Windows Server 2025 Core or TempDesk Lite over SSH"], ["History", "Keeps real Git history of your answer files"]],
+      "sections": [
+        {"title": "From blank VM to ready", "body": "Windows Setup runs `FirstLogon.ps1` once from the install media: it copies the TempDesk folder to `C:\\TempDesk`, applies the static IP, turns on PowerShell remoting, registers the `TempDesk Setup` startup task and creates the forest. After each reboot `Continue-Setup.ps1` waits for Active Directory, creates the OUs, groups and policies, installs the agent and, if chosen, the native portals, then removes the passwords from `firstboot.json` and reports READY."},
+        {"title": "Download", "body": "The installer is published on the GitHub releases page. It is not code signed yet, so check the SHA-256 published with the release."}
+      ],
+      "links": [["Download", "index.html#download"]]
+    },
+    {
+      "id": "personal-wording",
+      "title": "Personal wording",
+      "summary": "Upload a small JSON file with your own words for interface text. It changes labels and headings only.",
+      "facts": [["Format", "{\"schemaVersion\":1,\"entries\":{...}}"], ["Size", "Up to 256 KiB, nesting up to 8 levels"], ["Applies to", "Interface copy only, never generated files or data"]],
+      "sections": [
+        {"title": "Rules", "body": "Each entry maps a phrase (1 to 160 characters) to a replacement (up to 1000 characters). Duplicate keys, reserved names (`__proto__`, `prototype`, `constructor`) and control characters are rejected, and the whole file is validated before anything changes. Matching is whole-word, longest phrase first, and keeps the capitalization of the original."},
+        {"title": "Where it lives", "body": "On this website the file stays in your browser (localStorage). In the admin console it is stored on the server for that installation. It is never applied to generated XML, scripts, user names or other data, and it is never logged."}
+      ],
+      "links": [["Open settings (gear icon)", "index.html"]]
+    },
+    {
+      "id": "language-modes",
+      "title": "Language modes",
+      "summary": "English, Cantonese (Traditional Chinese, Hong Kong) or both at once, everywhere.",
+      "facts": [["English", "Default"], ["Cantonese", "Traditional Chinese, Hong Kong"], ["Bilingual", "English with Cantonese underneath"]],
+      "sections": [
+        {"title": "How it works", "body": "Every interface string lives in two catalogs, `en.json` and `zh-HK.json`, with identical keys, checked by the tests. Bilingual mode shows the English text with the Cantonese line beneath it, which helps mixed groups at a shared desk. The choice is remembered in your browser."}
+      ],
+      "links": [["Open settings (gear icon)", "index.html"]]
+    }
+  ]
+}

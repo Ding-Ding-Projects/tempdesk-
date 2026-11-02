@@ -549,6 +549,23 @@
     if (f.initialAdminUser === 'Administrator') delete f.initialAdminUser;
     return f;
   }
+  // Zip layout of the server kit: autounattend.xml and TempDesk/ at the root; the firstboot scripts
+  // (FirstLogon.ps1, Continue-Setup.ps1, SetupStatus.ps1) directly in TempDesk/; payload folders as
+  // TempDesk/server, TempDesk/agent, TempDesk/client and TempDesk/portal (portal only when native).
+  function kitLayout(manifest, portalsMode) {
+    var out = [];
+    (manifest.files || []).forEach(function (f) {
+      var p = f.path;
+      if (p.indexOf('server/firstboot/') === 0) {
+        if (/^server\/firstboot\/[^/]+\.ps1$/.test(p)) out.push({ src: p, dest: 'TempDesk/' + p.slice(17), sha256: f.sha256 });
+        return;
+      }
+      var top = p.split('/')[0];
+      if (top === 'portal' && portalsMode !== 'native') return;
+      if (top === 'server' || top === 'agent' || top === 'client' || top === 'portal') out.push({ src: p, dest: 'TempDesk/' + p, sha256: f.sha256 });
+    });
+    return out;
+  }
   // Keys Continue-Setup.ps1 / FirstLogon.ps1 read from firstboot.json.
   var FIRSTBOOT_KEYS = ['computerName', 'ipAddress', 'prefixLength', 'gateway', 'dnsServers', 'domainName', 'netbiosName', 'functionalLevel', 'dsrmPassword', 'initialAdminUser', 'agent', 'portals'];
 
@@ -1485,7 +1502,7 @@
 
   var api = {
     // original API
-    buildAutounattend: buildAutounattend, buildFirstboot: buildFirstboot, importFirstboot: importFirstboot, validate: validate, unattendPassword: unattendPassword,
+    buildAutounattend: buildAutounattend, buildFirstboot: buildFirstboot, importFirstboot: importFirstboot, kitLayout: kitLayout, validate: validate, unattendPassword: unattendPassword,
     // modes and model
     buildXml: buildXml, buildModelTree: buildModelTree, serverTree: serverTree, guestTree: guestTree, customTree: customTree,
     defaultModel: defaultModel, normalizeModel: normalizeModel, normalizePresetBundle: normalizePresetBundle, stripSecrets: stripSecrets,

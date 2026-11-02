@@ -6,9 +6,9 @@
 <form class="card form-grid rise" method="get" action="/directory/search">
   <div class="field"><label for="f">{{ t('Filter') }} {{ info('An LDAP filter such as (&(objectClass=user)(sAMAccountName=guest-*)).') }}</label><input id="f" name="filter" value="{{ f.get('filter', '') }}" required class="mono" spellcheck="false" placeholder="(objectClass=user)"></div>
   <div class="field"><label for="b">{{ t('Search base') }} <span class="optional">({{ t('optional') }})</span></label><input id="b" name="base" value="{{ f.get('base', '') }}" spellcheck="false"></div>
-  <div class="field"><label for="s">{{ t('Scope') }}</label><select id="s" name="scope">{% for s, l in [('sub','Subtree'),('one','One level'),('base','Base only')] %}<option value="{{ s }}" {% if f.get('scope') == s %}selected{% endif %}>{{ t(l) }}</option>{% endfor %}</select></div>
-  <div class="field"><label for="a">{{ t('Attributes to show') }}</label><input id="a" name="attrs" value="{{ attrs }}" spellcheck="false"></div>
-  <div class="field"><label for="l">{{ t('Limit') }}</label><input id="l" name="limit" type="number" min="1" max="5000" value="{{ f.get('limit', '500') }}"></div>
+  <div class="field" data-advanced><label for="s">{{ t('Scope') }} {{ info('Subtree searches everything below the base. One level searches only direct children. Base only reads the base object.') }}</label><select id="s" name="scope">{% for s, l in [('sub','Subtree'),('one','One level'),('base','Base only')] %}<option value="{{ s }}" {% if f.get('scope') == s %}selected{% endif %}>{{ t(l) }}</option>{% endfor %}</select></div>
+  <div class="field" data-advanced><label for="a">{{ t('Attributes to show') }} {{ info('Comma separated attribute names to return and show as columns.') }}</label><input id="a" name="attrs" value="{{ attrs }}" spellcheck="false"></div>
+  <div class="field" data-advanced><label for="l">{{ t('Limit') }} {{ info('The most results to return. Large searches can be slow on big directories.') }}</label><input id="l" name="limit" type="number" min="1" max="5000" value="{{ f.get('limit', '500') }}"></div>
   <div class="field" style="justify-content:flex-end"><button class="btn filled" type="submit">{{ t('Search') }}</button></div>
 </form>
 {% if error %}<p class="alert error" role="alert">{{ error }}</p>{% endif %}

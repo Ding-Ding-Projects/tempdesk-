@@ -15,7 +15,7 @@
       {% if zone %}
       <div class="srv-tablewrap"><table class="srv-table">
         <thead><tr><th>{{ t("Host") }}</th><th>{{ t("Type") }}</th><th>{{ t("Data") }}</th><th data-no-sort></th></tr></thead>
-        <tbody>{% for r in (records or []) %}<tr>
+        <tbody>{% for r in (records or []) %}<tr data-ctx>
           <td>{{ r.hostName }}</td><td>{{ r.recordType }}</td><td>{{ r.recordData }}</td>
           <td><form method="post" action="/server/dns/records/delete" class="srv-inline">
             <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">

@@ -290,10 +290,10 @@ test('strict mode rejects unknown components and settings; validateModel reports
     },
   }, catalog);
   const text = issues.map((i) => `${i.level} ${i.where} ${i.message}`).join('\n');
-  assert.match(text, /warning .*ComputerName not documented for the windowsPE pass/);
-  assert.match(text, /error .*ComputerName longer than 15/);
-  assert.match(text, /error .*HideEULAPage value maybe/);
-  assert.match(text, /error .*SynchronousCommand\[1\] duplicate key 1/);
+  assert.match(text, /error .*ComputerName not valid in the windowsPE pass/);
+  assert.match(text, /error .*ComputerName ComputerName is 21 bytes/);
+  assert.match(text, /error .*HideEULAPage value maybe is not true or false/);
+  assert.match(text, /error .*SynchronousCommand\[1\] Order 1 is already used/);
 });
 
 test('parseXml maps an existing file and reports unknown elements', () => {
@@ -343,4 +343,43 @@ test('offline image reference survives a round trip', () => {
   const xml = buildXml(m, catalog);
   assert.match(xml, /<cpi:offlineImage cpi:source="wim:c:\/install\.wim#Windows 11 Pro" xmlns:cpi="urn:schemas-microsoft-com:cpi" \/>/);
   assert.deepEqual(parseXml(xml, catalog).model, m);
+});
+
+test('servicing packages round trip and no longer land in unknown', () => {
+  const m = structuredClone(serverCore);
+  m.servicing = [
+    {
+      action: 'configure',
+      identity: { name: 'Microsoft-Windows-Foundation-Package', version: '10.0.26100.1', processorArchitecture: 'amd64', publicKeyToken: '31bf3856ad364e35', language: '', versionScope: 'nonSxS' },
+      selections: [{ name: 'IIS-WebServerRole', state: true }, { name: 'SMB1Protocol', state: false }],
+    },
+    {
+      action: 'install',
+      permanence: 'permanent',
+      identity: { name: 'Package_for_KB5000001', version: '10.0.1.0', processorArchitecture: 'amd64', publicKeyToken: '31bf3856ad364e35', language: 'neutral' },
+      sources: [{ location: 'D:\\Updates\\KB5000001 & co.cab', permanence: 'permanent' }],
+    },
+    { action: 'remove', identity: { name: 'Microsoft-Windows-InternetExplorer-Optional-Package', version: '11.0.26100.1', processorArchitecture: 'amd64', publicKeyToken: '31bf3856ad364e35', language: '' } },
+  ];
+  assert.deepEqual(validateModel(m, catalog).filter((i) => i.level === 'error'), []);
+  const xml = buildXml(m, catalog);
+  assert.ok(xml.indexOf('<servicing>') < xml.indexOf('<settings pass="windowsPE">'), 'servicing must come before settings');
+  assert.match(xml, /<package action="configure">\s*<assemblyIdentity name="Microsoft-Windows-Foundation-Package" version="10\.0\.26100\.1" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="" versionScope="nonSxS" \/>\s*<selection name="IIS-WebServerRole" state="true" \/>\s*<selection name="SMB1Protocol" state="false" \/>/);
+  assert.match(xml, /<package action="install" permanence="permanent">[\s\S]*<source location="D:\\Updates\\KB5000001 &amp; co\.cab" permanence="permanent" \/>/);
+  parseXmlTree(xml);
+  const { model: back, unknown } = parseXml(xml, catalog);
+  assert.deepEqual(unknown, []);
+  assert.deepEqual(back.servicing, m.servicing);
+  assert.equal(buildXml(back, catalog), xml);
+});
+
+test('servicing defaults identity fields and rejects bad actions', () => {
+  const xml = buildXml({ architecture: 'arm64', servicing: [{ action: 'configure', identity: { name: 'Microsoft-Windows-Foundation-Package', version: '10.0.26100.1' }, selections: [{ name: 'X', state: 'true' }] }], passes: {} }, catalog);
+  assert.match(xml, /processorArchitecture="arm64" publicKeyToken="31bf3856ad364e35" language="neutral"/);
+  assert.match(xml, /<selection name="X" state="true" \/>/);
+  assert.throws(() => buildXml({ servicing: [{ action: 'enable', identity: { name: 'a', version: '1.0.0.0' } }], passes: {} }, catalog), /action must be one of/);
+  assert.throws(() => buildXml({ servicing: [{ action: 'install', identity: { name: 'a' } }], passes: {} }, catalog), /identity needs name and version/);
+  const parsed = parseXml('<unattend xmlns="urn:schemas-microsoft-com:unattend"><servicing><package action="stage"><assemblyIdentity name="a" version="1.0.0.0" processorArchitecture="x86" publicKeyToken="31bf3856ad364e35" language="en-US"/><extra/></package><oops/></servicing></unattend>', catalog);
+  assert.deepEqual(parsed.model.servicing, [{ action: 'stage', identity: { name: 'a', version: '1.0.0.0', processorArchitecture: 'x86', publicKeyToken: '31bf3856ad364e35', language: 'en-US' } }]);
+  assert.deepEqual(parsed.unknown, ['/unattend/servicing/package[1]/extra', '/unattend/servicing/oops']);
 });
