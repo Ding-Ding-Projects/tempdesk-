@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.env.guest
+.env.admin
+.env.local
+agent/bin/
+deployer/bin/
+deployer/output/
+*.iso
+node_modules/
