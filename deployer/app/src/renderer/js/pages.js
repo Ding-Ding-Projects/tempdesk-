@@ -1,6 +1,6 @@
 // Pages of the desktop app. Every page builds real UI from real data; empty states say what is
 // actually missing. Strings come from the i18n catalogs through t().
-import { h, t, state, btn, iconBtn, toast, dialog, confirmDialog, promptDialog, superConfirm, info, searchBox, field, select, contextMenu, play, fmtBytes, fmtTime, pulseFocus, announce } from './ui.js';
+import { h, t, state, btn, iconBtn, toast, dialog, confirmDialog, promptDialog, superConfirm, info, searchBox, field, select, contextMenu, showMenu, play, fmtBytes, fmtTime, pulseFocus, announce } from './ui.js';
 import { progressPanel } from './run.js';
 import { base64Page } from './base64.js';
 import { settingsPage } from './settings.js';
@@ -183,12 +183,41 @@ function studioPage(root, app) {
     catch (e) { toast(e.message, 'error'); refreshBranches(); }
   });
   function setStatus() { status.textContent = (studioFile ? studioFile : t('studio.untitled')) + (studioDirty ? ' · ' + t('studio.unsaved') : ''); }
+  // Reloads the studio frame (for example with ?mode=direct) and resolves once its host API exists.
+  function loadStudio(query) {
+    return new Promise((resolve) => {
+      const done = () => { frame.removeEventListener('load', onLoad); resolve(!!host()); };
+      const onLoad = () => { let n = 0; const tick = () => (host() || n++ > 50 ? done() : setTimeout(tick, 100)); tick(); };
+      frame.addEventListener('load', onLoad);
+      frame.src = 'studio.html' + (query || '');
+    });
+  }
+  // Arbitrary .xml files open in Direct mode (passes > components > settings, no template forms).
   async function openFile(r) {
     if (!r) return;
     if (r.tooLarge) { toast(t('studio.tooLarge'), 'error'); return; }
+    if (/\.xml$/i.test(r.name || '')) await loadStudio('?mode=direct');
     const ok = host() && host().importText(r.text, r.name);
     if (!ok) { toast(t('studio.importUnsupported'), 'error'); return; }
     studioFile = r.path; studioDirty = false; setStatus(); toast(t('studio.opened', [r.name]), 'success');
+  }
+  async function newBlank() {
+    if (studioDirty && !(await confirmDialog(t('studio.new'), t('studio.discard'), t('studio.new')))) return;
+    await loadStudio('?mode=direct');
+    const blank = '<?xml version="1.0" encoding="utf-8"?>\r\n<unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">\r\n</unattend>\r\n';
+    const ok = host() && host().importText(blank, 'autounattend.xml');
+    studioFile = null; studioDirty = false; setStatus();
+    toast(ok ? t('studio.blankReady') : t('studio.importUnsupported'), ok ? 'success' : 'error');
+  }
+  function fileMenu(e) {
+    const r = e.currentTarget.getBoundingClientRect();
+    showMenu(r.left, r.bottom + 4, [
+      { label: t('studio.new'), kbd: 'Ctrl+N', run: newBlank },
+      { label: t('studio.open'), kbd: 'Ctrl+O', run: async () => openFile(await td.invoke['studio:open']()) },
+      { label: t('studio.recent'), run: recent },
+      'sep',
+      { label: t('studio.save'), kbd: 'Ctrl+S', run: () => save(false) },
+      { label: t('studio.saveAs'), kbd: 'Ctrl+Shift+S', run: () => save(true) }]);
   }
   async function save(as) {
     const x = xml(); if (!x) { toast(t('studio.notReady'), 'error'); return; }
@@ -261,6 +290,7 @@ function studioPage(root, app) {
     d.addEventListener('keydown', (e) => {
       if (e.ctrlKey && e.key.toLowerCase() === 's') { e.preventDefault(); save(e.shiftKey); }
       if (e.ctrlKey && e.key.toLowerCase() === 'o') { e.preventDefault(); td.invoke['studio:open']().then(openFile); }
+      if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'n') { e.preventDefault(); newBlank(); }
     });
   });
   const off = td.on['studio:changed'](async (ev) => {
@@ -273,10 +303,9 @@ function studioPage(root, app) {
   setStatus(); refreshBranches();
   root.appendChild(h('div', { class: 'afb-host' }, [
     h('div', { class: 'afb-extras', role: 'toolbar', 'aria-label': t('studio.desktopTools') }, [
-      btn(t('studio.open'), async () => openFile(await td.invoke['studio:open']()), 'btn-ghost btn-sm', { title: 'Ctrl+O' }),
-      btn(t('studio.recent'), recent, 'btn-ghost btn-sm'),
+      btn(t('studio.file'), fileMenu, 'btn-ghost btn-sm', { 'aria-haspopup': 'menu', title: t('studio.fileHelp') }),
+      btn(t('studio.new'), newBlank, 'btn-ghost btn-sm', { title: 'Ctrl+N' }),
       btn(t('studio.save'), () => save(false), 'btn-ghost btn-sm', { title: 'Ctrl+S' }),
-      btn(t('studio.saveAs'), () => save(true), 'btn-ghost btn-sm', { title: 'Ctrl+Shift+S' }),
       btn(t('studio.iso'), buildIso, 'btn-primary btn-sm'),
       btn(t('studio.usb'), writeUsb, 'btn-ghost btn-sm'),
       info('info.studio', t('studio.title')),

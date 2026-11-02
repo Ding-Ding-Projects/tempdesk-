@@ -112,7 +112,7 @@ export async function helpPage(root, app) {
   root.appendChild(h('div', { class: 'page-head' }, [h('div', null, [h('h1', { text: t('nav.help') }), h('p', { class: 'muted', text: t('help.lead') })]),
     h('div', { class: 'row', role: 'tablist' }, ['docs', 'changelog', 'shortcuts'].map((k) => h('button', { type: 'button', role: 'tab', class: 'btn btn-sm ' + (tab === k ? 'btn-primary' : 'btn-ghost'), 'aria-selected': String(tab === k), onclick: () => app.go('help', { tab: k }) }, [t('help.tab.' + k)])))]));
   if (tab === 'shortcuts') {
-    const rows = [['Ctrl+Shift+F', 'key.palette'], ['Ctrl+1 … Ctrl+8', 'key.pages'], ['Ctrl+Z', 'key.undo'], ['Ctrl+Y, Ctrl+Shift+Z', 'key.redo'], ['Ctrl+Tab', 'key.tabs'], ['Ctrl+W', 'key.closeTab'], ['Ctrl+Shift+Left/Right', 'key.moveTab'], ['Shift+F10, Menu key', 'key.context'], ['Ctrl+O, Ctrl+S, Ctrl+Shift+S', 'key.studioFiles'], ['F1', 'key.help'], ['Esc', 'key.close']];
+    const rows = [['Ctrl+Shift+F', 'key.palette'], ['Ctrl+1 … Ctrl+8', 'key.pages'], ['Ctrl+Z', 'key.undo'], ['Ctrl+Y, Ctrl+Shift+Z', 'key.redo'], ['Ctrl+Tab', 'key.tabs'], ['Ctrl+W', 'key.closeTab'], ['Ctrl+Shift+Left/Right', 'key.moveTab'], ['Shift+F10, Menu key', 'key.context'], ['Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+Shift+S', 'key.studioFiles'], ['F1', 'key.help'], ['Esc', 'key.close']];
     root.appendChild(h('div', { class: 'card' }, [h('table', { class: 'table' }, [h('tbody', null, rows.map(([k, d]) => h('tr', null, [h('td', null, [h('span', { class: 'kbd', text: k })]), h('td', { text: t(d) })])))])]));
     return;
   }

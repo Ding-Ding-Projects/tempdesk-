@@ -192,6 +192,9 @@ s('portals.nativeNote', 'This server hosts the portals natively (no Docker): gue
 # ---- answer file studio -------------------------------------------------------------------
 s('studio.title', 'Answer File Studio', '應答檔案工作室'); s('studio.desktopTools', 'Desktop tools', '桌面工具')
 s('studio.open', 'Open file', '開啟檔案'); s('studio.recent', 'Recent files', '最近的檔案'); s('studio.save', 'Save', '儲存'); s('studio.saveAs', 'Save as', '另存新檔')
+s('studio.file', 'File', '檔案'); s('studio.fileHelp', 'New, open, recent files, save and save as', '新增、開啟、最近的檔案、儲存及另存新檔')
+s('studio.new', 'New blank answer file', '新增空白應答檔'); s('studio.discard', 'Discard the unsaved changes and start a blank answer file?', '捨棄未儲存的變更並開始新的空白應答檔？')
+s('studio.blankReady', 'Blank answer file ready in Direct mode. Add components to any pass.', '空白應答檔已在直接模式準備好。可在任何階段加入元件。')
 s('studio.iso', 'Build ISO', '建立 ISO'); s('studio.usb', 'Write to USB', '寫入 USB'); s('studio.branch', 'Variant (Git branch)', '變體（Git 分支）')
 s('studio.newBranch', 'New variant...', '新增變體……'); s('studio.branchName', 'Branch name', '分支名稱'); s('studio.branchBad', 'Use letters, numbers, dot, dash, underscore or slash.', '請使用字母、數字、句點、連字號、底線或斜線。')
 s('studio.branchHelp', 'Each preset variant can live on its own Git branch in the workspace.', '每個預設變體可以在工作區有自己的 Git 分支。'); s('studio.branchNoGit', 'Branches need Git for Windows.', '分支需要 Git for Windows。'); s('studio.onBranch', 'Now on {0}', '現在位於 {0}')
@@ -340,7 +343,7 @@ s('help.searchDocs', 'Search the documentation', '搜尋文件'); s('help.search
 s('help.noChangelog', 'No changelog is bundled with this build.', '此版本沒有附帶變更記錄。'); s('help.linkBlocked', 'That link is not on the list of allowed sites.', '該連結不在允許的網站清單內。')
 for k, en, zh in [('palette', 'Command palette: search every page, setting and action', '指令面板：搜尋所有頁面、設定及動作'), ('pages', 'Go to page 1 to 8 in the navigation rail', '前往導覽列的第 1 至 8 頁'), ('undo', 'Undo the last action (a new commit)', '復原上一個動作（新的提交）'),
                   ('redo', 'Redo (a new commit)', '重做（新的提交）'), ('tabs', 'Next or previous deployment tab', '下一個或上一個部署分頁'), ('closeTab', 'Close the deployment tab', '關閉部署分頁'), ('moveTab', 'Move the focused tab', '移動焦點所在的分頁'),
-                  ('context', 'Open the context menu of the focused item', '開啟焦點項目的快顯功能表'), ('studioFiles', 'Studio: open, save, save as', '工作室：開啟、儲存、另存新檔'), ('help', 'Open help', '開啟說明'), ('close', 'Close a dialog, menu or popup', '關閉對話方塊、功能表或彈出視窗')]:
+                  ('context', 'Open the context menu of the focused item', '開啟焦點項目的快顯功能表'), ('studioFiles', 'Studio: new blank, open, save, save as', '工作室：新增空白、開啟、儲存、另存新檔'), ('help', 'Open help', '開啟說明'), ('close', 'Close a dialog, menu or popup', '關閉對話方塊、功能表或彈出視窗')]:
     s('key.' + k, en, zh)
 tone('onb.welcome', ['Welcome to TempDesk Deployer', 'Welcome to TempDesk Deployer', 'Hello! Let us set things up', 'Oh hi, new friend'], ['歡迎使用 TempDesk Deployer', '歡迎使用 TempDesk Deployer', '你好！一齊設定吓', '哈囉，新朋友'])
 s('onb.welcomeLead', 'A few quick steps: choose how you will run TempDesk, check this PC, pick a look.', '幾個簡單步驟：選擇 TempDesk 的執行方式、檢查此電腦、挑選外觀。')
