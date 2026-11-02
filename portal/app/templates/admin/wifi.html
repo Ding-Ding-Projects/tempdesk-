@@ -1,0 +1,31 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel, info with context %}
+{% block title %}{{ ta('Wi-Fi profiles') }}{% endblock %}
+{% block content %}
+<h1>{{ t('Wi-Fi profiles') }}</h1>
+<p class="muted">{{ t('Profiles are pushed to guest PCs. Keys are write-only: they are never shown again after saving.') }}</p>
+<div class="row">
+<section class="grow card rise" style="flex-basis:520px">{{ search_box(tv, regex_error, 'Search networks') }}
+  {% if tv.rows %}<form method="post" action="/wifi/bulk" data-bulk-form>{{ csrf() }}<div class="table-wrap"><table><thead><tr>{{ sel_all() }}{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}<th><span class="sr-only">{{ t('Actions') }}</span></th></tr></thead><tbody class="stagger">
+  {% for w in tv.rows %}<tr data-ctx='[{"label":"{{ ta('Edit') }}","href":"/wifi?edit={{ w.id|urlencode }}"},{"label":"{{ ta('Delete') }}","href":"/wifi/{{ w.id|urlencode }}/delete","key":"Del"}]'>{{ sel(w.id, w.ssid) }}<td>{{ w.ssid }}</td><td>{{ w.auth }}</td><td>{{ t('Yes') if w.hidden else t('No') }}</td><td>{{ t('Yes') if w.autoConnect else t('No') }}</td>
+    <td class="actions"><a class="btn sm" href="/wifi?edit={{ w.id|urlencode }}">{{ t('Edit') }}</a> <a class="btn sm danger" href="/wifi/{{ w.id|urlencode }}/delete">{{ t('Delete') }}</a></td></tr>{% endfor %}
+  </tbody></table></div>{{ bulk_bar([('delete','Delete selected')], bulk_token) }}</form>
+  {% else %}{{ empty('No Wi-Fi profiles', 'Add a network on the right, or import profiles exported from Windows.') }}{% endif %}</section>
+<div class="side stack" style="flex-basis:340px">
+<section class="card raised"><h2>{{ t('Edit profile') if edit else t('Add a network') }}</h2>
+  <form method="post" action="/wifi" class="stack" autocomplete="off">{{ csrf() }}<input type="hidden" name="id" value="{{ edit.id if edit else '' }}">
+    <div class="field"><label for="ss">{{ t('Network name (SSID)') }}</label><input id="ss" name="ssid" value="{{ edit.ssid if edit else '' }}" required maxlength="32"></div>
+    <div class="field"><label for="au">{{ t('Security') }}</label><select id="au" name="auth">{% for a in auths %}<option value="{{ a }}" {% if edit and edit.auth == a %}selected{% endif %}>{{ a }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="ky">{{ t('Key') }} {{ info('8 to 63 characters. Leave empty when editing to keep the current key.') }}</label><input id="ky" name="key" type="password" autocomplete="new-password" minlength="8" maxlength="63" placeholder="{{ ta('Unchanged') if edit else '' }}"></div>
+    <label class="check"><input type="checkbox" name="hidden" {% if edit and edit.hidden %}checked{% endif %}> {{ t('Hidden network') }}</label>
+    <label class="check"><input type="checkbox" name="autoConnect" {% if not edit or edit.autoConnect %}checked{% endif %}> {{ t('Connect automatically') }}</label>
+    <p class="hint">{{ t('Changing the key cannot be undone, because old keys are never stored.') }}</p>
+    <div class="form-actions"><button class="btn filled" type="submit">{{ t('Save') }}</button>{% if edit %}<a class="btn" href="/wifi">{{ t('Cancel') }}</a>{% endif %}</div>
+  </form></section>
+<section class="card"><h2>{{ t('Import from Windows') }}</h2>
+  <p class="hint">{{ t('Export on a PC with: netsh wlan export profile key=clear folder=. Then upload the XML files here. The files contain the key in plain text, so delete them afterwards.') }}</p>
+  <form method="post" action="/wifi/import" enctype="multipart/form-data" class="stack">{{ csrf() }}
+    <label for="wx">{{ t('WLAN profile XML files') }}</label><input id="wx" type="file" name="file" accept=".xml,text/xml" multiple required>
+    <button class="btn tonal" type="submit">{{ t('Preview import') }}</button></form></section>
+</div></div>
+{% endblock %}

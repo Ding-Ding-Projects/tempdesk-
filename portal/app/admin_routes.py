@@ -306,6 +306,11 @@ def audit_columns(rows: list) -> list[tuple[str, str]]:
     return [(k, k[:1].upper() + k[1:]) for k in keys[:6]]
 
 
+@router.get("/more")
+async def more(request: Request, sess: Session = Depends(require_admin)):
+    return await render(request, "admin/more.html", {})
+
+
 # ================================================================ guests
 
 GUEST_COLS = [("username", "Username"), ("displayName", "Display name"), ("created", "Created"),
@@ -528,6 +533,7 @@ async def directory_object(request: Request, sess: Session = Depends(require_adm
         "is_group": "group" in classes,
         "members": members if isinstance(members, list) else [members],
         "delete_token": confirm_token(request, "delete-object", dn),
+        "undo_note": delete_undo_note(await agent(request).health()),
         "tab_title": (attrs.get("name") or [dn])[0] if isinstance(attrs.get("name"), list) else dn,
     })
 

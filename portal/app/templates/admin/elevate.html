@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf %}
+{% from "macros.html" import csrf with context %}
 {% block title %}{{ ta('Confirm your password') }}{% endblock %}
 {% block content %}
 <form class="card lg stack rise" style="max-width:560px" method="post" action="/auth/elevate">

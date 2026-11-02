@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf, super_confirm %}
+{% from "macros.html" import csrf, super_confirm with context %}
 {% block title %}{{ ta('Confirm deletion') }}{% endblock %}
 {% block content %}
 <form class="card lg stack rise" style="max-width:620px" method="post" action="{{ action }}">

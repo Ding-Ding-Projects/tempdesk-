@@ -652,7 +652,7 @@
     if (o.owner) shellSpec.push(leaf('RegisteredOwner', o.owner));
     shellSpec.push(leaf('TimeZone', o.timeZone || 'Eastern Standard Time'));
     spec.c.push(component('Microsoft-Windows-Shell-Setup', arch, shellSpec));
-    var runSync = (o.runSync || []).filter(function (r) { return r && str(r.command).trim(); }).map(function (r) { return { command: r.command, description: r.description }; });
+    var runSync = [];
     if (bool(o.edgeFirstRunOff)) runSync.push({ command: EDGE_CMD, description: 'Edge first-run experience off (policy)' });
     if (runSync.length) spec.c.push(component('Microsoft-Windows-Deployment', arch, [syncCommands('RunSynchronous', 'RunSynchronousCommand', 'Path', runSync)]));
     if (bool(o.rdp)) {
@@ -677,7 +677,7 @@
     var hide = OOBE_HIDE.filter(function (k) { return bool(o['oobe' + k]); }).map(function (k) { return leaf(k, 'true'); });
     if (o.protectYourPC) hide.push(leaf('ProtectYourPC', parseInt(o.protectYourPC, 10) || 3));
     if (hide.length) oobe.push(el('OOBE', null, hide));
-    var fl = (o.firstLogon || []).filter(function (r) { return r && str(r.command).trim(); }).map(function (r) { return { command: r.command, description: r.description }; });
+    var fl = [];
     var feat = featureCommand(o);
     if (feat) fl.push(feat);
     if (fl.length) oobe.push(syncCommands('FirstLogonCommands', 'SynchronousCommand', 'CommandLine', fl, function (kids) { kids.push(leaf('RequiresUserInput', 'false')); }));
@@ -707,10 +707,208 @@
       mergeValue(c, map[key]);
     });
   }
+  // ---- Model-level command lists (command timeline) -------------------------------------------
+  // model.commands = { runSync: [], runAsync: [], firstLogon: [], logon: [] }
+  // item: { command, description, willReboot: 'Never'|'Always'|'OnRequest', disabled, credentials: {domain, username, password} }
+  var COMMAND_LISTS = {
+    runSync: { pass: 'specialize', component: 'Microsoft-Windows-Deployment', list: 'RunSynchronous', item: 'RunSynchronousCommand', cmd: 'Path', reboot: true, creds: true },
+    runAsync: { pass: 'specialize', component: 'Microsoft-Windows-Deployment', list: 'RunAsynchronous', item: 'RunAsynchronousCommand', cmd: 'Path', reboot: false, creds: true },
+    firstLogon: { pass: 'oobeSystem', component: 'Microsoft-Windows-Shell-Setup', list: 'FirstLogonCommands', item: 'SynchronousCommand', cmd: 'CommandLine', reboot: false, creds: false, userInput: true },
+    logon: { pass: 'oobeSystem', component: 'Microsoft-Windows-Shell-Setup', list: 'LogonCommands', item: 'AsynchronousCommand', cmd: 'CommandLine', reboot: false, creds: false, userInput: true }
+  };
+  function commandItem(def, it, order) {
+    var kids = [leaf('Order', order)];
+    if (it.description) kids.push(leaf('Description', it.description));
+    kids.push(leaf(def.cmd, it.command));
+    if (def.reboot && it.willReboot && it.willReboot !== 'Never') kids.push(leaf('WillReboot', it.willReboot));
+    if (def.userInput) kids.push(leaf('RequiresUserInput', 'false'));
+    var c = it.credentials;
+    if (def.creds && c && (c.username || c.domain)) kids.push(el('Credentials', null, [leaf('Domain', c.domain || ''), leaf('Password', c.password || ''), leaf('Username', c.username || '')]));
+    return addItem(def.item, kids);
+  }
+  function mergeCommands(doc, commands, arch) {
+    Object.keys(COMMAND_LISTS).forEach(function (k) {
+      var items = ((commands || {})[k] || []).filter(function (it) { return it && !it.disabled && str(it.command).trim(); });
+      if (!items.length) return;
+      var def = COMMAND_LISTS[k];
+      var comp = getComponent(doc, def.pass, def.component, arch, true);
+      var list = child(comp, def.list);
+      if (!list) { list = el(def.list, null, []); comp.c.push(list); }
+      var used = children(list, def.item).map(function (x) { return parseInt(pathText(x, 'Order'), 10) || 0; });
+      var next = used.length ? Math.max.apply(null, used) + 1 : 1;
+      items.forEach(function (it) { list.c.push(commandItem(def, it, next++)); });
+    });
+  }
+  function readCommandItem(def, e) {
+    var it = { command: pathText(e, def.cmd), description: pathText(e, 'Description'), willReboot: pathText(e, 'WillReboot') || 'Never', disabled: false };
+    var c = path(e, 'Credentials');
+    if (c) it.credentials = { domain: pathText(c, 'Domain'), username: pathText(c, 'Username'), password: pathText(c, 'Password') };
+    return it;
+  }
+
+  // ---- Model-level disk layout (disk canvas) ---------------------------------------------------
+  // model.disks = null | { disks: [{ diskId, sizeMB, wipe, partitions: [{ type, sizeMB, extend, format, label, letter, active, typeId }] }],
+  //                        target: { diskId, partitionId } }
+  var PART_TYPES = ['EFI', 'MSR', 'Primary', 'Recovery', 'Extended', 'Logical'];
+  var RECOVERY_GPT = 'de94bba4-06d1-4d40-a16a-bfd50179d6ac';
+  function layoutDiskXml(layout) {
+    var disks = (layout.disks || []).map(function (d) {
+      var kids = [leaf('DiskID', parseInt(d.diskId, 10) || 0), leaf('WillWipeDisk', d.wipe === false ? 'false' : 'true')];
+      var cp = [], mp = [];
+      (d.partitions || []).forEach(function (p, i) {
+        var order = i + 1;
+        var type = p.type === 'Recovery' ? 'Primary' : p.type;
+        var ck = [leaf('Order', order), leaf('Type', type)];
+        if (p.extend) ck.push(leaf('Extend', 'true')); else ck.push(leaf('Size', Math.max(1, parseInt(p.sizeMB, 10) || 1)));
+        cp.push(addItem('CreatePartition', ck));
+        var mk = [leaf('Order', order), leaf('PartitionID', order)];
+        if (p.type === 'EFI') { mk.push(leaf('Format', 'FAT32')); }
+        else if (p.type !== 'MSR' && p.type !== 'Extended' && p.format) mk.push(leaf('Format', p.format));
+        if (p.label && p.type !== 'MSR' && p.type !== 'Extended') mk.push(leaf('Label', p.label));
+        if (p.letter && /^[C-Z]$/i.test(p.letter)) mk.push(leaf('Letter', p.letter.toUpperCase()));
+        if (p.active) mk.push(leaf('Active', 'true'));
+        if (p.type === 'Recovery') mk.push(leaf('TypeID', p.typeId || RECOVERY_GPT));
+        mp.push(addItem('ModifyPartition', mk));
+      });
+      if (d.wipe !== false && cp.length) kids.push(el('CreatePartitions', null, cp));
+      if (mp.length) kids.push(el('ModifyPartitions', null, mp));
+      return addItem('Disk', kids);
+    });
+    return el('DiskConfiguration', null, disks);
+  }
+  function applyDiskLayout(doc, layout, arch) {
+    var setup = getComponent(doc, 'windowsPE', 'Microsoft-Windows-Setup', arch, true);
+    setup.c = setup.c.filter(function (c) { return c.n !== 'DiskConfiguration'; });
+    if ((layout.disks || []).length) setup.c.unshift(layoutDiskXml(layout));
+    var t = layout.target || {};
+    var ii = child(setup, 'ImageInstall');
+    if (!ii) { ii = el('ImageInstall', null, [el('OSImage', null, [])]); setup.c.push(ii); }
+    var os = child(ii, 'OSImage');
+    os.c = os.c.filter(function (c) { return c.n !== 'InstallTo' && c.n !== 'InstallToAvailablePartition'; });
+    os.c.push(el('InstallTo', null, [leaf('DiskID', parseInt(t.diskId, 10) || 0), leaf('PartitionID', parseInt(t.partitionId, 10) || 1)]));
+  }
+  function readDiskLayout(setup) {
+    var dc = path(setup, 'DiskConfiguration');
+    var layout = { disks: [], target: { diskId: pathText(setup, 'ImageInstall/OSImage/InstallTo/DiskID') || '0', partitionId: pathText(setup, 'ImageInstall/OSImage/InstallTo/PartitionID') || '1' } };
+    if (!dc) return layout;
+    children(dc, 'Disk').forEach(function (d) {
+      var disk = { diskId: pathText(d, 'DiskID') || '0', sizeMB: 0, wipe: pathText(d, 'WillWipeDisk').toLowerCase() === 'true', partitions: [] };
+      var mods = children(path(d, 'ModifyPartitions') || el('x'), 'ModifyPartition');
+      var creates = children(path(d, 'CreatePartitions') || el('x'), 'CreatePartition').sort(function (a, b) { return (parseInt(pathText(a, 'Order'), 10) || 0) - (parseInt(pathText(b, 'Order'), 10) || 0); });
+      creates.forEach(function (c, i) {
+        var m = mods.filter(function (x) { return pathText(x, 'PartitionID') === String(i + 1); })[0];
+        var type = pathText(c, 'Type') || 'Primary';
+        var typeId = m ? pathText(m, 'TypeID') : '';
+        var p = { type: typeId && typeId.toLowerCase() === RECOVERY_GPT ? 'Recovery' : type, sizeMB: pathText(c, 'Size') || '0', extend: pathText(c, 'Extend').toLowerCase() === 'true',
+          format: m ? pathText(m, 'Format') : '', label: m ? pathText(m, 'Label') : '', letter: m ? pathText(m, 'Letter') : '', active: !!(m && pathText(m, 'Active').toLowerCase() === 'true') };
+        if (p.type === 'Recovery' && typeId.toLowerCase() !== RECOVERY_GPT) p.typeId = typeId;
+        if (p.type === 'EFI') p.format = 'FAT32';
+        disk.partitions.push(p);
+      });
+      layout.disks.push(disk);
+    });
+    return layout;
+  }
+
+  // ---- Extras: dense-section settings shared by every mode -------------------------------------
+  // Component settings (written as real unattend settings) and generated commands (tagged with a
+  // description "TempDesk extra: <id>=<value>" so import restores them exactly).
+  var EXTRA_SETTINGS = [
+    { id: 'uacOff', pass: 'offlineServicing', comp: 'Microsoft-Windows-LUA-Settings', path: 'EnableLUA', value: 'false' },
+    { id: 'ceipOff', pass: 'specialize', comp: 'Microsoft-Windows-SQMApi', path: 'CEIPEnabled', value: '0' },
+    { id: 'werOff', pass: 'specialize', comp: 'Microsoft-Windows-ErrorReportingCore', path: 'DisableWER', value: '1' },
+    { id: 'serverManagerOff', pass: 'specialize', comp: 'Microsoft-Windows-ServerManager-SvrMgrNc', path: 'DoNotOpenServerManagerAtLogon', value: 'true' },
+    { id: 'ieEscOff', pass: 'specialize', comp: 'Microsoft-Windows-IE-ESC', path: 'IEHardenAdmin', value: 'false' },
+    { id: 'oemManufacturer', pass: 'specialize', comp: 'Microsoft-Windows-Shell-Setup', path: 'OEMInformation/Manufacturer', text: true },
+    { id: 'oemModel', pass: 'specialize', comp: 'Microsoft-Windows-Shell-Setup', path: 'OEMInformation/Model', text: true },
+    { id: 'oemSupportUrl', pass: 'specialize', comp: 'Microsoft-Windows-Shell-Setup', path: 'OEMInformation/SupportURL', text: true },
+    { id: 'oemSupportPhone', pass: 'specialize', comp: 'Microsoft-Windows-Shell-Setup', path: 'OEMInformation/SupportPhone', text: true },
+    { id: 'oemSupportHours', pass: 'specialize', comp: 'Microsoft-Windows-Shell-Setup', path: 'OEMInformation/SupportHours', text: true },
+    { id: 'oemLogo', pass: 'specialize', comp: 'Microsoft-Windows-Shell-Setup', path: 'OEMInformation/Logo', text: true }
+  ];
+  var POWER_PLANS = { balanced: '381b4222-f694-41f0-9685-ff5bb260df2e', high: '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c', saver: 'a1841308-3541-4fab-bc81-f71556f20b4a' };
+  var APP_IDS = { chrome: 'Google.Chrome', vscode: 'Microsoft.VisualStudioCode', git: 'Git.Git', node: 'OpenJS.NodeJS.LTS', python: 'Python.Python.3.13', sevenzip: '7zip.7zip', pwsh: 'Microsoft.PowerShell' };
+  var REG = 'reg.exe add ';
+  // id -> { list, build(value) -> command or null }
+  var EXTRA_COMMANDS = {
+    updates: { list: 'runSync', build: function (v) {
+      if (v === 'notify') return REG + '"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU" /v AUOptions /t REG_DWORD /d 2 /f';
+      if (v === 'off') return REG + '"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU" /v NoAutoUpdate /t REG_DWORD /d 1 /f';
+      return null; } },
+    telemetry: { list: 'runSync', build: function (v) {
+      if (v === '0' || v === '1') return REG + '"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection" /v AllowTelemetry /t REG_DWORD /d ' + v + ' /f';
+      return null; } },
+    advertisingIdOff: { list: 'runSync', build: function (v) { return v ? REG + '"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo" /v DisabledByGroupPolicy /t REG_DWORD /d 1 /f' : null; } },
+    verboseStatus: { list: 'runSync', build: function (v) { return v ? REG + '"HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System" /v VerboseStatus /t REG_DWORD /d 1 /f' : null; } },
+    powerPlan: { list: 'firstLogon', build: function (v) { return POWER_PLANS[v] ? 'powercfg.exe /setactive ' + POWER_PLANS[v] : null; } },
+    hibernateOff: { list: 'firstLogon', build: function (v) { return v ? 'powercfg.exe /hibernate off' : null; } },
+    monitorTimeout: { list: 'firstLogon', build: function (v) { return /^\d{1,3}$/.test(str(v)) ? 'powercfg.exe /change monitor-timeout-ac ' + parseInt(v, 10) : null; } },
+    ntpServer: { list: 'firstLogon', build: function (v) { return /^[A-Za-z0-9.,-]{1,200}$/.test(str(v)) ? 'cmd.exe /c w32tm /config /manualpeerlist:"' + str(v).split(',').join(' ') + '" /syncfromflags:manual /update && w32tm /resync' : null; } },
+    winrm: { list: 'firstLogon', build: function (v) { return v ? 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Enable-PSRemoting -Force -SkipNetworkProfileCheck"' : null; } },
+    sshServer: { list: 'firstLogon', build: function (v) { return v ? 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0; Set-Service sshd -StartupType Automatic; Start-Service sshd"' : null; } },
+    apps: { list: 'firstLogon', build: function (v) {
+      var ids = splitList(v).filter(function (a) { return APP_IDS[a]; });
+      return ids.length ? 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "' + ids.map(function (a) { return 'winget install --id ' + APP_IDS[a] + ' -e --silent --accept-package-agreements --accept-source-agreements --scope machine'; }).join('; ') + '"' : null; } },
+    setupLog: { list: 'firstLogon', build: function (v) { return v ? 'cmd.exe /c mkdir C:\\ProgramData\\TempDesk\\logs 2>nul & copy /y C:\\Windows\\Panther\\setupact.log C:\\ProgramData\\TempDesk\\logs\\ & copy /y C:\\Windows\\Panther\\UnattendGC\\setupact.log C:\\ProgramData\\TempDesk\\logs\\setupact-oobe.log' : null; } }
+  };
+  var EXTRA_TAG = 'TempDesk extra: ';
+  function extraDefaults() {
+    return { uacOff: false, ceipOff: false, werOff: false, serverManagerOff: false, ieEscOff: false, oemManufacturer: '', oemModel: '', oemSupportUrl: '', oemSupportPhone: '', oemSupportHours: '', oemLogo: '',
+      updates: 'default', telemetry: 'default', advertisingIdOff: false, verboseStatus: false, powerPlan: '', hibernateOff: false, monitorTimeout: '', ntpServer: '', winrm: false, sshServer: false, apps: '', setupLog: false };
+  }
+  function encodeExtraValue(v) { return typeof v === 'boolean' ? (v ? 'true' : 'false') : str(v); }
+  function applyExtras(doc, extras, arch) {
+    if (!extras) return;
+    EXTRA_SETTINGS.forEach(function (d) {
+      var v = extras[d.id];
+      if (d.text ? !str(v).trim() : !v) return;
+      var obj = {}, cur = obj, parts = d.path.split('/');
+      for (var i = 0; i < parts.length - 1; i++) { cur[parts[i]] = {}; cur = cur[parts[i]]; }
+      cur[parts[parts.length - 1]] = d.text ? str(v) : d.value;
+      mergeValue(getComponent(doc, d.pass, d.comp, arch, true), obj);
+    });
+    var cmds = { runSync: [], firstLogon: [] };
+    Object.keys(EXTRA_COMMANDS).forEach(function (id) {
+      var def = EXTRA_COMMANDS[id], v = extras[id];
+      if (v === undefined || v === '' || v === false || v === 'default') return;
+      var c = def.build(v);
+      if (c) cmds[def.list].push({ command: c, description: EXTRA_TAG + id + '=' + encodeExtraValue(v) });
+    });
+    mergeCommands(doc, cmds, arch);
+  }
+  function readExtras(doc) {
+    var ex = extraDefaults(), found = false;
+    EXTRA_SETTINGS.forEach(function (d) {
+      var c = compOf(doc, d.pass, d.comp);
+      if (!c) return;
+      var t = pathText(c, d.path);
+      if (d.text) { if (t) { ex[d.id] = t; found = true; } }
+      else if (t.toLowerCase() === d.value) { ex[d.id] = true; found = true; }
+    });
+    Object.keys(COMMAND_LISTS).forEach(function (k) {
+      var def = COMMAND_LISTS[k], c = compOf(doc, def.pass, def.component);
+      children(c && path(c, def.list) || el('x'), def.item).forEach(function (x) {
+        var desc = pathText(x, 'Description');
+        if (desc.indexOf(EXTRA_TAG) !== 0) return;
+        var kv = desc.slice(EXTRA_TAG.length), eq = kv.indexOf('='), id = kv.slice(0, eq), val = kv.slice(eq + 1);
+        if (!EXTRA_COMMANDS[id]) return;
+        var parsed = typeof ex[id] === 'boolean' ? val === 'true' : val;
+        if (EXTRA_COMMANDS[id].build(parsed) === pathText(x, def.cmd)) { ex[id] = parsed; found = true; }
+      });
+    });
+    return found ? ex : null;
+  }
+
+  // ---- Deployment map extras (written back into firstboot fields and guest join) ---------------
+  // model.deploy = { appHost: { name, ip }, portalsHost: { name, ip, guestPort, adminPort }, network: { cidr } }
+
   function buildModelTree(model) {
     var mode = MODES.indexOf(model.mode) >= 0 ? model.mode : 'server';
     var doc = modeTree(mode, model[mode]);
     var arch = modeArch(model);
+    if (model.disks && Array.isArray(model.disks.disks)) applyDiskLayout(doc, model.disks, arch);
+    applyExtras(doc, model.extras, arch);
+    mergeCommands(doc, model.commands, arch);
     mergeMap(doc, model.all, arch);
     var raw = parseRawBlock(model.raw);
     mergeMap(doc, raw.map, arch);
@@ -925,7 +1123,7 @@
       var dep2 = compOf(doc, 'specialize', 'Microsoft-Windows-Deployment');
       var rs = listCommands(dep2 && path(dep2, 'RunSynchronous'), 'RunSynchronousCommand', 'Path');
       f.edgeFirstRunOff = rs.some(function (c) { return c.command === EDGE_CMD; });
-      f.runSync = rs.filter(function (c) { return c.command !== EDGE_CMD; });
+
       var ls = compOf(doc, 'specialize', 'Microsoft-Windows-TerminalServices-LocalSessionManager');
       f.rdp = !!(ls && pathText(ls, 'fDenyTSConnections').toLowerCase() === 'false');
       f.adminPassword = oobe ? readPassword(path(oobe, 'UserAccounts/AdministratorPassword')) : '';
@@ -945,7 +1143,7 @@
         if (m1) { f.target = 'server'; f.features = m1[1].split(',').join(', '); }
         else { f.target = 'client'; f.features = (featCmd.command.match(/featurename:(\S+)/g) || []).map(function (x) { return x.slice(12); }).join(', '); }
       }
-      f.firstLogon = fl.filter(function (c) { return c !== featCmd; });
+
       var dpe = compOf(doc, 'windowsPE', 'Microsoft-Windows-PnpCustomizationsWinPE');
       f.driversPE = dpe ? children(path(dpe, 'DriverPaths') || el('x'), 'PathAndCredentials').map(function (p) { return pathText(p, 'Path'); }).join('\n') : '';
       var doff = compOf(doc, 'offlineServicing', 'Microsoft-Windows-PnpCustomizationsNonWinPE');
@@ -961,10 +1159,42 @@
     opts = opts || {};
     var doc = parseXml(xml);
     if (doc.n !== 'unattend') throw new Error('The root element is <' + doc.n + '>, not <unattend>.');
-    var mode = opts.mode || detectMode(doc);
+    var mode = opts.mode || detectMode(doc), notes = [];
     var form = extractForm(mode, doc, (opts.defaults || {})[mode]);
-    var gen = modeTree(mode, form);
-    var all = {}, rawMap = {}, unknown = [], notes = [];
+    var base = modeTree(mode, form);
+    var commands = { runSync: [], runAsync: [], firstLogon: [], logon: [] };
+    var extras = readExtras(doc);
+    Object.keys(COMMAND_LISTS).forEach(function (k) {
+      var def = COMMAND_LISTS[k];
+      var inC = compOf(doc, def.pass, def.component), genC = compOf(base, def.pass, def.component);
+      var inItems = inC ? children(path(inC, def.list) || el('x'), def.item) : [];
+      var genCmds = genC ? children(path(genC, def.list) || el('x'), def.item).map(function (x) { return pathText(x, def.cmd); }) : [];
+      inItems.sort(function (a, b) { return (parseInt(pathText(a, 'Order'), 10) || 0) - (parseInt(pathText(b, 'Order'), 10) || 0); }).forEach(function (x) {
+        var c = pathText(x, def.cmd), at = genCmds.indexOf(c);
+        if (at >= 0) { genCmds.splice(at, 1); return; }
+        if (pathText(x, 'Description').indexOf(EXTRA_TAG) === 0 && extras) {
+          var probe = newDoc(); applyExtras(probe, extras, 'amd64');
+          var pc = compOf(probe, def.pass, def.component);
+          if (pc && children(path(pc, def.list) || el('x'), def.item).some(function (y) { return pathText(y, def.cmd) === c; })) return;
+        }
+        commands[k].push(readCommandItem(def, x));
+      });
+    });
+    var disks = null, setupIn = compOf(doc, 'windowsPE', 'Microsoft-Windows-Setup'), setupGen = compOf(base, 'windowsPE', 'Microsoft-Windows-Setup');
+    if (setupIn) {
+      var a1 = path(setupIn, 'DiskConfiguration'), b1 = setupGen && path(setupGen, 'DiskConfiguration');
+      var a2 = path(setupIn, 'ImageInstall/OSImage/InstallTo'), b2 = setupGen && path(setupGen, 'ImageInstall/OSImage/InstallTo');
+      var same1 = (!a1 && !b1) || (a1 && b1 && deepEqualEl(a1, b1));
+      var same2 = (!a2 && !b2) || (a2 && b2 && deepEqualEl(a2, b2));
+      if (!same1 || !same2) {
+        disks = readDiskLayout(setupIn);
+        var regen = newDoc(); regen.c = []; applyDiskLayout(regen, disks, 'amd64');
+        var rs = compOf(regen, 'windowsPE', 'Microsoft-Windows-Setup');
+        if (a1 && !deepEqualEl(path(rs, 'DiskConfiguration') || el('x'), a1)) notes.push('diskPartial');
+      }
+    }
+    var gen = buildModelTree({ mode: mode, server: mode === 'server' ? form : {}, guest: mode === 'guest' ? form : {}, custom: mode === 'custom' ? form : {}, commands: commands, disks: disks, extras: extras || undefined });
+    var all = {}, rawMap = {}, unknown = [];
     doc.c.forEach(function (s) {
       if (s.n !== 'settings') return;
       s.c.forEach(function (c) {
@@ -983,7 +1213,7 @@
       });
     });
     if (mode === 'server') notes.push('serverJsonSeparate');
-    return { mode: mode, form: form, all: all, raw: Object.keys(rawMap).length ? valuesToRawXml(rawMap, form.arch) : '', unknown: unknown, notes: notes };
+    return { mode: mode, form: form, commands: commands, disks: disks, extras: extras || extraDefaults(), all: all, raw: Object.keys(rawMap).length ? valuesToRawXml(rawMap, form.arch) : '', unknown: unknown, notes: notes };
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -1036,7 +1266,11 @@
       schema: 'tempdesk-answer-model', version: 1, mode: 'server',
       server: { imageIndex: '1', computerName: 'TD-DC01', domainName: 'lab.example.org', netbiosName: 'LAB', functionalLevel: '', ipAddress: '192.168.10.10', prefixLength: '24', gateway: '192.168.10.1', dnsServers: '127.0.0.1', adminPassword: '', dsrmPassword: '', productKey: '', firmware: 'uefi', locale: 'en-US', keyboard: 'en-US', timeZone: 'Eastern Standard Time', portalsMode: 'none', agentTls: false },
       guest: { imageIndex: '6', diskId: '0', firmware: 'uefi', arch: 'amd64', locale: 'en-US', keyboard: 'en-US', timeZone: 'Eastern Standard Time', computerName: '', adminUser: 'tdadmin', adminPassword: '', domainName: 'lab.example.org', joinDomain: '', joinUser: 'td-join', joinPassword: '', ou: '', dnsMode: 'static', dnsServer: '192.168.10.10', productKey: '' },
-      custom: { target: 'client', arch: 'amd64', setupLanguage: 'en-US', diskLayout: 'uefi', diskId: '0', partitionId: '3', imageBy: 'index', imageIndex: '1', imageName: '', productKey: '', computerName: '', organization: '', owner: '', timeZone: 'Eastern Standard Time', rdp: false, edgeFirstRunOff: true, runSync: [], locale: 'en-US', keyboard: 'en-US', adminPassword: '', accounts: [{ name: 'admin', displayName: '', group: 'Administrators', password: '' }], autoLogonCount: '0', oobeHideEULAPage: true, oobeHideOEMRegistrationScreen: true, oobeHideOnlineAccountScreens: true, oobeHideWirelessSetupInOOBE: false, oobeHideLocalAccountScreen: true, protectYourPC: '3', firstLogon: [], features: '', driversPE: '', driversOffline: '' },
+      custom: { target: 'client', arch: 'amd64', setupLanguage: 'en-US', diskLayout: 'uefi', diskId: '0', partitionId: '3', imageBy: 'index', imageIndex: '1', imageName: '', productKey: '', computerName: '', organization: '', owner: '', timeZone: 'Eastern Standard Time', rdp: false, edgeFirstRunOff: true, locale: 'en-US', keyboard: 'en-US', adminPassword: '', accounts: [{ name: 'admin', displayName: '', group: 'Administrators', password: '' }], autoLogonCount: '0', oobeHideEULAPage: true, oobeHideOEMRegistrationScreen: true, oobeHideOnlineAccountScreens: true, oobeHideWirelessSetupInOOBE: false, oobeHideLocalAccountScreen: true, protectYourPC: '3', features: '', driversPE: '', driversOffline: '' },
+      commands: { runSync: [], runAsync: [], firstLogon: [], logon: [] },
+      extras: extraDefaults(),
+      disks: null,
+      deploy: { appHost: { name: '', ip: '' }, portalsHost: { name: '', ip: '', guestPort: '8081', adminPort: '8082' }, network: { cidr: '192.168.10.0/24' } },
       all: {}, raw: ''
     };
   }
@@ -1048,6 +1282,7 @@
       SECRET_FIELDS[mode].forEach(function (k) { if (k in m[mode]) m[mode][k] = ''; });
       if (Array.isArray(m[mode].accounts)) m[mode].accounts.forEach(function (a) { a.password = ''; });
     });
+    Object.keys(m.commands || {}).forEach(function (k) { (m.commands[k] || []).forEach(function (it) { if (it.credentials) it.credentials.password = ''; }); });
     (function scrub(v) {
       if (!v || typeof v !== 'object') return;
       Object.keys(v).forEach(function (k) {
@@ -1101,6 +1336,43 @@
         if (!input.all[key] || typeof input.all[key] !== 'object') return { ok: false, error: 'model.shape' };
       }
       out.all = clone(input.all);
+    }
+    if (input.commands !== undefined) {
+      if (!input.commands || typeof input.commands !== 'object' || Array.isArray(input.commands)) return { ok: false, error: 'model.shape' };
+      for (var ck in input.commands) {
+        if (!COMMAND_LISTS[ck] || !Array.isArray(input.commands[ck])) return { ok: false, error: 'model.commands' };
+        for (var ci = 0; ci < input.commands[ck].length; ci++) {
+          var it = input.commands[ck][ci];
+          if (!it || typeof it !== 'object' || typeof it.command !== 'string') return { ok: false, error: 'model.commands' };
+          if (it.willReboot !== undefined && ['Never', 'Always', 'OnRequest'].indexOf(it.willReboot) < 0) return { ok: false, error: 'model.commands' };
+        }
+        out.commands[ck] = clone(input.commands[ck]);
+      }
+    }
+    if (input.extras !== undefined) {
+      if (!input.extras || typeof input.extras !== 'object' || Array.isArray(input.extras)) return { ok: false, error: 'model.shape' };
+      var exd = extraDefaults();
+      for (var ek in input.extras) {
+        if (!(ek in exd)) continue;
+        if (typeof exd[ek] === 'boolean' ? typeof input.extras[ek] !== 'boolean' : typeof input.extras[ek] !== 'string') return { ok: false, error: 'model.extras' };
+        out.extras[ek] = input.extras[ek];
+      }
+    }
+    if (input.disks !== undefined && input.disks !== null) {
+      var dl = input.disks;
+      if (!dl || typeof dl !== 'object' || !Array.isArray(dl.disks) || dl.disks.length > 16) return { ok: false, error: 'model.disks' };
+      for (var di = 0; di < dl.disks.length; di++) {
+        var dd = dl.disks[di];
+        if (!dd || !Array.isArray(dd.partitions) || dd.partitions.length > 128) return { ok: false, error: 'model.disks' };
+        if (dd.partitions.some(function (p) { return !p || PART_TYPES.indexOf(p.type) < 0; })) return { ok: false, error: 'model.disks' };
+      }
+      out.disks = clone(dl);
+    }
+    if (input.deploy !== undefined) {
+      if (!input.deploy || typeof input.deploy !== 'object' || Array.isArray(input.deploy)) return { ok: false, error: 'model.shape' };
+      ['appHost', 'portalsHost', 'network'].forEach(function (k) {
+        if (input.deploy[k] && typeof input.deploy[k] === 'object') Object.keys(out.deploy[k]).forEach(function (f) { if (input.deploy[k][f] !== undefined) out.deploy[k][f] = String(input.deploy[k][f]); });
+      });
     }
     if (input.raw !== undefined) {
       if (typeof input.raw !== 'string') return { ok: false, error: 'model.shape' };
@@ -1226,7 +1498,8 @@
     suggestNetbios: suggestNetbios, domainDn: domainDn, guestOu: guestOu, dnsCommand: dnsCommand, FIRSTLOGON_CMD: FIRSTLOGON_CMD, FIRSTBOOT_KEYS: FIRSTBOOT_KEYS,
     generatePassword: generatePassword, passwordStrength: passwordStrength, strongPassword: strongPassword,
     TIME_ZONES: TIME_ZONES, TIME_ZONE_IDS: TIME_ZONE_IDS, LOCALES: LOCALES, KEYBOARDS: KEYBOARDS,
-    SERVER_EDITIONS: SERVER_EDITIONS, CLIENT_EDITIONS: CLIENT_EDITIONS, TIMELINE: TIMELINE, CHECKLIST: CHECKLIST, PASS_ORDER: PASS_ORDER
+    SERVER_EDITIONS: SERVER_EDITIONS, CLIENT_EDITIONS: CLIENT_EDITIONS, TIMELINE: TIMELINE, CHECKLIST: CHECKLIST, PASS_ORDER: PASS_ORDER,
+    COMMAND_LISTS: COMMAND_LISTS, EXTRA_SETTINGS: EXTRA_SETTINGS, EXTRA_COMMANDS: EXTRA_COMMANDS, APP_IDS: APP_IDS, POWER_PLANS: POWER_PLANS, extraDefaults: extraDefaults, PART_TYPES: PART_TYPES, layoutDiskXml: layoutDiskXml, readDiskLayout: readDiskLayout, clone: clone
   };
   root.TempDeskAnswer = api;
   if (typeof module === 'object' && module.exports) module.exports = api;

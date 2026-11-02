@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from .agent_client import AgentError
 from .security import ONCE_COOKIE, client_ip
-from .web import agent_message, csrf_protect, redirect, render, set_cookie
+from .web import agent_message, csrf_protect, redirect, render, set_cookie, translator_for
 
 router = APIRouter()
 USERNAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,20}$")
@@ -51,7 +51,6 @@ async def create(request: Request):
     expiry = (form.get("expiryId") or "").strip()
     values = {"displayName": display, "expiryId": expiry}
     ids = {c.get("id") for c in pub["expiryChoices"]}
-    tr = request.state.tr if hasattr(request.state, "tr") else None
     error = None
     if expiry not in ids:
         error = "Choose how long you need the sign-in for."
@@ -71,7 +70,6 @@ async def create(request: Request):
                                 {"pub": pub, "error_text": agent_message(request, exc), "values": values},
                                 status=exc.status if exc.status < 500 else 502)
         raise
-    del tr
     # Keep the credentials server side; the browser only gets a random id.
     once_id = request.app.state.once.put(created)
     resp = redirect(request, "/created")
@@ -153,4 +151,4 @@ async def delete(request: Request):
         if exc.code in ("unauthorized", "not_found", "forbidden"):
             return await render(request, "guest/delete.html", {"pub": pub, "error_key": "That username and password did not match a guest sign-in."}, status=400, headers=NO_STORE)
         raise
-    return redirect(request, "/", flash=("success", request.state.tr.plain("Your sign-in was deleted.")))
+    return redirect(request, "/", flash=("success", translator_for(request).plain("Your sign-in was deleted.")))

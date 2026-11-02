@@ -1,0 +1,43 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ ta("Registry") }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/css/server.css">
+<div class="srv">
+  <div class="srv-head"><h1>{{ t("Registry") }}</h1>
+    <a class="srv-btn" href="/server/registry/export?path={{ path | urlencode }}">{{ t("Export .reg") }}</a>
+  </div>
+  {% if error %}<div class="srv-err">{{ error }}</div>{% endif %}
+  <div class="srv-crumbs"><code>{{ path }}</code></div>
+  <div class="srv-split">
+    <section class="srv-card">
+      <h2>{{ t("Subkeys") }}</h2>
+      <ul class="srv-tree">
+        {% for k in (registry["subkeys"] if registry else []) %}
+        <li><a href="/server/registry?path={{ path | urlencode }}\{{ k.name | urlencode }}">{{ k.name }}</a></li>
+        {% endfor %}
+      </ul>
+    </section>
+    <section class="srv-card">
+      <h2>{{ t("Values") }}</h2>
+      <div class="srv-tablewrap"><table class="srv-table">
+        <thead><tr><th>{{ t("Name") }}</th><th>{{ t("Value") }}</th></tr></thead>
+        <tbody>{% for v in (registry["values"] if registry else []) %}<tr><td>{{ v.name }}</td><td>{{ v.value }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+      <form method="post" action="/server/registry/value" class="srv-form" style="margin-top:12px">
+        <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+        <input type="hidden" name="path" value="{{ path }}">
+        <div class="srv-field"><label>{{ t("Value name") }}</label><input name="name"></div>
+        <div class="srv-field"><label>{{ t("Type") }}</label><select name="type"><option>String</option><option>ExpandString</option><option>DWord</option><option>QWord</option><option>MultiString</option><option>Binary</option></select></div>
+        <div class="srv-field"><label>{{ t("Value") }}</label><input name="value"></div>
+        <button class="srv-btn primary" type="submit">{{ t("Set value") }}</button>
+      </form>
+      <form method="post" action="/server/registry/key/delete" class="srv-inline" style="margin-top:10px">
+        <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+        <input type="hidden" name="path" value="{{ path }}">
+        <input class="srv-search" name="confirm_name" placeholder="{{ ta('Type the key name to delete it') }}">
+        <button class="srv-btn danger" type="submit">{{ t("Delete this key") }}</button>
+      </form>
+    </section>
+  </div>
+</div>
+{% endblock %}

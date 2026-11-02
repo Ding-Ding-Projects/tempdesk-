@@ -1,0 +1,48 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ ta("Services") }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/css/server.css">
+<div class="srv">
+  <div class="srv-head"><h1>{{ t("Services") }}</h1></div>
+  {% if error %}<div class="srv-err">{{ error }}</div>{% endif %}
+  <div data-srv-table>
+    <div class="srv-toolbar">
+      <input class="srv-search" data-srv-search placeholder="{{ ta('Search') }}" aria-label="{{ ta('Search') }}">
+      <label class="srv-toggle"><input type="checkbox" data-srv-regex> {{ t("Regex") }}</label>
+      <span data-srv-regex-error class="srv-err" role="alert" style="padding:4px 8px"></span>
+      <button type="button" class="srv-btn" data-srv-export="csv">CSV</button>
+      <button type="button" class="srv-btn" data-srv-export="json">JSON</button>
+    </div>
+    <div class="srv-tablewrap">
+      <table class="srv-table">
+        <thead><tr>
+          <th data-col="status">{{ t("Status") }}</th>
+          <th data-col="displayName">{{ t("Display name") }}</th>
+          <th data-col="name">{{ t("Name") }}</th>
+          <th data-col="startupType">{{ t("Startup") }}</th>
+          <th data-no-sort>{{ t("Actions") }}</th>
+        </tr></thead>
+        <tbody>
+        {% for s in services %}
+          <tr>
+            <td data-sort="{{ s.status }}"><span class="srv-dot {{ 'ok' if s.status == 'Running' else 'off' }}"></span> {{ s.status }}</td>
+            <td>{{ s.displayName }}</td>
+            <td>{{ s.name }}</td>
+            <td>{{ s.startupType }}</td>
+            <td>
+              {% for op in ["start","stop","restart"] %}
+              <form method="post" action="/server/services/{{ s.name | urlencode }}/{{ op }}" class="srv-inline">
+                <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+                <button class="srv-btn" type="submit">{{ op }}</button>
+              </form>
+              {% endfor %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/server-table.js"></script>{% endblock %}

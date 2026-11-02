@@ -33,10 +33,10 @@ def user_of(sess: Session) -> str:
     return str(sess.user.get("sam") or sess.user.get("displayName") or "admin")
 
 
-def track(request: Request, sess: Session, **kw) -> dict | None:
+def track(_req: Request, sess: Session, **kw) -> dict | None:
     """Record one successful action. Never raises."""
     try:
-        return journal(request).record(user=user_of(sess), **kw)
+        return journal(_req).record(user=user_of(sess), **kw)
     except Exception:  # noqa: BLE001
         return None
 

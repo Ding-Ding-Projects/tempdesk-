@@ -1,0 +1,39 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import csrf with context %}
+{% block title %}{{ ta('First-run setup') }}{% endblock %}
+{% block content %}
+<h1>{{ t('First-run setup') }}</h1>
+<div class="progress" role="progressbar" aria-valuemin="1" aria-valuemax="{{ steps|length }}" aria-valuenow="{{ step }}" aria-label="{{ ta('Setup progress') }}"><span style="width:{{ (step / steps|length * 100)|round }}%"></span></div>
+<ol class="step-list">{% for st in steps %}<li {% if loop.index == step %}aria-current="step"{% elif loop.index < step %}class="done"{% endif %}>{{ loop.index }}. {{ t(st.title) }}{% if st.id in (state.skipped or []) %} ({{ t('skipped') }}){% endif %}</li>{% endfor %}</ol>
+<form class="card lg stack rise" method="post" action="/welcome" style="max-width:760px">{{ csrf() }}<input type="hidden" name="step" value="{{ step }}">
+  <h2>{{ t(s.title) }}{% if s.optional %} <span class="chip">{{ t('optional') }}</span>{% endif %}</h2>
+  {% if s.id == 'health' %}
+    {% if health %}<p class="alert success">{{ t('The agent answered: {dc} in {domain}, version {version}.', dc=health.dc or '', domain=health.domain or '', version=health.version or '') }}</p>
+    {% else %}<p class="alert error">{{ t('The agent did not answer. Check AGENT_URL and AGENT_KEY in the admin .env file and that the TempDesk Agent service is running.') }}</p>{% endif %}
+  {% elif s.id == 'org' %}
+    <div class="field"><label for="on">{{ t('Organization name') }}</label><input id="on" name="orgName" value="{{ doc.orgName or '' }}" required maxlength="100"></div>
+    <div class="field"><label for="wt">{{ t('Welcome text') }}</label><textarea id="wt" name="welcomeText" rows="3" maxlength="1000">{{ doc.welcomeText or '' }}</textarea></div>
+  {% elif s.id == 'expiry' %}
+    <p class="hint">{{ t('Pick what guests can choose. Minutes 0 means permanent.') }}</p>
+    <div class="stack tight" data-rows>{% for c in doc.expiryChoices or [] %}<div class="cluster" data-row><input name="exp_id" value="{{ c.id }}" aria-label="{{ ta('Id') }}" style="flex:0 1 110px"><input name="exp_label" value="{{ c.label }}" aria-label="{{ ta('Label') }}" style="flex:1 1 180px"><input name="exp_minutes" type="number" min="0" value="{{ c.minutes }}" aria-label="{{ ta('Minutes') }}" style="flex:0 1 130px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div>{% endfor %}</div>
+    <label class="check"><input type="checkbox" name="allowPermanent" {% if doc.allowPermanent %}checked{% endif %}> {{ t('Allow permanent guest accounts') }}</label>
+  {% elif s.id == 'wifi' %}
+    {% if wifi %}<p>{{ t('Existing profiles') }}: {% for w in wifi %}<span class="chip">{{ w.ssid }}</span> {% endfor %}</p>{% endif %}
+    <div class="form-grid"><div class="field"><label for="ss">{{ t('Network name (SSID)') }}</label><input id="ss" name="ssid" maxlength="32"></div>
+      <div class="field"><label for="au">{{ t('Security') }}</label><select id="au" name="auth"><option>WPA2PSK</option><option>WPA3SAE</option><option>open</option></select></div>
+      <div class="field"><label for="ky">{{ t('Key') }}</label><input id="ky" type="password" name="key" autocomplete="new-password"></div></div>
+    <p class="hint">{{ t('Leave the name empty to continue without adding a network.') }}</p>
+  {% elif s.id == 'allowlist' %}
+    <label class="check"><input type="checkbox" name="enabled" {% if allow.enabled %}checked{% endif %}> {{ t('Enforce the allowlist') }}</label>
+    <div class="field"><label for="ap">{{ t('Programs, one file name per line') }}</label><textarea id="ap" name="apps" class="code" style="min-height:180px">{{ (allow.apps or [])|join('\n') }}</textarea></div>
+  {% elif s.id == 'done' %}
+    <p>{{ t('Setup is complete. The guest portal is ready for visitors.') }}</p>
+  {% endif %}
+  <div class="form-actions">
+    {% if step > 1 %}<button class="btn" type="submit" name="nav" value="back" formnovalidate>{{ t('Back') }}</button>{% endif %}
+    <button class="btn filled" type="submit" name="nav" value="next">{{ t('Open the dashboard') if s.id == 'done' else t('Next') }}</button>
+    {% if s.optional %}<button class="btn text" type="submit" name="nav" value="skip" formnovalidate>{{ t('Skip this step') }}</button>{% endif %}
+    <span class="spacer"></span><button class="btn text" type="submit" name="nav" value="dismiss" formnovalidate>{{ t('Finish later') }}</button>
+  </div>
+</form>
+{% endblock %}

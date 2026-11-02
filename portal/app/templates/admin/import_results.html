@@ -1,0 +1,15 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ ta(title_key) }}{% endblock %}
+{% block content %}
+<h1>{{ t(title_key) }}: {{ t('results') }}</h1>
+<section class="card"><div class="table-wrap"><table><thead><tr><th>{{ t('Row') }}</th><th>{{ t('Result') }}</th><th>{{ t('Details') }}</th></tr></thead><tbody>
+{% for r in results %}<tr><td>{{ r.row }}</td><td><span class="chip {{ 'ok' if r.ok else 'bad' }}">{{ t('Done') if r.ok else t('Failed') }}</span></td><td>{{ r.message }}</td></tr>{% else %}<tr><td colspan="3" class="muted">{{ t('Nothing to import.') }}</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% if passwords %}
+<section class="card raised"><h2>{{ t('New passwords (shown once)') }}</h2><p style="color:var(--coral)">{{ t('Copy or print these now. They are not stored anywhere.') }}</p>
+  <div class="table-wrap"><table><thead><tr><th>{{ t('Username') }}</th><th>{{ t('Password') }}</th><th>{{ t('Ends') }}</th></tr></thead><tbody>
+  {% for p in passwords %}<tr><td class="mono">{{ p.username }}</td><td class="mono">{{ p.password }}</td><td>{% if p.expiresAt %}<time datetime="{{ p.expiresAt }}" data-local-time>{{ p.expiresAt }}</time>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+  <button class="btn light" type="button" data-print>{{ t('Print') }}</button></section>
+{% endif %}
+<a class="btn" href="{{ back }}">{{ t('Back') }}</a>
+{% endblock %}

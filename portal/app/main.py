@@ -152,10 +152,6 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
 
         app.include_router(guest_router)
 
-    @app.exception_handler(405)
-    async def _405(request, exc):
-        return JSONResponse({"error": "method_not_allowed"}, status_code=405)
-
     _APP = app
     navmod  # imported so other modules can extend it before startup
     return app

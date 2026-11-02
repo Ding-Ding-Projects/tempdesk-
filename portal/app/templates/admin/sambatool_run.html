@@ -1,0 +1,25 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import csrf with context %}
+{% block title %}samba-tool {{ c.command }}{% endblock %}
+{% block content %}
+{% set sub = submitted or {} %}
+<div class="page-head"><h1 class="mono">samba-tool {{ c.command }}</h1><a class="btn" href="/sambatool">{{ t('All commands') }}</a></div>
+<div class="row">
+<form class="grow card stack rise" method="post" action="/sambatool/run">{{ csrf() }}<input type="hidden" name="command" value="{{ c.command }}">
+  {% for a in c.args or [] %}{% set f = 'a_' ~ a.name %}
+    {% if (a.type or '')|lower in ('bool','boolean','switch','flag') %}<label class="check"><input type="checkbox" name="{{ f }}" {% if sub.get(f) == 'on' %}checked{% endif %}> <span class="mono">{{ a.flag or a.name }}</span> <span class="subtle small">{{ a.help }}</span></label>
+    {% else %}<div class="field"><label for="{{ f }}"><span class="mono">{{ a.flag or a.name }}</span> <span class="subtle small">{{ a.help }}</span></label><input id="{{ f }}" name="{{ f }}" value="{{ sub.get(f, '') }}" class="mono" {% if (a.type or '')|lower in ('password','secret') %}type="password" autocomplete="off"{% endif %}></div>{% endif %}
+  {% endfor %}
+  <div class="field"><label for="extra">{{ t('Extra arguments, one per line') }}</label><textarea id="extra" name="extra" rows="3" class="mono">{{ sub.get('extra', '') }}</textarea></div>
+  {% if destructive %}<div class="field"><label for="cf">{{ t('Type {name} to confirm', name=c.command) }}</label><input id="cf" name="confirm" autocomplete="off" class="mono"><span class="hint">{{ t('This command deletes, removes, demotes or resets something. It cannot be undone.') }}</span></div>{% endif %}
+  <button class="btn filled" type="submit">{{ t('Run') }}</button>
+</form>
+<section class="grow card rise" style="--i:1" aria-live="polite"><h2>{{ t('Output') }}</h2>
+  {% if argv %}<p class="subtle mono small break">samba-tool {{ c.command }} {{ argv|join(' ') }}</p>{% endif %}
+  {% if error_text %}<p class="alert error" role="alert">{{ error_text }}</p>{% endif %}
+  {% if result %}<p>{{ t('Exit code') }}: <span class="chip {{ 'ok' if result.exitCode == 0 else 'bad' }}">{{ result.exitCode }}</span></p>
+    <h3>stdout</h3><pre class="inset mono small">{{ result.stdout }}</pre>
+    {% if result.stderr %}<h3>stderr</h3><pre class="inset mono small" style="color:var(--danger)">{{ result.stderr }}</pre>{% endif %}
+  {% elif not error_text %}<p class="muted">{{ t('Run the command to see its output here.') }}</p>{% endif %}
+</section></div>
+{% endblock %}

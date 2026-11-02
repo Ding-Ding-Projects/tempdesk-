@@ -1,0 +1,41 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ ta("Certificates") }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/css/server.css">
+<div class="srv">
+  <div class="srv-head"><h1>{{ t("Certificates") }}</h1></div>
+  {% if error %}<div class="srv-err">{{ error }}</div>{% endif %}
+  <div class="srv-crumbs"><code>{{ store }}</code></div>
+  <section class="srv-card">
+    <h2>{{ t("New self-signed certificate") }}</h2>
+    <form method="post" action="/server/certificates/selfsigned" class="srv-form" style="max-width:420px">
+      <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+      <div class="srv-field"><label>{{ t("DNS names (one per line)") }}</label><textarea name="dnsNames" required></textarea></div>
+      <div class="srv-field"><label>{{ t("Valid for (years)") }}</label><input name="years" value="5"></div>
+      <button class="srv-btn primary" type="submit">{{ t("Create") }}</button>
+    </form>
+  </section>
+  <div data-srv-table>
+    <div class="srv-toolbar">
+      <input class="srv-search" data-srv-search placeholder="{{ ta('Search') }}">
+      <button type="button" class="srv-btn" data-srv-export="csv">CSV</button>
+    </div>
+    <div class="srv-tablewrap"><table class="srv-table">
+      <thead><tr><th data-col="subject">{{ t("Subject") }}</th><th data-col="notAfter">{{ t("Expires") }}</th><th data-col="thumbprint">{{ t("Thumbprint") }}</th><th data-no-sort></th></tr></thead>
+      <tbody>{% for c in certificates %}<tr>
+        <td>{{ c.subject }}</td><td>{{ c.notAfter }}</td><td><code>{{ c.thumbprint }}</code></td>
+        <td>
+          <a class="srv-btn" href="/server/certificates/{{ c.thumbprint }}/export?store={{ store | urlencode }}">{{ t("Export") }}</a>
+          <form method="post" action="/server/certificates/{{ c.thumbprint }}/delete" class="srv-inline">
+            <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+            <input type="hidden" name="store" value="{{ store }}">
+            <input type="hidden" name="confirm_name" value="{{ c.thumbprint }}">
+            <button class="srv-btn danger" type="submit">{{ t("Delete") }}</button>
+          </form>
+        </td>
+      </tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/server-table.js"></script>{% endblock %}

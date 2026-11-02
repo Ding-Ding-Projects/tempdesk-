@@ -1,0 +1,8 @@
+tests/
+.env
+secrets/
+**/__pycache__
+**/*.pyc
+.pytest_cache
+README.md
+compose.yaml

@@ -1,5 +1,5 @@
 {% extends "layouts/base.html" %}
-{% from "macros.html" import icon, logo, csrf, flash_block %}
+{% from "macros.html" import icon, logo, csrf, flash_block with context %}
 {% block body %}
 <header class="guest-header">
   <a class="brand" href="/">{% if has_logo %}<img src="/logo" alt="">{% else %}{{ logo(28, 'var(--ground)') }}{% endif %}<span>{{ org_name }}</span></a>

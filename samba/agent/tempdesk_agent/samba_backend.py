@@ -18,7 +18,6 @@ import uuid
 
 import ldb
 from samba import Ldb as SambaLdb
-from samba import ntacls
 from samba.auth import system_session
 from samba.credentials import DONT_USE_KERBEROS, Credentials
 from samba.dcerpc import security
@@ -700,6 +699,10 @@ class SambaBackend(SysvolMixin, Backend):
         if r["exitCode"] != 0 or not m:
             raise ApiError("internal", "samba-tool gpo create failed: " + (r["stderr"] or r["stdout"])[-500:])
         guid = m.group(0).upper()
+        try:
+            self._sync_gpo_fs_acl(guid)
+        except Exception:  # noqa: BLE001 - GPO works anyway; sysvolreset can fix ACLs later
+            pass
         if comment:
             self._write_comment(guid, comment)
         return self.gpo_get(guid)
@@ -851,44 +854,58 @@ class SambaBackend(SysvolMixin, Backend):
         self._sync_gpo_fs_acl(guid, ds_sddl)
         return self.gpo_get(guid, with_permissions=True)
 
-    def _sync_gpo_fs_acl(self, guid, ds_sddl):
-        """Mirror the GPO object's DACL onto its SYSVOL folder the way
-        samba-tool gpo create does, then re-inherit to every child."""
+    def _sync_gpo_fs_acl(self, guid, ds_sddl=None):
+        """Set the SYSVOL folder of a GPO, and everything in it, to the
+        filesystem form of the GPO object's DACL. This is the exact ACL
+        "samba-tool ntacl sysvolcheck" expects."""
         root = self.gpo_dir(guid)
-        try:
-            fs = ntacls.dsacl2fsacl(ds_sddl, security.dom_sid(self.domain_sid))
-        except Exception:  # noqa: BLE001
-            return
+        if ds_sddl is None:
+            meta = self._gpo_meta(guid)
+            ds_sddl = self._run(lambda db: self._read_sd(db, ldb.Dn(db, meta["dn"])))
+        fs = self._nt.dsacl_to_fs(ds_sddl)
         self._setntacl(root, fs)
         for dirpath, dirnames, filenames in os.walk(root):
-            for n in dirnames:
-                self._after_sysvol_write(os.path.join(dirpath, n))
-            for n in filenames:
-                self._after_sysvol_write(os.path.join(dirpath, n))
+            for n in dirnames + filenames:
+                self._setntacl(os.path.join(dirpath, n), fs)
+
+    _GPO_PATH_RE = re.compile(r"[\\/]Policies[\\/](\{[0-9A-Fa-f-]{36}\})(?:[\\/]|$)")
 
     # ACL helpers --------------------------------------------------------
+    @property
+    def _nt(self):
+        if getattr(self, "_ntacl", None) is None:
+            from .ntacl import NtAcl
+            self._ntacl = NtAcl(self.lp, self.domain_sid)
+        return self._ntacl
+
     def _getntacl(self, path):
-        try:
-            sd = ntacls.getntacl(self.lp, path, system_session(), direct_db_access=False, service="sysvol")
-        except TypeError:
-            sd = ntacls.getntacl(self.lp, path, direct_db_access=False)
-        return sd.as_sddl(security.dom_sid(self.domain_sid))
+        return self._nt.get(path)
 
     def _setntacl(self, path, sddl_text):
-        dsid = security.dom_sid(self.domain_sid)
-        try:
-            ntacls.setntacl(self.lp, path, sddl_text, dsid, system_session(), use_ntvfs=False, service="sysvol")
-        except TypeError:
-            ntacls.setntacl(self.lp, path, sddl_text, dsid, use_ntvfs=False)
+        self._nt.set(path, sddl_text)
 
     def _after_sysvol_write(self, path, kind="gpo"):
         """Give a file the NT ACL it would inherit from its parent folder,
         so clients see the same permissions as for files copied over SMB."""
         try:
-            parent = self._getntacl(os.path.dirname(path))
-            self._setntacl(path, sddlmod.inherit_sddl(parent, os.path.isdir(path)))
-        except Exception:  # noqa: BLE001
-            # Fall back to tight POSIX permissions; sysvolreset fixes the rest.
+            m = self._GPO_PATH_RE.search(path[len(self.sysvol_domain_dir):])
+            if m:
+                guid = m.group(1).upper()
+                meta = self._gpo_meta(guid)
+                ds = self._run(lambda db: self._read_sd(db, ldb.Dn(db, meta["dn"])))
+                fs = self._nt.dsacl_to_fs(ds)
+                # parent folders created on the way get the same ACL
+                d = os.path.dirname(path)
+                gdir = self.gpo_dir(guid)
+                while len(d) > len(gdir):
+                    self._setntacl(d, fs)
+                    d = os.path.dirname(d)
+                self._setntacl(path, fs)
+            else:
+                self._nt.inherit(path)
+        except Exception as e:  # noqa: BLE001
+            # Fall back to tight POSIX permissions; "samba-tool ntacl sysvolreset" fixes the rest.
+            self._acl_warn = f"{path}: {e}"
             try:
                 os.chmod(path, 0o700 if os.path.isdir(path) else (0o600 if kind == "wifi" else 0o644))
             except OSError:
@@ -911,7 +928,12 @@ class SambaBackend(SysvolMixin, Backend):
                        "status": g["status"], "machineExt": meta["machineExt"], "userExt": meta["userExt"],
                        "comment": g.get("comment")}, f, indent=2)
         # Also keep a native samba-tool backup for use with "samba-tool gpo restore".
-        self._tool(["gpo", "backup"], [guid, f"--tmpdir={os.path.join(dest, 'samba-tool')}"])
+        native = os.path.join(dest, "samba-tool")
+        os.makedirs(native, mode=0o700)
+        r = self._tool(["gpo", "backup"], [guid, f"--tmpdir={native}"])
+        if r["exitCode"] != 0:
+            with open(os.path.join(native, "ERROR.txt"), "w", encoding="utf-8") as f:
+                f.write(r["stderr"] or r["stdout"])
         return {"backupId": bid, "path": dest}
 
     def gpo_backups(self):

@@ -1,5 +1,5 @@
 {% extends "layouts/guest.html" %}
-{% from "macros.html" import csrf %}
+{% from "macros.html" import csrf with context %}
 {% block title %}{{ ta('Delete my sign-in') }}{% endblock %}
 {% block content %}
 <div class="row" style="gap:40px">

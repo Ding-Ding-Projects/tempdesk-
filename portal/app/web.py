@@ -65,6 +65,8 @@ JS_STRINGS = [
     "Wrong PIN", "School mode is on", "School mode is off", "Set a PIN first", "Days", "Hours", "Minutes", "Seconds",
     "Contrast {ratio}:1 passes", "Contrast {ratio}:1 is too low for text", "Saved in this browser",
     "Select all", "selected", "Loading", "Expand", "Collapse", "Command palette", "Open", "Theme switched",
+    "Start", "Resume", "Pause", "Preview", "Done", "Encode", "Decode", "Open a file", "Paste from clipboard",
+    "Make data: URL", "Parse data: URL", "Save as file", "Undo", "Redo",
 ]
 
 
@@ -312,8 +314,10 @@ def install_error_handlers(app) -> None:
         return await error_page(request, status, "The agent did not accept that", "",
                                 message=agent_message(request, exc))
 
-    @app.exception_handler(HTTPException)
-    async def _http(request: Request, exc: HTTPException):
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+
+    @app.exception_handler(StarletteHTTPException)
+    async def _http(request: Request, exc: StarletteHTTPException):
         if exc.status_code in (302, 303) and exc.headers and exc.headers.get("Location"):
             return RedirectResponse(exc.headers["Location"], status_code=303)
         if exc.status_code == 403 and exc.detail == "csrf":

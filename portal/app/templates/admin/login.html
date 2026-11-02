@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf, logo %}
+{% from "macros.html" import csrf, logo with context %}
 {% block title %}{{ ta('Sign in') }}{% endblock %}
 {% block content %}
 <div class="row" style="gap:40px;max-width:1040px;width:100%;margin:6vh auto 0">

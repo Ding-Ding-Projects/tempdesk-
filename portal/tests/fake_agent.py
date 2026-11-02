@@ -512,7 +512,7 @@ def create_app(backend: str | None = None) -> FastAPI:
         return ADMX_CATEGORIES
 
     @app.get("/api/v1/admx/policies")
-    async def admx_policies(category: str | None = None, q: str | None = None, **_):
+    async def admx_policies(category: str | None = None, q: str | None = None):
         rows = ADMX_POLICIES
         if category:
             rows = [p for p in rows if p["categoryId"] == category]

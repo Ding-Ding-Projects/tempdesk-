@@ -1,0 +1,390 @@
+#!/usr/bin/python3
+"""Provision the Samba AD domain on first run and (re)apply the TempDesk
+layout on every start. Every step is idempotent.
+
+Environment (see .env.example):
+  REALM                 DNS domain, for example LAB.EXAMPLE.ORG (required)
+  NETBIOS               NetBIOS domain name, for example LAB (required)
+  DC_HOSTNAME           host name of the DC, for example dc1 (default: container host name)
+  DC_IP                 the DC's own IP address on the LAN (recommended)
+  DNS_FORWARDER         upstream DNS server for non domain names (default 1.1.1.1)
+  INITIAL_ADMIN         account added to TempDesk Admins (default Administrator)
+  ADMIN_PASSWORD_FILE   file with the Administrator password (default /run/secrets/admin_password)
+"""
+
+import base64
+import os
+import secrets
+import shutil
+import socket
+import subprocess
+import sys
+import time
+
+sys.path.insert(0, "/opt/tempdesk/agent")
+
+SAM = "/var/lib/samba/private/sam.ldb"
+SMB_CONF = "/etc/samba/smb.conf"
+DATA = os.environ.get("TEMPDESK_DATA", "/var/lib/tempdesk")
+CLIENT_SRC = "/opt/tempdesk/client"
+SVC_USER = "tempdesk-svc"
+WIFI_SDDL = "O:BAG:SYD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICI;FA;;;DA)(A;OICI;0x1200a9;;;DC)"
+
+
+def log(msg):
+    print(f"[tempdesk-provision] {msg}", flush=True)
+
+
+def die(msg):
+    log("ERROR: " + msg)
+    sys.exit(1)
+
+
+def run(argv, check=True, quiet=False, env=None):
+    """argv list only, never a shell."""
+    if not quiet:
+        log("running: " + " ".join(a if "pass" not in a.lower() else a.split("=")[0] + "=***" for a in argv))
+    p = subprocess.run(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                       text=True, env=env)
+    if check and p.returncode != 0:
+        print(p.stdout, flush=True)
+        die(f"{argv[0]} {argv[1] if len(argv) > 1 else ''} failed with exit code {p.returncode}")
+    return p
+
+
+def read_secret(name, default_path):
+    path = os.environ.get(f"{name}_FILE") or default_path
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            v = f.read().strip("\r\n")
+    except OSError:
+        return None
+    return v or None
+
+
+def env(name, default=None, required=False):
+    v = os.environ.get(name, "").strip()
+    if not v:
+        if required:
+            die(f"environment variable {name} is required")
+        return default
+    return v
+
+
+# --------------------------------------------------------------------------
+def provision_domain():
+    realm = env("REALM", required=True).upper()
+    netbios = env("NETBIOS", required=True).upper()
+    host = env("DC_HOSTNAME", socket.gethostname().split(".")[0]).lower()
+    fwd = env("DNS_FORWARDER", "1.1.1.1")
+    ip = env("DC_IP")
+    pw = read_secret("ADMIN_PASSWORD", "/run/secrets/admin_password")
+    if not pw:
+        die("no Administrator password: create the admin_password secret (see README)")
+    if os.path.exists(SMB_CONF):
+        os.rename(SMB_CONF, SMB_CONF + ".pre-provision")
+    argv = ["samba-tool", "domain", "provision", "--use-rfc2307", f"--realm={realm}", f"--domain={netbios}",
+            "--server-role=dc", "--dns-backend=SAMBA_INTERNAL", f"--host-name={host}",
+            f"--adminpass={pw}", f"--option=dns forwarder = {fwd}", "--option=tls enabled = yes",
+            "--option=ldap server require strong auth = yes"]
+    if ip:
+        argv.append(f"--host-ip={ip}")
+    log(f"provisioning new domain {realm} ({netbios}) on host {host}")
+    p = subprocess.run(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    out = p.stdout.replace(pw, "***")
+    print(out, flush=True)
+    if p.returncode != 0:
+        die("domain provision failed (is the password complex enough: 8+ characters with 3 of upper, lower, "
+            "digit, symbol?)")
+
+
+def own_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("192.0.2.1", 9))  # no packet is sent for UDP connect
+        ip = s.getsockname()[0]
+        s.close()
+        if not ip.startswith("127."):
+            return ip
+    except OSError:
+        pass
+    p = run(["hostname", "-i"], check=False, quiet=True)
+    for tok in p.stdout.split():
+        if not tok.startswith("127.") and ":" not in tok:
+            return tok
+    return None
+
+
+def system_files():
+    realm = None
+    from samba.param import LoadParm
+    lp = LoadParm()
+    lp.load(SMB_CONF)
+    realm = lp.get("realm").lower()
+    host = lp.get("netbios name").lower()
+    shutil.copyfile("/var/lib/samba/private/krb5.conf", "/etc/krb5.conf")
+    # The DC name must resolve to a real interface address (not 127.0.1.1),
+    # otherwise samba-tool gpo commands fail their CLDAP lookup.
+    ip = env("DC_IP") or own_ip()
+    try:
+        with open("/etc/resolv.conf", "w") as f:
+            f.write(f"search {realm}\nnameserver 127.0.0.1\n")
+    except OSError as e:
+        log(f"could not write /etc/resolv.conf: {e}")
+    try:
+        with open("/etc/hosts") as f:
+            hosts = f.read()
+        if ip:
+            # Drop lines that map our names elsewhere, then add ours.
+            keep = [l for l in hosts.splitlines()
+                    if not (l.split() and l.split()[0] != ip and
+                            ({host, f"{host}.{realm}"} & set(l.split()[1:])))]
+            keep.append(f"{ip}\t{host}.{realm}\t{host}")
+            with open("/etc/hosts", "w") as f:
+                f.write("\n".join(keep) + "\n")
+    except OSError as e:
+        log(f"could not update /etc/hosts: {e}")
+    return lp
+
+
+# --------------------------------------------------------------------------
+def directory_layout(lp, settings):
+    import ldb
+    from samba.auth import system_session
+    from samba.samdb import SamDB
+    from tempdesk_agent.util import UF_DONT_EXPIRE_PASSWD, UF_NORMAL_ACCOUNT, guest_password
+
+    db = SamDB(url=SAM, session_info=system_session(), lp=lp)
+    base = str(db.domain_dn())
+
+    def exists(dn):
+        try:
+            return len(db.search(dn, ldb.SCOPE_BASE, attrs=["dn"])) > 0
+        except ldb.LdbError:
+            return False
+
+    def ensure_ou(rel, desc):
+        dn = f"{rel},{base}"
+        if exists(dn):
+            return dn
+        # create parents first
+        parts = rel.split(",")
+        for i in range(len(parts) - 1, -1, -1):
+            sub = ",".join(parts[i:]) + "," + base
+            if not exists(sub):
+                db.add({"dn": sub, "objectClass": "organizationalUnit", "description": desc})
+                log(f"created {sub}")
+        return dn
+
+    ensure_ou("OU=TempDesk", "TempDesk")
+    guest_ou = ensure_ou(settings["guestOu"], "TempDesk guest accounts (managed, do not add other users)")
+    comp_ou = ensure_ou(settings["computersOu"], "TempDesk guest computers")
+
+    def find(sam):
+        r = db.search(base, ldb.SCOPE_SUBTREE, f"(sAMAccountName={ldb.binary_encode(sam)})", ["dn"])
+        return str(r[0].dn) if len(r) else None
+
+    for g, desc in ((settings["guestGroup"], "TempDesk guest accounts"),
+                    (settings["adminGroup"], "May sign in to the TempDesk admin portal")):
+        if not find(g):
+            db.newgroup(g, groupou="OU=TempDesk", description=desc)
+            log(f"created group {g}")
+
+    admin = env("INITIAL_ADMIN", "Administrator")
+    if find(admin):
+        try:
+            db.add_remove_group_members(settings["adminGroup"], [admin], add_members_operation=True)
+        except ldb.LdbError:
+            pass  # already a member
+    else:
+        log(f"INITIAL_ADMIN {admin} not found, skipping")
+
+    # Service account used by the agent for samba-tool commands that talk to
+    # the DC over the network (gpo create/del/backup, dns, drs). The agent
+    # already runs as root on the DC, so this grants nothing new. Its
+    # password is random and rotated on every container start.
+    pw = guest_password(32)
+    if not find(SVC_USER):
+        db.newuser(SVC_USER, pw, description="TempDesk agent service account (password rotates automatically)")
+        log(f"created {SVC_USER}")
+    else:
+        db.setpassword(f"(sAMAccountName={SVC_USER})", pw)
+    dn = find(SVC_USER)
+    m = ldb.Message(ldb.Dn(db, dn))
+    m["userAccountControl"] = ldb.MessageElement(str(UF_NORMAL_ACCOUNT | UF_DONT_EXPIRE_PASSWD),
+                                                 ldb.FLAG_MOD_REPLACE, "userAccountControl")
+    db.modify(m)
+    try:
+        db.add_remove_group_members("Domain Admins", [SVC_USER], add_members_operation=True)
+    except ldb.LdbError:
+        pass
+    netbios = lp.get("workgroup").upper()
+    os.makedirs(os.path.join(DATA, "private"), mode=0o700, exist_ok=True)
+    from tempdesk_agent.stores import write_private
+    write_private(os.path.join(DATA, "private", "svc.auth"),
+                  f"username = {SVC_USER}\npassword = {pw}\ndomain = {netbios}\n".encode())
+    return db, base, guest_ou, comp_ou
+
+
+# --------------------------------------------------------------------------
+class TempSamba:
+    """Run samba in the background while provisioning needs the network
+    services (samba-tool gpo create uses LDAP and SMB)."""
+
+    def __init__(self):
+        self.p = None
+
+    def __enter__(self):
+        self.p = subprocess.Popen(["samba", "--foreground", "--no-process-group"], stdout=subprocess.DEVNULL,
+                                  stderr=subprocess.DEVNULL)
+        for _ in range(90):
+            r = run(["ldbsearch", "-H", "ldap://127.0.0.1", "-P", "-s", "base", "-b", "", "dnsHostName"],
+                    check=False, quiet=True)
+            if r.returncode == 0:
+                # SMB comes up a little after LDAP
+                time.sleep(3)
+                return self
+            time.sleep(1)
+        self.__exit__(None, None, None)
+        die("samba did not start")
+
+    def __exit__(self, *a):
+        if self.p and self.p.poll() is None:
+            self.p.terminate()
+            try:
+                self.p.wait(30)
+            except subprocess.TimeoutExpired:
+                self.p.kill()
+
+
+def gpo_layout(db, lp, base, settings, guest_ou, comp_ou):
+    import ldb
+    pol_dn = f"CN=Policies,CN=System,{base}"
+    host = lp.get("netbios name").lower()
+    realm = lp.get("realm").lower()
+    auth = ["-H", f"ldap://{host}.{realm}", "-A", os.path.join(DATA, "private", "svc.auth")]
+
+    def find_gpo(name):
+        r = db.search(pol_dn, ldb.SCOPE_ONELEVEL,
+                      f"(&(objectClass=groupPolicyContainer)(displayName={ldb.binary_encode(name)}))", ["name"])
+        return str(r[0]["name"][0]) if len(r) else None
+
+    wanted = [(settings["guestGpoName"], guest_ou), (settings["computerGpoName"], comp_ou)]
+    missing = [n for n, _ in wanted if not find_gpo(n)]
+    unlinked = []
+    for name, ou in wanted:
+        g = find_gpo(name)
+        if g:
+            r = db.search(ou, ldb.SCOPE_BASE, attrs=["gPLink"])
+            if g.lower() not in str(r[0].get("gPLink", [b""])[0]).lower():
+                unlinked.append((name, ou))
+    if not missing and not unlinked:
+        return
+    with TempSamba():
+        for name in missing:
+            p = run(["samba-tool", "gpo", "create", name] + auth)
+            log(p.stdout.strip())
+        for name, ou in wanted:
+            g = find_gpo(name)
+            if not g:
+                die(f"GPO {name} was not created")
+            r = db.search(ou, ldb.SCOPE_BASE, attrs=["gPLink"])
+            if g.lower() not in str(r[0].get("gPLink", [b""])[0]).lower():
+                run(["samba-tool", "gpo", "setlink", ou, g] + auth)
+    # samba-tool gpo create uploads GPT.INI over SMB, where it inherits the
+    # folder ACL instead of the GPO object ACL; normalise like Windows does.
+    run(["samba-tool", "ntacl", "sysvolreset"])
+
+
+# --------------------------------------------------------------------------
+def nt_acl_helpers(lp, db):
+    from tempdesk_agent.ntacl import NtAcl
+    n = NtAcl(lp, str(db.get_domain_sid()))
+    return n.get, n.set, n.inherit
+
+
+def sysvol_layout(lp, db):
+    realm = lp.get("realm").lower()
+    sysvol = lp.get("path", "sysvol") or "/var/lib/samba/sysvol"
+    root = os.path.join(sysvol, realm, "TempDesk")
+    _, set_acl, inherit = nt_acl_helpers(lp, db)
+
+    def mk(path):
+        if not os.path.isdir(path):
+            os.makedirs(path)
+            inherit(path)
+
+    mk(root)
+    for sub in ("wifi", "scripts", "scripts/startup", "scripts/logon", "client"):
+        mk(os.path.join(root, sub))
+    wifi = os.path.join(root, "wifi")
+    # Readable by Domain Computers (the machine startup task reads profiles),
+    # full control for SYSTEM, Administrators and Domain Admins, nobody else.
+    set_acl(wifi, WIFI_SDDL)
+    for n in os.listdir(wifi):
+        inherit(os.path.join(wifi, n))
+
+    if os.path.isdir(CLIENT_SRC):
+        dst = os.path.join(root, "client")
+        for dirpath, dirnames, filenames in os.walk(CLIENT_SRC):
+            rel = os.path.relpath(dirpath, CLIENT_SRC)
+            tdir = os.path.normpath(os.path.join(dst, rel))
+            mk(tdir)
+            for n in filenames:
+                s, t = os.path.join(dirpath, n), os.path.join(tdir, n)
+                shutil.copyfile(s, t)
+                inherit(t)
+        log(f"copied client scripts from {CLIENT_SRC}")
+    else:
+        log(f"{CLIENT_SRC} not mounted; client scripts not copied")
+    pd = os.path.join(sysvol, realm, "Policies", "PolicyDefinitions")
+    if not os.path.isdir(pd):
+        log("no ADMX central store yet: copy PolicyDefinitions into SYSVOL to enable Administrative Templates")
+
+
+# --------------------------------------------------------------------------
+def agent_files(lp):
+    from tempdesk_agent.stores import SettingsStore, load_or_create_agent_config
+    os.makedirs(DATA, exist_ok=True)
+    os.makedirs(os.path.join(DATA, "private"), mode=0o700, exist_ok=True)
+    os.chmod(DATA, 0o755)
+    cfg = load_or_create_agent_config(DATA)
+    settings = SettingsStore(os.path.join(DATA, "settings.json")).get()
+    cert, key = cfg["certFile"], cfg["keyFile"]
+    if not (os.path.exists(cert) and os.path.exists(key)):
+        realm = lp.get("realm").lower()
+        host = lp.get("netbios name").lower()
+        san = f"DNS:{host}.{realm},DNS:{host},IP:127.0.0.1"
+        ip = env("DC_IP")
+        if ip:
+            san += f",IP:{ip}"
+        run(["openssl", "req", "-x509", "-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:P-256", "-nodes",
+             "-sha256", "-days", "3650", "-subj", f"/CN={host}.{realm}/O=TempDesk Agent",
+             "-addext", f"subjectAltName={san}", "-addext", "basicConstraints=critical,CA:TRUE,pathlen:0",
+             "-addext", "keyUsage=critical,digitalSignature,keyCertSign",
+             "-addext", "extendedKeyUsage=serverAuth",
+             "-keyout", key, "-out", cert])
+        os.chmod(key, 0o600)
+        os.chmod(cert, 0o644)
+        log(f"generated agent TLS certificate {cert}")
+    log(f"agent keys are in {os.path.join(DATA, 'agent.json')} (guestKey for the guest portal, "
+        "adminKey for the admin portal)")
+    return settings
+
+
+# --------------------------------------------------------------------------
+def main():
+    if not os.path.exists(SAM):
+        provision_domain()
+    elif not os.path.exists(SMB_CONF):
+        die("/var/lib/samba has a domain but /etc/samba/smb.conf is missing: restore the /etc/samba volume")
+    lp = system_files()
+    settings = agent_files(lp)
+    db, base, guest_ou, comp_ou = directory_layout(lp, settings)
+    gpo_layout(db, lp, base, settings, guest_ou, comp_ou)
+    sysvol_layout(lp, db)
+    log("TempDesk layout is in place")
+
+
+if __name__ == "__main__":
+    main()

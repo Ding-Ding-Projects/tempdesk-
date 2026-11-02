@@ -1,0 +1,41 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ ta("Roles and features") }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/css/server.css">
+<div class="srv">
+  <div class="srv-head"><h1>{{ t("Roles and features") }}</h1></div>
+  {% if error %}<div class="srv-err">{{ error }}</div>{% endif %}
+  <section class="srv-card">
+    <h2>{{ t("Install or remove") }}</h2>
+    <form method="post" action="/server/features/install" class="srv-form" style="max-width:480px">
+      <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+      <div class="srv-field"><label>{{ t("Feature ids (one per line)") }}</label><textarea name="names" placeholder="DNS&#10;DHCP"></textarea></div>
+      <label class="srv-toggle"><input type="checkbox" name="includeManagementTools" checked> {{ t("Include management tools") }}</label>
+      <label class="srv-toggle"><input type="checkbox" name="restart"> {{ t("Restart if required") }}</label>
+      <div class="srv-toolbar">
+        <button class="srv-btn primary" type="submit">{{ t("Install") }}</button>
+        <button class="srv-btn danger" type="submit" formaction="/server/features/uninstall">{{ t("Uninstall") }}</button>
+      </div>
+    </form>
+  </section>
+  <div data-srv-table>
+    <div class="srv-toolbar">
+      <input class="srv-search" data-srv-search placeholder="{{ ta('Search') }}">
+      <label class="srv-toggle"><input type="checkbox" data-srv-regex> {{ t("Regex") }}</label>
+      <span data-srv-regex-error class="srv-err" role="alert" style="padding:4px 8px"></span>
+      <button type="button" class="srv-btn" data-srv-export="csv">CSV</button>
+    </div>
+    <div class="srv-tablewrap">
+      <table class="srv-table">
+        <thead><tr><th data-col="installed">{{ t("Installed") }}</th><th data-col="displayName">{{ t("Display name") }}</th><th data-col="name">{{ t("Name") }}</th><th data-col="featureType">{{ t("Type") }}</th></tr></thead>
+        <tbody>
+        {% for f in features %}
+          <tr><td>{{ "Yes" if f.installed in [true,"True"] else "No" }}</td><td>{{ f.displayName }}</td><td>{{ f.name }}</td><td>{{ f.featureType }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/server-table.js"></script>{% endblock %}

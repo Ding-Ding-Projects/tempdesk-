@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import local_time, empty %}
+{% from "macros.html" import local_time, empty with context %}
 {% block title %}{{ ta('Dashboard') }}{% endblock %}
 {% block content %}
 <div class="page-head"><h1>{{ t('Hello, {name}', name=user.displayName or user.sam) }}</h1>

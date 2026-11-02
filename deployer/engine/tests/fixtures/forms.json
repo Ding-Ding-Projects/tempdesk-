@@ -1,0 +1,146 @@
+{
+  "server": {
+    "imageIndex": "1",
+    "computerName": "TD-DC01",
+    "domainName": "lab.example.org",
+    "netbiosName": "lab",
+    "functionalLevel": "",
+    "ipAddress": "192.168.10.10",
+    "prefixLength": "24",
+    "gateway": "192.168.10.1",
+    "dnsServers": "127.0.0.1, 1.1.1.1",
+    "adminPassword": "Example-Pass-123",
+    "dsrmPassword": "Example-Dsrm-456",
+    "productKey": "",
+    "firmware": "uefi",
+    "locale": "en-US",
+    "keyboard": "en-US",
+    "timeZone": "China Standard Time",
+    "portalsMode": "native",
+    "agentTls": false
+  },
+  "serverBios": {
+    "imageIndex": "3",
+    "computerName": "DC02",
+    "domainName": "corp.example.net",
+    "netbiosName": "CORP",
+    "ipAddress": "10.0.0.5",
+    "prefixLength": "16",
+    "gateway": "10.0.0.1",
+    "dnsServers": "127.0.0.1",
+    "adminPassword": "A&b<c>\"d'1234",
+    "dsrmPassword": "Example-Dsrm-456",
+    "productKey": "AAAAA-BBBBB-CCCCC-DDDDD-EEEEE",
+    "firmware": "bios",
+    "locale": "zh-HK",
+    "keyboard": "0c04:00000409",
+    "timeZone": "",
+    "portalsMode": "none",
+    "agentTls": true
+  },
+  "guest": {
+    "imageIndex": "6",
+    "diskId": "0",
+    "firmware": "uefi",
+    "arch": "amd64",
+    "locale": "en-GB",
+    "keyboard": "en-GB",
+    "timeZone": "GMT Standard Time",
+    "computerName": "",
+    "adminUser": "tdadmin",
+    "adminPassword": "Local-Admin-789",
+    "domainName": "lab.example.org",
+    "joinDomain": "",
+    "joinUser": "td-join",
+    "joinPassword": "Join-Pass-000",
+    "ou": "",
+    "dnsMode": "static",
+    "dnsServer": "192.168.10.10",
+    "productKey": ""
+  },
+  "custom": {
+    "target": "server",
+    "arch": "amd64",
+    "setupLanguage": "en-US",
+    "diskLayout": "existing",
+    "diskId": "1",
+    "partitionId": "4",
+    "imageBy": "name",
+    "imageName": "Windows Server 2025 SERVERSTANDARDCORE",
+    "imageIndex": "1",
+    "productKey": "",
+    "computerName": "APP01",
+    "organization": "Example Org",
+    "owner": "IT",
+    "timeZone": "Eastern Standard Time",
+    "rdp": true,
+    "edgeFirstRunOff": true,
+    "locale": "en-US",
+    "keyboard": "en-US",
+    "adminPassword": "Custom-Admin-111",
+    "accounts": [
+      {
+        "name": "admin",
+        "displayName": "",
+        "group": "Administrators",
+        "password": "Acct-Pass-222"
+      },
+      {
+        "name": "kiosk",
+        "displayName": "Kiosk",
+        "group": "Users",
+        "password": ""
+      }
+    ],
+    "autoLogonCount": "2",
+    "oobeHideEULAPage": true,
+    "oobeHideOEMRegistrationScreen": false,
+    "oobeHideOnlineAccountScreens": true,
+    "oobeHideWirelessSetupInOOBE": false,
+    "oobeHideLocalAccountScreen": true,
+    "protectYourPC": "3",
+    "features": "RSAT-AD-Tools, Web-Server",
+    "driversPE": "D:\\drivers\\net\nE:\\storage",
+    "driversOffline": "\\\\server\\share\\drv"
+  },
+  "commands": {
+    "runSync": [
+      {
+        "command": "cmd /c echo one",
+        "description": "First"
+      },
+      {
+        "command": "  ",
+        "description": "skip"
+      },
+      {
+        "command": "cmd /c reboot-me",
+        "description": "",
+        "willReboot": "Always",
+        "credentials": {
+          "domain": "LAB",
+          "username": "svc",
+          "password": "x"
+        }
+      }
+    ],
+    "firstLogon": [
+      {
+        "command": "powershell -c Write-Host hi",
+        "description": ""
+      }
+    ],
+    "logon": [
+      {
+        "command": "explorer.exe",
+        "description": "Shell",
+        "disabled": false
+      },
+      {
+        "command": "notepad",
+        "disabled": true
+      }
+    ],
+    "runAsync": []
+  }
+}

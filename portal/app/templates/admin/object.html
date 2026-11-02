@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf, search_box, th_sort, empty, super_confirm, info %}
+{% from "macros.html" import csrf, search_box, th_sort, empty, super_confirm, info with context %}
 {% block title %}{{ tab_title }}{% endblock %}
 {% block content %}
 <div class="page-head"><h1 class="break">{{ tab_title }}</h1>

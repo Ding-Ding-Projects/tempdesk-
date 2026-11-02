@@ -1,0 +1,50 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import csrf with context %}
+{% block title %}{{ p.name }}{% endblock %}
+{% block content %}
+{% set tab = 'admx' %}
+<div class="page-head"><h1>{{ t('Administrative Templates') }}</h1><a class="btn" href="/gpo/{{ gid|urlencode }}/admx?class={{ cls }}&category={{ cat|urlencode }}">{{ t('Back to the list') }}</a></div>
+<p class="subtle">{{ g.displayName }} · {{ t('Computer') if cls == 'Machine' else t('User') }}</p>
+{% include "admin/_gpo_tabs.html" %}
+<div class="panes">
+<form class="card raised pane-sheet stack" style="gap:16px" method="post" action="/gpo/{{ gid|urlencode }}/admx/{{ p.id|urlencode }}">{{ csrf() }}
+  <input type="hidden" name="class" value="{{ cls }}"><input type="hidden" name="category" value="{{ cat }}">
+  <h2 style="font-size:1.25rem">{{ p.name }}</h2>
+  <div class="state-group" role="radiogroup" aria-label="{{ ta('State') }}">
+    {% for s, l in [('NotConfigured','Not configured'),('Enabled','Enabled'),('Disabled','Disabled')] %}
+    <label><input type="radio" name="state" value="{{ s }}" {% if state == s %}checked{% endif %} data-admx-state> {{ t(l) }}</label>{% endfor %}
+  </div>
+  <fieldset class="stack" data-admx-options {% if state != 'Enabled' %}disabled{% endif %}>
+    <legend>{{ t('Options') }}</legend>
+    {% for el in p.elements or [] %}{% set name = 'el_' ~ el.id %}{% set v = values.get(el.id) %}
+    {% if el.type == 'boolean' %}
+      <label class="check"><input type="checkbox" name="{{ name }}" {% if v %}checked{% endif %}> {{ el.label }}</label>
+    {% elif el.type == 'decimal' %}
+      <div class="field"><label for="{{ name }}">{{ el.label }}</label><input id="{{ name }}" type="number" name="{{ name }}" value="{{ v if v is not none else '' }}" {% if el.min is not none %}min="{{ el.min }}"{% endif %} {% if el.max is not none %}max="{{ el.max }}"{% endif %} {% if el.required %}required{% endif %}>
+        {% if el.min is not none or el.max is not none %}<span class="hint">{{ t('From {min} to {max}', min=el.min if el.min is not none else '', max=el.max if el.max is not none else '') }}</span>{% endif %}</div>
+    {% elif el.type == 'text' %}
+      <div class="field"><label for="{{ name }}">{{ el.label }}</label><input id="{{ name }}" type="text" name="{{ name }}" value="{{ v or '' }}" {% if el.maxLength %}maxlength="{{ el.maxLength }}"{% endif %} {% if el.required %}required{% endif %}></div>
+    {% elif el.type == 'multiText' %}
+      <div class="field"><label for="{{ name }}">{{ el.label }}</label><textarea id="{{ name }}" name="{{ name }}" rows="4">{{ v|join('\n') if v is iterable and v is not string else (v or '') }}</textarea><span class="hint">{{ t('One line per entry.') }}</span></div>
+    {% elif el.type == 'enum' %}
+      <div class="field"><label for="{{ name }}">{{ el.label }}</label><select id="{{ name }}" name="{{ name }}">{% for it in el['items'] or [] %}<option value="{{ it.id }}" {% if v|string == it.id|string %}selected{% endif %}>{{ it.label }}</option>{% endfor %}</select></div>
+    {% elif el.type == 'list' %}
+      <div class="field" data-list-editor data-name="{{ name }}"><span style="font-weight:600">{{ el.label }}</span>
+        <div class="stack tight" data-rows>
+          {% set rows = (v.items()|list) if v is mapping else ((v or [])|map('string')|map('list')|list) %}
+          {% if v is mapping %}{% for k2, v2 in v.items() %}<div class="cluster" data-row><label class="sr-only">{{ t('Name') }}</label><input name="{{ name }}_name" value="{{ k2 }}" placeholder="{{ ta('Name') }}" style="flex:1 1 140px"><input name="{{ name }}" value="{{ v2 }}" placeholder="{{ ta('Value') }}" style="flex:1 1 140px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div>{% endfor %}
+          {% else %}{% for v2 in v or [] %}<div class="cluster" data-row><input name="{{ name }}" value="{{ v2 }}" aria-label="{{ ta('Value') }}" style="flex:1 1 200px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div>{% endfor %}{% endif %}
+        </div>
+        <div class="cluster"><button type="button" class="btn sm tonal" data-add-row>{{ t('Add row') }}</button><button type="button" class="btn sm text" data-add-row="named">{{ t('Add named row') }}</button></div>
+      </div>
+    {% endif %}
+    {% else %}<p class="muted">{{ t('This policy has no options: Enabled or Disabled is the whole setting.') }}</p>{% endfor %}
+  </fieldset>
+  <div class="inset small muted"><p style="white-space:pre-wrap">{{ p.explain or ta('No help text is provided for this policy.') }}</p>
+    {% if p.supportedOn %}<p style="margin:0"><strong>{{ t('Supported on') }}:</strong> {{ p.supportedOn }}</p>{% endif %}
+    <p style="margin:0" class="mono small break">{{ p.key }}{% if p.valueName %}\{{ p.valueName }}{% endif %}</p></div>
+  <p class="hint">{{ t('A policy backup is taken first, so Undo can restore it.') }}</p>
+  <div class="form-actions" style="margin-top:auto"><button class="btn filled" type="submit">{{ t('Apply') }}</button><a class="btn" href="/gpo/{{ gid|urlencode }}/admx?class={{ cls }}&category={{ cat|urlencode }}">{{ t('Cancel') }}</a></div>
+</form>
+</div>
+{% endblock %}

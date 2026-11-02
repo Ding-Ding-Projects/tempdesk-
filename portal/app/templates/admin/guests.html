@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel, local_time %}
+{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel, local_time with context %}
 {% block title %}{{ ta('Guests') }}{% endblock %}
 {% block content %}
 <div class="page-head"><h1>{{ t('Guests') }}</h1><a class="btn" href="/import">{{ t('CSV import') }}</a></div>

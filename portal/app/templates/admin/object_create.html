@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf, info %}
+{% from "macros.html" import csrf, info with context %}
 {% block title %}{{ ta('Create directory object') }}{% endblock %}
 {% block content %}
 <h1>{{ t('Create directory object') }}</h1>

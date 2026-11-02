@@ -1,0 +1,13 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ doc.title if doc else ta('Documentation') }}{% endblock %}
+{% block content %}
+<h1>{{ t('Documentation') }}</h1>
+<div class="row">
+<nav class="side card" aria-label="{{ ta('Documents') }}">
+  <form method="get" action="/docs" role="search" class="stack tight"><label for="dq">{{ t('Search the documentation') }}</label><input id="dq" type="search" name="q" value="{{ q }}"><button class="btn sm tonal" type="submit">{{ t('Search') }}</button></form>
+  {% if docs %}<ul class="tree" style="margin-top:12px">{% for d in docs %}<li><div class="node"><a href="/docs/{{ d.name }}" {% if doc and doc.name == d.name %}aria-current="page"{% endif %}>{{ d.title }}</a></div>{% if d.snippet %}<p class="subtle small" style="margin:0 12px 8px">{{ d.snippet }}</p>{% endif %}</li>{% endfor %}</ul>
+  {% else %}<p class="muted">{{ t('No documents found. The image bundles the docs folder of the repository; if it is empty, rebuild the image from the repository root.') if not q else t('No documents mention that.') }}</p>{% endif %}
+</nav>
+<article class="grow card prose" style="flex-basis:560px">{% if doc %}{{ doc.html }}{% else %}<p class="muted">{{ t('Pick a document on the left.') }}</p>{% endif %}</article>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel with context %}
+{% block title %}{{ ta('Group Policy') }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ t('Group Policy') }}</h1>
+  {% if has_cap('gpo-backup') %}<a class="btn" href="/gpo/backups">{{ t('Backups') }}</a>{% endif %}
+  {% if has_cap('wmifilters') %}<a class="btn" href="/gpo/wmi">{{ t('WMI filters') }}</a>{% endif %}
+  <a class="btn" href="/gpo/inheritance">{{ t('Block inheritance') }}</a></div>
+<section class="card rise" id="create"><h2>{{ t('Create a Group Policy object') }}</h2>
+  <form method="post" action="/gpo" class="form-grid">{{ csrf() }}
+    <div class="field"><label for="gn">{{ t('Name') }}</label><input id="gn" name="name" required maxlength="200"></div>
+    <div class="field"><label for="gc">{{ t('Comment') }} <span class="optional">({{ t('optional') }})</span></label><input id="gc" name="comment"></div>
+    <div class="field" style="justify-content:flex-end"><button class="btn filled" type="submit">{{ t('Create') }}</button></div>
+  </form></section>
+<section class="card rise" style="--i:1">
+  {{ search_box(tv, regex_error, 'Search policies') }}
+  {% if tv.rows %}
+  <form method="post" action="/gpo/bulk" data-bulk-form>{{ csrf() }}
+  <div class="table-wrap"><table><thead><tr>{{ sel_all() }}{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}</tr></thead>
+    <tbody class="stagger">{% for g in tv.rows %}
+    <tr data-ctx='[{"label":"{{ ta('Open') }}","href":"/gpo/{{ g.id|urlencode }}","key":"Enter"},{"label":"{{ ta('Administrative Templates') }}","href":"/gpo/{{ g.id|urlencode }}/admx"},{"label":"{{ ta('Security settings') }}","href":"/gpo/{{ g.id|urlencode }}/security"},{"label":"{{ ta('Report') }}","href":"/gpo/{{ g.id|urlencode }}/report"},{"label":"{{ ta('Open in a new tab') }}","href":"/gpo/{{ g.id|urlencode }}","tab":true}]'>
+      {{ sel(g.id, g.displayName) }}<td><a href="/gpo/{{ g.id|urlencode }}" data-tab-link>{{ g.displayName }}</a></td><td>{{ g.status }}</td>
+      <td><time datetime="{{ g.modified }}" data-local-time>{{ g.modified }}</time></td><td>{{ g.wmiFilter or '' }}</td><td class="mono small">{{ g.id }}</td><td>{{ g.linkCount }}</td></tr>
+    {% endfor %}</tbody></table></div>
+  {{ bulk_bar([('backup','Back up selected'),('AllSettingsEnabled','Enable all settings'),('AllSettingsDisabled','Disable all settings'),('delete','Delete selected')], bulk_token) }}
+  </form>
+  {% elif tv.total %}{{ empty('No policies match this filter', 'Clear the search box to see every policy.') }}
+  {% else %}{{ empty('No Group Policy objects', 'Create one above. TempDesk setup normally creates the guest policies.') }}{% endif %}
+</section>
+{% endblock %}

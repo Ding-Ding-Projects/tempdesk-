@@ -1,5 +1,5 @@
 {% extends "layouts/guest.html" %}
-{% from "macros.html" import icon %}
+{% from "macros.html" import icon with context %}
 {% block title %}{{ ta('Your sign-in') }}{% endblock %}
 {% block content %}
 {% set full = (netbios ~ '\\' ~ c.username) if netbios else c.username %}

@@ -1,0 +1,14 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import csrf with context %}
+{% block title %}{{ ta('Version history') }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ t('Version history') }}: <span class="mono">{{ name }}</span></h1><a class="btn" href="{{ back }}">{{ t('Back') }}</a></div>
+<div class="row">
+<section class="side card"><h2>{{ t('Saved versions') }}</h2>
+  {% if versions %}<ul class="timeline">{% for v in versions %}<li><span class="dot {{ '' if loop.first else 'neutral' }}"></span><div><a href="?name={{ name|urlencode }}&v={{ v.id }}" {% if sel == v.id %}aria-current="page"{% endif %}><time data-epoch="{{ v.time }}">{{ v.id }}</time></a><div class="subtle">{{ v.user }} · {{ t('{count} characters', count=v.size) }}</div></div></li>{% endfor %}</ul>
+  {% else %}<p class="muted">{{ t('No versions saved yet. A version is kept every time you save.') }}</p>{% endif %}</section>
+<section class="grow card"><h2>{{ t('Difference from the current version') }}</h2>
+  {% if diff is not none %}{% if diff %}<div class="diff">{% for kind, line in diff %}<div class="{{ kind }}">{{ line }}</div>{% endfor %}</div>{% else %}<p class="muted">{{ t('This version is the same as the current one.') }}</p>{% endif %}
+    <form method="post" action="/history/{{ kind }}/restore" style="margin-top:12px">{{ csrf() }}<input type="hidden" name="name" value="{{ name }}"><input type="hidden" name="v" value="{{ sel }}"><button class="btn filled" type="submit">{{ t('Restore this version') }}</button></form>
+  {% else %}<p class="muted">{{ t('Pick a version to compare it with the current one.') }}</p>{% endif %}</section></div>
+{% endblock %}

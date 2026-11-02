@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel, info %}
+{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel, info with context %}
 {% block title %}{{ ta('LDAP search') }}{% endblock %}
 {% block content %}
 <h1>{{ t('LDAP search') }}</h1>

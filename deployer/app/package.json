@@ -1,0 +1,52 @@
+{
+  "name": "tempdesk-deployer",
+  "productName": "TempDesk Deployer",
+  "version": "1.0.0",
+  "description": "Deploys and manages TempDesk: install media, unattended server setup, TempDesk Lite over SSH, portals.",
+  "main": "src/main/main.js",
+  "private": true,
+  "license": "MIT",
+  "author": "TempDesk contributors",
+  "homepage": "https://github.com/Ding-Ding-Projects/tempdesk-",
+  "scripts": {
+    "prepare-bundle": "node scripts/prepare-bundle.js",
+    "start": "node scripts/prepare-bundle.js && electron .",
+    "check": "node scripts/check-syntax.js",
+    "test": "node --test test/",
+    "dist": "node scripts/prepare-bundle.js && electron-builder --win squirrel portable --publish never"
+  },
+  "devDependencies": {
+    "electron": "44.9.0",
+    "electron-builder": "26.17.0",
+    "electron-builder-squirrel-windows": "26.17.0"
+  },
+  "build": {
+    "appId": "TempDeskDeployer",
+    "productName": "TempDesk Deployer",
+    "executableName": "TempDeskDeployer",
+    "copyright": "TempDesk contributors, MIT License",
+    "directories": { "output": "../output", "buildResources": "build" },
+    "files": ["src/**/*", "package.json", "!src/**/*.map"],
+    "extraResources": [
+      { "from": "../../.bundle/payload", "to": "payload" },
+      { "from": "../engine", "to": "engine", "filter": ["*.ps1", "*.psm1"] },
+      { "from": "../../.bundle/docs", "to": "docs" }
+    ],
+    "asar": true,
+    "win": {
+      "icon": "../assets/tempdesk.ico",
+      "target": ["squirrel", "portable"],
+      "signAndEditExecutable": true,
+      "forceCodeSigning": false
+    },
+    "squirrelWindows": {
+      "name": "TempDeskDeployer",
+      "iconUrl": "https://raw.githubusercontent.com/Ding-Ding-Projects/tempdesk-/main/deployer/assets/tempdesk.ico",
+      "msi": false,
+      "remoteReleases": false,
+      "useAppIdAsId": true
+    },
+    "portable": { "artifactName": "TempDeskDeployer-${version}-portable.exe" },
+    "publish": null
+  }
+}

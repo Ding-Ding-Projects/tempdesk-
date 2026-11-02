@@ -1,7 +1,7 @@
 {# Admin console layout. Blocks for page templates (also used by templates/server/*):
    title, content, scripts, head, page_actions. #}
 {% extends "layouts/base.html" %}
-{% from "macros.html" import icon, logo, csrf, flash_block %}
+{% from "macros.html" import icon, logo, csrf, flash_block with context %}
 {% block body %}
 <div class="shell">
   {% if session %}

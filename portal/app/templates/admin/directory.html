@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel %}
+{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel with context %}
 {% block title %}{{ ta('Directory') }}{% endblock %}
 {% block content %}
 <div class="page-head"><h1>{{ t('Directory') }}</h1>
