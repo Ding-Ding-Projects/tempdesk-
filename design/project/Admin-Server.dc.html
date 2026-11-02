@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Server overview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#0B1110}
+a{color:#7CF3E6}a:hover{color:#B6FFF6}
+@keyframes draw{from{stroke-dashoffset:600}to{stroke-dashoffset:0}}
+.s-line{stroke-dasharray:600;animation:draw 1.4s cubic-bezier(.2,.9,.25,1) both}
+@media (prefers-reduced-motion: reduce){.s-line{animation:none;stroke-dasharray:none}}
+</style>
+</helmet>
+<div style="font-family: 'Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background: #0B1110; color: #E8F1EF; min-height: 100vh; display: flex; flex-wrap: wrap">
+  <nav aria-label="Server tools" style="flex: 1 1 220px; max-width: 260px; min-width: 0; padding: 20px 12px; background: #0F1716; border-right: 1px solid #1D2A28; display: flex; flex-direction: column; gap: 2px; font-size: 15px">
+    <span style="padding: 8px 12px; font-size: 13px; color: #8EA29E; font-weight: 700">DC01</span>
+    <a href="#" aria-current="page" style="padding: 10px 12px; border-radius: 12px; background: #1F3A36; color: #E8F1EF; text-decoration: none; font-weight: 700">Overview</a>
+    <a href="#" style="padding: 10px 12px; color: #A9BBB8; text-decoration: none">Services</a>
+    <a href="#" style="padding: 10px 12px; color: #A9BBB8; text-decoration: none">Processes</a>
+    <a href="#" style="padding: 10px 12px; color: #A9BBB8; text-decoration: none">Events</a>
+    <a href="#" style="padding: 10px 12px; color: #A9BBB8; text-decoration: none">Files</a>
+    <a href="#" style="padding: 10px 12px; color: #A9BBB8; text-decoration: none">Firewall</a>
+    <a href="#" style="padding: 10px 12px; color: #A9BBB8; text-decoration: none">Roles and features</a>
+    <a href="#" style="padding: 10px 12px; color: #A9BBB8; text-decoration: none">Updates</a>
+    <a href="#" style="padding: 10px 12px; color: #A9BBB8; text-decoration: none">Storage</a>
+    <a href="#" style="padding: 10px 12px; color: #A9BBB8; text-decoration: none">Networks</a>
+    <a href="#" style="padding: 10px 12px; color: #A9BBB8; text-decoration: none">Registry</a>
+    <a href="#" style="padding: 10px 12px; color: #A9BBB8; text-decoration: none">Scheduled tasks</a>
+    <a href="#" style="padding: 10px 12px; color: #A9BBB8; text-decoration: none">Certificates</a>
+    <a href="#" style="padding: 10px 12px; color: #A9BBB8; text-decoration: none">DNS</a>
+    <a href="#" style="padding: 10px 12px; color: #A9BBB8; text-decoration: none">PowerShell</a>
+  </nav>
+  <div style="flex: 999 1 560px; min-width: 0; padding: 22px 28px 40px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+      <div style="flex: 1 1 auto">
+        <h1 style="margin: 0; font-size: 30px; letter-spacing: -0.02em">DC01</h1>
+        <div style="color: #8EA29E; margin-top: 4px">Windows Server 2025 Standard, Server Core, domain controller for lab.example.org</div>
+      </div>
+      <button type="button" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF; font-weight: 600">Restart</button>
+      <button type="button" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 1px solid #5A3A31; background: transparent; color: #FFB8A3; font-weight: 600">Shut down</button>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px">
+      <div style="padding: 20px; border-radius: 24px; background: #121A19; border: 1px solid #22322F">
+        <div style="display: flex; justify-content: space-between"><span style="font-weight: 700">CPU</span><span style="font-size: 28px; font-weight: 800">7%</span></div>
+        <svg width="100%" height="90" viewBox="0 0 300 90" preserveAspectRatio="none" aria-hidden="true"><path class="s-line" d="M0 80 L20 76 L40 78 L60 70 L80 74 L100 60 L120 66 L140 72 L160 64 L180 70 L200 52 L220 68 L240 74 L260 70 L280 76 L300 72" fill="none" stroke="#7CF3E6" stroke-width="2.5"></path></svg>
+      </div>
+      <div style="padding: 20px; border-radius: 24px; background: #121A19; border: 1px solid #22322F">
+        <div style="display: flex; justify-content: space-between"><span style="font-weight: 700">Memory</span><span style="font-size: 28px; font-weight: 800">3.1 GB</span></div>
+        <svg width="100%" height="90" viewBox="0 0 300 90" preserveAspectRatio="none" aria-hidden="true"><path class="s-line" d="M0 46 L30 45 L60 47 L90 44 L120 44 L150 42 L180 43 L210 41 L240 42 L270 40 L300 41" fill="none" stroke="#FFB8A3" stroke-width="2.5"></path></svg>
+      </div>
+      <div style="padding: 20px; border-radius: 24px; background: #121A19; border: 1px solid #22322F">
+        <div style="display: flex; justify-content: space-between"><span style="font-weight: 700">Network</span><span style="font-size: 28px; font-weight: 800">1.2 Mb/s</span></div>
+        <svg width="100%" height="90" viewBox="0 0 300 90" preserveAspectRatio="none" aria-hidden="true"><path class="s-line" d="M0 84 L25 70 L50 82 L75 60 L100 78 L125 40 L150 74 L175 66 L200 80 L225 58 L250 76 L275 70 L300 82" fill="none" stroke="#B9C9C6" stroke-width="2.5"></path></svg>
+      </div>
+    </div>
+    <section style="padding: 20px; border-radius: 24px; background: #121A19; border: 1px solid #22322F">
+      <h2 style="margin: 0 0 12px; font-size: 18px">Key services</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px">
+        <div style="padding: 14px; border-radius: 16px; background: #1A2725; display: flex; align-items: center; gap: 10px"><span style="width: 10px; height: 10px; border-radius: 5px; background: #7CF3E6"></span>Active Directory Domain Services</div>
+        <div style="padding: 14px; border-radius: 16px; background: #1A2725; display: flex; align-items: center; gap: 10px"><span style="width: 10px; height: 10px; border-radius: 5px; background: #7CF3E6"></span>DNS Server</div>
+        <div style="padding: 14px; border-radius: 16px; background: #1A2725; display: flex; align-items: center; gap: 10px"><span style="width: 10px; height: 10px; border-radius: 5px; background: #7CF3E6"></span>TempDesk Agent</div>
+        <div style="padding: 14px; border-radius: 16px; background: #1A2725; display: flex; align-items: center; gap: 10px"><span style="width: 10px; height: 10px; border-radius: 5px; background: #FFB8A3"></span>Windows Update: 3 updates ready</div>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

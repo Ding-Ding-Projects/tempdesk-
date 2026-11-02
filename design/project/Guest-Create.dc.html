@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Create a sign-in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#0B1110}
+a{color:#7CF3E6}a:hover{color:#B6FFF6}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.g-rise{animation:rise .7s cubic-bezier(.2,.9,.25,1) both}.g-d1{animation-delay:.08s}.g-d2{animation-delay:.16s}
+@media (prefers-reduced-motion: reduce){.g-rise{animation:none}}
+.g-h1{font-size:clamp(36px,7vw,56px)}
+</style>
+</helmet>
+<div style="font-family: 'Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background: #0B1110; color: #E8F1EF; min-height: 100vh; display: flex; flex-direction: column">
+  <header style="max-width: 1040px; width: 100%; box-sizing: border-box; margin: 0 auto; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between">
+    <span style="display: flex; gap: 10px; align-items: center; font-weight: 700; font-size: 18px">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="4" width="28" height="20" rx="7" fill="#7CF3E6"></rect><rect x="11" y="25.5" width="10" height="3" rx="1.5" fill="#7CF3E6"></rect><circle cx="16" cy="14" r="5" fill="#0B1110"></circle></svg>
+      Maple Library
+    </span>
+    <button type="button" aria-label="Settings" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #22322F; background: transparent; color: #E8F1EF; display: flex; align-items: center; justify-content: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 8.6 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 4.6 15H4.5a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 6 9.4l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 11 4.6V4.5a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.6 1.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.6 1.6 0 0 0 19.4 11h.1a2 2 0 1 1 0 4z"></path></svg>
+    </button>
+  </header>
+  <main style="flex: 1; max-width: 1040px; width: 100%; box-sizing: border-box; margin: 0 auto; padding: 24px 24px 64px; display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+    <div style="flex: 1 1 360px; min-width: 0; padding-top: 16px">
+      <h1 class="g-rise g-h1" style="margin: 0 0 16px; line-height: 1; letter-spacing: -0.03em; font-weight: 800">Need a computer?</h1>
+      <p class="g-rise g-d1" style="margin: 0; font-size: 18px; line-height: 1.55; color: #A9BBB8; max-width: 420px">Create a temporary sign-in. It is yours alone, and it is removed automatically when it expires.</p>
+    </div>
+    <form class="g-rise g-d2" style="flex: 1 1 420px; min-width: 0; padding: 28px; border-radius: 28px; background: #121A19; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 22px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <label for="dn" style="font-weight: 600">Your name <span style="color: #8EA29E; font-weight: 400">(optional)</span></label>
+        <input id="dn" type="text" placeholder="Shown on the sign-in screen" style="height: 52px; padding: 0 16px; border-radius: 14px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF; font-size: 16px">
+      </div>
+      <fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 10px">
+        <legend style="font-weight: 600; margin-bottom: 10px">How long do you need it?</legend>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+          <label style="min-height: 52px; padding: 0 16px; border-radius: 16px; border: 1px solid #22322F; display: flex; align-items: center; gap: 10px"><input type="radio" name="exp"> 1 hour</label>
+          <label style="min-height: 52px; padding: 0 16px; border-radius: 16px; border: 2px solid #7CF3E6; background: #13302C; display: flex; align-items: center; gap: 10px; font-weight: 700"><input type="radio" name="exp" checked> 4 hours</label>
+          <label style="min-height: 52px; padding: 0 16px; border-radius: 16px; border: 1px solid #22322F; display: flex; align-items: center; gap: 10px"><input type="radio" name="exp"> 1 day</label>
+          <label style="min-height: 52px; padding: 0 16px; border-radius: 16px; border: 1px solid #22322F; display: flex; align-items: center; gap: 10px"><input type="radio" name="exp"> 1 week</label>
+          <label style="grid-column: span 2; min-height: 52px; padding: 0 16px; border-radius: 16px; border: 1px solid #22322F; display: flex; align-items: center; gap: 10px"><input type="radio" name="exp"> Until I delete it</label>
+        </div>
+      </fieldset>
+      <button type="submit" style="height: 56px; border-radius: 28px; border: 0; background: #7CF3E6; color: #04201D; font-weight: 800; font-size: 17px">Create my sign-in</button>
+      <p style="margin: 0; font-size: 14px; color: #8EA29E; line-height: 1.5">Already have one? <a href="#">Check or delete my sign-in</a></p>
+    </form>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

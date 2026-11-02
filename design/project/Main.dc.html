@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TempDesk website</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#0B1110}
+a{color:#7CF3E6}a:hover{color:#B6FFF6}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes slidein{from{opacity:0;transform:translateX(60px) rotate(-1deg)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.9) translateY(10px)}70%{transform:scale(1.03)}100%{opacity:1;transform:none}}
+@keyframes tick{0%,100%{opacity:1}50%{opacity:.35}}
+.td-rise{animation:rise .8s cubic-bezier(.2,.9,.25,1) both}
+.td-d1{animation-delay:.08s}.td-d2{animation-delay:.16s}.td-d3{animation-delay:.24s}.td-d4{animation-delay:.32s}
+.td-window{animation:slidein 1s cubic-bezier(.2,.9,.25,1) .2s both}
+.td-pop{animation:pop .7s cubic-bezier(.2,.9,.25,1.3) .9s both}
+.td-live{animation:tick 1.6s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.td-rise,.td-window,.td-pop,.td-live{animation:none}}
+.td-h1{font-size:clamp(44px,8.5vw,76px)}
+.td-h2{font-size:clamp(32px,6vw,48px)}
+.td-stage{margin-right:-220px;height:520px}
+.td-sat{left:-48px;bottom:34px;width:300px}
+@media (max-width:760px){
+.td-stage{margin-right:-28px;height:430px}
+.td-sat{left:0;right:28px;bottom:-24px;width:auto}
+.td-bento{grid-template-columns:1fr!important}
+.td-bento>div{grid-column:auto!important;min-height:0!important}
+.td-big{font-size:28px!important}
+}
+</style>
+</helmet>
+<div style="font-family: 'Segoe UI Variable Display','Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background: #0B1110; color: #E8F1EF; min-height: 100vh; overflow: hidden">
+  <header style="max-width: 1240px; margin: 0 auto; padding: 22px 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px">
+    <a href="#top" aria-label="TempDesk home" style="display: flex; gap: 10px; align-items: center; text-decoration: none; color: #E8F1EF; font-weight: 700; font-size: 19px; letter-spacing: -0.01em">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="4" width="28" height="20" rx="7" fill="#7CF3E6"></rect><rect x="11" y="25.5" width="10" height="3" rx="1.5" fill="#7CF3E6"></rect><circle cx="16" cy="14" r="5" fill="#0B1110"></circle></svg>
+      TempDesk
+    </a>
+    <div style="display: flex; align-items: center; gap: 8px">
+      <a href="#docs" style="padding: 10px 16px; border-radius: 999px; text-decoration: none; color: #B9C9C6; font-weight: 600; font-size: 15px">Docs</a>
+      <a href="#deploy" style="padding: 11px 20px; border-radius: 999px; text-decoration: none; background: #E8F1EF; color: #0B1110; font-weight: 700; font-size: 15px">Get started</a>
+    </div>
+  </header>
+
+  <section id="top" style="max-width: 1240px; margin: 0 auto; padding: 56px 28px 0; display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+    <div style="flex: 1 1 440px; min-width: 0; padding-top: 24px">
+      <p class="td-rise" style="margin: 0 0 22px; display: inline-flex; gap: 8px; align-items: center; padding: 7px 14px 7px 10px; border-radius: 999px; background: #13201E; border: 1px solid #22322F; color: #9FB3AF; font-size: 14px; font-weight: 600"><span class="td-live" style="width: 8px; height: 8px; border-radius: 4px; background: #7CF3E6"></span>Windows Server 2025 Core or a Samba container</p>
+      <h1 class="td-rise td-d1 td-h1" style="margin: 0 0 22px; line-height: .98; letter-spacing: -0.035em; font-weight: 800">Shared computers.<br><span style="color: #7CF3E6">Disposable</span> sign-ins.</h1>
+      <p class="td-rise td-d2" style="margin: 0 0 34px; max-width: 520px; font-size: 20px; line-height: 1.55; color: #A9BBB8">People create their own temporary account, use the PC as a normal user, and TempDesk signs them out and erases everything when time is up.</p>
+      <div class="td-rise td-d3" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+        <a href="#deploy" style="padding: 16px 28px; border-radius: 999px; background: #7CF3E6; color: #04201D; text-decoration: none; font-weight: 800; font-size: 17px">Deploy in one go</a>
+        <a href="#how" style="padding: 16px 22px; border-radius: 999px; color: #E8F1EF; text-decoration: none; font-weight: 700; font-size: 17px; border: 1px solid #2A3B38">See how it works</a>
+      </div>
+    </div>
+
+    <div class="td-stage" style="flex: 1 1 560px; min-width: 0; position: relative">
+      <div class="td-window" style="position: absolute; left: 0; top: 0; right: 0; bottom: -40px; border-radius: 22px 0 0 22px; background: #121A19; border: 1px solid #22322F; border-right: 0; box-shadow: 0 40px 120px rgba(0,0,0,.6); overflow: hidden; display: flex">
+        <div style="width: 72px; background: #0F1716; border-right: 1px solid #1D2A28; display: flex; flex-direction: column; align-items: center; gap: 14px; padding-top: 22px">
+          <span style="width: 40px; height: 32px; border-radius: 16px; background: #1F3A36"></span>
+          <span style="width: 22px; height: 22px; border-radius: 6px; background: #22322F"></span>
+          <span style="width: 22px; height: 22px; border-radius: 6px; background: #22322F"></span>
+          <span style="width: 22px; height: 22px; border-radius: 6px; background: #22322F"></span>
+        </div>
+        <div style="flex: 1; padding: 26px 30px; display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <span style="font-size: 20px; font-weight: 700">Guests</span>
+            <span style="padding: 8px 14px; border-radius: 999px; background: #7CF3E6; color: #04201D; font-weight: 700; font-size: 13px">New sign-in</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+            <div style="padding: 16px; border-radius: 16px; background: #172220"><div style="font-size: 12px; color: #8EA29E">Active now</div><div style="font-size: 30px; font-weight: 800">24</div></div>
+            <div style="padding: 16px; border-radius: 16px; background: #172220"><div style="font-size: 12px; color: #8EA29E">Expiring today</div><div style="font-size: 30px; font-weight: 800">9</div></div>
+            <div style="padding: 16px; border-radius: 16px; background: #172220"><div style="font-size: 12px; color: #8EA29E">Removed this week</div><div style="font-size: 30px; font-weight: 800">131</div></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px; border-radius: 16px; overflow: hidden">
+            <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: #1A2725"><span style="width: 30px; height: 30px; border-radius: 15px; background: #2D4642"></span><span style="font-family: 'Cascadia Mono',Consolas,monospace; font-weight: 700">guest-k7m2qp</span><span style="margin-left: auto; padding: 5px 10px; border-radius: 999px; background: #3A2620; color: #FFB8A3; font-size: 12px; font-weight: 700">12 min left</span></div>
+            <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: #151F1E"><span style="width: 30px; height: 30px; border-radius: 15px; background: #22322F"></span><span style="height: 9px; width: 140px; border-radius: 5px; background: #263634"></span><span style="margin-left: auto; height: 9px; width: 60px; border-radius: 5px; background: #263634"></span></div>
+            <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: #151F1E"><span style="width: 30px; height: 30px; border-radius: 15px; background: #22322F"></span><span style="height: 9px; width: 110px; border-radius: 5px; background: #263634"></span><span style="margin-left: auto; height: 9px; width: 60px; border-radius: 5px; background: #263634"></span></div>
+            <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: #151F1E"><span style="width: 30px; height: 30px; border-radius: 15px; background: #22322F"></span><span style="height: 9px; width: 160px; border-radius: 5px; background: #263634"></span><span style="margin-left: auto; height: 9px; width: 60px; border-radius: 5px; background: #263634"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="td-pop td-sat" style="position: absolute; padding: 20px; border-radius: 20px; background: #E8F1EF; color: #0B1110; box-shadow: 0 24px 60px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 10px">
+        <span style="font-size: 13px; font-weight: 700; color: #3D4F4C">Your sign-in</span>
+        <span style="font-family: 'Cascadia Mono',Consolas,monospace; font-size: 20px; font-weight: 800">LAB\guest-k7m2qp</span>
+        <span style="font-family: 'Cascadia Mono',Consolas,monospace; font-size: 20px; font-weight: 800; letter-spacing: .04em">Rw7#tLp9Kq2+mV</span>
+        <span style="align-self: flex-start; padding: 6px 12px; border-radius: 999px; background: #0B1110; color: #7CF3E6; font-size: 13px; font-weight: 700">Ends 6:30 PM</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="how" style="max-width: 1240px; margin: 0 auto; padding: 110px 28px 0">
+    <div class="td-bento" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px">
+      <div class="td-rise" style="grid-column: span 4; min-height: 230px; padding: 30px; border-radius: 28px; background: #7CF3E6; color: #04201D; display: flex; flex-direction: column; justify-content: space-between">
+        <span style="font-size: 14px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase">Admin console</span>
+        <span class="td-big" style="font-size: 38px; font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; max-width: 620px">Every directory object, every Group Policy setting, the server itself. In a browser.</span>
+      </div>
+      <div class="td-rise td-d1" style="grid-column: span 2; min-height: 230px; padding: 30px; border-radius: 28px; background: #16211F; border: 1px solid #22322F; display: flex; flex-direction: column; justify-content: space-between">
+        <span style="font-size: 64px; font-weight: 800; letter-spacing: -0.04em">0</span>
+        <span style="color: #A9BBB8; font-size: 17px; line-height: 1.45">administrator rights for guests. Standard users with an app allowlist.</span>
+      </div>
+      <div class="td-rise td-d2" style="grid-column: span 2; min-height: 200px; padding: 28px; border-radius: 28px; background: #16211F; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 10px">
+        <span style="font-size: 20px; font-weight: 700">Preset PCs</span>
+        <span style="color: #A9BBB8; line-height: 1.5">Wi-Fi, Chrome, VS Code, Git and AI tools ready before anyone signs in.</span>
+      </div>
+      <div class="td-rise td-d3" style="grid-column: span 2; min-height: 200px; padding: 28px; border-radius: 28px; background: #16211F; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 10px">
+        <span style="font-size: 20px; font-weight: 700">Apps in the browser</span>
+        <span style="color: #A9BBB8; line-height: 1.5">Stream published apps to any tab, or download a Remote Desktop file.</span>
+      </div>
+      <div class="td-rise td-d4" style="grid-column: span 2; min-height: 200px; padding: 28px; border-radius: 28px; background: #FFB8A3; color: #2B0C03; display: flex; flex-direction: column; gap: 10px">
+        <span style="font-size: 20px; font-weight: 800">Gone on time</span>
+        <span style="line-height: 1.5">A warning, a sign-out, then the account and profile are deleted.</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="deploy" style="max-width: 1240px; margin: 0 auto; padding: 110px 28px 0; display: flex; flex-wrap: wrap; gap: 14px">
+    <h2 class="td-h2" style="flex: 1 1 100%; margin: 0 0 14px; letter-spacing: -0.03em">Pick your domain controller</h2>
+    <div style="flex: 1 1 420px; padding: 32px; border-radius: 28px; background: #16211F; border: 1px solid #2E4642; display: flex; flex-direction: column; gap: 14px">
+      <span style="align-self: flex-start; padding: 6px 12px; border-radius: 999px; background: #1F3A36; color: #7CF3E6; font-size: 13px; font-weight: 700">Recommended</span>
+      <h3 style="margin: 0; font-size: 28px">Windows Server 2025 Core</h3>
+      <p style="margin: 0; color: #A9BBB8; line-height: 1.55; font-size: 17px">Unattended install media for VMware or bare metal, then the Deployer finishes everything over the network. No desktop on the server.</p>
+    </div>
+    <div style="flex: 1 1 420px; padding: 32px; border-radius: 28px; background: #16211F; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 14px">
+      <span style="align-self: flex-start; padding: 6px 12px; border-radius: 999px; background: #3A2620; color: #FFB8A3; font-size: 13px; font-weight: 700">No Windows Server license</span>
+      <h3 style="margin: 0; font-size: 28px">TempDesk Lite</h3>
+      <p style="margin: 0; color: #A9BBB8; line-height: 1.55; font-size: 17px">A Samba 4 domain controller in Docker on a Linux host, deployed over SSH from the same Deployer.</p>
+    </div>
+  </section>
+
+  <section id="docs" style="max-width: 1240px; margin: 0 auto; padding: 110px 28px 90px; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-end; justify-content: space-between">
+    <h2 class="td-h2" style="margin: 0; letter-spacing: -0.03em; max-width: 680px">Open source. Read the guide, then deploy.</h2>
+    <a href="https://github.com/Ding-Ding-Projects/tempdesk-" style="padding: 16px 28px; border-radius: 999px; background: #E8F1EF; color: #0B1110; text-decoration: none; font-weight: 800; font-size: 17px">View on GitHub</a>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1640}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
