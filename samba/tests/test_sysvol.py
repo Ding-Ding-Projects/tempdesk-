@@ -171,7 +171,7 @@ def test_admx_parse_and_apply(admin, app):
     assert [p["name"] for p in pols] == ["Policy with elements", "Simple policy"]
     we = next(p for p in pols if p["id"] == "Test.Policies:WithEls")
     assert [e["label"] for e in we["elements"]] == ["Number", "Mode", "Apps"]
-    assert we["elements"][1]["items"][1]["label"] == "B"
+    assert we["elements"][1]["items"][1]["label"] == "Choice B"
 
     g = _gpo(admin)
     url = f"/gpo/{g['id']}/admx/Test.Policies:Simple"

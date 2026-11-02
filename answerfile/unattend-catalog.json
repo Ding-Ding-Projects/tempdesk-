@@ -6043,6 +6043,7 @@
            }
           ],
           "default": "true",
+          "itemPath": "DisplayQuickPick",
           "help": "R2, Windows Server 2012 This setting has been deprecated in Windows 8.1.",
           "deprecated": true,
           "doc": "ff715589(v=win.10)",
@@ -6066,6 +6067,7 @@
            }
           ],
           "default": "true",
+          "itemPath": "ShowTopResult",
           "help": "Whether the TopResult feature is used with search requests in Windows Internet Explorer.",
           "doc": "hh825460(v=win.10)",
           "deprecated": true,
@@ -6079,6 +6081,7 @@
            "specialize"
           ],
           "maxLength": 2083,
+          "itemPath": "TopResultURL",
           "help": "The complete URL of the page that shows the TopResult search results from a search provider in Windows Internet Explorer.",
           "doc": "hh825479(v=win.10)",
           "deprecated": true,

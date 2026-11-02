@@ -238,6 +238,11 @@ Describe 'Remoting helpers' {
     }
     It 'quotes shell arguments for the remote side' {
         ConvertTo-TdShellQuote "it's" | Should -BeExactly "'it'\''s'"
+        ConvertTo-TdWindowsArg 'plain' | Should -BeExactly 'plain'
+        ConvertTo-TdWindowsArg 'a b' | Should -BeExactly '"a b"'
+        ConvertTo-TdWindowsArg 'say "hi"' | Should -BeExactly '"say \"hi\""'
+        ConvertTo-TdWindowsArg 'C:\dir with space\' | Should -BeExactly '"C:\dir with space\\"'
+        ConvertTo-TdWindowsArg '' | Should -BeExactly '""'
         Test-TdSshTarget -User 'ubuntu' -HostName '192.168.1.5' | Should -BeTrue
         Test-TdSshTarget -User 'bad user' -HostName 'h' | Should -BeFalse
         (Get-TdSshArgs ([pscustomobject]@{ user = 'u'; host = 'h'; port = 2222 })) -join ' ' | Should -Match 'BatchMode=yes.*-p 2222'

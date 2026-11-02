@@ -12,9 +12,7 @@ Environment (see .env.example):
   ADMIN_PASSWORD_FILE   file with the Administrator password (default /run/secrets/admin_password)
 """
 
-import base64
 import os
-import secrets
 import shutil
 import socket
 import subprocess

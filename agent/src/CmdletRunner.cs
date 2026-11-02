@@ -47,6 +47,13 @@ namespace TempDesk.Agent
             new Dictionary<string, CmdletInfo>(StringComparer.OrdinalIgnoreCase);
         private bool _catalogLoaded;
 
+        // Every installed module's commands, for the elevated scope=all runner.
+        // Loaded lazily on first use (it can take several seconds) and cached.
+        private readonly Dictionary<string, CmdletInfo> _allCmdlets =
+            new Dictionary<string, CmdletInfo>(StringComparer.OrdinalIgnoreCase);
+        private bool _allLoaded;
+        private readonly object _allLock = new object();
+
         public PowerShellHost()
         {
             InitialSessionState iss = InitialSessionState.CreateDefault2();
@@ -139,6 +146,71 @@ namespace TempDesk.Agent
             }
         }
 
+        /// <summary>
+        /// Builds the scope=all catalog once: every cmdlet and function from
+        /// every installed module (module autoloading makes them available).
+        /// </summary>
+        public void LoadAllCatalog()
+        {
+            lock (_allLock)
+            {
+                if (_allLoaded)
+                {
+                    return;
+                }
+                using (PowerShell ps = PowerShell.Create())
+                {
+                    ps.RunspacePool = _pool;
+                    ps.AddCommand("Get-Command")
+                      .AddParameter("CommandType", "Cmdlet,Function");
+                    Collection<PSObject> results = ps.Invoke();
+                    foreach (PSObject o in results)
+                    {
+                        CmdletInfo info = BuildInfo(o);
+                        if (info != null && !string.IsNullOrEmpty(info.Name) && !_allCmdlets.ContainsKey(info.Name))
+                        {
+                            _allCmdlets[info.Name] = info;
+                        }
+                    }
+                }
+                _allLoaded = true;
+            }
+        }
+
+        public bool IsAllowedAll(string name)
+        {
+            LoadAllCatalog();
+            lock (_allLock)
+            {
+                return _allCmdlets.ContainsKey(name);
+            }
+        }
+
+        public CmdletInfo LookupAll(string name)
+        {
+            lock (_allLock)
+            {
+                CmdletInfo info;
+                return _allCmdlets.TryGetValue(name, out info) ? info : null;
+            }
+        }
+
+        public List<CmdletInfo> CatalogAll()
+        {
+            LoadAllCatalog();
+            lock (_allLock)
+            {
+                return new List<CmdletInfo>(_allCmdlets.Values);
+            }
+        }
+
+        /// <summary>Metadata from the allowlist, falling back to the scope=all catalog.</summary>
+        private CmdletInfo LookupAny(string name)
+        {
+            CmdletInfo info = Lookup(name);
+            return info != null ? info : LookupAll(name);
+        }
+
         public bool IsAllowed(string name)
         {
             lock (_lock)
@@ -217,7 +289,7 @@ namespace TempDesk.Agent
                 }
                 if (addWhatIf)
                 {
-                    CmdletInfo info = Lookup(command);
+                    CmdletInfo info = LookupAny(command);
                     if (info != null && info.ParamNames.Contains("WhatIf"))
                     {
                         ps.AddParameter("WhatIf");
@@ -261,7 +333,7 @@ namespace TempDesk.Agent
         /// </summary>
         private void AddParameter(PowerShell ps, string command, string name, object value)
         {
-            CmdletInfo info = Lookup(command);
+            CmdletInfo info = LookupAny(command);
             bool isSwitch = info != null && info.SwitchParams.Contains(name);
             if (isSwitch)
             {

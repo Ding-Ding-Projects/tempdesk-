@@ -16,6 +16,7 @@ namespace TempDesk.Agent
     public class GpoService : IAgentModule
     {
         private readonly AgentConfig _config;
+        private Router _router;
 
         public GpoService(AgentConfig config)
         {
@@ -29,13 +30,14 @@ namespace TempDesk.Agent
                 return new string[]
                 {
                     "gpo", "gpo-registry", "gpo-preferences", "gpo-permissions",
-                    "gpo-backup", "wmifilters", "cmdlets"
+                    "gpo-backup", "wmifilters", "cmdlets", "cmdlets-all"
                 };
             }
         }
 
         public void Register(Router router)
         {
+            _router = router;
             router.Map("GET", "gpo", true, false, ListGpos);
             router.Map("POST", "gpo", true, false, CreateGpo);
             router.Map("GET", "gpo/{id}", true, false, GetGpo);
@@ -666,10 +668,34 @@ namespace TempDesk.Agent
         // Cmdlet runner
         // ---------------------------------------------------------------
 
+        /// <summary>
+        /// scope=all (every installed module) is the escape hatch for anything
+        /// without its own page. It needs a valid X-TempDesk-Elevation token bound
+        /// to the acting user, checked exactly like requiresElevation routes.
+        /// </summary>
+        private void RequireElevation(RequestContext ctx)
+        {
+            string token = ctx.Request != null ? ctx.Request.Headers["X-TempDesk-Elevation"] : null;
+            if (_router == null || _router.Auth == null || !_router.Auth.IsElevated(token, ctx.ActingUser))
+            {
+                throw AgentException.Forbidden("This action needs a fresh password confirmation (POST /auth/confirm).");
+            }
+        }
+
+        private static bool IsScopeAll(string scope)
+        {
+            return string.Equals(scope, "all", StringComparison.OrdinalIgnoreCase);
+        }
+
         private object ListCmdlets(RequestContext ctx)
         {
+            bool all = IsScopeAll(ctx.Query["scope"]);
+            if (all)
+            {
+                RequireElevation(ctx);
+            }
             List<object> result = new List<object>();
-            foreach (CmdletInfo info in Ps(ctx).Catalog())
+            foreach (CmdletInfo info in (all ? Ps(ctx).CatalogAll() : Ps(ctx).Catalog()))
             {
                 Dictionary<string, object> row = new Dictionary<string, object>(StringComparer.Ordinal);
                 row["name"] = info.Name;
@@ -696,7 +722,16 @@ namespace TempDesk.Agent
         {
             Dictionary<string, object> body = ctx.BodyJson();
             string name = Json.RequireString(body, "name", 128);
-            if (!Ps(ctx).IsAllowed(name))
+            bool all = IsScopeAll(Json.GetString(body, "scope")) || IsScopeAll(ctx.Query["scope"]);
+            if (all)
+            {
+                RequireElevation(ctx);
+                if (!Ps(ctx).IsAllowedAll(name))
+                {
+                    throw AgentException.NotFound("No installed cmdlet or function named '" + name + "'.");
+                }
+            }
+            else if (!Ps(ctx).IsAllowed(name))
             {
                 throw AgentException.Forbidden("Cmdlet '" + name + "' is not in the ActiveDirectory or GroupPolicy allowlist.");
             }
@@ -706,7 +741,7 @@ namespace TempDesk.Agent
             bool whatIf = Json.GetBool(body, "whatIf", false);
 
             PowerShellHost.InvokeResult raw = Ps(ctx).InvokeRaw(name, parameters, whatIf);
-            ctx.Audit("cmdlet invoke", name);
+            ctx.Audit(all ? "cmdlet invoke (scope=all)" : "cmdlet invoke", name);
 
             Dictionary<string, object> result = new Dictionary<string, object>(StringComparer.Ordinal);
             List<object> output = new List<object>();

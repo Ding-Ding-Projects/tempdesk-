@@ -4,7 +4,6 @@ plus one real HTTP round trip through server.make_handler."""
 import datetime as dt
 import http.client
 import json
-import os
 import re
 import threading
 

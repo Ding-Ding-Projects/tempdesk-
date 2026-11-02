@@ -8,7 +8,6 @@ Only importable where python3-samba is installed (inside the image).
 from __future__ import annotations
 
 import base64
-import datetime as dt
 import json
 import os
 import re

@@ -57,8 +57,13 @@ report, so the Samba backend and member servers show only what they support.
   `X-TempDesk-Elevation` token) on top of the session, because the command text
   is the operator's own input run verbatim. The portal sends the person to the
   elevation page before the console page loads and before each session call.
-  The generic module runner (`/cmdlets?scope=all`) has the same requirement; it
-  rides on the existing cmdlet-runner routes and is not re-registered here.
+  The generic module runner (capability `cmdlets-all`) has the same
+  requirement: `GET /cmdlets?scope=all` lists every installed module's cmdlets
+  and functions (loaded once on first request, then cached), and
+  `POST /cmdlets/invoke` with `"scope":"all"` runs any of them. Both check the
+  `X-TempDesk-Elevation` token against the acting user exactly as
+  requiresElevation routes do, keep the destructive-verb `confirm` rule, and
+  still bind only through AddCommand/AddParameter.
 - **Audit.** Every admin call is written to the Windows event log with the
   acting user. Handlers add a specific entry naming the action and target
   (service name, path, task name, and for the console the full command text).
@@ -100,10 +105,11 @@ report, so the Samba backend and member servers show only what they support.
 - **Console sessions** expire after 20 minutes idle on the agent; the page shows
   a countdown and disables input when it lapses. A session belongs to the admin
   who opened it and cannot be used by another.
-- **Windows Update** uses the WUA COM API (`Microsoft.Update.Session`, search
-  `IsInstalled=0 and IsHidden=0`). Where the agent owner's WUA helper is not
-  present the available/installed lists come back empty rather than failing the
-  page.
+- **Windows Update** is not finished. The routes exist, but the native WUA COM
+  driver (`Microsoft.Update.Session`, search `IsInstalled=0 and IsHidden=0`,
+  STA thread, download and install as jobs) has not been written yet, so the
+  available and installed lists currently come back empty and install jobs do
+  not install anything.
 - **ACL writes** apply a full SDDL descriptor with `icacls /restore`; the SDDL
   is parsed in process first so a malformed descriptor is rejected before any
   change.

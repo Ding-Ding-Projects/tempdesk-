@@ -186,7 +186,7 @@ class AdmxStore:
             els = _child(p, "elements")
             if els is not None:
                 for e in els:
-                    pol["elements"].append(_parse_element(e, pol["key"], labels))
+                    pol["elements"].append(_parse_element(e, pol["key"], labels, text))
             self.policies[pid] = pol
 
     # ------------------------------------------------------------------
@@ -250,7 +250,7 @@ def _parse_list(el, default_key):
     return out
 
 
-def _parse_element(e, pkey, labels) -> dict:
+def _parse_element(e, pkey, labels, text=lambda v: v or "") -> dict:
     t = _local(e.tag)
     eid = e.get("id")
     base = {"id": eid, "type": t, "label": labels.get(eid, eid),
@@ -279,9 +279,7 @@ def _parse_element(e, pkey, labels) -> dict:
     elif t == "enum":
         items = []
         for i, it in enumerate(_children(e, "item")):
-            dn = it.get("displayName") or ""
-            m = re.match(r"^\$\(string\.([^)]+)\)$", dn)
-            items.append({"id": str(i), "label": m.group(1) if m else dn,
+            items.append({"id": str(i), "label": text(it.get("displayName")),
                           "_value": _parse_value(_child(it, "value")),
                           "_valueList": _parse_list(_child(it, "valueList"), base["key"])})
         base["items"] = items
@@ -291,11 +289,6 @@ def _parse_element(e, pkey, labels) -> dict:
         base["_explicit"] = e.get("explicitValue") == "true"
         base["_expandable"] = e.get("expandable") == "true"
     return base
-
-
-def resolve_enum_labels(store_strings: dict, policy: dict):
-    """Kept for API compatibility; enum labels are resolved at load time."""
-    return policy
 
 
 # ----------------------------------------------------------------------

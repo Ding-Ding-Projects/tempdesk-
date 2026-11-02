@@ -45,6 +45,24 @@ function ConvertTo-TdShellQuote {
     "'" + $Value.Replace("'", "'\''") + "'"
 }
 
+function ConvertTo-TdWindowsArg {
+    <# Quotes one argument for CommandLineToArgvW (works on Windows PowerShell 5.1 and 7). #>
+    param([AllowEmptyString()][string] $Value)
+    if ($Value -and $Value -notmatch '[\s"]') { return $Value }
+    $sb = New-Object System.Text.StringBuilder
+    [void]$sb.Append('"')
+    $bs = 0
+    foreach ($ch in $Value.ToCharArray()) {
+        if ($ch -eq '\') { $bs++; continue }
+        if ($ch -eq '"') { [void]$sb.Append('\' * ($bs * 2 + 1)); [void]$sb.Append('"'); $bs = 0; continue }
+        if ($bs) { [void]$sb.Append('\' * $bs); $bs = 0 }
+        [void]$sb.Append($ch)
+    }
+    if ($bs) { [void]$sb.Append('\' * ($bs * 2)) }
+    [void]$sb.Append('"')
+    $sb.ToString()
+}
+
 function Invoke-TdSsh {
     <#
     .SYNOPSIS
@@ -54,10 +72,10 @@ function Invoke-TdSsh {
     param([Parameter(Mandatory)] $Ssh, [Parameter(Mandatory)][string] $Command, [string] $InputText, [switch] $Quiet, [switch] $AllowFailure)
     $exe = Get-TdSshTool ssh
     $target = '{0}@{1}' -f $Ssh.user, $Ssh.host
-    $args = @(Get-TdSshArgs $Ssh) + @($target, $Command)
+    $argv = @(Get-TdSshArgs $Ssh) + @($target, $Command)
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = $exe
-    foreach ($x in $args) { [void]$psi.ArgumentList.Add($x) }
+    $psi.Arguments = (@($argv | ForEach-Object { ConvertTo-TdWindowsArg $_ })) -join ' '
     $psi.RedirectStandardInput = $true; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
     $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true
     $p = [System.Diagnostics.Process]::Start($psi)
@@ -81,8 +99,8 @@ function Invoke-TdSsh {
 function Copy-TdToRemote {
     param([Parameter(Mandatory)] $Ssh, [Parameter(Mandatory)][string[]] $LocalPath, [Parameter(Mandatory)][string] $RemoteDir)
     $exe = Get-TdSshTool scp
-    $args = @(Get-TdSshArgs $Ssh -Scp) + @('-r', '-q') + $LocalPath + @(('{0}@{1}:{2}' -f $Ssh.user, $Ssh.host, $RemoteDir))
-    & $exe @args
+    $argv = @(Get-TdSshArgs $Ssh -Scp) + @('-r', '-q') + $LocalPath + @(('{0}@{1}:{2}' -f $Ssh.user, $Ssh.host, $RemoteDir))
+    & $exe @argv
     if ($LASTEXITCODE -ne 0) { throw "scp failed with exit code $LASTEXITCODE." }
 }
 
@@ -174,4 +192,4 @@ function Invoke-TdLiteDeploy {
     }
 }
 
-Export-ModuleMember -Function Get-TdSshTool, Test-TdSshTarget, Get-TdSshArgs, ConvertTo-TdShellQuote, Invoke-TdSsh, Copy-TdToRemote, New-TdSshKey, New-TdSambaEnv, Invoke-TdLiteDeploy
+Export-ModuleMember -Function ConvertTo-TdWindowsArg, Get-TdSshTool, Test-TdSshTarget, Get-TdSshArgs, ConvertTo-TdShellQuote, Invoke-TdSsh, Copy-TdToRemote, New-TdSshKey, New-TdSambaEnv, Invoke-TdLiteDeploy
