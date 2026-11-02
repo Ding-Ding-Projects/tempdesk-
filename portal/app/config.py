@@ -57,6 +57,7 @@ class Settings:
     tls_cert_file: str | None = None
     tls_key_file: str | None = None
     data_dir: str = "/data"
+    state_dir: str = ""
 
     @property
     def agent_plain_http(self) -> bool:
@@ -121,4 +122,5 @@ class Settings:
             tls_cert_file=(env.get("TLS_CERT_FILE") or "").strip() or None,
             tls_key_file=(env.get("TLS_KEY_FILE") or "").strip() or None,
             data_dir=(env.get("PORTAL_DATA_DIR") or "/data").strip(),
+            state_dir=(env.get("PORTAL_STATE_DIR") or env.get("PORTAL_DATA_DIR") or "/data").strip(),
         )

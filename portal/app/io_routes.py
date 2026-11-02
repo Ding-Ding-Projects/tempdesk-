@@ -35,11 +35,10 @@ from .admin_routes import (
 )
 from .agent_client import AgentError
 from .history import diff, settings_text
-from .security import OneTimeStore, Session
+from .security import Session
 from .web import agent_message, flash_text, render, require_admin
 
 router = APIRouter()
-PENDING = OneTimeStore(ttl_seconds=600, max_items=200)
 MAX_IMPORT = 2 * 1024 * 1024
 MAX_ROWS = 2000
 SAM_RE = re.compile(r"^[A-Za-z0-9._-]{1,20}$")
@@ -100,7 +99,7 @@ async def settings_import(request: Request, sess: Session = Depends(require_admi
     current = await call(request, sess, "GET", "/settings") or {}
     merged = {**current, **{k: v for k, v in doc.items() if k in settings_schema.FIELD_NAMES}}
     clean, errors = settings_schema.validate_settings(merged)
-    pending_id = PENDING.put({"kind": "settings", "doc": clean, "user": _user(sess)}) if not errors else None
+    pending_id = request.app.state.pending.put({"kind": "settings", "doc": clean, "user": _user(sess)}) if not errors else None
     changes = [(k, current.get(k), clean.get(k)) for k in settings_schema.FIELD_NAMES if current.get(k) != clean.get(k)]
     return await render(request, "admin/import_preview.html", {
         "title_key": "Import settings", "errors": errors, "unknown": unknown, "changes": changes,
@@ -111,7 +110,7 @@ async def settings_import(request: Request, sess: Session = Depends(require_admi
 @router.post("/settings/import/apply", dependencies=CSRF)
 async def settings_import_apply(request: Request, sess: Session = Depends(require_admin)):
     form = await form_of(request)
-    item = PENDING.pop(form.get("pending"))
+    item = request.app.state.pending.pop(form.get("pending"))
     if not item or item.get("kind") != "settings":
         return fail(request, "/settings", "That import has expired. Upload the file again.")
     clean, errors = settings_schema.validate_settings(item["doc"])
@@ -189,7 +188,7 @@ async def wifi_import(request: Request, sess: Session = Depends(require_admin)):
             errors.append(f"File {n}: {exc if isinstance(exc, ValueError) and not isinstance(exc, UnicodeDecodeError) else 'not valid XML'}")
     if errors:
         return fail(request, "/wifi", "Nothing was imported. " + " ".join(errors[:5]))
-    pending = PENDING.put({"kind": "wifi", "profiles": profiles})
+    pending = request.app.state.pending.put({"kind": "wifi", "profiles": profiles})
     rows = [{"ssid": p["ssid"], "auth": p["auth"], "hidden": p["hidden"], "autoConnect": p["autoConnect"], "key": "set" if p["key"] else ""} for p in profiles]
     return await render(request, "admin/import_preview.html", {
         "title_key": "Import Wi-Fi profiles", "errors": {}, "unknown": [], "rows": rows,
@@ -200,7 +199,7 @@ async def wifi_import(request: Request, sess: Session = Depends(require_admin)):
 @router.post("/wifi/import/apply", dependencies=CSRF)
 async def wifi_import_apply(request: Request, sess: Session = Depends(require_admin)):
     form = await form_of(request)
-    item = PENDING.pop(form.get("pending"))
+    item = request.app.state.pending.pop(form.get("pending"))
     if not item or item.get("kind") != "wifi":
         return fail(request, "/wifi", "That import has expired. Upload the file again.")
     results = []
@@ -466,7 +465,7 @@ async def import_preview(request: Request, sess: Session = Depends(require_admin
                 r["exists"] = True
                 r["problems"].append("an account with this name already exists")
     valid = [r for r in rows if not r["problems"]]
-    pending = PENDING.put({"kind": "csv-" + kind, "rows": valid, "ou": ou}) if valid and not errors else None
+    pending = request.app.state.pending.put({"kind": "csv-" + kind, "rows": valid, "ou": ou}) if valid and not errors else None
     return await render(request, "admin/import_csv_preview.html", {
         "kind": kind, "ou": ou, "rows": [_public_row(r) for r in rows], "errors": errors,
         "valid": len(valid), "invalid": len(rows) - len(valid), "pending": pending}, headers=NO_STORE)
@@ -481,7 +480,7 @@ def _bool(v: str | None, default: bool) -> bool:
 @router.post("/import/apply", dependencies=CSRF)
 async def import_apply(request: Request, sess: Session = Depends(require_admin)):
     form = await form_of(request)
-    item = PENDING.pop(form.get("pending"))
+    item = request.app.state.pending.pop(form.get("pending"))
     if not item or not str(item.get("kind", "")).startswith("csv-"):
         return fail(request, "/import", "That import has expired. Upload the file again.")
     results, created_pw = [], []

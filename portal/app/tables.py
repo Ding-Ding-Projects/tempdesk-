@@ -117,13 +117,24 @@ def table(
     if sort:
         rows.sort(key=lambda r: _sort_key(cell(r, sort)), reverse=direction == "desc")
     export = qp.get("export")
-    if export in ("csv", "json"):
+    if export in ("csv", "json", "xlsx"):
         data = [export_filter(r) if export_filter else r for r in rows]
         safe_name = "".join(c for c in filename if c.isalnum() or c in "-_") or "export"
         if export == "json":
             body = json.dumps(data, ensure_ascii=False, indent=2, default=str)
             return Response(body, media_type="application/json",
                             headers={"Content-Disposition": f'attachment; filename="{safe_name}.json"'})
+        if export == "xlsx":
+            from .xlsx import workbook
+
+            cols = ([(key, key)] if key and key not in keys else []) + list(columns)
+
+            def xv(v):
+                return v if isinstance(v, (int, float, bool)) else text(v)
+
+            body = workbook([c[1] for c in cols], [[xv(cell(r, c[0])) for c in cols] for r in rows], safe_name)
+            return Response(body, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            headers={"Content-Disposition": f'attachment; filename="{safe_name}.xlsx"'})
         buf = io.StringIO()
         w = csv.writer(buf)
         cols = ([(key, key)] if key and key not in keys else []) + list(columns)

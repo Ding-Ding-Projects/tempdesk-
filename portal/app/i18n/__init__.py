@@ -11,8 +11,9 @@ Catalog layout::
     {"strings": {"<English>": "<translation>"},
      "fun": {"<English>": {"2": "...", "3": "..."}}}
 
-"fun" holds playful variants for non-critical copy only. Errors and security
-text never get fun variants.
+"fun" holds variants for levels 1 (warm), 2 (friendly) and 3 (playful, with
+emoji) for non-critical copy only. Errors and security text never get fun
+variants (the test suite checks this), and callers pass serious=True for them.
 """
 
 from __future__ import annotations
@@ -45,10 +46,10 @@ def reload() -> None:
 
 def lookup(lang: str, key: str, fun: int = 0) -> str:
     cat = CATALOGS.get(lang) or CATALOGS["en"]
-    if fun >= 2:
+    if fun >= 1:
         variants = cat.get("fun", {}).get(key)
         if isinstance(variants, dict):
-            for level in range(fun, 1, -1):
+            for level in range(fun, 0, -1):
                 v = variants.get(str(level))
                 if v:
                     return v

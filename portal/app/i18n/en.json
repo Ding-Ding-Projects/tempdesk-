@@ -817,31 +817,189 @@
   "{done} done, {failed} failed.": "{done} done, {failed} failed.",
   "{done} done.": "{done} done.",
   "{name}: names must match letters, digits, dot, dash or underscore and end in .ps1 or .cmd.": "{name}: names must match letters, digits, dot, dash or underscore and end in .ps1 or .cmd.",
-  "{shown} of {total}": "{shown} of {total}"
+  "{shown} of {total}": "{shown} of {total}",
+  "Excel": "Excel"
  },
  "fun": {
-  "Your sign-in is ready": {
-   "2": "Your sign-in is ready!",
-   "3": "Ta-da! Your sign-in is ready 🎉"
-  },
   "Need a computer?": {
+   "1": "Need a computer? Easy.",
    "2": "Need a computer? We have you covered.",
    "3": "Need a computer? Say no more 💻"
   },
+  "Create my sign-in": {
+   "1": "Create my sign-in now",
+   "2": "Let me in",
+   "3": "Let me in! 🚀"
+  },
+  "Your sign-in is ready": {
+   "1": "Your sign-in is ready.",
+   "2": "Your sign-in is ready!",
+   "3": "Ta-da! Your sign-in is ready 🎉"
+  },
+  "How long do you need it?": {
+   "1": "How long will you need it?",
+   "2": "How long are you staying?",
+   "3": "How long is the adventure? ⏳"
+  },
   "Hello, {name}": {
+   "1": "Good to see you, {name}",
    "2": "Hi there, {name}!",
    "3": "Welcome back, {name} 👋"
   },
   "No guest accounts yet": {
+   "1": "No guest accounts yet.",
    "2": "No guests yet, all quiet.",
    "3": "No guests yet. Tumbleweeds 🌵"
   },
+  "No activity yet": {
+   "1": "Nothing has happened yet.",
+   "2": "All quiet for now.",
+   "3": "Crickets so far 🦗"
+  },
+  "No notifications yet": {
+   "1": "Nothing new.",
+   "2": "Nothing new, all caught up.",
+   "3": "No notifications yet. Enjoy the calm ☕"
+  },
   "Setup complete.": {
+   "1": "Setup is done.",
    "2": "Setup complete. Nice work!",
    "3": "Setup complete. High five ✋"
   },
-  "No notifications yet": {
-   "3": "No notifications yet. Enjoy the calm ☕"
+  "Setup is complete. The guest portal is ready for visitors.": {
+   "1": "Setup is done. Visitors can now use the guest portal.",
+   "2": "All set! The guest portal is ready for visitors.",
+   "3": "All set! Doors open, visitors welcome 🚪✨"
+  },
+  "Settings saved.": {
+   "1": "Your settings are saved.",
+   "2": "Settings saved. Looking good!",
+   "3": "Settings saved. Chef's kiss 👌"
+  },
+  "Saved.": {
+   "1": "All saved.",
+   "2": "Saved!",
+   "3": "Saved! 💾"
+  },
+  "Copied": {
+   "1": "Copied to the clipboard",
+   "2": "Copied!",
+   "3": "Copied! 📋"
+  },
+  "Recent activity": {
+   "1": "What happened recently",
+   "2": "Lately around here",
+   "3": "The latest gossip 📰"
+  },
+  "Quick links": {
+   "1": "Handy links",
+   "2": "Shortcuts",
+   "3": "Shortcuts ⚡"
+  },
+  "The audit log is empty": {
+   "1": "Nothing in the audit log yet.",
+   "2": "The audit log is empty for now.",
+   "3": "The audit log is squeaky clean 🧼"
+  },
+  "No Wi-Fi profiles": {
+   "1": "No Wi-Fi profiles yet.",
+   "2": "No Wi-Fi profiles yet.",
+   "3": "No Wi-Fi yet. Offline life 📵"
+  },
+  "No scripts yet": {
+   "1": "No scripts yet.",
+   "2": "No scripts yet, a blank page.",
+   "3": "No scripts yet. A blank canvas 🎨"
+  },
+  "No backups yet": {
+   "1": "No backups yet.",
+   "2": "No backups yet.",
+   "3": "No backups yet. Living dangerously 😬"
+  },
+  "The allowlist is empty": {
+   "1": "The allowlist has no programs yet.",
+   "2": "The allowlist is empty for now.",
+   "3": "The allowlist is empty. Nobody gets in 🚫"
+  },
+  "This container is empty": {
+   "1": "Nothing is in this container.",
+   "2": "This container is empty.",
+   "3": "Nothing in here but dust 🕸️"
+  },
+  "No recorded actions": {
+   "1": "No actions recorded yet.",
+   "2": "Nothing to undo yet.",
+   "3": "Nothing to undo. Clean slate ✨"
+  },
+  "Check my sign-in": {
+   "1": "Check my sign-in",
+   "2": "How long have I got?",
+   "3": "How long have I got? ⏱️"
+  },
+  "See when your sign-in ends and whether it is still active.": {
+   "1": "See when your sign-in ends.",
+   "2": "Find out how much time you have left.",
+   "3": "Find out how much time is left on the clock ⏰"
+  },
+  "When you are finished, delete your sign-in. Your files on shared computers are removed with it.": {
+   "1": "Finished? Delete your sign-in. Your files on shared computers go with it.",
+   "2": "All done? Tidy up by deleting your sign-in. Your files on shared computers go with it.",
+   "3": "All done? Leave no trace 👣 Deleting your sign-in removes your files on shared computers too."
+  },
+  "Base64 tools": {
+   "1": "Base64 tools",
+   "2": "Base64 toolbox",
+   "3": "Base64 toolbox 🧰"
+  },
+  "Search everything": {
+   "1": "Search everything",
+   "2": "Find anything",
+   "3": "Find anything 🔎"
+  },
+  "First-run setup": {
+   "1": "First-run setup",
+   "2": "Getting started",
+   "3": "Let's get started 🏁"
+  },
+  "Open the dashboard": {
+   "1": "Go to the dashboard",
+   "2": "Take me to the dashboard",
+   "3": "Take me home 🏠"
+  },
+  "Documentation": {
+   "1": "Documentation",
+   "2": "Docs and guides",
+   "3": "The manual nobody reads 📖"
+  },
+  "Changelog": {
+   "1": "Changelog",
+   "2": "What's new",
+   "3": "What's new ✨"
+  },
+  "Personal wording applied": {
+   "1": "Personal wording applied.",
+   "2": "Your own words are in!",
+   "3": "Your own words are in! 🗣️"
+  },
+  "Pick a category on the left, or search all policies.": {
+   "1": "Pick a category on the left, or search.",
+   "2": "Choose a category or search for a policy.",
+   "3": "Pick a category or go hunting 🕵️"
+  },
+  "Run the cmdlet to see its output here.": {
+   "1": "Run the cmdlet and the output appears here.",
+   "2": "Hit Run and the results land here.",
+   "3": "Hit Run and watch the magic 🪄"
+  },
+  "Nothing decoded yet.": {
+   "1": "Nothing decoded so far.",
+   "2": "Nothing decoded yet.",
+   "3": "Nothing decoded yet. Feed me bytes 🍪"
+  },
+  "Dashboard": {
+   "1": "Dashboard",
+   "2": "Home base",
+   "3": "Home base 🏠"
   }
  }
 }

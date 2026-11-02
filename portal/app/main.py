@@ -24,6 +24,7 @@ from .security import (
     OneTimeStore,
     RateLimiter,
     SessionStore,
+    StateDB,
     SuperConfirm,
     is_https,
 )
@@ -68,6 +69,7 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
     async def lifespan(app: FastAPI):
         yield
         await app.state.agent.aclose()
+        app.state.db.close()
 
     app = FastAPI(title="TempDesk portal", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.settings = settings
@@ -75,11 +77,14 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
     app.state.csrf = Csrf(settings.session_secret)
     app.state.flash = Flash(settings.session_secret)
     app.state.confirm = SuperConfirm(settings.session_secret)
-    app.state.once = OneTimeStore(ttl_seconds=600)
-    app.state.create_limiter = RateLimiter(settings.create_limit, settings.create_window_seconds)
-    app.state.lookup_limiter = RateLimiter(settings.lookup_limit, settings.lookup_window_seconds)
-    app.state.login_limiter = RateLimiter(settings.login_limit, settings.login_window_seconds)
-    app.state.sessions = SessionStore(settings.session_secret)
+    db = StateDB(settings.state_dir, settings.session_secret if settings.mode == "admin" else None, settings.mode)
+    app.state.db = db
+    app.state.once = OneTimeStore(db, ttl_seconds=600, kind="once")
+    app.state.pending = OneTimeStore(db, ttl_seconds=600, max_items=200, kind="pending")
+    app.state.create_limiter = RateLimiter(db, "create", settings.create_limit, settings.create_window_seconds)
+    app.state.lookup_limiter = RateLimiter(db, "lookup", settings.lookup_limit, settings.lookup_window_seconds)
+    app.state.login_limiter = RateLimiter(db, "login", settings.login_limit, settings.login_window_seconds)
+    app.state.sessions = SessionStore(db, settings.session_secret)
     app.state.vocab = Vocabulary(settings.data_dir)
     app.state.history = History(settings.data_dir)
     app.state.journal = Journal(settings.data_dir)

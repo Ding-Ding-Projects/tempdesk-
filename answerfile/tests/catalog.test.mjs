@@ -105,7 +105,7 @@ test('setting shapes are consistent', () => {
         };
         for (const x of scope(li.settings)) assert.ok(x.itemPath && s.path + '/' + x.itemPath === x.path, `${where} itemPath of ${x.path}`);
       }
-      assert.ok(!/—/.test(s.help), `${where} help contains an em dash`);
+      assert.ok(!/\u2014/.test(s.help), `${where} help contains an em dash`);
     }
   }
 });

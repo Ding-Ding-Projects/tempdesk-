@@ -63,6 +63,7 @@
   <span class="subtle">{{ t('{shown} of {total}', shown=tv.rows|length, total=tv.total) }}</span>
   <a class="btn sm" href="{{ tv.url(export='csv') }}" download>{{ t('CSV') }}</a>
   <a class="btn sm" href="{{ tv.url(export='json') }}" download>{{ t('JSON') }}</a>
+  <a class="btn sm" href="{{ tv.url(export='xlsx') }}" download>{{ t('Excel') }}</a>
   <div class="regex-status subtle" id="re-{{ tv.id }}" data-regex-status aria-live="polite" style="flex-basis:100%">{% if regex_error %}<span class="error-text">{{ regex_error }}</span>{% endif %}</div>
 </form>
 {%- endmacro %}
