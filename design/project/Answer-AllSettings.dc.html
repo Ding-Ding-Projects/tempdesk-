@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>All answer file settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#0B1110}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.s-rise{animation:rise .55s cubic-bezier(.2,.9,.25,1) both}
+@media (prefers-reduced-motion: reduce){.s-rise{animation:none}}
+</style>
+</helmet>
+<div style="font-family: 'Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background: #0B1110; color: #E8F1EF; min-height: 100vh; padding: 20px 28px 40px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+    <h1 style="margin: 0; font-size: 28px; letter-spacing: -0.02em; flex: 1 1 auto">All settings</h1>
+    <span style="color: #8EA29E; font-size: 14px">14 settings set across 6 components</span>
+  </div>
+  <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+    <label for="cs" style="position: absolute; left: -9999px">Search settings</label>
+    <input id="cs" type="search" value="timezone" style="flex: 1 1 280px; height: 46px; padding: 0 16px; border-radius: 23px; border: 1px solid #2E4642; background: #121A19; color: #E8F1EF; font-size: 15px">
+    <button type="button" aria-label="Regular expression" style="width: 46px; height: 46px; border-radius: 23px; border: 1px solid #2E4642; background: transparent; color: #A9BBB8; font-family: Consolas, monospace; font-weight: 700">.*</button>
+    <span style="display: flex; gap: 6px; flex-wrap: wrap">
+      <span style="height: 36px; padding: 0 14px; border-radius: 18px; background: #1F3A36; color: #7CF3E6; display: flex; align-items: center; font-size: 13px; font-weight: 700">All passes</span>
+      <span style="height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid #22322F; color: #A9BBB8; display: flex; align-items: center; font-size: 13px">specialize</span>
+      <span style="height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid #22322F; color: #A9BBB8; display: flex; align-items: center; font-size: 13px">oobeSystem</span>
+      <span style="height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid #22322F; color: #A9BBB8; display: flex; align-items: center; font-size: 13px">Server</span>
+    </span>
+  </div>
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+    <nav aria-label="Components" style="flex: 1 1 260px; max-width: 340px; min-width: 0; padding: 12px; border-radius: 22px; background: #121A19; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 2px; font-size: 14px">
+      <span style="padding: 10px 12px; display: flex; justify-content: space-between; color: #A9BBB8">International-Core <span>2</span></span>
+      <span style="padding: 10px 12px; display: flex; justify-content: space-between; border-radius: 12px; background: #1F3A36; font-weight: 700">Shell-Setup <span style="color: #7CF3E6">5</span></span>
+      <span style="padding: 10px 12px; display: flex; justify-content: space-between; color: #A9BBB8">Setup <span>4</span></span>
+      <span style="padding: 10px 12px; display: flex; justify-content: space-between; color: #A9BBB8">TCPIP <span>0</span></span>
+      <span style="padding: 10px 12px; display: flex; justify-content: space-between; color: #A9BBB8">TerminalServices-LocalSessionManager <span>1</span></span>
+      <span style="padding: 10px 12px; display: flex; justify-content: space-between; color: #A9BBB8">UnattendedJoin <span>0</span></span>
+    </nav>
+    <section class="s-rise" aria-label="Microsoft-Windows-Shell-Setup" style="flex: 3 1 560px; min-width: 0; padding: 20px; border-radius: 22px; background: #121A19; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 4px">
+      <h2 style="margin: 0 0 10px; font-size: 18px">Microsoft-Windows-Shell-Setup <span style="color: #8EA29E; font-weight: 400; font-size: 14px">specialize, oobeSystem</span></h2>
+      <div style="padding: 14px; border-radius: 16px; background: #16211F; border: 1px solid #2E4642; display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+        <div style="flex: 1 1 260px"><div style="font-weight: 700">TimeZone</div><div style="color: #8EA29E; font-size: 13px; margin-top: 2px">The Windows time zone id for this computer.</div></div>
+        <select aria-label="TimeZone" style="flex: 1 1 260px; height: 46px; padding: 0 12px; border-radius: 14px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF; font-size: 15px"><option>Eastern Standard Time</option></select>
+        <span style="width: 8px; height: 8px; border-radius: 4px; background: #7CF3E6" aria-label="Set"></span>
+      </div>
+      <div style="padding: 14px; border-radius: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+        <div style="flex: 1 1 260px"><div style="font-weight: 700">OOBE / HideEULAPage</div><div style="color: #8EA29E; font-size: 13px; margin-top: 2px">Skips the license terms page.</div></div>
+        <span role="switch" aria-checked="true" aria-label="HideEULAPage" style="width: 52px; height: 32px; border-radius: 16px; background: #7CF3E6; position: relative"><span style="position: absolute; right: 4px; top: 4px; width: 24px; height: 24px; border-radius: 12px; background: #04201D"></span></span>
+      </div>
+      <div style="padding: 14px; border-radius: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+        <div style="flex: 1 1 260px"><div style="font-weight: 700">AutoLogon / LogonCount</div><div style="color: #8EA29E; font-size: 13px; margin-top: 2px">How many times the account signs in automatically.</div></div>
+        <input type="number" value="1" aria-label="LogonCount" style="width: 120px; height: 46px; padding: 0 12px; border-radius: 14px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF; font-size: 15px">
+      </div>
+      <div style="padding: 14px; border-radius: 16px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; align-items: center"><div><div style="font-weight: 700">FirstLogonCommands</div><div style="color: #8EA29E; font-size: 13px; margin-top: 2px">Commands that run at the first sign-in, in order.</div></div><button type="button" style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF">Add command</button></div>
+        <div style="display: flex; gap: 10px; align-items: center; padding: 12px; border-radius: 14px; background: #0F1716"><span style="width: 26px; height: 26px; border-radius: 13px; background: #1F3A36; color: #7CF3E6; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center">1</span><span style="font-family: 'Cascadia Mono',Consolas,monospace; font-size: 13px; color: #A9BBB8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1">powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ...</span></div>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

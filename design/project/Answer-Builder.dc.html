@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Answer file builder</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#0B1110}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.b-rise{animation:rise .55s cubic-bezier(.2,.9,.25,1) both}.b-d1{animation-delay:.08s}
+@media (prefers-reduced-motion: reduce){.b-rise{animation:none}}
+.b-f{display:flex;flex-direction:column;gap:5px;font-weight:600;font-size:13px}
+.b-i{height:42px;padding:0 12px;border-radius:12px;border:1px solid #2E4642;background:#0F1716;color:#E8F1EF;font-size:14px;box-sizing:border-box;min-width:0}
+.b-sw{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;padding:0 12px;border-radius:12px;background:#0F1716;font-size:14px}
+.b-n{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;color:#A9BBB8;font-size:14px}
+.b-dot{width:8px;height:8px;border-radius:4px;flex:none}
+</style>
+</helmet>
+<div style="font-family: 'Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background: #0B1110; color: #E8F1EF; min-height: 100vh; padding: 18px 24px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+  <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+    <h1 style="margin: 0; font-size: 28px; letter-spacing: -0.02em; flex: 1 1 auto">Answer file builder</h1>
+    <div role="tablist" aria-label="Mode" style="display: flex; padding: 4px; border-radius: 999px; background: #121A19; border: 1px solid #22322F">
+      <button type="button" role="tab" aria-selected="true" style="height: 38px; padding: 0 14px; border-radius: 19px; border: 0; background: #7CF3E6; color: #04201D; font-weight: 800">TempDesk server</button>
+      <button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 14px; border-radius: 19px; border: 0; background: transparent; color: #A9BBB8">Guest PC</button>
+      <button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 14px; border-radius: 19px; border: 0; background: transparent; color: #A9BBB8">Custom</button>
+      <button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 14px; border-radius: 19px; border: 0; background: transparent; color: #A9BBB8">All settings</button>
+      <button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 14px; border-radius: 19px; border: 0; background: transparent; color: #A9BBB8">Canvas</button>
+    </div>
+    <button type="button" aria-label="Undo" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF">&#8630;</button>
+    <button type="button" aria-label="Redo" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF">&#8631;</button>
+    <button type="button" style="height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF">Import</button>
+    <button type="button" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 0; background: #7CF3E6; color: #04201D; font-weight: 800">Download kit</button>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+    <nav aria-label="Sections" style="flex: 0 1 236px; min-width: 200px; padding: 10px; border-radius: 22px; background: #121A19; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 1px">
+      <span class="b-n"><span class="b-dot" style="background:#7CF3E6"></span>Disk</span>
+      <span class="b-n"><span class="b-dot" style="background:#7CF3E6"></span>Image and edition</span>
+      <span class="b-n"><span class="b-dot" style="background:#4C625E"></span>Product key and activation</span>
+      <span class="b-n"><span class="b-dot" style="background:#7CF3E6"></span>Language and region</span>
+      <span class="b-n"><span class="b-dot" style="background:#7CF3E6"></span>Computer identity</span>
+      <span class="b-n"><span class="b-dot" style="background:#7CF3E6"></span>Accounts</span>
+      <span class="b-n"><span class="b-dot" style="background:#7CF3E6"></span>Domain</span>
+      <span class="b-n"><span class="b-dot" style="background:#FFB8A3"></span>Network</span>
+      <span class="b-n" style="background:#1F3A36;color:#E8F1EF;font-weight:700"><span class="b-dot" style="background:#7CF3E6"></span>Security and UAC</span>
+      <span class="b-n"><span class="b-dot" style="background:#7CF3E6"></span>Remote access</span>
+      <span class="b-n"><span class="b-dot" style="background:#4C625E"></span>Updates</span>
+      <span class="b-n"><span class="b-dot" style="background:#7CF3E6"></span>Features and roles</span>
+      <span class="b-n"><span class="b-dot" style="background:#4C625E"></span>Drivers</span>
+      <span class="b-n"><span class="b-dot" style="background:#7CF3E6"></span>Apps and scripts</span>
+      <span class="b-n"><span class="b-dot" style="background:#7CF3E6"></span>OOBE and first sign-in</span>
+      <span class="b-n"><span class="b-dot" style="background:#4C625E"></span>Power</span>
+      <span class="b-n"><span class="b-dot" style="background:#4C625E"></span>Privacy and telemetry</span>
+      <span class="b-n"><span class="b-dot" style="background:#4C625E"></span>Branding and OEM</span>
+      <span class="b-n"><span class="b-dot" style="background:#4C625E"></span>Time and NTP</span>
+      <span class="b-n"><span class="b-dot" style="background:#4C625E"></span>Logging</span>
+    </nav>
+
+    <form class="b-rise" style="flex: 3 1 520px; min-width: 0; padding: 20px; border-radius: 22px; background: #121A19; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+        <h2 style="margin: 0; font-size: 20px; flex: 1">Security and UAC</h2>
+        <div role="tablist" aria-label="Detail" style="display: flex; padding: 3px; border-radius: 999px; background: #0F1716; border: 1px solid #22322F">
+          <button type="button" role="tab" aria-selected="false" style="height: 34px; padding: 0 14px; border-radius: 17px; border: 0; background: transparent; color: #A9BBB8">Basic</button>
+          <button type="button" role="tab" aria-selected="true" style="height: 34px; padding: 0 14px; border-radius: 17px; border: 0; background: #E8F1EF; color: #0B1110; font-weight: 700">Advanced</button>
+        </div>
+      </div>
+      <div style="font-size: 12px; color: #8EA29E; font-weight: 700; letter-spacing: .06em">USER ACCOUNT CONTROL</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px">
+        <label class="b-sw">User Account Control on <input type="checkbox" checked></label>
+        <label class="b-sw">Prompt on the secure desktop <input type="checkbox" checked></label>
+        <label class="b-f">Administrator prompt behavior<select class="b-i"><option>Prompt for consent for non-Windows binaries</option></select></label>
+        <label class="b-f">Standard user prompt behavior<select class="b-i"><option>Prompt for credentials</option></select></label>
+      </div>
+      <div style="font-size: 12px; color: #8EA29E; font-weight: 700; letter-spacing: .06em">ACCOUNTS AND PASSWORDS</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px">
+        <label class="b-f">Minimum password length<input class="b-i" type="number" value="12"></label>
+        <label class="b-f">Maximum password age (days)<input class="b-i" type="number" value="0"></label>
+        <label class="b-f">Lockout threshold<input class="b-i" type="number" value="5"></label>
+        <label class="b-f">Lockout duration (min)<input class="b-i" type="number" value="15"></label>
+        <label class="b-sw">Complexity required <input type="checkbox" checked></label>
+        <label class="b-sw">Disable the Guest account <input type="checkbox" checked></label>
+      </div>
+      <div style="font-size: 12px; color: #8EA29E; font-weight: 700; letter-spacing: .06em">PROTECTION</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px">
+        <label class="b-sw">Microsoft Defender real-time protection <input type="checkbox" checked></label>
+        <label class="b-sw">Firewall on for all profiles <input type="checkbox" checked></label>
+        <label class="b-sw">SMBv1 removed <input type="checkbox" checked></label>
+        <label class="b-sw">Require NLA for Remote Desktop <input type="checkbox" checked></label>
+        <label class="b-f">Credential Guard<select class="b-i"><option>Off on domain controllers</option></select></label>
+        <label class="b-f">BitLocker<select class="b-i"><option>Off</option><option>On, TPM only</option></select></label>
+        <label class="b-f">LAN Manager auth level<select class="b-i"><option>NTLMv2 only, refuse LM and NTLM</option></select></label>
+        <label class="b-f">LDAP signing (DC)<select class="b-i"><option>Require signing</option></select></label>
+      </div>
+      <p style="margin: 0; color: #8EA29E; font-size: 13px">Each control maps to real answer file or first sign-in settings. Items Windows cannot set in an answer file run as a generated first sign-in command, shown in the preview.</p>
+    </form>
+
+    <aside class="b-rise b-d1" aria-label="Preview" style="flex: 2 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+      <section style="padding: 16px; border-radius: 22px; background: #0F1716; border: 1px solid #22322F">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px"><h2 style="margin: 0; font-size: 15px">autounattend.xml</h2><span style="font-size: 12px; color: #7CF3E6; font-weight: 700">Valid</span></div>
+        <pre style="margin: 0; font-family: 'Cascadia Mono',Consolas,monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; color: #A9BBB8"><span style="color: #FFB8A3">&lt;component</span> <span style="color: #7CF3E6">name</span>="Microsoft-Windows-LUA-Settings"<span style="color: #FFB8A3">&gt;</span>
+  <span style="color: #FFB8A3">&lt;EnableLUA&gt;</span><span style="color: #E8F1EF">true</span><span style="color: #FFB8A3">&lt;/EnableLUA&gt;</span>
+<span style="color: #FFB8A3">&lt;/component&gt;</span></pre>
+      </section>
+      <section style="padding: 16px; border-radius: 22px; background: #121A19; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-size: 15px">Checks</h2>
+        <div style="display: flex; gap: 10px; font-size: 14px"><span style="color: #7CF3E6; font-weight: 800">&#10003;</span>48 settings across 11 components</div>
+        <div style="display: flex; gap: 10px; font-size: 14px"><span style="color: #FFB8A3; font-weight: 800">!</span>Network: DNS forwarder missing</div>
+        <div style="display: flex; gap: 10px; font-size: 14px"><span style="color: #7CF3E6; font-weight: 800">&#10003;</span>Every setting is in a pass that supports it</div>
+      </section>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

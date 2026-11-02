@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Answer file builder on a phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; font-family: 'Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background: #0B1110; color: #E8F1EF; display: flex; flex-direction: column; overflow: hidden">
+  <div style="padding: 18px 16px 10px; display: flex; align-items: center; gap: 10px">
+    <span style="font-weight: 800; font-size: 20px; flex: 1">Answer file</span>
+    <button type="button" aria-label="Undo" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 0 12h-3"></path></svg></button>
+    <button type="button" aria-label="More" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF; font-weight: 800">...</button>
+  </div>
+  <div style="padding: 0 16px 12px; display: flex; gap: 6px">
+    <span style="flex: 1; height: 6px; border-radius: 3px; background: #7CF3E6"></span>
+    <span style="flex: 1; height: 6px; border-radius: 3px; background: #7CF3E6"></span>
+    <span style="flex: 1; height: 6px; border-radius: 3px; background: #2E4642"></span>
+    <span style="flex: 1; height: 6px; border-radius: 3px; background: #2E4642"></span>
+  </div>
+  <div style="flex: 1; padding: 6px 16px 16px; display: flex; flex-direction: column; gap: 14px; min-height: 0">
+    <div style="font-size: 13px; color: #7CF3E6; font-weight: 700">STEP 2 OF 4</div>
+    <h1 style="margin: 0; font-size: 28px; letter-spacing: -0.02em">Network</h1>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px">IPv4 address<input type="text" inputmode="decimal" value="192.168.50.10" style="height: 52px; padding: 0 14px; border-radius: 14px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF; font-size: 17px"></label>
+    <div style="display: flex; gap: 10px">
+      <label style="flex: 1; display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px">Prefix<input type="text" inputmode="numeric" value="24" style="height: 52px; padding: 0 14px; border-radius: 14px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF; font-size: 17px"></label>
+      <label style="flex: 2; display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px">Gateway<input type="text" inputmode="decimal" value="192.168.50.1" style="height: 52px; padding: 0 14px; border-radius: 14px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF; font-size: 17px"></label>
+    </div>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px">DNS servers<input type="text" inputmode="decimal" value="1.1.1.1" style="height: 52px; padding: 0 14px; border-radius: 14px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF; font-size: 17px"></label>
+    <p style="margin: 0; color: #8EA29E; font-size: 14px; line-height: 1.5">After the domain is created, the server points DNS at itself automatically.</p>
+  </div>
+  <div style="padding: 12px 16px 26px; background: #0F1716; border-top: 1px solid #1D2A28; display: flex; gap: 10px">
+    <button type="button" style="flex: 1; height: 52px; border-radius: 26px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF; font-weight: 700; font-size: 16px">Preview</button>
+    <button type="button" style="flex: 1; height: 52px; border-radius: 26px; border: 0; background: #7CF3E6; color: #04201D; font-weight: 800; font-size: 16px">Next</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

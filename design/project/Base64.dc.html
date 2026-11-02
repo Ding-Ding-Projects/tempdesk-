@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Base64 tools</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#0B1110}
+@keyframes fill{from{width:0}to{width:68%}}
+.x-bar{animation:fill 1.6s cubic-bezier(.2,.9,.25,1) both}
+@media (prefers-reduced-motion: reduce){.x-bar{animation:none}}
+</style>
+</helmet>
+<div style="font-family: 'Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background: #0B1110; color: #E8F1EF; min-height: 100vh; padding: 22px 28px 40px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+    <h1 style="margin: 0; font-size: 32px; letter-spacing: -0.02em; flex: 1 1 auto">Base64</h1>
+    <div role="tablist" aria-label="Direction" style="display: flex; padding: 4px; border-radius: 999px; background: #121A19; border: 1px solid #22322F">
+      <button type="button" role="tab" aria-selected="true" style="height: 40px; padding: 0 18px; border-radius: 20px; border: 0; background: #7CF3E6; color: #04201D; font-weight: 800">Encode</button>
+      <button type="button" role="tab" aria-selected="false" style="height: 40px; padding: 0 18px; border-radius: 20px; border: 0; background: transparent; color: #A9BBB8; font-weight: 600">Decode</button>
+    </div>
+  </div>
+  <div style="display: flex; flex-wrap: wrap; gap: 8px">
+    <label style="height: 40px; padding: 0 14px; border-radius: 20px; background: #1F3A36; color: #7CF3E6; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700">Variant <select style="background: transparent; border: 0; color: #7CF3E6; font-weight: 700; font-size: 14px"><option>Standard</option><option>URL-safe</option><option>MIME</option></select></label>
+    <label style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid #22322F; color: #A9BBB8; display: flex; align-items: center; gap: 8px; font-size: 14px"><input type="checkbox" checked> Padding</label>
+    <label style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid #22322F; color: #A9BBB8; display: flex; align-items: center; gap: 8px; font-size: 14px">Text as <select style="background: transparent; border: 0; color: #E8F1EF; font-size: 14px"><option>UTF-8</option></select></label>
+    <label style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid #22322F; color: #A9BBB8; display: flex; align-items: center; gap: 8px; font-size: 14px"><input type="checkbox"> Strict</label>
+  </div>
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch">
+    <section aria-label="Input" style="flex: 1 1 420px; min-width: 0; padding: 18px; border-radius: 24px; background: #121A19; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; color: #8EA29E; font-size: 13px; font-weight: 600"><span>INPUT</span><span>27 bytes</span></div>
+      <textarea aria-label="Text to encode" style="flex: 1; min-height: 160px; padding: 14px; border-radius: 16px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF; font-family: 'Cascadia Mono',Consolas,monospace; font-size: 15px; resize: vertical">Welcome to the Maple Library</textarea>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <button type="button" style="height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF">Open files</button>
+        <button type="button" style="height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF">Paste</button>
+      </div>
+    </section>
+    <section aria-label="Output" style="flex: 1 1 420px; min-width: 0; padding: 18px; border-radius: 24px; background: #16211F; border: 1px solid #2E4642; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; color: #8EA29E; font-size: 13px; font-weight: 600"><span>BASE64</span><span>36 characters</span></div>
+      <div style="flex: 1; min-height: 160px; padding: 14px; border-radius: 16px; background: #0F1716; font-family: 'Cascadia Mono',Consolas,monospace; font-size: 15px; color: #7CF3E6; word-break: break-all; line-height: 1.6">V2VsY29tZSB0byB0aGUgTWFwbGUgTGlicmFyeQ==</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <button type="button" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 0; background: #7CF3E6; color: #04201D; font-weight: 800">Copy</button>
+        <button type="button" style="height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF">Save .b64</button>
+        <button type="button" style="height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF">data: URL</button>
+        <button type="button" style="height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF">Export record</button>
+      </div>
+    </section>
+  </div>
+  <section aria-label="Files" style="padding: 18px; border-radius: 24px; background: #121A19; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 10px">
+    <h2 style="margin: 0; font-size: 16px">Files</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 16px; background: #1A2725">
+      <span style="flex: 1 1 200px; font-weight: 600">install.wim</span><span style="color: #8EA29E; font-size: 13px">4.2 GB</span>
+      <span style="flex: 1 1 240px; height: 8px; border-radius: 4px; background: #0F1716; overflow: hidden"><span class="x-bar" style="display: block; height: 8px; width: 68%; border-radius: 4px; background: #7CF3E6"></span></span>
+      <span style="font-size: 13px; color: #A9BBB8">68%</span>
+      <button type="button" style="height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF">Pause</button>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 16px">
+      <span style="flex: 1 1 200px; font-weight: 600">logo.png</span><span style="color: #8EA29E; font-size: 13px">18 KB</span>
+      <span style="padding: 4px 10px; border-radius: 999px; background: #13302C; color: #7CF3E6; font-size: 12px; font-weight: 700">Verified SHA-256</span>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

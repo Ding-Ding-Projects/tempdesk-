@@ -31,7 +31,7 @@ def test_guest_password_rules():
 def test_filetime_roundtrip():
     d = dt.datetime(2026, 11, 2, 20, 30, tzinfo=dt.timezone.utc)
     ft = util.to_filetime(d)
-    assert ft == 134065314000000000
+    assert ft == (int(d.timestamp()) + 11644473600) * 10_000_000 == 134381250000000000
     assert util.from_filetime(ft) == d
     assert util.from_filetime(0) is None
     assert util.from_filetime(util.NEVER_EXPIRES) is None

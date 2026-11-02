@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>History and undo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#0B1110}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.h-rise{animation:rise .5s cubic-bezier(.2,.9,.25,1) both}.h-d1{animation-delay:.06s}.h-d2{animation-delay:.12s}.h-d3{animation-delay:.18s}
+@media (prefers-reduced-motion: reduce){.h-rise{animation:none}}
+.h-row{display:flex;gap:14px;align-items:flex-start;padding:12px 14px;border-radius:16px}
+.h-sha{font-family:'Cascadia Mono',Consolas,monospace;font-size:12px;color:#8EA29E}
+</style>
+</helmet>
+<div style="font-family: 'Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background: #0B1110; color: #E8F1EF; min-height: 100vh; padding: 22px 28px 40px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+    <h1 style="margin: 0; font-size: 30px; letter-spacing: -0.02em; flex: 1 1 auto">History</h1>
+    <span style="height: 36px; padding: 0 14px; border-radius: 18px; background: #1F3A36; color: #7CF3E6; display: flex; align-items: center; font-size: 13px; font-weight: 700">Git history on</span>
+    <button type="button" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF; font-weight: 600">Undo</button>
+    <button type="button" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF; font-weight: 600">Redo</button>
+  </div>
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+    <section aria-label="Timeline" style="flex: 1 1 460px; min-width: 0; padding: 12px; border-radius: 24px; background: #121A19; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 2px">
+      <div style="display: flex; gap: 8px; padding: 6px 4px 10px">
+        <label for="hq" style="position: absolute; left: -9999px">Search history</label>
+        <input id="hq" type="search" placeholder="Search actions" style="flex: 1; height: 42px; padding: 0 14px; border-radius: 21px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF">
+        <button type="button" aria-label="Regular expression" style="width: 42px; height: 42px; border-radius: 21px; border: 1px solid #2E4642; background: transparent; color: #A9BBB8; font-family: Consolas, monospace; font-weight: 700">.*</button>
+      </div>
+      <div class="h-row h-rise" style="background: #16211F; border: 1px solid #2E4642"><span style="width: 12px; height: 12px; margin-top: 5px; border-radius: 6px; background: #7CF3E6; flex: none"></span><div style="flex: 1; min-width: 0"><div style="font-weight: 700">Set DNS forwarder to 1.1.1.1</div><div class="h-sha">a91c3e2 · now · Sam</div></div><span style="font-size: 12px; color: #7CF3E6; font-weight: 700">Current</span></div>
+      <div class="h-row h-rise h-d1"><span style="width: 12px; height: 12px; margin-top: 5px; border-radius: 6px; background: #4C625E; flex: none"></span><div style="flex: 1; min-width: 0"><div style="font-weight: 600">Undo: Remove recovery partition</div><div class="h-sha">77d0b41 · 1 min ago · Sam</div></div><button type="button" style="height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF; font-size: 13px">Restore</button></div>
+      <div class="h-row h-rise h-d2"><span style="width: 12px; height: 12px; margin-top: 5px; border-radius: 6px; background: #4C625E; flex: none"></span><div style="flex: 1; min-width: 0"><div style="font-weight: 600">Remove recovery partition</div><div class="h-sha">3be92f0 · 2 min ago · Sam</div></div><button type="button" style="height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF; font-size: 13px">Restore</button></div>
+      <div class="h-row h-rise h-d3"><span style="width: 12px; height: 12px; margin-top: 5px; border-radius: 6px; background: #4C625E; flex: none"></span><div style="flex: 1; min-width: 0"><div style="font-weight: 600">Move Remote Desktop to specialize</div><div class="h-sha">c10e7aa · 5 min ago · Sam</div></div><button type="button" style="height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF; font-size: 13px">Restore</button></div>
+      <div class="h-row"><span style="width: 12px; height: 12px; margin-top: 5px; border-radius: 6px; background: #4C625E; flex: none"></span><div style="flex: 1; min-width: 0"><div style="font-weight: 600">Set computer name to DC01</div><div class="h-sha">58f2d19 · 9 min ago · Sam</div></div><button type="button" style="height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF; font-size: 13px">Restore</button></div>
+      <div style="padding: 10px 14px; color: #8EA29E; font-size: 13px">412 earlier actions · no limit</div>
+    </section>
+    <section aria-label="Changes" style="flex: 1 1 420px; min-width: 0; padding: 18px; border-radius: 24px; background: #0F1716; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 16px">What changed</h2>
+      <pre style="margin: 0; font-family: 'Cascadia Mono',Consolas,monospace; font-size: 13px; line-height: 1.7; white-space: pre-wrap; word-break: break-all"><span style="color: #8EA29E">  "dnsServers": [</span>
+<span style="display: block; background: #2B1A15; color: #FFB8A3">-   "192.168.50.1"</span><span style="display: block; background: #13302C; color: #7CF3E6">+   "1.1.1.1"</span><span style="color: #8EA29E">  ],</span></pre>
+      <p style="margin: 0; color: #8EA29E; font-size: 13px">Restoring creates a new entry, so you can always come back here.</p>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

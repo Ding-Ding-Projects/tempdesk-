@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Disk layout and commands</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#0B1110}
+@keyframes grow{from{flex-grow:40}to{flex-grow:58}}
+.k-grow{animation:grow 1.2s cubic-bezier(.2,.9,.25,1) both}
+@media (prefers-reduced-motion: reduce){.k-grow{animation:none}}
+</style>
+</helmet>
+<div style="font-family: 'Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background: #0B1110; color: #E8F1EF; min-height: 100vh; padding: 20px 28px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+  <h1 style="margin: 0; font-size: 28px; letter-spacing: -0.02em">Disks and commands</h1>
+
+  <section aria-label="Disk layout" style="padding: 20px; border-radius: 24px; background: #121A19; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+      <h2 style="margin: 0; font-size: 18px; flex: 1 1 auto">Disk 0 <span style="color: #8EA29E; font-weight: 400; font-size: 14px">128 GB, wiped</span></h2>
+      <label style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid #2E4642; display: flex; align-items: center; gap: 8px; font-size: 14px">Preset <select style="background: transparent; border: 0; color: #E8F1EF; font-size: 14px"><option>UEFI with recovery</option></select></label>
+      <button type="button" style="height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF">Add disk</button>
+    </div>
+    <div style="display: flex; gap: 4px; height: 92px">
+      <div style="flex: 3 1 0; min-width: 64px; border-radius: 14px 6px 6px 14px; background: #2D4642; padding: 10px; font-size: 12px; display: flex; flex-direction: column; justify-content: space-between"><strong>EFI</strong><span>300 MB</span></div>
+      <div style="flex: 1 1 0; min-width: 52px; border-radius: 6px; background: #22322F; padding: 10px; font-size: 12px; display: flex; flex-direction: column; justify-content: space-between"><strong>MSR</strong><span>16 MB</span></div>
+      <div class="k-grow" style="flex: 58 1 0; border-radius: 6px; background: #7CF3E6; color: #04201D; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; position: relative; outline: 3px solid #E8F1EF; outline-offset: 2px"><strong style="font-size: 15px">C: Windows</strong><span style="font-size: 13px; font-weight: 600">Primary, NTFS, install target, extends</span><span style="position: absolute; right: -9px; top: 30px; width: 14px; height: 32px; border-radius: 7px; background: #E8F1EF" aria-label="Resize handle"></span></div>
+      <div style="flex: 6 1 0; min-width: 90px; border-radius: 6px 14px 14px 6px; background: #FFB8A3; color: #2B0C03; padding: 10px; font-size: 12px; display: flex; flex-direction: column; justify-content: space-between"><strong>Recovery</strong><span>1 GB</span></div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px">
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Type<select style="height: 44px; padding: 0 10px; border-radius: 12px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF"><option>Primary</option></select></label>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Size<input type="text" value="Extend" style="height: 44px; padding: 0 10px; border-radius: 12px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF"></label>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Format<select style="height: 44px; padding: 0 10px; border-radius: 12px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF"><option>NTFS</option></select></label>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Label<input type="text" value="Windows" style="height: 44px; padding: 0 10px; border-radius: 12px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF"></label>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Letter<input type="text" value="C" style="height: 44px; padding: 0 10px; border-radius: 12px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF"></label>
+    </div>
+  </section>
+
+  <section aria-label="Command timeline" style="padding: 20px; border-radius: 24px; background: #121A19; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; gap: 10px; align-items: center"><h2 style="margin: 0; font-size: 18px; flex: 1">Command timeline</h2><button type="button" style="height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid #2E4642; background: transparent; color: #E8F1EF">Add command</button></div>
+    <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px">
+      <div style="flex: 0 0 230px; padding: 14px; border-radius: 16px; background: #16211F; border: 1px solid #2E4642; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; color: #8EA29E; font-weight: 700">SPECIALIZE 1</span><strong>Set DNS to the DC</strong><code style="font-size: 12px; color: #A9BBB8">netsh interface ip set dns ...</code></div>
+      <div style="flex: 0 0 230px; padding: 14px; border-radius: 16px; background: #16211F; border: 1px solid #2E4642; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; color: #8EA29E; font-weight: 700">SPECIALIZE 2</span><strong>Enable Remote Desktop</strong><code style="font-size: 12px; color: #A9BBB8">reg add ... fDenyTSConnections</code></div>
+      <div style="flex: 0 0 64px; border-radius: 16px; border: 1px dashed #FFB8A3; color: #FFB8A3; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; writing-mode: vertical-rl">Reboot</div>
+      <div style="flex: 0 0 230px; padding: 14px; border-radius: 16px; background: #1F3A36; border: 2px solid #7CF3E6; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; color: #7CF3E6; font-weight: 700">FIRST SIGN-IN 1</span><strong>TempDesk unattended setup</strong><code style="font-size: 12px; color: #A9BBB8">powershell.exe ... FirstLogon.ps1</code></div>
+      <div style="flex: 0 0 230px; padding: 14px; border-radius: 16px; border: 1px dashed #2E4642; color: #8EA29E; display: flex; align-items: center; justify-content: center">Drop here</div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

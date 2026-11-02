@@ -450,34 +450,42 @@ namespace TempDesk.Agent
             {
                 throw AgentException.BadRequest("An SDDL string is required to set the ACL.");
             }
+            // Build a security descriptor from the SDDL in-process (data, never
+            // script text), then apply it with icacls, which accepts an SDDL
+            // directly and needs no multi-step PowerShell pipeline.
+            try
+            {
+                System.Security.AccessControl.RawSecurityDescriptor rsd =
+                    new System.Security.AccessControl.RawSecurityDescriptor(sddl);
+                rsd.ToString(); // validates it parsed
+            }
+            catch (Exception)
+            {
+                throw AgentException.BadRequest("The SDDL string could not be parsed.");
+            }
             ctx.Audit("file acl set", path);
-            // Build a fresh security descriptor from the SDDL and apply it. The
-            // SDDL is passed as data to Set-Acl via a security object the binder
-            // builds, never concatenated into script text.
-            Dictionary<string, object> newAcl = Srv.PsOne(ctx, "Get-Acl", NewP("Path", path));
-            // Set-Acl applies the descriptor; we set the SDDL on a System.Security
-            // object through PowerShell's SetSecurityDescriptorSddlForm is not
-            // directly callable here, so use Set-Acl with an AclObject built from
-            // a temporary file is overkill. Instead apply via Set-Acl -Path with
-            // a security descriptor constructed by the host.
-            IDictionary<string, object> p = NewP("Path", path);
-            p["AclObject"] = AclFromSddl(ctx, path, sddl);
-            Srv.Ps(ctx, "Set-Acl", p);
+            // icacls <path> /setowner is not SDDL; use the /restore form via a
+            // temp SDDL file so the whole descriptor (owner, group, DACL, SACL)
+            // is applied atomically.
+            string sddlFile = Srv.NewTempFile(".sddl");
+            try
+            {
+                File.WriteAllText(sddlFile, Srv.LeafName(path) + " " + sddl + "\r\n", new UTF8Encoding(false));
+                string parent = Path.GetDirectoryName(path.TrimEnd('\\', '/'));
+                ProcessResult r = Srv.RunProcess("icacls.exe",
+                    new string[] { parent, "/restore", sddlFile }, 30000);
+                if (r.ExitCode != 0)
+                {
+                    throw AgentException.Internal("icacls could not apply the ACL: " + r.StdErr + r.StdOut);
+                }
+            }
+            finally
+            {
+                try { File.Delete(sddlFile); } catch (Exception) { }
+            }
             Dictionary<string, object> result = Srv.P();
             result["path"] = path;
             return result;
-        }
-
-        private object AclFromSddl(RequestContext ctx, string path, string sddl)
-        {
-            // Get the current ACL object, set its SDDL, and return it. Done in a
-            // single allowlisted pipeline is not possible, so the portal supplies
-            // a full SDDL and we rely on Set-Acl binding. We return the SDDL and
-            // let Set-Acl's -AclObject binder reject anything malformed.
-            Dictionary<string, object> wrapper = Srv.P();
-            wrapper["Sddl"] = sddl;
-            wrapper["Path"] = path;
-            return wrapper;
         }
 
         private object Hash(RequestContext ctx)

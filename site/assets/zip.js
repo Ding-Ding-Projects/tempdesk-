@@ -1,6 +1,6 @@
 // Minimal ZIP writer (stored, no compression) for building downloads in the browser.
 // Supports UTF-8 file names; enough for a kit of text files and small scripts.
-(function () {
+(function (root) {
   'use strict';
   var table = (function () {
     var t = new Uint32Array(256);
@@ -22,11 +22,16 @@
       date: ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()
     };
   }
-  function makeZip(files) {
+  // Returns the zip as an array of Uint8Array parts (no Blob needed; works in Node).
+  function makeZipParts(files, date) {
     // files: [{ name: 'a/b.txt', data: Uint8Array | string }]
     var enc = new TextEncoder();
-    var parts = [], central = [], offset = 0, now = dosTime(new Date());
+    var parts = [], central = [], offset = 0, now = dosTime(date || new Date());
+    var seen = {};
     files.forEach(function (f) {
+      if (!f.name || /^\/|\\|(^|\/)\.\.(\/|$)/.test(f.name)) throw new Error('Unsafe file name in zip: ' + f.name);
+      if (seen[f.name]) throw new Error('Duplicate file name in zip: ' + f.name);
+      seen[f.name] = 1;
       var name = enc.encode(f.name);
       var data = typeof f.data === 'string' ? enc.encode(f.data) : f.data;
       var crc = crc32(data);
@@ -48,7 +53,20 @@
     var end = new DataView(new ArrayBuffer(22));
     end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
     end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
-    return new Blob(parts.concat(central, [new Uint8Array(end.buffer)]), { type: 'application/zip' });
+    if (files.length > 0xffff || offset + cdSize > 0xffffffff) throw new Error('The zip is too large for this writer (no Zip64).');
+    return parts.concat(central, [new Uint8Array(end.buffer)]);
   }
-  window.TempDeskZip = { makeZip: makeZip, crc32: crc32 };
-})();
+  function makeZipBytes(files, date) {
+    var parts = makeZipParts(files, date), len = 0, at = 0;
+    parts.forEach(function (p) { len += p.length; });
+    var out = new Uint8Array(len);
+    parts.forEach(function (p) { out.set(p, at); at += p.length; });
+    return out;
+  }
+  function makeZip(files, date) {
+    return new Blob(makeZipParts(files, date), { type: 'application/zip' });
+  }
+  var api = { makeZip: makeZip, makeZipBytes: makeZipBytes, makeZipParts: makeZipParts, crc32: crc32 };
+  root.TempDeskZip = api;
+  if (typeof module === 'object' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);
