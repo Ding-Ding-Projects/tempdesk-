@@ -1,0 +1,12 @@
+{% extends "layouts/admin.html" if mode == "admin" else "layouts/guest.html" %}
+{% block title %}{{ ta(title_key, serious=True) }}{% endblock %}
+{% block content %}
+<section class="card lg rise" style="max-width:640px">
+  <p class="subtle">{{ t('Error {code}', code=status) }}</p>
+  <h1>{{ tr.html(title_key, serious=True) }}</h1>
+  {% if body_key %}<p class="muted">{{ tr.html(body_key, serious=True) }}</p>{% endif %}
+  {% if message %}<p class="alert error" role="alert">{{ message }}</p>{% endif %}
+  {% if retry_after %}<p class="muted">{{ tr.html('Try again in about {seconds} seconds.', serious=True, seconds=retry_after) }}</p>{% endif %}
+  <div class="form-actions"><a class="btn filled" href="/">{{ t('Go to the start page') }}</a><button type="button" class="btn" data-reload>{{ t('Try again') }}</button></div>
+</section>
+{% endblock %}

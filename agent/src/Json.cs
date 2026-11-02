@@ -224,7 +224,7 @@ namespace TempDesk.Agent
                     default:
                         // Escape control characters, HTML-sensitive characters and the
                         // JavaScript line separators so the output is safe anywhere.
-                        if (c < 0x20 || c == '<' || c == '>' || c == '&' || c == ' ' || c == ' ')
+                        if (c < 0x20 || c == '<' || c == '>' || c == '&' || c == '\u2028' || c == '\u2029')
                         {
                             sb.Append("\\u");
                             sb.Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));

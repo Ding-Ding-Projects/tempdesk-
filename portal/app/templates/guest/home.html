@@ -1,0 +1,35 @@
+{% extends "layouts/guest.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}{{ ta('Create a sign-in') }}{% endblock %}
+{% block content %}
+<div class="row" style="gap:40px;align-items:flex-start">
+  <div class="grow" style="padding-top:16px">
+    <h1 class="hero rise">{{ t('Need a computer?') }}</h1>
+    <p class="lead rise" style="--i:1">{{ pub.welcomeText or ta('Create a temporary sign-in. It is yours alone, and it is removed automatically when it expires.') }}</p>
+  </div>
+  <form class="grow card lg stack rise" style="--i:2;gap:22px" method="post" action="/create" novalidate>
+    {{ csrf() }}
+    {% if error_key %}<p class="alert error" role="alert">{{ tr.html(error_key, serious=True) }}</p>{% endif %}
+    {% if error_text %}<p class="alert error" role="alert">{{ error_text }}</p>{% endif %}
+    <div class="field">
+      <label for="dn">{{ t('Your name') }} <span class="optional">({{ t('optional') }})</span></label>
+      <input id="dn" type="text" name="displayName" maxlength="64" autocomplete="name" value="{{ values.get('displayName', '') }}" placeholder="{{ ta('Shown on the sign-in screen') }}">
+    </div>
+    {% if pub.expiryChoices %}
+    <fieldset>
+      <legend>{{ t('How long do you need it?') }}</legend>
+      <div class="choice-grid">
+        {% set sel = values.get('expiryId') or (pub.expiryChoices[1].id if pub.expiryChoices|length > 1 else pub.expiryChoices[0].id) %}
+        {% for c in pub.expiryChoices %}
+        <label class="choice {% if loop.last and loop.length is odd %}wide{% endif %}"><input type="radio" name="expiryId" value="{{ c.id }}" {% if c.id == sel %}checked{% endif %} required> {{ c.label if c.minutes != 0 else ta('Until I delete it') }}</label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <button type="submit" class="btn filled lg block">{{ t('Create my sign-in') }}</button>
+    {% else %}
+    <p class="alert warn">{{ t('Creating sign-ins is not available right now. Please ask a member of staff.') }}</p>
+    {% endif %}
+    <p class="subtle" style="margin:0">{{ t('Already have one?') }} <a href="/check">{{ t('Check my sign-in') }}</a>{% if pub.allowSelfDelete %} · <a href="/delete">{{ t('Delete my sign-in') }}</a>{% endif %}</p>
+  </form>
+</div>
+{% endblock %}

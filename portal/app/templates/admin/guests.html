@@ -1,0 +1,59 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel, local_time %}
+{% block title %}{{ ta('Guests') }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ t('Guests') }}</h1><a class="btn" href="/import">{{ t('CSV import') }}</a></div>
+<section class="card rise" id="create">
+  <h2>{{ t('Create a guest account') }}</h2>
+  <form method="post" action="/guests" class="form-grid" data-expiry-form>
+    {{ csrf() }}
+    <div class="field"><label for="g-dn">{{ t('Display name') }} <span class="optional">({{ t('optional') }})</span></label><input id="g-dn" name="displayName" maxlength="64"></div>
+    <div class="field"><label for="g-exp">{{ t('Expiry') }}</label>
+      <select id="g-exp" name="expiryId" data-custom-toggle="#g-min-wrap">
+        {% for c in choices %}<option value="{{ c.id }}">{{ c.label }}</option>{% endfor %}
+        <option value="custom">{{ t('Custom number of minutes') }}</option>
+      </select></div>
+    <div class="field" id="g-min-wrap" hidden><label for="g-min">{{ t('Minutes (0 = permanent)') }}</label><input id="g-min" type="number" name="minutes" min="0" max="525600" inputmode="numeric"></div>
+    <div class="field" style="justify-content:flex-end"><button class="btn filled" type="submit">{{ t('Create') }}</button></div>
+  </form>
+</section>
+<section class="card rise" style="--i:1">
+  {{ search_box(tv, regex_error, 'Search guests') }}
+  {% if tv.rows %}
+  <form method="post" action="/guests/bulk" data-bulk-form>
+    {{ csrf() }}
+    <div class="table-wrap"><table>
+      <thead><tr>{{ sel_all() }}{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}<th><span class="sr-only">{{ t('Actions') }}</span></th></tr></thead>
+      <tbody class="stagger">
+      {% for g in tv.rows %}
+      <tr data-ctx='[{"label":"{{ ta('Extend') }}","focus":"#ext-{{ loop.index }}"},{"label":"{{ ta('Delete') }}","href":"/guests/{{ g.username|urlencode }}/delete","key":"Del"}]'>
+        {{ sel(g.username, g.username) }}
+        <td class="mono">{{ g.username }}</td><td>{{ g.displayName or '' }}</td><td>{{ local_time(g.created) }}</td>
+        <td>{{ local_time(g.expiresAt, 'No expiry') }}</td>
+        <td>{% if g.enabled %}<span class="chip ok">{{ t('Yes') }}</span>{% else %}<span class="chip">{{ t('No') }}</span>{% endif %}</td>
+        <td>{{ local_time(g.lastLogon) }}</td>
+        <td class="actions">
+          <a class="btn sm" id="ext-{{ loop.index }}" href="#extend-{{ loop.index }}" data-open-dialog="#extend-{{ loop.index }}">{{ t('Extend') }}</a>
+          <a class="btn sm danger" href="/guests/{{ g.username|urlencode }}/delete">{{ t('Delete') }}</a>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <div class="field" style="max-width:260px;margin-top:8px"><label for="bulk-min">{{ t('Minutes for bulk extend (0 = permanent)') }}</label><input id="bulk-min" type="number" name="minutes" min="0" max="525600"></div>
+    {{ bulk_bar([('extend', 'Extend selected'), ('delete', 'Delete selected')], bulk_token) }}
+  </form>
+  {% for g in tv.rows %}
+  <dialog id="extend-{{ loop.index }}" aria-labelledby="ext-t-{{ loop.index }}">
+    <form method="post" action="/guests/{{ g.username|urlencode }}/extend" class="stack">{{ csrf() }}
+      <h2 id="ext-t-{{ loop.index }}">{{ t('Extend {name}', name=g.username) }}</h2>
+      <div class="field"><label for="m-{{ loop.index }}">{{ t('Minutes from now (0 = permanent)') }}</label><input id="m-{{ loop.index }}" type="number" name="minutes" min="0" max="525600" value="60" required></div>
+      <p class="hint">{{ t('You can undo this afterwards.') }}</p>
+      <div class="form-actions"><button class="btn filled" type="submit">{{ t('Save') }}</button><button class="btn" type="button" data-close>{{ t('Cancel') }}</button></div>
+    </form>
+  </dialog>
+  {% endfor %}
+  {% elif tv.total %}{{ empty('No guests match this filter', 'Clear the search box to see every guest.') }}
+  {% else %}{{ empty('No guest accounts yet', 'Guests create their own sign-in on the guest portal, or you can create one above.') }}{% endif %}
+</section>
+{% endblock %}

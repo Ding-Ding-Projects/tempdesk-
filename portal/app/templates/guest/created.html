@@ -1,0 +1,51 @@
+{% extends "layouts/guest.html" %}
+{% from "macros.html" import icon %}
+{% block title %}{{ ta('Your sign-in') }}{% endblock %}
+{% block content %}
+{% set full = (netbios ~ '\\' ~ c.username) if netbios else c.username %}
+<div class="stack" style="gap:20px;max-width:920px;margin:0 auto">
+  <div class="cluster pop"><span class="check-badge">{{ icon('check', 22) }}</span><h1 style="margin:0">{{ t('Your sign-in is ready') }}</h1></div>
+  <p style="margin:0;color:var(--coral);font-weight:600" role="note">{{ t('Write it down or keep this page open. The password is shown only once.') }}</p>
+  <div class="row">
+    <section class="grow card lg stack pop" style="--i:1;gap:18px;flex-basis:480px" aria-label="{{ ta('Your sign-in details') }}">
+      <div class="stack tight">
+        <span class="cred-label">{{ t('Username') }}</span>
+        <div class="cluster"><span class="cred" id="cred-user">{{ full }}</span><button type="button" class="btn no-print" data-copy="#cred-user">{{ t('Copy') }}</button></div>
+        <span class="subtle">{{ t('Or') }} <span class="mono break" id="cred-upn">{{ c.upn }}</span></span>
+      </div>
+      <div class="stack tight">
+        <span class="cred-label">{{ t('Password') }}</span>
+        <div class="cluster">
+          <span class="cred pw" id="cred-pw" data-secret="{{ c.password }}">{{ c.password }}</span>
+          <button type="button" class="btn no-print" data-copy="#cred-pw" data-copy-attr="data-secret">{{ t('Copy') }}</button>
+          <button type="button" class="btn no-print" data-toggle-secret="#cred-pw" aria-pressed="false">{{ t('Hide') }}</button>
+        </div>
+      </div>
+      <ol class="steps">
+        <li>{{ t('On the computer sign-in screen, choose Other user.') }}</li>
+        <li>{{ t('Type the username exactly as shown, then the password.') }}</li>
+        <li>{{ t('Save your files somewhere else before it expires: they are deleted with the account.') }}</li>
+      </ol>
+    </section>
+    <section class="side card lg coral stack pop" style="--i:2;align-items:center;justify-content:center;text-align:center;gap:12px" aria-label="{{ ta('Time left') }}">
+      {% if c.expiresAt %}
+      <svg class="ring" viewBox="0 0 120 120" role="img" aria-labelledby="ring-text" data-countdown="{{ c.expiresAt }}">
+        <circle class="track" cx="60" cy="60" r="48"/>
+        <circle class="bar" cx="60" cy="60" r="48" stroke-dasharray="302" stroke-dashoffset="0" transform="rotate(-90 60 60)"/>
+        <text id="ring-text" x="60" y="66" text-anchor="middle" font-size="20" data-countdown-text>--:--</text>
+      </svg>
+      <span style="font-weight:800;font-size:1.125rem">{{ t('Ends') }} <time datetime="{{ c.expiresAt }}" data-local-time>{{ c.expiresAt }}</time></span>
+      <span class="small" aria-live="polite" data-countdown-words></span>
+      {% else %}
+      <span style="font-weight:800;font-size:1.25rem">{{ t('No expiry') }}</span>
+      <span class="small">{{ t('This sign-in stays until you or staff delete it.') }}</span>
+      {% endif %}
+    </section>
+  </div>
+  <div class="cluster no-print">
+    <button type="button" class="btn light lg" data-print>{{ t('Print') }}</button>
+    <a class="btn lg" href="/check">{{ t('Check my sign-in') }}</a>
+    {% if pub.allowSelfDelete %}<a class="btn coral-text lg" href="/delete">{{ t('Delete it now') }}</a>{% endif %}
+  </div>
+</div>
+{% endblock %}

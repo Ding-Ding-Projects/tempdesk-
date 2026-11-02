@@ -534,6 +534,21 @@
       portals: { mode: o.portalsMode === 'native' ? 'native' : 'none' }
     }, null, 2) + '\n';
   }
+  // firstboot.json -> server form fields (inverse of buildFirstboot). Throws on a bad shape.
+  function importFirstboot(text, base) {
+    var j = JSON.parse(text);
+    if (!j || typeof j !== 'object' || Array.isArray(j)) throw new Error('firstboot.json must be a JSON object.');
+    var f = clone(base || {});
+    ['computerName', 'ipAddress', 'gateway', 'domainName', 'netbiosName', 'functionalLevel', 'dsrmPassword', 'initialAdminUser'].forEach(function (k) {
+      if (j[k] !== undefined && j[k] !== null) f[k] = String(j[k]);
+    });
+    if (j.prefixLength !== undefined) f.prefixLength = String(j.prefixLength);
+    if (Array.isArray(j.dnsServers)) f.dnsServers = j.dnsServers.join(', ');
+    if (j.agent && typeof j.agent === 'object') f.agentTls = !!j.agent.tls;
+    if (j.portals && typeof j.portals === 'object') f.portalsMode = j.portals.mode === 'native' ? 'native' : 'none';
+    if (f.initialAdminUser === 'Administrator') delete f.initialAdminUser;
+    return f;
+  }
   // Keys Continue-Setup.ps1 / FirstLogon.ps1 read from firstboot.json.
   var FIRSTBOOT_KEYS = ['computerName', 'ipAddress', 'prefixLength', 'gateway', 'dnsServers', 'domainName', 'netbiosName', 'functionalLevel', 'dsrmPassword', 'initialAdminUser', 'agent', 'portals'];
 
@@ -1198,7 +1213,7 @@
 
   var api = {
     // original API
-    buildAutounattend: buildAutounattend, buildFirstboot: buildFirstboot, validate: validate, unattendPassword: unattendPassword,
+    buildAutounattend: buildAutounattend, buildFirstboot: buildFirstboot, importFirstboot: importFirstboot, validate: validate, unattendPassword: unattendPassword,
     // modes and model
     buildXml: buildXml, buildModelTree: buildModelTree, serverTree: serverTree, guestTree: guestTree, customTree: customTree,
     defaultModel: defaultModel, normalizeModel: normalizeModel, normalizePresetBundle: normalizePresetBundle, stripSecrets: stripSecrets,

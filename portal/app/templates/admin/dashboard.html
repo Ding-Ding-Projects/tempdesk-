@@ -1,0 +1,43 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import local_time, empty %}
+{% block title %}{{ ta('Dashboard') }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ t('Hello, {name}', name=user.displayName or user.sam) }}</h1>
+  {% if has_cap('guest') %}<a class="btn filled" href="/guests#create">{{ t('New sign-in') }}</a>{% endif %}</div>
+{% if not onboarding_done %}<p class="alert"><span class="grow">{{ t('Finish the first-run setup to get the guest portal ready.') }}</span> <a class="btn sm tonal" href="/welcome">{{ t('Continue setup') }}</a></p>{% endif %}
+<div class="grid">
+  <div class="card stat rise" data-ctx='[{"label":"{{ ta('Open guests') }}","href":"/guests"}]'>
+    <div class="label">{{ t('Guest accounts') }}</div>
+    {% if guest_total is none %}<div class="value sm">{{ t('Unavailable') }}</div><div class="note">{{ guest_error or ta('The guest list could not be read.') }}</div>
+    {% else %}<div class="value" data-rollup="{{ guest_total }}">{{ guest_total }}</div><div class="note">{{ t('{count} enabled', count=guest_active) }}</div>{% endif %}
+  </div>
+  <div class="card stat rise" style="--i:1">
+    <div class="label">{{ t('Domain controller') }}</div>
+    {% if health %}<div class="value sm">{{ health.dc or '' }} {{ t('healthy') if health.status == 'ok' else health.status }}</div>
+    <div class="note">{{ health.domain }} · {{ t('Agent {version}', version=health.version or '') }} · {{ health.backend or 'windows' }}</div>
+    {% else %}<div class="value sm" style="color:var(--coral)">{{ t('Not reachable') }}</div><div class="note">{{ t('The TempDesk Agent did not answer the health check.') }}</div>{% endif %}
+  </div>
+  <div class="card stat primary rise" style="--i:2">
+    <div class="label">{{ t('Capabilities') }}</div>
+    <div class="value" data-rollup="{{ (health.capabilities|length) if health and health.capabilities else 0 }}">{{ (health.capabilities|length) if health and health.capabilities else 0 }}</div>
+    <div class="note" style="color:inherit">{{ t('features reported by the agent') }}</div>
+  </div>
+</div>
+<div class="row">
+  <section class="grow card rise" style="--i:3;flex-basis:480px">
+    <h2>{{ t('Recent activity') }}</h2>
+    {% if audit_rows %}
+    <ul class="timeline">
+      {% for r in audit_rows %}<li><span class="dot {{ loop.cycle('', 'coral', 'neutral') }}"></span><div>
+        <div style="font-weight:600">{{ r.message or r.action or r }}</div>
+        <div class="subtle">{{ r.user or '' }} {% if r.time %}· {{ local_time(r.time) }}{% endif %}</div></div></li>{% endfor %}
+    </ul>
+    <a href="/audit">{{ t('Open the audit log') }}</a>
+    {% else %}{{ empty('No activity yet', 'Agent actions appear here once someone creates a guest or changes a setting.') }}{% endif %}
+  </section>
+  <section class="side card rise stack" style="--i:4">
+    <h2>{{ t('Quick links') }}</h2>
+    {% for item in nav_items if not item.get('primary') %}<a href="{{ item.href }}">{{ t(item.label) }}</a>{% endfor %}
+  </section>
+</div>
+{% endblock %}

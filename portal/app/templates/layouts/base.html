@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="{{ tr.html_lang }}" data-mode="{{ mode }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="referrer" content="no-referrer">
+<title>{% block title %}{% endblock %} | {{ org_name if mode == 'guest' else ta('Admin console') }}</title>
+<link rel="icon" href="/static/img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/css/tokens.css">
+<link rel="stylesheet" href="/static/css/app.css">
+{% block head %}{% endblock %}
+<script src="/static/js/prefs.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">{{ t('Skip to content') }}</a>
+{% block body %}{% endblock %}
+<div class="toasts" aria-live="polite" aria-atomic="false" data-toasts></div>
+<script type="application/json" id="td-palette">{{ palette_json }}</script>
+<script type="application/json" id="td-strings">{{ js_strings }}</script>
+<script src="/static/js/app.js" defer></script>
+<script src="/static/js/palette.js" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

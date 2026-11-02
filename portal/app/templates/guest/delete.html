@@ -1,0 +1,16 @@
+{% extends "layouts/guest.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}{{ ta('Delete my sign-in') }}{% endblock %}
+{% block content %}
+<div class="row" style="gap:40px">
+  <div class="grow"><h1 class="hero rise">{{ t('Delete my sign-in') }}</h1><p class="lead rise" style="--i:1">{{ t('When you are finished, delete your sign-in. Your files on shared computers are removed with it.') }}</p></div>
+  <form class="grow card lg stack rise" style="--i:2" method="post" action="/delete" autocomplete="off">
+    {{ csrf() }}
+    {% if error_key %}<p class="alert error" role="alert">{{ tr.html(error_key, serious=True) }}</p>{% endif %}
+    <div class="field"><label for="u">{{ t('Username') }}</label><input id="u" name="username" type="text" required autocapitalize="off" spellcheck="false" autocomplete="username"></div>
+    <div class="field"><label for="p">{{ t('Password') }}</label><input id="p" name="password" type="password" required autocomplete="current-password"></div>
+    <label class="check"><input type="checkbox" name="confirm" required> {{ t('I understand this cannot be undone.') }}</label>
+    <button class="btn danger lg" type="submit">{{ t('Delete my sign-in') }}</button>
+  </form>
+</div>
+{% endblock %}

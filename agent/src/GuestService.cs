@@ -17,15 +17,11 @@ namespace TempDesk.Agent
     {
         private readonly AgentConfig _config;
         private readonly AuditLog _audit;
-        private readonly RateLimiter _createLimiter;
 
         public GuestService(AgentConfig config, AuditLog audit)
         {
             _config = config;
             _audit = audit;
-            // Per source-IP window is one hour; the max comes from settings at
-            // call time, so we build a limiter lazily with the configured max.
-            _createLimiter = null;
         }
 
         // The per-hour limiter is rebuilt when settings change the cap; keep a

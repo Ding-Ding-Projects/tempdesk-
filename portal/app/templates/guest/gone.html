@@ -1,0 +1,9 @@
+{% extends "layouts/guest.html" %}
+{% block title %}{{ ta('Already shown') }}{% endblock %}
+{% block content %}
+<section class="card lg rise" style="max-width:640px">
+  <h1>{{ t('This sign-in was already shown') }}</h1>
+  <p class="muted">{{ t('For your privacy the password is shown only once and is not kept. If you did not write it down, delete the sign-in with staff help or create a new one.') }}</p>
+  <a class="btn filled" href="/">{{ t('Create a new sign-in') }}</a>
+</section>
+{% endblock %}
