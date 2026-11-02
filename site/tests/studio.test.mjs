@@ -50,7 +50,7 @@ test('XML two-way sync: invalid XML throws and nothing is applied; unknown parts
   assert.match(r.model.raw, /Contoso-Thing/);
 });
 
-test('quick fixes resolve rules engine issues and the result validates', async (t) => {
+test('quick fixes come from the rules engine and round-trip through the studio model', async (t) => {
   if (!haveShared) { t.skip('answerfile/ not present'); return; }
   const g = await import(genPath);
   const m = A.defaultModel();
@@ -59,38 +59,22 @@ test('quick fixes resolve rules engine issues and the result validates', async (
     'specialize|Microsoft-Windows-Shell-Setup': { ComputerName: '12345' },
     'oobeSystem|Microsoft-Windows-UnattendedJoin': { Identification: { JoinDomain: 'lab.example.org', Credentials: { Domain: 'lab', Username: 'j', Password: 'p' } } }
   };
-  let xml = A.buildXml(m);
-  const ids = (x) => g.validateModel(g.parseXml(x, rawCatalog).model, rawCatalog).map((i) => i.id);
-  const before = g.validateModel(g.parseXml(xml, rawCatalog).model, rawCatalog);
-  assert.ok(before.some((i) => i.id === 'computerName.digits'));
-  assert.ok(before.some((i) => i.id === 'setting.passNotAllowed'));
+  let current = m;
+  const issues = (mm) => g.validateModel(g.parseXml(A.buildXml(mm), rawCatalog).model, rawCatalog);
   for (const id of ['computerName.digits', 'setting.passNotAllowed']) {
-    const issue = g.validateModel(g.parseXml(xml, rawCatalog).model, rawCatalog).find((i) => i.id === id);
-    assert.ok(A.fixFor(issue), id + ' offers a fix');
-    const fixed = A.applyFix(xml, issue, rawCatalog);
-    assert.ok(fixed, id + ' applied');
-    assert.ok(A.isWellFormed(fixed));
-    xml = fixed;
+    const before = issues(current);
+    assert.ok(before.some((i) => i.id === id), id + ' fires');
+    assert.ok(g.fixesFor(before).some((f) => f.id === id), id + ' is offered as a fix');
+    const fixed = g.applyFix(g.parseXml(A.buildXml(current), rawCatalog).model, rawCatalog, id);
+    const xml = g.buildXml(fixed, rawCatalog);
+    assert.ok(A.isWellFormed(xml));
+    current = A.syncFromXml(current, xml, { knownComponent: known }).model;
+    assert.ok(!issues(current).some((i) => i.id === id), id + ' resolved in the studio model');
   }
-  const after = ids(xml);
-  assert.ok(!after.includes('computerName.digits'));
-  assert.ok(!after.includes('setting.passNotAllowed'));
-  const r = A.syncFromXml(m, xml, { knownComponent: known });
-  assert.equal(r.model.custom.computerName, 'PC-12345', 'the fixed name lands in the form field that owns it');
-  assert.ok(r.model.all['specialize|Microsoft-Windows-UnattendedJoin'], 'join moved to specialize');
-  assert.equal(A.fixFor({ id: 'join.credentials' }), null, 'issues without a safe fix offer none');
-  assert.equal(A.applyFix(xml, { id: 'computerName.digits', where: 'specialize/Nope/ComputerName' }, rawCatalog), null);
-});
-
-test('quick fix renumbers duplicate Order values', () => {
-  const m = A.defaultModel();
-  m.mode = 'custom';
-  m.commands.firstLogon = [{ command: 'a', willReboot: 'Never' }, { command: 'b', willReboot: 'Never' }];
-  let xml = A.buildXml(m).replace(/<Order>2<\/Order>(\s*<Description>|\s*<CommandLine>b)/, '<Order>1</Order>$1');
-  const fixed = A.applyFix(xml, { id: 'list.orderUnique', where: 'oobeSystem/Microsoft-Windows-Shell-Setup/FirstLogonCommands' }, null);
-  assert.ok(fixed);
-  const orders = [...fixed.matchAll(/<SynchronousCommand[\s\S]*?<Order>(\d+)<\/Order>/g)].map((x) => x[1]);
-  assert.deepEqual(orders, ['1', '2']);
+  assert.equal(current.custom.computerName, 'PC-12345', 'the fixed name lands in the form field that owns it');
+  assert.ok(current.all['specialize|Microsoft-Windows-UnattendedJoin'], 'join moved to specialize');
+  assert.equal(g.applyFix({ passes: {} }, rawCatalog, 'join.credentials'), null, 'rules without a safe fix offer none');
+  assert.equal(typeof A.applyFix, 'undefined', 'no private fix table in the studio');
 });
 
 test('compare reports added, removed and changed settings by path', () => {

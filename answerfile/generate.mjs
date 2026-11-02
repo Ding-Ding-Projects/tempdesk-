@@ -345,7 +345,7 @@ export function buildXml(model, catalog, options = {}) {
 // Validation (rules table lives in rules.mjs)
 // ---------------------------------------------------------------------------
 
-export { validateModel, RULES, describeRules } from './rules.mjs';
+export { validateModel, RULES, describeRules, fixesFor, applyFix, NO_FIX } from './rules.mjs';
 
 // ---------------------------------------------------------------------------
 // Tiny XML parser (enough for answer files: elements, attributes, text, CDATA,

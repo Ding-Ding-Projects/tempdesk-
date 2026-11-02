@@ -339,3 +339,42 @@ siblings (its page lists the NonWinPE passes by mistake).
 ## Source and attribution
 
 Setting names, types, passes and allowed values are derived from Microsoft's Unattended Windows Setup Reference on Microsoft Learn. Help text is a short paraphrase written for this project, not a copy of the reference; read the reference for the authoritative description of each setting. Windows and Windows Server are trademarks of Microsoft.
+
+## Automatic fixes
+
+`rules.mjs` gives a rule an optional `fix(model, catalog)` with a short `fixLabel` when a safe automatic fix exists. A fix is pure: it returns a new model and changes only what makes its rule pass (each fix has a test that checks exactly that). Builders call `fixesFor(issues)` to show buttons and `applyFix(model, catalog, ruleId)` to apply one.
+
+Rules with a fix: `component.unknown`, `component.passNotAllowed`, `setting.unknown`, `setting.passNotAllowed`, `setting.deprecated`, `value.list`, `value.boolean`, `value.range`, `value.maxLength`, `list.orderUnique`, `join.exclusive`, `join.ouWithoutDomain`, `computerName.length`, `computerName.digits`, `computerName.chars`, `autologon.logonCount`, `command.willReboot`, `productKey.format`, `disk.extendWithSize`, `disk.extendLast`, `disk.efiSize`, `disk.efiFormat`, `disk.activeOnGpt`, `install.toAndAvailable`, `servicing.publicKeyToken`, `servicing.selection`, `servicing.selectionDuplicate`, `servicing.selectionWithoutConfigure`.
+
+Rules without an automatic fix, and why (the same list is exported as `NO_FIX`):
+
+| Rule id | Why there is no automatic fix |
+| --- | --- |
+| `pass.unknown` | The intended pass cannot be guessed; moving or deleting the settings could lose work. |
+| `value.enum` | The check already ignores case, so a value it reports is not a spelling variant; the intended choice is unknown. |
+| `disk.mbrActive` | The reference marks ModifyPartition/Active itself as deprecated, so adding it trades this error for a warning; the user should decide. |
+| `value.integer` | There is no safe number to turn arbitrary text into. |
+| `list.keyMissing` | A key is an identity (an address, a name) the user must choose. |
+| `list.keyDuplicate` | Which of the two items is right is a judgement; renaming either could break references. |
+| `join.credentials` | Credentials are secrets only the user has. |
+| `join.credentialsIncomplete` | The missing domain, user name or password is unknown. |
+| `autologon.password` | A password is a secret; writing an empty one would weaken security silently. |
+| `autologon.username` | The account to sign in is the user's choice. |
+| `password.blankAdministrator` | Choosing a password for the user would hide a secret they do not know. |
+| `command.missing` | The command to run is unknown; deleting the item could drop intended work. |
+| `productKey.alphabet` | A key with impossible characters is a typo; the right characters are unknown. |
+| `disk.extendCount` | Which partition should take the rest of the disk is a layout decision. |
+| `disk.sizeRequired` | The partition size is a layout decision. |
+| `disk.msrCount` | Adding or removing an MSR changes partition numbers that other settings refer to. |
+| `disk.gptNoExtended` | Converting between GPT and MBR layouts is a design decision. |
+| `disk.mbrPrimaryLimit` | Merging or converting partitions changes the layout the user designed. |
+| `disk.modifyTarget` | The intended partition is unknown. |
+| `disk.letterDuplicate` | Which partition keeps the letter is the user's choice. |
+| `disk.fit` | Shrinking partitions to fit could cut space the user needs. |
+| `install.target` | The intended install partition is unknown. |
+| `servicing.action` | The intended package action cannot be guessed. |
+| `servicing.identity` | Package identity values come from the package itself. |
+| `servicing.version` | The package version comes from the package itself. |
+| `servicing.permanence` | Permanence changes how a package can be removed later; the intent is unknown. |
+| `servicing.sourceLocation` | The package path is unknown. |
+| `servicing.installNeedsSource` | The package path is unknown, and the package may already be staged. |

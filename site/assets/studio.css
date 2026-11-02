@@ -233,3 +233,15 @@ button.pass-chip { cursor: pointer; font: inherit; font-size: .72rem; }
   .studio .st-tab-new { width: var(--tap); height: var(--tap); }
   .st-tab { height: 48px; }
 }
+.st-cm { flex: 1; min-height: 0; display: flex; }
+.st-cm .cm-editor { flex: 1; min-width: 0; height: 100%; }
+.st-cm .cm-editor.cm-focused { outline: 2px solid var(--primary); outline-offset: -2px; }
+.st-cm .cm-panel.cm-search { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 8px; }
+.st-cm .cm-panel.cm-search label { font-size: .8rem; display: inline-flex; gap: 4px; align-items: center; }
+.st-cm .cm-button { background: var(--s3); border: 1px solid var(--outline2); color: var(--text); border-radius: 8px; background-image: none; }
+.st-cm .cm-textfield { background: var(--s1); border: 1px solid var(--outline2); color: var(--text); border-radius: 8px; }
+@media (max-width: 900px) { .st-cm .cm-button, .st-cm .cm-textfield { min-height: var(--tap); } }
+@media (max-width: 900px) {
+  .studio .st-logo { min-height: var(--tap); min-width: var(--tap); justify-content: center; }
+  .studio .st-top .btn, .studio #b-dl-zip { min-height: var(--tap); }
+}

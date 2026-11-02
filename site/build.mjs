@@ -196,13 +196,21 @@ async function docSources() {
 }
 
 async function build() {
+  // 0. CodeMirror bundle: rebuilt with esbuild when the dev dependencies are installed; otherwise the
+  //    committed assets/vendor/codemirror.js is used as is (so the build needs no network).
+  let vendor = 'committed bundle';
+  if (existsSync(path.join(SITE, 'node_modules', 'esbuild')) && existsSync(path.join(SITE, 'node_modules', '@codemirror', 'view'))) {
+    await import(path.join(SITE, 'build-vendor.mjs'));
+    vendor = 'rebuilt with esbuild';
+  }
+  if (!existsSync(path.join(SITE, 'assets', 'vendor', 'codemirror.js'))) throw new Error('assets/vendor/codemirror.js is missing; run npm ci && node build-vendor.mjs in site/');
   LAYOUT = await fs.readFile(path.join(SITE, 'templates', 'layout.html'), 'utf8');
   await rmrf(OUT);
   await mkdirp(OUT);
   const index = { generated: new Date().toISOString(), pages: [] };
 
   // 1. static files
-  const STATIC_SKIP = new Set(['_site', 'node_modules', 'tests', 'templates', 'build.mjs', 'features.json', 'package.json', 'package-lock.json', 'README.md', 'payload', '.gitignore']);
+  const STATIC_SKIP = new Set(['_site', 'node_modules', 'tests', 'templates', 'build.mjs', 'features.json', 'package.json', 'package-lock.json', 'README.md', 'payload', '.gitignore', 'vendor-src', 'build-vendor.mjs']);
   const statics = await walk(SITE, (rel, e) => !STATIC_SKIP.has(rel.split('/')[0]) && !rel.split('/').some((p) => p.startsWith('.')) && !(e.isFile() && /\.(py|mjs\.map)$/.test(rel)));
   for (const f of statics) await copyFile(path.join(SITE, f), path.join(OUT, f));
   await fs.writeFile(path.join(OUT, '.nojekyll'), '');
@@ -324,14 +332,19 @@ ${r.html}
   const urls = index.pages.map((p) => BASE_URL + p.url.replace(/index\.html$/, ''));
   await fs.writeFile(path.join(OUT, 'sitemap.xml'), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls.map((u) => `  <url><loc>${escapeHtml(u)}</loc></url>`).join('\n') + '\n</urlset>\n');
   await fs.writeFile(path.join(OUT, 'robots.txt'), 'User-agent: *\nAllow: /\nSitemap: ' + BASE_URL + 'sitemap.xml\n');
-  await fs.writeFile(path.join(OUT, '404.html'), page({ title: 'Page not found | TempDesk', desc: 'This page does not exist.', root: '/tempdesk-/', url: '404.html', body: '<div class="content"><h1 data-i18n="nf.title">Page not found</h1><p class="lede" data-i18n="nf.body">This page does not exist. Try the command palette (Ctrl+Shift+F) or go home.</p><a class="btn btn-primary" href="/tempdesk-/" data-i18n="nav.home">Home</a></div>' }));
+  // 404.html is served for any missing path, at any depth, so relative links would break. A tiny script
+  // computes the site root at runtime (the first path segment on GitHub Pages project sites, or / when
+  // served locally) and sets <base href> before anything else loads.
+  const nfBase = '<script>(function(){var p=location.pathname,b="/";if(/\\.github\\.io$/.test(location.hostname)){var m=p.match(/^\\/[^\\/]+\\//);if(m)b=m[0];}document.write(\'<base href="\'+b+\'">\');})();</script>';
+  const nfPage = page({ title: 'Page not found | TempDesk', desc: 'This page does not exist.', root: '', url: '404.html', body: '<div class="content"><h1 data-i18n="nf.title">Page not found</h1><p class="lede" data-i18n="nf.body">This page does not exist. Try the command palette (Ctrl+Shift+F) or go home.</p><a class="btn btn-primary" href="./" data-i18n="nav.home">Home</a></div>' });
+  await fs.writeFile(path.join(OUT, '404.html'), nfPage.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + nfBase));
 
-  return { features: features.length, docs: docs.length, payload: manifest.files.length, answerfile: af, pages: index.pages.length };
+  return { vendor, features: features.length, docs: docs.length, payload: manifest.files.length, answerfile: af, pages: index.pages.length };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   build().then((r) => {
-    console.log(`Built site/_site: ${r.pages} indexed pages, ${r.features} feature articles, ${r.docs} docs, ${r.payload} payload files` + (r.answerfile.length ? `, answerfile: ${r.answerfile.join(', ')}` : ', answerfile catalog not present yet (builder uses its built-in core subset)'));
+    console.log(`CodeMirror: ${r.vendor}. Built site/_site: ${r.pages} indexed pages, ${r.features} feature articles, ${r.docs} docs, ${r.payload} payload files` + (r.answerfile.length ? `, answerfile: ${r.answerfile.join(', ')}` : ', answerfile catalog not present yet (builder uses its built-in core subset)'));
   }).catch((e) => { console.error(e); process.exit(1); });
 }
 export { build };

@@ -148,3 +148,72 @@ test('options: disable and severity overrides; errors sort first', () => {
   assert.equal(mixed[0].level, 'error');
   assert.equal(mixed[mixed.length - 1].level, 'warning');
 });
+
+// ---------------------------------------------------------------------------
+// automatic fixes: each fix makes its rule pass and changes nothing else
+// ---------------------------------------------------------------------------
+import { fixesFor, applyFix, NO_FIX } from '../rules.mjs';
+
+/** [ruleId, model that triggers it, exact expected model after the fix, options] */
+const FIX_CASES = [
+  ['component.unknown', { passes: { specialize: { 'Contoso-Nothing': { A: 1 }, [SHELL]: { ComputerName: 'A1' } } } }, spec(SHELL, { ComputerName: 'A1' })],
+  ['component.passNotAllowed', { passes: { windowsPE: { [JOIN]: { 'Identification/JoinWorkgroup': 'WG' } } } }, { passes: { windowsPE: {}, specialize: { [JOIN]: { 'Identification/JoinWorkgroup': 'WG' } } } }],
+  ['setting.unknown', spec(SHELL, { NoSuchThing: 1, ComputerName: 'A1' }), spec(SHELL, { ComputerName: 'A1' })],
+  ['setting.passNotAllowed', { passes: { windowsPE: { [SHELL]: { ComputerName: 'A1' } } } }, { passes: { windowsPE: {}, specialize: { [SHELL]: { ComputerName: 'A1' } } } }],
+  ['setting.deprecated', oobe({ 'OOBE/NetworkLocation': 'Work', 'OOBE/HideEULAPage': true }), oobe({ 'OOBE/HideEULAPage': true })],
+  ['value.list', oobe({ 'FirstLogonCommands/SynchronousCommand': { Order: 1, CommandLine: 'x' } }), oobe({ 'FirstLogonCommands/SynchronousCommand': [{ Order: 1, CommandLine: 'x' }] })],
+  ['value.boolean', oobe({ 'OOBE/HideEULAPage': 'yes', 'OOBE/HideWirelessSetupInOOBE': 'nah' }), oobe({ 'OOBE/HideEULAPage': true, 'OOBE/HideWirelessSetupInOOBE': false })],
+  ['value.range', spec(JOIN, { 'Identification/TimeoutPeriodInMinutes': 90, 'Identification/JoinWorkgroup': 'WG' }), spec(JOIN, { 'Identification/TimeoutPeriodInMinutes': 60, 'Identification/JoinWorkgroup': 'WG' })],
+  ['value.maxLength', pe({ 'UserData/FullName': 'x'.repeat(70) }), pe({ 'UserData/FullName': 'x'.repeat(63) })],
+  ['list.orderUnique', spec('Microsoft-Windows-Deployment', { 'RunSynchronous/RunSynchronousCommand': [{ Order: 1, Path: 'a' }, { Order: '1', Path: 'b' }] }),
+    spec('Microsoft-Windows-Deployment', { 'RunSynchronous/RunSynchronousCommand': [{ Order: 1, Path: 'a' }, { Order: 2, Path: 'b' }] })],
+  ['join.exclusive', spec(JOIN, { 'Identification/JoinDomain': 'corp', 'Identification/JoinWorkgroup': 'WG', 'Identification/UnsecureJoin': true }), spec(JOIN, { 'Identification/JoinDomain': 'corp', 'Identification/UnsecureJoin': true })],
+  ['join.ouWithoutDomain', spec(JOIN, { 'Identification/JoinWorkgroup': 'WG', 'Identification/MachineObjectOU': 'OU=x' }), spec(JOIN, { 'Identification/JoinWorkgroup': 'WG' })],
+  ['computerName.length', spec(SHELL, { ComputerName: 'ClassroomComputer01' }), spec(SHELL, { ComputerName: 'ClassroomComput' })],
+  ['computerName.digits', spec(SHELL, { ComputerName: '12345' }), spec(SHELL, { ComputerName: 'PC-12345' })],
+  ['computerName.chars', spec(SHELL, { ComputerName: 'my pc' }), spec(SHELL, { ComputerName: 'my-pc' })],
+  ['autologon.logonCount', oobe({ 'AutoLogon/Enabled': 'true', 'AutoLogon/Username': 'a', 'AutoLogon/Password/Value': 'p' }), oobe({ 'AutoLogon/Enabled': 'true', 'AutoLogon/Username': 'a', 'AutoLogon/Password/Value': 'p', 'AutoLogon/LogonCount': 1 })],
+  ['command.willReboot', spec('Microsoft-Windows-Deployment', { 'RunSynchronous/RunSynchronousCommand': [{ Order: 1, Path: 'a', WillReboot: 'always' }] }),
+    spec('Microsoft-Windows-Deployment', { 'RunSynchronous/RunSynchronousCommand': [{ Order: 1, Path: 'a', WillReboot: 'Always' }] })],
+  ['productKey.format', pe({ 'UserData/ProductKey/Key': 'vk7jg nphtm c97jm 9mpgt 3v66t' }), pe({ 'UserData/ProductKey/Key': 'VK7JG-NPHTM-C97JM-9MPGT-3V66T' })],
+  ['disk.extendWithSize', disk([{ Order: 1, Type: 'Primary', Size: 500, Extend: true }], [{ Order: 1, PartitionID: 1, Active: true }]), disk([{ Order: 1, Type: 'Primary', Extend: true }], [{ Order: 1, PartitionID: 1, Active: true }])],
+  ['disk.extendLast', disk([{ Order: 1, Type: 'Primary', Extend: true }, { Order: 2, Type: 'Primary', Size: 500 }], [{ Order: 1, PartitionID: 1, Format: 'NTFS', Letter: 'C' }, { Order: 2, PartitionID: 2, Active: true }]),
+    disk([{ Order: 2, Type: 'Primary', Extend: true }, { Order: 1, Type: 'Primary', Size: 500 }], [{ Order: 1, PartitionID: 2, Format: 'NTFS', Letter: 'C' }, { Order: 2, PartitionID: 1, Active: true }])],
+  ['disk.efiSize', disk([{ Order: 1, Type: 'EFI', Size: 99 }, ...uefiCreates.slice(1)], uefiModifies), disk([{ Order: 1, Type: 'EFI', Size: 260 }, ...uefiCreates.slice(1)], uefiModifies)],
+  ['disk.efiFormat', disk(uefiCreates, [{ Order: 1, PartitionID: 1, Format: 'NTFS' }]), disk(uefiCreates, [{ Order: 1, PartitionID: 1, Format: 'FAT32' }])],
+  ['disk.activeOnGpt', disk(uefiCreates, [{ Order: 1, PartitionID: 1, Format: 'FAT32', Active: true }]), disk(uefiCreates, [{ Order: 1, PartitionID: 1, Format: 'FAT32' }])],
+  ['install.toAndAvailable', pe({ 'ImageInstall/OSImage/InstallToAvailablePartition': true, 'ImageInstall/OSImage/InstallTo/DiskID': 0 }), pe({ 'ImageInstall/OSImage/InstallTo/DiskID': 0 })],
+  ['servicing.publicKeyToken', pkg({ identity: { name: 'x', version: '1.0.0.0', processorArchitecture: 'amd64', publicKeyToken: 'xyz', language: '' } }), pkg({ identity: { name: 'x', version: '1.0.0.0', processorArchitecture: 'amd64', publicKeyToken: '31bf3856ad364e35', language: '' } })],
+  ['servicing.selection', pkg({ selections: [{ name: 'IIS-WebServer', state: 'on' }] }), pkg({ selections: [{ name: 'IIS-WebServer', state: true }] })],
+  ['servicing.selectionDuplicate', pkg({ selections: [{ name: 'A', state: true }, { name: 'a', state: false }] }), pkg({ selections: [{ name: 'A', state: true }] })],
+  ['servicing.selectionWithoutConfigure', pkg({ action: 'remove', selections: [{ name: 'A', state: true }] }), pkg({ action: 'remove' })],
+];
+
+test('every rule either has a fix with a test case, or is listed in NO_FIX with a reason', () => {
+  const withFix = RULES.filter((r) => r.fix).map((r) => r.id);
+  assert.deepEqual(withFix.filter((id) => !FIX_CASES.some((c) => c[0] === id)), [], 'fix without a test');
+  for (const r of RULES) {
+    if (r.fix) { assert.equal(typeof r.fixLabel, 'string', r.id); assert.ok(!NO_FIX[r.id], r.id + ' has a fix and a NO_FIX reason'); }
+    else assert.ok(NO_FIX[r.id] && NO_FIX[r.id].length > 10, r.id + ' needs a fix or a NO_FIX reason');
+  }
+  const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+  for (const id of Object.keys(NO_FIX)) assert.ok(readme.includes('`' + id + '`'), 'README lists ' + id);
+});
+
+for (const [id, bad, expected, options] of FIX_CASES) {
+  test(`fix ${id}`, () => {
+    assert.ok(validateModel(bad, catalog, options).some((i) => i.id === id), `${id} did not fire before the fix`);
+    assert.ok(fixesFor(validateModel(bad, catalog, options)).some((f) => f.id === id), 'offered as a fix');
+    const before = JSON.stringify(bad);
+    const fixed = applyFix(bad, catalog, id);
+    assert.equal(JSON.stringify(bad), before, 'input model not mutated');
+    assert.deepEqual(validateModel(fixed, catalog, options).filter((i) => i.id === id), [], `${id} still fires after the fix`);
+    assert.deepEqual(fixed, expected, 'the fix changes only what it must');
+    const otherBefore = new Set(validateModel(bad, catalog, options).filter((i) => i.id !== id).map((i) => i.id + ' ' + i.where));
+    const introduced = validateModel(fixed, catalog, options).filter((i) => i.id !== id && !otherBefore.has(i.id + ' ' + i.where));
+    assert.deepEqual(introduced, [], 'no new issues');
+  });
+}
+test('applyFix returns null for rules without a fix', () => {
+  assert.equal(applyFix(spec(JOIN, { 'Identification/JoinDomain': 'corp' }), catalog, 'join.credentials'), null);
+});

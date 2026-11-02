@@ -134,6 +134,62 @@ function disks(model) {
 
 const partitionByNumber = (d, n) => (Number.isInteger(n) && n >= 1 ? d.numbered[n - 1] : undefined);
 
+
+// ---------------------------------------------------------------------------
+// fixes: pure helpers (each returns a new model)
+// ---------------------------------------------------------------------------
+const cloneModel = (m) => JSON.parse(JSON.stringify(m || {}));
+// Applies fn(values, pass, compName) to every component named `name` (case-insensitive).
+function editComps(model, name, fn) {
+  const m = cloneModel(model);
+  for (const [pass, cs] of Object.entries(m.passes || {})) {
+    for (const cn of Object.keys(cs || {})) if (cn.toLowerCase() === name.toLowerCase()) fn(cs[cn], pass, cn);
+  }
+  return m;
+}
+// Applies fn to every collected entry (with its catalog setting) and lets fn edit the holder object.
+function editEntries(model, catalog, pick, fn) {
+  const m = cloneModel(model);
+  const idx = indexCatalog(catalog);
+  for (const [pass, cs] of Object.entries(m.passes || {})) {
+    if (!PASS_ORDER.includes(pass)) continue;
+    for (const [cn, values] of Object.entries(cs || {})) {
+      const e = idx.byName.get(cn.toLowerCase());
+      if (!e) continue;
+      const scan = (scope, holder) => {
+        for (const key of Object.keys(holder || {})) {
+          const st = scope.get(key) || null;
+          const v = holder[key];
+          if (st && st.type === 'list' && Array.isArray(v)) { const sc = listScope(st); v.forEach((it) => it && typeof it === 'object' && scan(sc, it)); continue; }
+          if (pick({ pass, comp: e.comp, key, s: st, value: v })) fn(holder, key, { pass, comp: e.comp, s: st, value: v, cs, cn });
+        }
+      };
+      scan(e.top, values);
+    }
+  }
+  for (const cs of Object.values(m.passes || {})) for (const cn of Object.keys(cs || {})) if (cs[cn] && !Object.keys(cs[cn]).length) delete cs[cn];
+  return m;
+}
+// The pass most answer files use for a component, among the passes the reference allows.
+function preferredPass(passes) {
+  for (const p of ['specialize', 'oobeSystem', 'windowsPE']) if (passes.includes(p)) return p;
+  return passes[0];
+}
+function sanitizeComputerName(n) {
+  let s = String(n).normalize('NFKD').replace(/[^\x00-\x7f]/g, '').replace(/[^A-Za-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
+  if (/^\d*$/.test(s)) s = 'PC-' + s;
+  while (utf8Bytes(s) > 15) s = s.slice(0, -1);
+  return s.replace(/-+$/, '') || 'PC';
+}
+function editDisks(model, fn) {
+  return editComps(model, SETUP, (v) => (Array.isArray(v['DiskConfiguration/Disk']) ? v['DiskConfiguration/Disk'] : []).forEach((d) => fn(d)));
+}
+const creates = (d) => (Array.isArray(d['CreatePartitions/CreatePartition']) ? d['CreatePartitions/CreatePartition'] : []);
+const modifies = (d) => (Array.isArray(d['ModifyPartitions/ModifyPartition']) ? d['ModifyPartitions/ModifyPartition'] : []);
+const byOrder = (a, b) => (Number.isNaN(num(a.Order)) ? 1e9 : num(a.Order)) - (Number.isNaN(num(b.Order)) ? 1e9 : num(b.Order));
+function numberedOf(d) { return creates(d).slice().sort(byOrder).filter((c) => !/^Extended$/i.test(String(c.Type || ''))); }
+function editPackages(model, fn) { const m = cloneModel(model); (Array.isArray(m.servicing) ? m.servicing : []).forEach((p) => p && fn(p)); return m; }
+
 // ---------------------------------------------------------------------------
 // rules
 // ---------------------------------------------------------------------------
@@ -147,34 +203,41 @@ export const RULES = [
   {
     id: 'component.unknown', severity: 'error', title: 'Component not in the catalog',
     check: (c, r) => c.comps.filter((x) => !x.comp).forEach((x) => r(`${x.pass}/${x.name}`, 'component is not documented in the unattend reference')),
+    fixLabel: 'Remove the component', fix: (m, cat) => { const out = cloneModel(m); const idx = indexCatalog(cat); for (const cs of Object.values(out.passes || {})) for (const cn of Object.keys(cs || {})) if (!idx.byName.has(cn.toLowerCase())) delete cs[cn]; return out; },
   },
   {
     id: 'component.passNotAllowed', severity: 'warning', title: 'Component has no settings for this pass',
     check: (c, r) => c.comps.filter((x) => x.comp && !x.comp.passes.includes(x.pass))
       .forEach((x) => r(`${x.pass}/${x.comp.name}`, `no setting of this component is valid in ${x.pass} (valid: ${x.comp.passes.join(', ')})`)),
+    fixLabel: 'Move to the first valid pass', fix: (m, cat) => { const out = cloneModel(m); const idx = indexCatalog(cat); for (const [pass, cs] of Object.entries(out.passes || {})) for (const cn of Object.keys(cs || {})) { const e = idx.byName.get(cn.toLowerCase()); if (!e || e.comp.passes.includes(pass) || !e.comp.passes.length) continue; const to = preferredPass(e.comp.passes); out.passes[to] = out.passes[to] || {}; out.passes[to][cn] = Object.assign(out.passes[to][cn] || {}, cs[cn]); delete cs[cn]; } return out; },
   },
   {
     id: 'setting.unknown', severity: 'error', title: 'Setting not in the catalog',
     check: (c, r) => c.entries.filter((e) => !e.s).forEach((e) => r(e.where, 'unknown setting')),
+    fixLabel: 'Remove the setting', fix: (m, cat) => editEntries(m, cat, (e) => !e.s, (h, k) => { delete h[k]; }),
   },
   {
     id: 'setting.passNotAllowed', severity: 'error', title: 'Setting placed in a pass the reference does not allow',
     check: (c, r) => c.entries.filter((e) => e.s && e.s.passes && !e.s.passes.includes(e.pass))
       .forEach((e) => r(e.where, `not valid in the ${e.pass} pass (valid: ${e.s.passes.join(', ')})`)),
+    fixLabel: 'Move to the first valid pass', fix: (m, cat) => { const moves = []; const out = editEntries(m, cat, (e) => e.s && e.s.passes && e.s.passes.length && !e.s.passes.includes(e.pass) && e.s.itemPath === undefined, (h, k, x) => { moves.push([preferredPass(x.s.passes), x.cn, k, h[k]]); delete h[k]; }); for (const [to, cn, k, v] of moves) { out.passes[to] = out.passes[to] || {}; out.passes[to][cn] = out.passes[to][cn] || {}; if (out.passes[to][cn][k] === undefined) out.passes[to][cn][k] = v; } return out; },
   },
   {
     id: 'setting.deprecated', severity: 'warning', title: 'Deprecated setting',
     check: (c, r) => c.entries.filter((e) => e.s && e.s.deprecated).forEach((e) => r(e.where, 'deprecated setting; Windows may ignore it')),
+    fixLabel: 'Remove the deprecated setting', fix: (m, cat) => editEntries(m, cat, (e) => e.s && e.s.deprecated, (h, k) => { delete h[k]; }),
   },
   {
     id: 'value.list', severity: 'error', title: 'List setting needs an array of items',
     check: (c, r) => c.entries.filter((e) => e.s && e.s.type === 'list' && isSet(e.value) && !Array.isArray(e.value))
       .forEach((e) => r(e.where, 'list setting needs an array of items')),
+    fixLabel: 'Wrap the value in a list', fix: (m, cat) => editEntries(m, cat, (e) => e.s && e.s.type === 'list' && isSet(e.value) && !Array.isArray(e.value), (h, k) => { h[k] = [h[k]]; }),
   },
   {
     id: 'value.boolean', severity: 'error', title: 'Boolean value must be true or false',
     check: (c, r) => c.entries.filter((e) => e.s && e.s.type === 'boolean' && isSet(e.value) && !/^(true|false)$/i.test(text(e.value).trim()))
       .forEach((e) => r(e.where, `value ${text(e.value)} is not true or false`)),
+    fixLabel: 'Use true or false', fix: (m, cat) => editEntries(m, cat, (e) => e.s && e.s.type === 'boolean' && isSet(e.value) && !/^(true|false)$/i.test(text(e.value).trim()), (h, k) => { h[k] = /^(1|yes|on|y|enabled?)$/i.test(text(h[k]).trim()); }),
   },
   {
     id: 'value.enum', severity: 'warning', title: 'Value is not one of the documented choices',
@@ -194,12 +257,14 @@ export const RULES = [
       if (e.s.min !== undefined && n < e.s.min) r(e.where, `below minimum ${e.s.min}`);
       if (e.s.max !== undefined && n > e.s.max) r(e.where, `above maximum ${e.s.max}`);
     }),
+    fixLabel: 'Bring into the documented range', fix: (m, cat) => editEntries(m, cat, (e) => e.s && e.s.type === 'integer' && !Number.isNaN(num(e.value)) && ((e.s.min !== undefined && num(e.value) < e.s.min) || (e.s.max !== undefined && num(e.value) > e.s.max)), (h, k, x) => { let n = num(h[k]); if (x.s.min !== undefined && n < x.s.min) n = x.s.min; if (x.s.max !== undefined && n > x.s.max) n = x.s.max; h[k] = typeof h[k] === 'number' ? n : String(n); }),
   },
   {
     id: 'value.maxLength', severity: 'error', title: 'Text longer than the documented maximum',
     check: (c, r) => c.entries.filter((e) => e.s && e.s.maxLength !== undefined && isSet(e.value) && !Array.isArray(e.value)
       && text(e.value).length > e.s.maxLength && e.s.name !== 'ComputerName')
       .forEach((e) => r(e.where, `longer than ${e.s.maxLength} characters`)),
+    fixLabel: 'Shorten to the maximum length', fix: (m, cat) => editEntries(m, cat, (e) => e.s && e.s.maxLength !== undefined && isSet(e.value) && !Array.isArray(e.value) && text(e.value).length > e.s.maxLength && e.s.name !== 'ComputerName', (h, k, x) => { h[k] = text(h[k]).slice(0, x.s.maxLength); }),
   },
   {
     id: 'list.keyMissing', severity: 'error', title: 'List item has no key',
@@ -240,6 +305,7 @@ export const RULES = [
         else seen.set(k, i);
       });
     }),
+    fixLabel: 'Renumber the Order values', fix: (m, cat) => { const out = cloneModel(m); const c = collect(out, cat); c.lists.filter((l) => l.s.listItem.key === 'Order').forEach((l) => { const seen = new Set(l.items.map((it) => it && has(it.Order) ? text(it.Order).trim() : null)); if (seen.size === l.items.length) return; l.items.forEach((it, i) => { if (it) it.Order = i + 1; }); }); return out; },
   },
 
   // --- domain join -----------------------------------------------------------
@@ -250,6 +316,7 @@ export const RULES = [
         r(`${where}/Identification`, 'set either JoinDomain or JoinWorkgroup, not both (Windows uses JoinDomain and ignores JoinWorkgroup)');
       }
     }),
+    fixLabel: 'Keep the domain join', fix: (m) => editComps(m, JOIN, (v) => { if (has(v['Identification/JoinDomain'])) delete v['Identification/JoinWorkgroup']; }),
   },
   {
     id: 'join.credentials', severity: 'error', title: 'Domain join needs credentials or a provisioned account',
@@ -276,6 +343,7 @@ export const RULES = [
     check: (c, r, m) => comps(m, JOIN).forEach(({ values: v, where }) => {
       if (has(v['Identification/MachineObjectOU']) && !has(v['Identification/JoinDomain'])) r(`${where}/Identification/MachineObjectOU`, 'MachineObjectOU is only used when JoinDomain is set');
     }),
+    fixLabel: 'Remove MachineObjectOU', fix: (m) => editComps(m, JOIN, (v) => { if (!has(v['Identification/JoinDomain'])) delete v['Identification/MachineObjectOU']; }),
   },
 
   // --- computer name ---------------------------------------------------------
@@ -285,12 +353,14 @@ export const RULES = [
       const s = text(e.value);
       if (s !== '*' && utf8Bytes(s) > 15) r(e.where, `ComputerName is ${utf8Bytes(s)} bytes; the limit is 15 bytes`);
     }),
+    fixLabel: 'Make a valid computer name', fix: (m, cat) => editEntries(m, cat, (e) => e.s && e.key === 'ComputerName' && e.comp.name === SHELL && text(e.value) !== '*' && utf8Bytes(text(e.value)) > 15, (h, k) => { h[k] = sanitizeComputerName(h[k]); }),
   },
   {
     id: 'computerName.digits', severity: 'error', title: 'ComputerName cannot be only digits',
     check: (c, r) => computerNames(c).forEach((e) => {
       if (/^\d+$/.test(text(e.value))) r(e.where, 'ComputerName cannot consist only of digits (it fails DNS name validation)');
     }),
+    fixLabel: 'Make a valid computer name', fix: (m, cat) => editEntries(m, cat, (e) => e.s && ((e.key === 'ComputerName' && e.comp.name === SHELL) || (e.key === 'AuditComputerName/Name' && e.comp.name === DEPLOY)) && /^\d+$/.test(text(e.value)), (h, k) => { h[k] = sanitizeComputerName(h[k]); }),
   },
   {
     id: 'computerName.chars', severity: 'error', title: 'ComputerName contains a character Windows rejects',
@@ -298,6 +368,7 @@ export const RULES = [
       const s = text(e.value);
       if (s !== '*' && COMPUTER_NAME_BAD.test(s)) r(e.where, 'ComputerName cannot contain spaces or any of { | } ~ [ \\ ] ^ \' : ; < = > ? @ ! " # $ % ` ( ) + / . , * &');
     }),
+    fixLabel: 'Make a valid computer name', fix: (m, cat) => editEntries(m, cat, (e) => e.s && ((e.key === 'ComputerName' && e.comp.name === SHELL) || (e.key === 'AuditComputerName/Name' && e.comp.name === DEPLOY)) && text(e.value) !== '*' && COMPUTER_NAME_BAD.test(text(e.value)), (h, k) => { h[k] = sanitizeComputerName(h[k]); }),
   },
 
   // --- AutoLogon ---------------------------------------------------------------
@@ -312,6 +383,7 @@ export const RULES = [
     check: (c, r, m) => comps(m, SHELL).forEach(({ values: v, where }) => {
       if (isTrue(v['AutoLogon/Enabled']) && !has(v['AutoLogon/LogonCount'])) r(`${where}/AutoLogon`, 'AutoLogon is enabled but LogonCount is not set');
     }),
+    fixLabel: 'Set LogonCount to 1', fix: (m) => editComps(m, SHELL, (v) => { if (isTrue(v['AutoLogon/Enabled']) && !has(v['AutoLogon/LogonCount'])) v['AutoLogon/LogonCount'] = 1; }),
   },
   {
     id: 'autologon.username', severity: 'error', title: 'AutoLogon enabled without Username',
@@ -336,6 +408,7 @@ export const RULES = [
         r(`${l.where}[${i}]/WillReboot`, `WillReboot ${text(it.WillReboot)} is not Always, OnRequest or Never`);
       }
     })),
+    fixLabel: 'Use a documented WillReboot value', fix: (m, cat) => { const out = cloneModel(m); collect(out, cat).lists.filter((l) => l.s.name === 'RunSynchronousCommand').forEach((l) => l.items.forEach((it) => { if (it && isSet(it.WillReboot) && !['Always', 'OnRequest', 'Never'].includes(text(it.WillReboot))) { const f = ['Always', 'OnRequest', 'Never'].find((x) => x.toLowerCase() === text(it.WillReboot).trim().toLowerCase()); it.WillReboot = f || 'Never'; } })); return out; },
   },
   {
     id: 'command.missing', severity: 'error', title: 'Command item without a command line',
@@ -354,6 +427,7 @@ export const RULES = [
     check: (c, r) => productKeys(c).forEach((e) => {
       if (!/^[A-Z0-9]{5}(-[A-Z0-9]{5}){4}$/i.test(text(e.value).trim())) r(e.where, 'expected XXXXX-XXXXX-XXXXX-XXXXX-XXXXX');
     }),
+    fixLabel: 'Normalize or remove the key', fix: (m, cat) => editEntries(m, cat, (e) => e.s && has(e.value) && ((e.comp.name === SETUP && e.key === 'UserData/ProductKey/Key') || (e.comp.name === SHELL && e.key === 'ProductKey')) && !/^[A-Z0-9]{5}(-[A-Z0-9]{5}){4}$/i.test(text(e.value).trim()), (h, k) => { const raw = text(h[k]).replace(/[^A-Za-z0-9]/g, '').toUpperCase(); if (raw.length === 25) h[k] = raw.match(/.{5}/g).join('-'); else delete h[k]; }),
   },
   {
     id: 'productKey.alphabet', severity: 'warning', title: 'Product key uses characters Windows keys never contain',
@@ -377,12 +451,14 @@ export const RULES = [
       const i = d.creates.findIndex((x) => isTrue(x.p.Extend));
       if (i >= 0 && i !== d.creates.length - 1) r(`${d.where}/CreatePartitions/CreatePartition[${d.creates[i].j}]`, 'the partition with Extend must have the highest Order');
     }),
+    fixLabel: 'Give the extending partition the highest Order', fix: (m) => editDisks(m, (d) => { const list = creates(d).slice().sort(byOrder); const ext = list.find((p) => isTrue(p.Extend)); if (!ext || list[list.length - 1] === ext) return; const old = new Map(numberedOf(d).map((p, i) => [p, i + 1])); const reordered = list.filter((p) => p !== ext).concat([ext]); reordered.forEach((p, i) => { p.Order = i + 1; }); const now = new Map(numberedOf(d).map((p, i) => [p, i + 1])); const remap = new Map(); old.forEach((n, p) => remap.set(n, now.get(p))); modifies(d).forEach((mp) => { const n = num(mp.PartitionID); if (remap.has(n)) mp.PartitionID = typeof mp.PartitionID === 'number' ? remap.get(n) : String(remap.get(n)); }); }),
   },
   {
     id: 'disk.extendWithSize', severity: 'error', title: 'Extend and Size cannot both be set',
     check: (c, r, m) => disks(m).forEach((d) => d.creates.forEach((x) => {
       if (isTrue(x.p.Extend) && has(x.p.Size)) r(`${d.where}/CreatePartitions/CreatePartition[${x.j}]`, 'set either Size or Extend, not both');
     })),
+    fixLabel: 'Remove Size from the extending partition', fix: (m) => editDisks(m, (d) => creates(d).forEach((p) => { if (isTrue(p.Extend) && has(p.Size)) delete p.Size; })),
   },
   {
     id: 'disk.sizeRequired', severity: 'error', title: 'Partition needs Size or Extend',
@@ -397,6 +473,7 @@ export const RULES = [
         r(`${d.where}/CreatePartitions/CreatePartition[${x.j}]`, `EFI partition is ${num(x.p.Size)} MB; use at least 100 MB (260 MB on 4K-sector drives)`);
       }
     })),
+    fixLabel: 'Set the EFI partition to 260 MB', fix: (m) => editDisks(m, (d) => creates(d).forEach((p) => { if (/^EFI$/i.test(String(p.Type || '').trim()) && !Number.isNaN(num(p.Size)) && num(p.Size) < 100) p.Size = 260; })),
   },
   {
     id: 'disk.efiFormat', severity: 'error', title: 'EFI system partition must be FAT32',
@@ -406,6 +483,7 @@ export const RULES = [
         r(`${d.where}/ModifyPartitions/ModifyPartition[${i}]/Format`, `the EFI system partition must be formatted FAT32, not ${text(mp.Format)}`);
       }
     })),
+    fixLabel: 'Format the EFI partition as FAT32', fix: (m) => editDisks(m, (d) => { const nb = numberedOf(d); modifies(d).forEach((mp) => { const t = nb[num(mp.PartitionID) - 1]; if (t && /^EFI$/i.test(String(t.Type || '').trim()) && has(mp.Format)) mp.Format = 'FAT32'; }); }),
   },
   {
     id: 'disk.msrCount', severity: 'error', title: 'GPT disks need exactly one MSR partition',
@@ -433,6 +511,7 @@ export const RULES = [
     check: (c, r, m) => disks(m).forEach((d) => d.modifies.forEach((mp, i) => {
       if (d.gpt && isTrue(mp.Active)) r(`${d.where}/ModifyPartitions/ModifyPartition[${i}]/Active`, 'Active is ignored on GPT (UEFI) disks');
     })),
+    fixLabel: 'Remove Active', fix: (m) => editDisks(m, (d) => { if (!creates(d).some((c) => /^(EFI|MSR)$/i.test(String(c.Type || '').trim()))) return; modifies(d).forEach((mp) => { if (isTrue(mp.Active)) delete mp.Active; }); }),
   },
   {
     id: 'disk.mbrPrimaryLimit', severity: 'error', title: 'MBR disks hold at most four primary or extended partitions',
@@ -509,6 +588,7 @@ export const RULES = [
         r(`${where}/ImageInstall/OSImage`, 'use InstallTo or InstallToAvailablePartition, not both');
       }
     }),
+    fixLabel: 'Keep InstallTo', fix: (m) => editComps(m, SETUP, (v) => { if (isTrue(v['ImageInstall/OSImage/InstallToAvailablePartition']) && (isSet(v['ImageInstall/OSImage/InstallTo/DiskID']) || isSet(v['ImageInstall/OSImage/InstallTo/PartitionID']))) delete v['ImageInstall/OSImage/InstallToAvailablePartition']; }),
   },
 
   // --- servicing / packages --------------------------------------------------------
@@ -540,6 +620,7 @@ export const RULES = [
       const t = p.identity && p.identity.publicKeyToken;
       if (has(t) && !/^[0-9a-f]{16}$/i.test(t)) r(`${w}/assemblyIdentity/@publicKeyToken`, `publicKeyToken ${t} is not 16 hexadecimal digits`);
     }),
+    fixLabel: 'Use the Microsoft public key token', fix: (m) => editPackages(m, (p) => { if (p.identity && has(p.identity.publicKeyToken) && !/^[0-9a-f]{16}$/i.test(p.identity.publicKeyToken)) p.identity.publicKeyToken = '31bf3856ad364e35'; }),
   },
   {
     id: 'servicing.permanence', severity: 'error', title: 'Permanence must be removable, permanent or temporary',
@@ -568,6 +649,7 @@ export const RULES = [
       if (!has(s && s.name)) r(`${w}/selection[${i}]`, 'selection needs the feature name');
       if (!s || !(s.state === true || s.state === false || /^(true|false)$/i.test(String(s.state)))) r(`${w}/selection[${i}]`, 'selection state must be true or false');
     })),
+    fixLabel: 'Use true or false for the state', fix: (m) => editPackages(m, (p) => (p.selections || []).forEach((x) => { if (x && has(x.name) && !(x.state === true || x.state === false || /^(true|false)$/i.test(String(x.state)))) x.state = /^(1|yes|on|enabled?)$/i.test(String(x.state)); })),
   },
   {
     id: 'servicing.selectionDuplicate', severity: 'error', title: 'Feature selected twice in one package',
@@ -580,12 +662,14 @@ export const RULES = [
         seen.add(n);
       });
     }),
+    fixLabel: 'Keep the first selection of each feature', fix: (m) => editPackages(m, (p) => { const seen = new Set(); p.selections = (p.selections || []).filter((x) => { const n = x && has(x.name) ? String(x.name).toLowerCase() : null; if (!n) return true; if (seen.has(n)) return false; seen.add(n); return true; }); }),
   },
   {
     id: 'servicing.selectionWithoutConfigure', severity: 'warning', title: 'Feature selections apply to install or configure actions',
     check: (c, r, m) => packages(m).forEach(({ p, w }) => {
       if ((p.selections || []).length && (p.action === 'remove' || p.action === 'stage')) r(w, `selections are ignored when the package action is ${p.action}`);
     }),
+    fixLabel: 'Remove the ignored selections', fix: (m) => editPackages(m, (p) => { if ((p.action === 'remove' || p.action === 'stage') && (p.selections || []).length) delete p.selections; }),
   },
 ];
 
@@ -604,7 +688,53 @@ function packages(m) {
 
 /** Rule metadata without the check functions (for builders that list or document rules). */
 export function describeRules() {
-  return RULES.map(({ id, severity, title }) => ({ id, severity, title }));
+  return RULES.map(({ id, severity, title, fixLabel }) => ({ id, severity, title, fix: fixLabel || null }));
+}
+
+/** Rule ids without an automatic fix, and why (also listed in README.md). */
+export const NO_FIX = {
+  'pass.unknown': 'The intended pass cannot be guessed; moving or deleting the settings could lose work.',
+  'value.enum': 'The check already ignores case, so a value it reports is not a spelling variant; the intended choice is unknown.',
+  'disk.mbrActive': 'The reference marks ModifyPartition/Active itself as deprecated, so adding it trades this error for a warning; the user should decide.',
+  'value.integer': 'There is no safe number to turn arbitrary text into.',
+  'list.keyMissing': 'A key is an identity (an address, a name) the user must choose.',
+  'list.keyDuplicate': 'Which of the two items is right is a judgement; renaming either could break references.',
+  'join.credentials': 'Credentials are secrets only the user has.',
+  'join.credentialsIncomplete': 'The missing domain, user name or password is unknown.',
+  'autologon.password': 'A password is a secret; writing an empty one would weaken security silently.',
+  'autologon.username': 'The account to sign in is the user\'s choice.',
+  'password.blankAdministrator': 'Choosing a password for the user would hide a secret they do not know.',
+  'command.missing': 'The command to run is unknown; deleting the item could drop intended work.',
+  'productKey.alphabet': 'A key with impossible characters is a typo; the right characters are unknown.',
+  'disk.extendCount': 'Which partition should take the rest of the disk is a layout decision.',
+  'disk.sizeRequired': 'The partition size is a layout decision.',
+  'disk.msrCount': 'Adding or removing an MSR changes partition numbers that other settings refer to.',
+  'disk.gptNoExtended': 'Converting between GPT and MBR layouts is a design decision.',
+  'disk.mbrPrimaryLimit': 'Merging or converting partitions changes the layout the user designed.',
+  'disk.modifyTarget': 'The intended partition is unknown.',
+  'disk.letterDuplicate': 'Which partition keeps the letter is the user\'s choice.',
+  'disk.fit': 'Shrinking partitions to fit could cut space the user needs.',
+  'install.target': 'The intended install partition is unknown.',
+  'servicing.action': 'The intended package action cannot be guessed.',
+  'servicing.identity': 'Package identity values come from the package itself.',
+  'servicing.version': 'The package version comes from the package itself.',
+  'servicing.permanence': 'Permanence changes how a package can be removed later; the intent is unknown.',
+  'servicing.sourceLocation': 'The package path is unknown.',
+  'servicing.installNeedsSource': 'The package path is unknown, and the package may already be staged.',
+};
+
+/** Rules that offer an automatic fix: [{ id, label }]. */
+export function fixesFor(issues) {
+  const seen = new Set();
+  return (issues || []).map((i) => i.id).filter((id) => { if (seen.has(id)) return false; seen.add(id); return true; })
+    .map((id) => RULES.find((r) => r.id === id)).filter((r) => r && r.fix).map((r) => ({ id: r.id, label: r.fixLabel }));
+}
+
+/** Apply the automatic fix of one rule. Returns a new model, or null when the rule has no fix. */
+export function applyFix(model, catalog, ruleId) {
+  const rule = RULES.find((r) => r.id === ruleId);
+  if (!rule || !rule.fix) return null;
+  return rule.fix(model, catalog);
 }
 
 /**

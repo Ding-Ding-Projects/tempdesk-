@@ -293,3 +293,11 @@ label { font-weight: 600; font-size: .92rem; }
 .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); z-index: 80; background: var(--inverse); color: var(--on-inverse); padding: 12px 18px; border-radius: 999px; font-weight: 700; box-shadow: var(--shadow-sm); max-width: calc(100% - 32px); text-align: center; }
 .bi-sub { display: block; font-size: .82em; opacity: .75; font-weight: inherit; }
 .bi-sub[lang] { letter-spacing: 0; }
+
+/* Touch: every checkbox and radio is at least 24 px, inside a hit area of at least 44 px. */
+input[type="checkbox"]:not([role="switch"]), input[type="radio"] { width: 24px; height: 24px; min-width: 24px; accent-color: var(--primary); margin: 0; cursor: pointer; }
+label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { min-height: 44px; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; }
+.check input { width: 24px; height: 24px; }
+input[type="checkbox"]:not([role="switch"]):not(label > input), input[type="radio"]:not(label > input) { outline-offset: 10px; box-shadow: 0 0 0 10px transparent; }
+.switch input { width: 48px; height: 30px; }
+.switch input::after { width: 24px; height: 24px; }

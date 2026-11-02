@@ -124,7 +124,7 @@ async function loadRules() {
   if (!catalog || catalog.origin !== 'full' || !catalog.raw) return;
   try {
     const g = await import(new URL(ROOT + 'answerfile/generate.mjs', document.baseURI).href);
-    rules = { parseXml: g.parseXml, validateModel: g.validateModel };
+    rules = { parseXml: g.parseXml, buildXml: g.buildXml, validateModel: g.validateModel, applyFix: g.applyFix, RULES: g.RULES };
   } catch (e) { rules = null; }
 }
 function computeIssues() {
@@ -579,23 +579,28 @@ function renderProblems(box) {
   Object.keys(fe).forEach((k) => ul.appendChild(h('li', { class: 'error' }, [h('span', { class: 'sensitive', text: t('studio.form') }), h('span', { class: 'msg', text: fe[k] }), h('small', { class: 'mono', text: k }),
     btn('studio.reveal', () => revealField(k), 'btn-ghost btn-sm')])));
   computeIssuesCached().forEach((i) => {
-    const fix = A.fixFor(i);
+    const fix = ruleFix(i);
     ul.appendChild(h('li', { class: i.level }, [h('span', { class: i.level === 'error' ? 'sensitive' : 'pass-chip', text: i.level }), h('span', { class: 'msg', text: i.message }), h('small', { class: 'mono', text: i.where + ' (' + i.id + ')' }),
-      fix ? btn(fix.label, () => quickFix(i), 'btn-primary btn-sm') : null, btn('studio.reveal', () => revealIssue(i), 'btn-ghost btn-sm')]));
+      fix ? h('button', { type: 'button', class: 'btn btn-primary btn-sm', title: fix.label, onclick: () => quickFix(i) }, [t('fix.quick') + ': ' + fix.label]) : null, btn('studio.reveal', () => revealIssue(i), 'btn-ghost btn-sm')]));
   });
   if (!ul.children.length) ul.appendChild(h('li', null, [rules ? t('checks.ok') : t('checks.unavailable')]));
   box.appendChild(ul);
 }
+function ruleFix(issue) { const r = rules && rules.RULES.find((x) => x.id === issue.id); return r && r.fix ? { label: r.fixLabel } : null; }
+// Quick fixes come from the rules engine (answerfile/rules.mjs): parse the XML into the engine's model,
+// apply the rule's pure fix, write the XML back and sync it into the studio model.
 function quickFix(issue) {
-  const xml = A.applyFix(A.buildXml(model), issue, catalog && catalog.raw);
-  if (!xml) { S.toast(t('fix.notApplied')); return; }
   try {
+    const parsed = rules.parseXml(A.buildXml(model), catalog.raw);
+    const fixed = rules.applyFix(parsed.model, catalog.raw, issue.id);
+    if (!fixed) { S.toast(t('fix.notApplied')); return; }
+    const xml = A.alignXml(rules.buildXml(fixed, catalog.raw), A.buildXml(model));
     const r = A.syncFromXml(model, xml, { knownComponent });
     model = r.model;
     commit({ key: 'hist.quickFix', args: [issue.id] });
     output(t('hist.quickFix', [issue.id]));
     renderView();
-  } catch (e) { S.toast(t('fix.notApplied')); }
+  } catch (e) { S.toast(t('fix.notApplied') + ' ' + e.message); }
 }
 function revealField(k) {
   const id = k.split('.')[0] === 'accounts' ? 'accounts' : k;
@@ -619,12 +624,12 @@ function revealIssue(i) {
 }
 function revealInXml(comp, pass) {
   openTab('xml', { noFocus: true });
-  const ta = mainEl.querySelector('textarea.st-code');
-  if (!ta) return;
-  const text = ta.value;
+  const ed = xmlEditor;
+  if (!ed) return;
+  const text = ed.cm.value;
   const passAt = text.indexOf('<settings pass="' + pass + '"');
   const at = text.indexOf('name="' + comp + '"', Math.max(0, passAt));
-  if (at >= 0) { ta.focus(); ta.setSelectionRange(at, at + comp.length + 7); const line = text.slice(0, at).split('\n').length; ta.scrollTop = Math.max(0, (line - 4) * 19); ta.dispatchEvent(new Event('scroll')); }
+  if (at >= 0) ed.cm.select(at, at + comp.length + 7);
 }
 
 // Status bar
@@ -1561,24 +1566,69 @@ function renderComponentTab(key) {
   sec.appendChild(holder);
 }
 // Code editor: a textarea over a highlighted layer, with line numbers. Two-way for autounattend.xml.
+// Code editor: CodeMirror 6 (assets/vendor/codemirror.js, bundled at build time, no CDN) with XML
+// autocomplete from the catalog, lint markers from the parser and the rules engine, folding and
+// search and replace (Ctrl+F). Two-way for autounattend.xml and firstboot.json.
+let xmlSchemaCache = null;
+function xmlSchema() {
+  if (xmlSchemaCache) return xmlSchemaCache;
+  if (!catalog) return {};
+  const names = new Map();
+  const walk = (list) => list.forEach((s) => { names.set(s.name, s.help || ''); walk(s.children || []); });
+  catalog.components.forEach((c) => walk(c.settings));
+  const elements = [
+    { name: 'unattend', top: true, children: ['settings', 'servicing'], attributes: ['xmlns', 'xmlns:wcm', 'xmlns:xsi'] },
+    { name: 'settings', children: ['component'], attributes: [{ name: 'pass', values: A.PASS_ORDER }] },
+    { name: 'component', attributes: [{ name: 'name', values: catalog.components.map((c) => c.name) }, { name: 'processorArchitecture', values: ['amd64', 'x86', 'arm64'] }, { name: 'publicKeyToken', values: ['31bf3856ad364e35'] }, { name: 'language', values: ['neutral'] }, { name: 'versionScope', values: ['nonSxS'] }] },
+  ];
+  names.forEach((help, name) => { if (!['unattend', 'settings', 'component'].includes(name)) elements.push({ name, attributes: [{ name: 'wcm:action', values: ['add', 'modify', 'remove'] }, 'wcm:keyValue'] }); });
+  xmlSchemaCache = { elements };
+  return xmlSchemaCache;
+}
+// Lint: parse errors at their line, rules engine issues at the element they name.
+function lintXml(text) {
+  const out = [];
+  const lineStart = (n) => { let pos = 0; for (let k = 1; k < n; k++) { const nl = text.indexOf('\n', pos); if (nl < 0) break; pos = nl + 1; } return pos; };
+  try { A.parseXml(text); } catch (e) {
+    const from = e.line ? lineStart(e.line) : 0;
+    const end = text.indexOf('\n', from);
+    return [{ from, to: end < 0 ? text.length : end, severity: 'error', message: e.message }];
+  }
+  if (!rules || !catalog || !catalog.raw) return out;
+  let issues;
+  try { issues = rules.validateModel(rules.parseXml(text, catalog.raw).model, catalog.raw); } catch (e) { return [{ from: 0, to: Math.min(text.length, 40), severity: 'error', message: e.message }]; }
+  issues.forEach((i) => {
+    const parts = String(i.where).split('/');
+    if (parts.length < 2) return;
+    let pos = text.indexOf('<settings pass="' + parts[0] + '"');
+    if (pos < 0) return;
+    const ca = text.indexOf('name="' + parts[1] + '"', pos);
+    if (ca < 0) return;
+    pos = ca;
+    const compEnd = text.indexOf('</component>', ca);
+    for (const seg of parts.slice(2)) {
+      const m = /^([^\[]+)(?:\[(\d+)\])?$/.exec(seg); if (!m) break;
+      let at = pos, n = m[2] ? Number(m[2]) : 0;
+      do { at = text.indexOf('<' + m[1].split('/').pop(), at + 1); } while (at >= 0 && n-- > 0);
+      if (at < 0 || (compEnd >= 0 && at > compEnd)) break;
+      pos = at;
+    }
+    const end = text.indexOf('>', pos);
+    out.push({ from: pos, to: end < 0 ? pos + 1 : end + 1, severity: i.level === 'error' ? 'error' : i.level === 'warning' ? 'warning' : 'info', message: i.message + ' (' + i.id + ')' });
+  });
+  return out;
+}
 function codeEditor(text, opts) {
-  const wrap = h('div', { class: 'st-codewrap' });
-  const gutter = h('pre', { class: 'st-gutter', 'aria-hidden': 'true' });
-  const hl = h('pre', { class: 'st-hl', 'aria-hidden': 'true' });
-  const ta = h('textarea', { class: 'st-code', spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off', wrap: 'off', 'aria-label': opts.label, readonly: opts.readonly || undefined });
-  ta.value = text;
+  const host = h('div', { class: 'st-cm' });
   const status = h('div', { class: 'pv-status', role: 'status', 'aria-live': 'polite' });
-  const paint = () => {
-    hl.innerHTML = (opts.lang === 'xml' ? A.highlightXml(ta.value) : ta.value.replace(/&/g, '&amp;').replace(/</g, '&lt;')) + '\n';
-    gutter.textContent = ta.value.split('\n').map((_, i) => i + 1).join('\n');
-  };
-  ta.addEventListener('scroll', () => { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; gutter.scrollTop = ta.scrollTop; });
-  ta.addEventListener('keydown', (e) => { if (e.key === 'Tab' && !e.shiftKey && !opts.readonly && !e.ctrlKey) { e.preventDefault(); const s = ta.selectionStart; ta.setRangeText('  ', s, ta.selectionEnd, 'end'); ta.dispatchEvent(new Event('input')); } });
   let tm;
-  ta.addEventListener('input', () => { paint(); clearTimeout(tm); if (opts.onEdit) tm = setTimeout(() => opts.onEdit(ta.value, status), 500); });
-  paint();
-  wrap.append(gutter, h('div', { class: 'st-codebox' }, [hl, ta]));
-  return { el: h('div', { class: 'st-editorbox' }, [wrap, status]), ta, status, set(v) { if (document.activeElement !== ta) { const st = ta.scrollTop; ta.value = v; paint(); ta.scrollTop = st; } } };
+  const cm = window.TempDeskCM.createCodeEditor(host, {
+    doc: text, lang: opts.lang, readOnly: !!opts.readonly, label: opts.label,
+    schema: opts.lang === 'xml' ? xmlSchema() : undefined,
+    lint: opts.lang === 'xml' ? lintXml : undefined,
+    onChange: (v) => { clearTimeout(tm); if (opts.onEdit) tm = setTimeout(() => opts.onEdit(v, status), 500); }
+  });
+  return { el: h('div', { class: 'st-editorbox' }, [host, status]), cm, status, set(v) { if (!cm.hasFocus()) cm.set(v); cm.relint(); } };
 }
 let xmlEditor = null;
 function xmlEdited(text, status) {
@@ -1784,7 +1834,7 @@ document.addEventListener('keydown', (e) => {
   if ((e.key === 'F1' || (e.key === '?' && !inField)) && !e.ctrlKey) { e.preventDefault(); openShortcuts(); return; }
   if (!(e.ctrlKey || e.metaKey)) { if (e.altKey && /^[1-9]$/.test(e.key)) { e.preventDefault(); const id = tabs[Number(e.key) - 1]; if (id) { view = id; saveTabs(); renderView(); } } return; }
   const k = e.key.toLowerCase();
-  if (e.target && e.target.classList && e.target.classList.contains('st-code') && (k === 'z' || k === 'y')) return; // native textarea undo inside code editors
+  if (e.target && e.target.closest && e.target.closest('.cm-editor') && (k === 'z' || k === 'y' || k === 'f')) return; // the code editor has its own undo and search
   if (k === 'z' && !e.shiftKey && !e.altKey) { e.preventDefault(); undo(); }
   else if ((k === 'y' || (k === 'z' && e.shiftKey)) && !e.altKey) { e.preventDefault(); redo(); }
   else if (k === 's' && !e.shiftKey) { e.preventDefault(); saveVersion(); }
@@ -1804,6 +1854,7 @@ document.addEventListener('contextmenu', (e) => {
 
 async function init() {
   shell.hidden = false;
+  try { window.TempDeskCM = await import(new URL(ROOT + 'assets/vendor/codemirror.js', document.baseURI).href); } catch (e) { output('CodeMirror: ' + e.message); }
   try {
     const store = await HI.openStore('builder');
     history = new HI.History({ store, initial: A.stripSecrets(A.defaultModel()), redact, onChange: () => updateUndo() });
@@ -1824,6 +1875,7 @@ async function init() {
   output(t('studio.ready'));
   catalog = await loadCatalog(ROOT);
   await loadRules();
+  xmlSchemaCache = null;
   output(catalog.origin === 'full' ? t('cat.full', [catalog.components.length, catalog.version]) : t('cat.notBuilt', [catalog.components.length]));
   if (rules) output(t('checks.loaded'));
   buildGlobalSearch();

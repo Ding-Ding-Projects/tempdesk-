@@ -10,8 +10,9 @@ node --test site/tests/      # unit tests (no dependencies)
 python3 -m http.server -d site/_site 8000
 ```
 
-`build.mjs` has no dependencies. It:
+`build.mjs` has no runtime dependencies. It:
 
+- rebuilds `assets/vendor/codemirror.js` (CodeMirror 6, bundled with esbuild by `build-vendor.mjs` from the pinned dev dependencies in `package.json`) when `node_modules` is installed; otherwise it uses the committed bundle, so the build and the studio work offline with no CDN
 - copies the static pages, `assets/` and `i18n/`
 - renders `features/<id>.html` from `features.json`
 - renders `docs/*.html` from `docs/*.md` and every component `README.md` with its own small Markdown renderer
@@ -28,10 +29,11 @@ python3 -m http.server -d site/_site 8000
 | `index.html` | Landing page (approved design `design/project/Main.dc.html`) |
 | `answer-file.html` | Answer File Studio app shell |
 | `templates/` | Shared page layout and the Base64 page body |
-| `assets/answer.js` | Pure answer file functions (`window.TempDeskAnswer`, also `require`-able): XML generation for the three templates, import, two-way sync, compare, simulate, quick fixes, snippets, validation, `firstboot.json` |
+| `assets/answer.js` | Pure answer file functions (`window.TempDeskAnswer`, also `require`-able): XML generation for the three templates, import, two-way sync, compare, simulate, snippets, validation, `firstboot.json`. Quick fixes come from `answerfile/rules.mjs` |
 | `assets/zip.js` | Small ZIP writer (stored entries, UTF-8 names) |
 | `assets/history.js` | Append-only history with unlimited undo and redo (IndexedDB, then localStorage, then memory) |
 | `assets/base64.js` | Base64 codec (variants, streaming, strict offsets, data: URLs, type detection, SHA-256) |
+| `assets/vendor/codemirror.js` | CodeMirror 6 bundle (committed). Source: `vendor-src/codemirror-entry.mjs`; rebuild with `npm ci && node build-vendor.mjs` |
 | `assets/wording.js` | Personal wording validator and translator |
 | `assets/canvas/` | Framework-free ES modules shared with the desktop app: catalog forms, search, setup flow, disk layout, command timeline, deployment map |
 | `assets/site.js` | Settings (language, motion, theme, text size, personal wording) and the Ctrl+Shift+F command palette |

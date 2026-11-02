@@ -1254,6 +1254,31 @@
     return { model: next, unknown: r.unknown, notes: r.notes };
   }
 
+  // Reorders the elements of `xml` to follow the order used in `reference` (same pass, component and
+  // element names), so XML written by another generator syncs back without spurious differences.
+  function alignXml(xml, reference) {
+    var a = parseXml(xml), ref = parseXml(reference);
+    function keyOf(e) { return e.n + '|' + (e.a.pass || e.a.name || e.a['wcm:keyValue'] || ''); }
+    function align(e, r) {
+      if (!r) return;
+      var order = {};
+      r.c.forEach(function (c, i) { var k = keyOf(c); if (!(k in order)) order[k] = i; if (!(c.n in order)) order[c.n] = i; });
+      var idx = e.c.map(function (c, i) { var k = keyOf(c); return { c: c, i: i, o: k in order ? order[k] : c.n in order ? order[c.n] : 1e6 + i }; });
+      idx.sort(function (x, y) { return x.o - y.o || x.i - y.i; });
+      e.c = idx.map(function (x) { return x.c; });
+      var used = {};
+      e.c.forEach(function (c) {
+        var k = keyOf(c), n = used[k] = (used[k] || 0) + 1;
+        var matches = r.c.filter(function (x) { return keyOf(x) === k; });
+        align(c, matches[n - 1] || null);
+      });
+    }
+    align(a, ref);
+    var comment = /^<\?xml[^>]*>\r?\n(<!--[\s\S]*?-->)/.exec(String(reference));
+    var out = serialize(a);
+    return comment ? out.replace(/^(<\?xml[^>]*>\r?\n)/, '$1' + comment[1] + '\r\n') : out;
+  }
+
   // Flattens XML into setting paths: pass/Component/Path, list items named by key (Order, keyValue, Name, DiskID...).
   var ITEM_KEYS = ['Order', 'Name', 'DiskID', 'PartitionID', 'Key', 'Identifier', 'Domain', 'Group'];
   function flattenXml(xml) {
@@ -1333,117 +1358,6 @@
       steps.push(step);
     });
     return steps;
-  }
-
-  // Quick fixes for issues from answerfile/rules.mjs. Each works on the XML tree, so it covers both
-  // friendly fields and catalog settings; the result is synced back with syncFromXml.
-  function resolveWhere(root, where) {
-    var parts = String(where || '').split('/');
-    if (parts.length < 2) return null;
-    var set = getSettings(root, parts[0], false);
-    if (!set) return null;
-    var comp = null;
-    for (var i = 0; i < set.c.length; i++) if (set.c[i].a.name === parts[1]) comp = set.c[i];
-    if (!comp) return null;
-    var el = comp, parent = set;
-    for (var j = 2; j < parts.length; j++) {
-      var m = /^([^\[]+)(?:\[(\d+)\])?$/.exec(parts[j]);
-      if (!m) return null;
-      var list = children(el, m[1]);
-      var next = list[m[2] !== undefined ? parseInt(m[2], 10) : 0];
-      if (!next) return null;
-      parent = el; el = next;
-    }
-    return { settings: set, comp: comp, el: el, parent: parent, pass: parts[0], compName: parts[1], path: parts.slice(2).map(function (p) { return p.replace(/\[\d+\]$/, ''); }).join('/') };
-  }
-  function rawSetting(catalog, compName, path) {
-    if (!catalog) return null;
-    var comp = (catalog.components || []).filter(function (c) { return c.name === compName; })[0];
-    if (!comp) return null;
-    var list = comp.settings, found = null;
-    path.split('/').forEach(function (seg) {
-      if (!list) { found = null; return; }
-      found = list.filter(function (x) { return x.name === seg; })[0] || null;
-      list = found ? (found.listItem ? found.listItem.settings : found.children) : null;
-    });
-    return { comp: comp, setting: found };
-  }
-  function removeEl(r) { r.parent.c.splice(r.parent.c.indexOf(r.el), 1); if (r.parent.n === 'component' && !r.parent.c.length) r.settings.c.splice(r.settings.c.indexOf(r.parent), 1); }
-  function moveComponentChild(root, r, toPass) {
-    // the top-level child of the component that contains r.el
-    var top = r.el;
-    while (top && r.comp.c.indexOf(top) < 0) top = findParent(r.comp, top);
-    if (!top) return;
-    var target = getComponent(root, toPass, r.compName, r.comp.a.processorArchitecture, true);
-    r.comp.c.splice(r.comp.c.indexOf(top), 1);
-    var existing = child(target, top.n);
-    if (existing && !(top.a && top.a['wcm:action'])) target.c.splice(target.c.indexOf(existing), 1, top); else target.c.push(top);
-    if (!r.comp.c.length) r.settings.c.splice(r.settings.c.indexOf(r.comp), 1);
-  }
-  function sanitizeComputerName(n) {
-    var s = String(n).replace(/[^A-Za-z0-9-]/g, '-').replace(/^-+|-+$/g, '');
-    if (/^\d*$/.test(s)) s = 'PC-' + s;
-    return s.slice(0, 15).replace(/-+$/, '') || 'PC';
-  }
-  var FIXES = {
-    'setting.deprecated': { label: 'fix.remove', apply: function (r) { removeEl(r); } },
-    'setting.unknown': { label: 'fix.remove', apply: function (r) { removeEl(r); } },
-    'component.unknown': { label: 'fix.removeComponent', apply: function (r) { r.settings.c.splice(r.settings.c.indexOf(r.comp), 1); } },
-    'setting.passNotAllowed': { label: 'fix.movePass', apply: function (r, root, cat) {
-      var info = rawSetting(cat, r.compName, r.path.split('/')[0]);
-      var passes = info && info.setting ? info.setting.passes : null;
-      if (!passes || !passes.length) { removeEl(r); return; }
-      moveComponentChild(root, r, passes[0]);
-    } },
-    'component.passNotAllowed': { label: 'fix.movePass', apply: function (r, root, cat) {
-      var comp = cat && (cat.components || []).filter(function (c) { return c.name === r.compName; })[0];
-      if (!comp || !comp.passes.length) return;
-      r.settings.c.splice(r.settings.c.indexOf(r.comp), 1);
-      var target = getComponent(root, comp.passes[0], r.compName, r.comp.a.processorArchitecture, true);
-      r.comp.c.forEach(function (c) { target.c.push(c); });
-    } },
-    'computerName.length': { label: 'fix.computerName', apply: function (r) { r.el.t = sanitizeComputerName(r.el.t); } },
-    'computerName.digits': { label: 'fix.computerName', apply: function (r) { r.el.t = sanitizeComputerName(r.el.t); } },
-    'computerName.chars': { label: 'fix.computerName', apply: function (r) { r.el.t = sanitizeComputerName(r.el.t); } },
-    'value.boolean': { label: 'fix.boolean', apply: function (r) { r.el.t = /^(1|yes|on|true)$/i.test(r.el.t.trim()) ? 'true' : 'false'; } },
-    'value.maxLength': { label: 'fix.truncate', apply: function (r, root, cat) { var i = rawSetting(cat, r.compName, r.path); var n = i && i.setting && i.setting.maxLength; if (n) r.el.t = r.el.t.slice(0, n); } },
-    'value.range': { label: 'fix.clamp', apply: function (r, root, cat) {
-      var i = rawSetting(cat, r.compName, r.path), st = i && i.setting; if (!st) return;
-      var v = parseInt(r.el.t, 10); if (isNaN(v)) return;
-      if (st.min !== undefined && v < st.min) v = st.min; if (st.max !== undefined && v > st.max) v = st.max; r.el.t = String(v);
-    } },
-    'productKey.format': { label: 'fix.removeKey', apply: function (r) { if (r.el.n === 'Key' && r.parent.n === 'ProductKey') { r.el = r.parent; r.parent = r.comp.c.indexOf(r.el) >= 0 ? r.comp : findParent(r.comp, r.el); } removeEl(r); } },
-    'productKey.alphabet': { label: 'fix.removeKey', apply: function (r) { FIXES['productKey.format'].apply(r); } },
-    'join.ouWithoutDomain': { label: 'fix.remove', apply: function (r) { removeEl(r); } },
-    'join.exclusive': { label: 'fix.keepDomain', apply: function (r) { var id = r.el.n === 'Identification' ? r.el : findParent(r.comp, r.el) || r.el; var wg = child(id, 'JoinWorkgroup'); if (wg) id.c.splice(id.c.indexOf(wg), 1); } },
-    'autologon.logonCount': { label: 'fix.logonCount', apply: function (r) { var al = r.el.n === 'AutoLogon' ? r.el : child(r.comp, 'AutoLogon'); if (al && !child(al, 'LogonCount')) al.c.push(leaf('LogonCount', 1)); } },
-    'list.orderUnique': { label: 'fix.renumber', apply: function (r) {
-      var holder = r.el.c.length && children(r.el, r.el.c[0].n).length === r.el.c.length ? r.el : r.parent;
-      var n = 1; holder.c.forEach(function (it) { var o = child(it, 'Order'); if (o) o.t = String(n++); });
-    } },
-    'disk.efiFormat': { label: 'fix.fat32', apply: function (r) { var f = child(r.el, 'Format'); if (f) f.t = 'FAT32'; else r.el.c.push(leaf('Format', 'FAT32')); } },
-    'install.toAndAvailable': { label: 'fix.remove', apply: function (r) { var os = r.el.n === 'OSImage' ? r.el : findOS(r.comp); var x = os && child(os, 'InstallToAvailablePartition'); if (x) os.c.splice(os.c.indexOf(x), 1); } }
-  };
-  function findParent(root, target) {
-    var found = null;
-    (function walk(e) { e.c.forEach(function (c) { if (c === target) found = e; else if (!found) walk(c); }); })(root);
-    return found;
-  }
-  function findOS(comp) { var ii = child(comp, 'ImageInstall'); return ii ? child(ii, 'OSImage') : null; }
-  function fixFor(issue) { return FIXES[issue && issue.id] ? { label: FIXES[issue.id].label } : null; }
-  // -> new XML text, or null when the fix does not apply.
-  function applyFix(xml, issue, rawCatalog) {
-    var f = FIXES[issue && issue.id];
-    if (!f) return null;
-    var root = parseXml(xml);
-    var r = resolveWhere(root, issue.where);
-    if (!r) return null;
-    var before = serialize(root);
-    f.apply(r, root, rawCatalog);
-    var after = serialize(root);
-    if (after === before) return null;
-    var comment = /^<\?xml[^>]*>\r?\n(<!--[\s\S]*?-->)/.exec(String(xml));
-    return comment ? after.replace(/^(<\?xml[^>]*>\r?\n)/, '$1' + comment[1] + '\r\n') : after;
   }
 
   // Snippets: common blocks inserted into model.all (catalog settings) or model.commands.
@@ -1755,7 +1669,7 @@
     generatePassword: generatePassword, passwordStrength: passwordStrength, strongPassword: strongPassword,
     TIME_ZONES: TIME_ZONES, TIME_ZONE_IDS: TIME_ZONE_IDS, LOCALES: LOCALES, KEYBOARDS: KEYBOARDS,
     SERVER_EDITIONS: SERVER_EDITIONS, CLIENT_EDITIONS: CLIENT_EDITIONS, TIMELINE: TIMELINE, CHECKLIST: CHECKLIST, PASS_ORDER: PASS_ORDER,
-    syncFromXml: syncFromXml, flattenXml: flattenXml, compareXml: compareXml, simulate: simulate, applyFix: applyFix, fixFor: fixFor, FIXES: FIXES, SNIPPETS: SNIPPETS, applySnippet: applySnippet, resolveWhere: resolveWhere,
+    syncFromXml: syncFromXml, alignXml: alignXml, flattenXml: flattenXml, compareXml: compareXml, simulate: simulate, SNIPPETS: SNIPPETS, applySnippet: applySnippet,
     COMMAND_LISTS: COMMAND_LISTS, EXTRA_SETTINGS: EXTRA_SETTINGS, EXTRA_COMMANDS: EXTRA_COMMANDS, APP_IDS: APP_IDS, POWER_PLANS: POWER_PLANS, extraDefaults: extraDefaults, PART_TYPES: PART_TYPES, layoutDiskXml: layoutDiskXml, readDiskLayout: readDiskLayout, clone: clone
   };
   root.TempDeskAnswer = api;
