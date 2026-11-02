@@ -300,7 +300,8 @@ def safe_next(value: str | None, default: str = "/") -> str:
 
 
 CSP_DEFAULT = (
-    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
+    # style-src-attr allows style="" attributes only (layout hints); no inline <style> or script.
+    "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; "
     "font-src 'self'; connect-src 'self'; form-action 'self'; frame-src 'self'; "
     "frame-ancestors 'none'; base-uri 'none'; object-src 'none'"
 )

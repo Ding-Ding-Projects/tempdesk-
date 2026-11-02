@@ -311,8 +311,10 @@ class SambaBackend(SysvolMixin, Backend):
         self._run(f)
         return {"upn": f"{sam}@{self.realm}"}
 
-    def _read_sd(self, db, dn) -> str:
-        r = db.search(dn, ldb.SCOPE_BASE, attrs=["nTSecurityDescriptor"], controls=["sd_flags:1:4"])
+    def _read_sd(self, db, dn, flags: int = 4) -> str:
+        """SDDL of an object's security descriptor. flags 4 = DACL only,
+        7 = owner, group and DACL."""
+        r = db.search(dn, ldb.SCOPE_BASE, attrs=["nTSecurityDescriptor"], controls=[f"sd_flags:1:{flags}"])
         sd = ndr_unpack(security.descriptor, r[0]["nTSecurityDescriptor"][0])
         return sd.as_sddl(security.dom_sid(self.domain_sid))
 
@@ -849,9 +851,8 @@ class SambaBackend(SysvolMixin, Backend):
             sid = self._resolve_trustee(db, trustee, trustee_type)
             new = sddlmod.set_gpo_permission(self._read_sd(db, dn), sid, permission, replace, self.domain_sid)
             self._write_sd(db, dn, new)
-            return self._read_sd(db, dn)
-        ds_sddl = self._run(f)
-        self._sync_gpo_fs_acl(guid, ds_sddl)
+        self._run(f)
+        self._sync_gpo_fs_acl(guid)
         return self.gpo_get(guid, with_permissions=True)
 
     def _sync_gpo_fs_acl(self, guid, ds_sddl=None):
@@ -861,7 +862,7 @@ class SambaBackend(SysvolMixin, Backend):
         root = self.gpo_dir(guid)
         if ds_sddl is None:
             meta = self._gpo_meta(guid)
-            ds_sddl = self._run(lambda db: self._read_sd(db, ldb.Dn(db, meta["dn"])))
+            ds_sddl = self._run(lambda db: self._read_sd(db, ldb.Dn(db, meta["dn"]), 7))
         fs = self._nt.dsacl_to_fs(ds_sddl)
         self._setntacl(root, fs)
         for dirpath, dirnames, filenames in os.walk(root):
@@ -892,7 +893,7 @@ class SambaBackend(SysvolMixin, Backend):
             if m:
                 guid = m.group(1).upper()
                 meta = self._gpo_meta(guid)
-                ds = self._run(lambda db: self._read_sd(db, ldb.Dn(db, meta["dn"])))
+                ds = self._run(lambda db: self._read_sd(db, ldb.Dn(db, meta["dn"]), 7))
                 fs = self._nt.dsacl_to_fs(ds)
                 # parent folders created on the way get the same ACL
                 d = os.path.dirname(path)
@@ -984,8 +985,7 @@ class SambaBackend(SysvolMixin, Backend):
                 s = ci_path(src, extra)
                 if os.path.isfile(s):
                     shutil.copy2(s, os.path.join(gdir, extra))
-            ds_sddl = self._run(lambda db: self._read_sd(db, ldb.Dn(db, meta["dn"])))
-            self._sync_gpo_fs_acl(guid, ds_sddl)
+            self._sync_gpo_fs_acl(guid)
             new_ver = gpt.bump_version(gpt.bump_version(meta["versionNumber"], machine=True, user=True))
             ini = ci_path(gdir, "GPT.INI")
             try:
