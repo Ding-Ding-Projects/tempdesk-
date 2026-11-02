@@ -15,7 +15,7 @@ Set-StrictMode -Version 3
 
 function Get-TdSshTool {
     param([ValidateSet('ssh', 'scp', 'ssh-keygen')][string] $Name = 'ssh')
-    $exe = if ($IsWindows -or $env:OS -eq 'Windows_NT') { "$Name.exe" } else { $Name }
+    $exe = if ($env:OS -eq 'Windows_NT' -or $IsWindows) { "$Name.exe" } else { $Name }
     $inbox = Join-Path $env:SystemRoot "System32\OpenSSH\$exe"
     if ($env:SystemRoot -and (Test-Path -LiteralPath $inbox)) { return $inbox }
     $cmd = Get-Command $exe -ErrorAction SilentlyContinue

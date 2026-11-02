@@ -1028,6 +1028,8 @@ function runGlobalSearch() {
 }
 function jumpTo(e) {
   closeGlobalSheet();
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  if (isPhone()) { layout.pane = 'editor'; applyLayout(); }
   if (e.kind === 'field') {
     if (model.mode !== e.mode || view !== 'template') setView(e.mode, { noFocus: true });
     const secs = [...mainEl.querySelectorAll('.b-sec[data-section-index]')];
@@ -1095,7 +1097,7 @@ function buildSearchUi(host, kind) {
   const results = h('ul', { class: 'gs-results', id: kind + '-gs-results', role: 'listbox', 'aria-label': t('search.global.results'), hidden: kind === 'top' });
   const n = catalog ? catalog.components.reduce((a, c) => { let k = 0; (function w(l) { l.forEach((x) => { k++; w(x.children || []); }); })(c.settings); return a + k; }, 0) : 0;
   const box = searchBox({ label: t('search.global'), placeholder: kind === 'top' ? t('studio.searchPh', [n || '']) : t('search.global.ph'), value: gs.q, regex: gs.regex, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
-    onChange: (q, regex) => { gs.q = q; gs.regex = regex; gsUis.forEach((u) => { if (u.box !== box) u.box.input.value = q; }); if (kind === 'top') openTop(); renderGlobalResults(); },
+    onChange: (q, regex) => { gs.q = q; gs.regex = regex; gsUis.forEach((u) => { if (u.box !== box) u.box.input.value = q; }); if (kind === 'top' && (q.trim() || gs.filter !== 'all')) openTop(); renderGlobalResults(); },
     onKey: (e) => {
       const items = [...results.querySelectorAll('.gs-item')];
       if (e.key === 'ArrowDown' && items.length) { e.preventDefault(); if (kind === 'top') openTop(); items[0].focus(); }
@@ -1674,7 +1676,7 @@ function renderSimulate() {
     if (s.commands.length) detail.appendChild(h('ol', { class: 'st-values' }, s.commands.map((c) => h('li', null, [c.text, c.reboot ? h('span', { class: 'reboot', text: ' ' + t('sim.reboot.' + c.reboot) }) : null]))));
     if (s.reboot) detail.appendChild(h('p', { class: 'reboot', text: t('sim.restart') }));
   };
-  steps.forEach((s, i) => ol.appendChild(h('li', { class: s.skipped ? 'skip' : null }, [h('button', { type: 'button', onclick: () => { simStep = i; show(); } }, [h('b', { text: s.pass }), h('small', { text: s.skipped ? t('sim.skipped') : t('sim.count', [s.applies.reduce((n, a) => n + a.settings.length, 0), s.commands.length]) }), s.reboot ? h('span', { class: 'reboot', text: '↻' }) : null])])));
+  steps.forEach((s, i) => ol.appendChild(h('li', { class: s.skipped ? 'sim-skip' : null }, [h('button', { type: 'button', onclick: () => { simStep = i; show(); } }, [h('b', { text: s.pass }), h('small', { text: s.skipped ? t('sim.skipped') : t('sim.count', [s.applies.reduce((n, a) => n + a.settings.length, 0), s.commands.length]) }), s.reboot ? h('span', { class: 'reboot', text: '↻' }) : null])])));
   const play = h('button', { type: 'button', class: 'btn btn-primary btn-sm', text: t('sim.play') });
   play.addEventListener('click', () => {
     if (simTimer) { clearInterval(simTimer); simTimer = null; play.textContent = t('sim.play'); return; }

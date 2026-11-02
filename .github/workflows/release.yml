@@ -1,0 +1,104 @@
+name: Release TempDesk Deployer
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Record the start time
+        id: start
+        shell: pwsh
+        run: |
+          "utc=$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))" >> $env:GITHUB_OUTPUT
+          "epoch=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Work out the version
+        id: ver
+        shell: pwsh
+        run: |
+          $base = (Get-Content deployer/app/package.json -Raw | ConvertFrom-Json).version
+          $parts = $base.Split('.')
+          # Squirrel needs three numeric parts: major.minor.<run number>.
+          $version = '{0}.{1}.{2}' -f $parts[0], $parts[1], $env:GITHUB_RUN_NUMBER
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=v$base.$env:GITHUB_RUN_NUMBER" >> $env:GITHUB_OUTPUT
+
+      - name: Use the previous release for delta packages
+        id: prev
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # SyncReleases downloads the previous RELEASES feed so Squirrel can make a delta package.
+          # On the very first release there is nothing to diff against, so it is skipped.
+          $prev = gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>$null
+          if ($prev) { "remote=https://github.com/${{ github.repository }}" >> $env:GITHUB_OUTPUT; Write-Host "Previous release: $prev" }
+          else { Write-Host 'No previous release: full package only.' }
+
+      - name: Build and package the installer (unsigned)
+        shell: cmd
+        env:
+          TEMPDESK_VERSION: ${{ steps.ver.outputs.version }}
+          TEMPDESK_REMOTE_RELEASES: ${{ steps.prev.outputs.remote }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: build-installer.bat /s
+
+      - name: Confirm Setup.exe is not signed
+        shell: pwsh
+        run: |
+          $s = Get-AuthenticodeSignature deployer/output/squirrel-windows/Setup.exe
+          Write-Host "Setup.exe signature status: $($s.Status)"
+          if ($s.Status -ne 'NotSigned') { throw "Setup.exe must be unsigned, got $($s.Status)" }
+
+      - name: Write the release notes
+        id: notes
+        shell: pwsh
+        run: |
+          $end = (Get-Date).ToUniversalTime()
+          $startEpoch = [int64]'${{ steps.start.outputs.epoch }}'
+          $secs = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - $startEpoch
+          $dur = '{0}m {1}s' -f [math]::Floor($secs / 60), ($secs % 60)
+          $lines = & ./scripts/line-counts.ps1
+          $notes = @(
+            "TempDesk Deployer ${{ steps.ver.outputs.version }} built from ${{ github.sha }}.",
+            '',
+            'Install with **Setup.exe**. Installed copies update themselves from this release feed and ask before restarting.',
+            'The installer and the app are **not code-signed** (owner decision), so Windows SmartScreen may warn on first run.',
+            '',
+            '| Workflow | UTC |',
+            '| --- | --- |',
+            "| Started | ${{ steps.start.outputs.utc }} |",
+            "| Finished | $($end.ToString('yyyy-MM-ddTHH:mm:ssZ')) |",
+            "| Duration | $dur |",
+            '',
+            '### Lines of code',
+            ''
+          ) + $lines
+          Set-Content -Path release-notes.md -Value ($notes -join "`n") -Encoding utf8
+
+      - name: Publish the GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $o = 'deployer/output/squirrel-windows'
+          $assets = @("$o/Setup.exe", "$o/RELEASES") + (Get-ChildItem $o -Filter *.nupkg | ForEach-Object FullName)
+          $portable = Get-ChildItem deployer/bin -Filter '*portable*.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($portable) { $assets += $portable.FullName }
+          gh release create '${{ steps.ver.outputs.tag }}' @assets --title 'TempDesk Deployer ${{ steps.ver.outputs.tag }}' --notes-file release-notes.md --target '${{ github.sha }}'

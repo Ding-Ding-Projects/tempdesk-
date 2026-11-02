@@ -39,14 +39,13 @@ function main() {
   fs.rmSync(VENDOR, { recursive: true, force: true });
   fs.mkdirSync(VENDOR, { recursive: true });
   // Shared with the website (same code path).
-  copy(path.join(REPO, 'site', 'assets', 'answer.js'), path.join(VENDOR, 'answer.js'), true);
-  copy(path.join(REPO, 'site', 'assets', 'base64.js'), path.join(VENDOR, 'base64.js'), true);
-  copy(path.join(REPO, 'site', 'assets', 'wording.js'), path.join(VENDOR, 'wording.js'), true);
-  copy(path.join(REPO, 'site', 'assets', 'zip.js'), path.join(VENDOR, 'zip.js'), false);
-  copy(path.join(REPO, 'site', 'assets', 'history.js'), path.join(VENDOR, 'history.js'), false);
-  copy(path.join(REPO, 'site', 'assets', 'builder.css'), path.join(VENDOR, 'builder.css'), false);
-  copy(path.join(REPO, 'site', 'assets', 'canvas'), path.join(VENDOR, 'canvas'), false);
-  copy(path.join(REPO, 'site', 'assets', 'site.css'), path.join(VENDOR, 'site.css'), false);
+  // Every website asset (scripts, styles, canvases), so new shared files are picked up without
+  // changing this script. Website-only page scripts are harmless: the desktop pages do not load them.
+  const SITE = path.join(REPO, 'site', 'assets');
+  for (const req of ['answer.js', 'base64.js', 'wording.js']) if (!fs.existsSync(path.join(SITE, req))) throw new Error('Missing shared module: site/assets/' + req);
+  for (const e of fs.readdirSync(SITE, { withFileTypes: true })) {
+    if (e.isDirectory() || /\.(js|css|svg)$/.test(e.name)) copy(path.join(SITE, e.name), path.join(VENDOR, e.name), false);
+  }
   copy(path.join(REPO, 'site', 'i18n'), path.join(VENDOR, 'site-i18n'), false);
   // The website's answer file builder page logic, hosted unchanged in the desktop app. One line is
   // appended so the desktop extras (ISO, media folder, Git history) can read the current model.

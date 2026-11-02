@@ -272,7 +272,7 @@ SETTINGS = [('theme', 'Theme', '主題', 'Dark, light, or follow Windows.', '深
             ('gitRemote', 'Push to a remote', '推送到遠端', 'Optional Git remote for the workspace. Credentials are never stored here: Git Credential Manager handles sign-in.', '工作區的選用 Git 遠端。這裏永不儲存認證：由 Git Credential Manager 處理登入。'),
             ('updates', 'Automatic update check', '自動檢查更新', 'Checks GitHub releases in the background and asks before restarting. Packages are not code-signed.', '在背景檢查 GitHub 發行版本，並在重新啟動前詢問。套件沒有程式碼簽署。'),
             ('settingsIo', 'Settings file', '設定檔', 'Export these settings to JSON, or import them (validated in full before anything changes).', '把設定匯出為 JSON，或匯入設定（在變更前會完整驗證）。'),
-            ('backup', 'Backup everything', '備份全部', 'One .zip with settings, personal wording, tabs, deployments and the workspace history files. No passwords or keys.', '一個 .zip 包含設定、個人用詞、分頁、部署及工作區記錄檔，不含密碼或金鑰。'),
+            ('backup', 'Backup everything', '備份全部', 'One .zip with settings, tabs, deployments and the workspace history files. No passwords, keys or personal wording.', '一個 .zip 包含設定、分頁、部署及工作區記錄檔，不含密碼、金鑰或個人用詞。'),
             ('onboarding', 'Onboarding', '入門設定', 'Run the first-run wizard again.', '再次執行首次使用精靈。')]
 for k, en, zh, hen, hzh in SETTINGS:
     s('set.' + ('school' if k == 'schoolMode' else k), en, zh)
@@ -313,7 +313,7 @@ s('school.enable', 'Turn on school mode', '開啟學校模式'); s('school.unloc
 s('school.newPin', 'New PIN (4 to 12 digits)', '新 PIN（4 至 12 位數字）'); s('school.repeatPin', 'Repeat the PIN', '再次輸入 PIN'); s('school.pin', 'PIN', 'PIN'); s('school.pinBad', 'Use 4 to 12 digits.', '請使用 4 至 12 位數字。')
 s('school.pinMismatch', 'The PINs do not match.', 'PIN 不相符。'); s('school.wrongPin', 'Wrong PIN.', 'PIN 錯誤。'); s('school.on', '{0} is on', '{0} 已開啟'); s('school.off', 'School mode is off.', '學校模式已關閉。')
 s('backup.saved', 'Backup saved to {0}', '已把備份儲存到 {0}'); s('backup.restore', 'Restore from backup', '從備份還原'); s('backup.restoreTitle', 'Restore a backup', '還原備份')
-s('backup.restoreWarn', 'Settings, personal wording, tabs and deployments from the backup replace the current ones. The whole file is checked first; if anything is invalid nothing changes.', '備份中的設定、個人用詞、分頁及部署會取代目前的內容。會先檢查整個檔案；如有任何無效內容，則不會作任何變更。')
+s('backup.restoreWarn', 'Settings, tabs and deployments from the backup replace the current ones. The whole file is checked first; if anything is invalid nothing changes.', '備份中的設定、分頁及部署會取代目前的內容。會先檢查整個檔案；如有任何無效內容，則不會作任何變更。')
 s('backup.restoreHold', 'Hold to restore', '按住以還原'); s('backup.restored', 'Restored {0} files.', '已還原 {0} 個檔案。'); s('backup.restoreBad', 'The backup was not restored: {0}', '未能還原備份：{0}')
 for k, en, zh in [('backup.schema', 'it is not a TempDesk backup', '它不是 TempDesk 備份'), ('backup.files', 'its file list is damaged', '其檔案清單已損壞'), ('backup.path', 'it contains an unexpected file path', '它包含意料之外的檔案路徑'), ('backup.missing', 'a listed file is missing', '清單中的檔案不見了'),
                   ('backup.json', 'a file is not valid JSON', '有檔案不是有效的 JSON'), ('backup.settings', 'its settings are not valid', '其設定無效'), ('backup.vocabulary', 'its personal wording file is not valid', '其個人用詞檔無效'), ('backup.deployment', 'a deployment is not valid', '有部署無效'),

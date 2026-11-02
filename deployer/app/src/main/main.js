@@ -438,8 +438,7 @@ function registerIpc() {
     const files = [];
     const add = (name, obj) => files.push({ name, data: JSON.stringify(obj, null, 2) + '\n' });
     add('settings.json', store.settings());
-    const vocab = store.vocabulary();
-    if (vocab) files.push({ name: 'vocabulary.json', data: vocab });
+    // Personal wording is never exported (owner rule), so it is not part of the backup.
     add('tabs.json', store.tabs());
     for (const d of store.deployments()) add('deployments/' + d.name + '.json', Core.stripSecrets(d));
     const snap = workspace.snapshot();
@@ -546,12 +545,14 @@ function smokeTest() {
       const r = await win.webContents.executeJavaScript("(async () => { const ob = document.querySelector('.onb'); if (ob) ob.remove(); window.TempDeskApp.go('" + p + "'); await new Promise((r) => setTimeout(r, 1500)); const v = document.getElementById('view'); return { page: '" + p + "', text: v.innerText.slice(0, 160).replace(/\\s+/g, ' '), controls: v.querySelectorAll('button, input, select, textarea').length, unlabelled: [...v.querySelectorAll('button, input, select, textarea')].filter((c) => !(c.getAttribute('aria-label') || c.labels && c.labels.length || c.textContent.trim() || c.title || c.getAttribute('aria-labelledby'))).map((c) => c.outerHTML.slice(0, 80)) }; })()").catch((e) => ({ page: p, error: e.message }));
       report.push(r);
     }
-    const frame = await win.webContents.executeJavaScript("(() => { const f = document.querySelector('iframe.afb'); return f ? 'frame:' + (f.contentWindow.TempDeskBuilderHost ? 'host' : 'nohost') : 'noframe'; })()").catch((e) => e.message);
+    await win.webContents.executeJavaScript("window.TempDeskApp.go('answers')");
+    await wait(4000);
+    const frame = await win.webContents.executeJavaScript("(() => { const f = document.querySelector('iframe.afb'); if (!f) return 'noframe'; const w = f.contentWindow, m = w.TempDeskBuilderHost && w.TempDeskBuilderHost.getModel(); return { host: !!w.TempDeskBuilderHost, mode: m && m.mode, xmlBytes: m ? window.TempDeskAnswer.buildXml(m).length : 0, studioText: w.document.body.innerText.slice(0, 200).replace(/\\s+/g, ' '), palette: w.TempDeskStudioPalette ? w.TempDeskStudioPalette('computer', false).length : -1 }; })()").catch((e) => e.message);
     report.push({ studio: frame });
     const pal = await win.webContents.executeJavaScript("(() => { window.TempDeskApp.openPalette(); const n = document.querySelectorAll('.palette li').length; document.querySelector('.palette').remove(); window.TempDeskApp.palette = null; return n; })()").catch((e) => e.message);
     report.push({ paletteItems: pal });
-    await win.webContents.executeJavaScript("window.TempDeskApp.go('deploy')");
-    await wait(800);
+    await win.webContents.executeJavaScript("window.TempDeskApp.go(" + JSON.stringify(process.env.TEMPDESK_SMOKE_PAGE || 'deploy') + ")");
+    await wait(2500);
     try { const img = await win.webContents.capturePage(); fs.writeFileSync(process.env.TEMPDESK_SMOKE_SHOT || path.join(os.tmpdir(), 'tempdesk-smoke.png'), img.toPNG()); } catch (e) { errors.push('capture: ' + e.message); }
     process.stdout.write('SMOKE ' + JSON.stringify({ report, errors }, null, 1) + '\n');
     app.exit(errors.length ? 1 : 0);

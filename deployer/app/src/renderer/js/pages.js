@@ -48,7 +48,9 @@ async function saveDraft(label, key) {
 function deployPage(root, app) {
   if (!draft) draft = (app.settings.onboarding && app.settings.onboarding.path === 'lite') ? DEFAULT_LITE() : DEFAULT_SERVER();
   const kindSeg = h('div', { class: 'row', role: 'group', 'aria-label': t('deploy.kind') }, ['server', 'lite'].map((k) => h('button', { type: 'button', class: 'btn ' + (draft.kind === k ? 'btn-primary' : 'btn-ghost'), 'aria-pressed': String(draft.kind === k), onclick: () => { draft = k === 'server' ? DEFAULT_SERVER() : DEFAULT_LITE(); app.render(); } }, [t('deploy.kind.' + k)])));
-  root.appendChild(h('div', { class: 'page-head' }, [h('div', null, [h('div', { class: 'kicker', text: t('deploy.kicker') }), h('h1', { text: t('deploy.title') }), h('p', { class: 'muted', text: t('deploy.lead') })]), kindSeg]));
+  const b = app.info.build;
+  root.appendChild(h('div', { class: 'page-head' }, [h('div', null, [h('div', { class: 'kicker', text: t('deploy.kicker') }), h('h1', { text: t('deploy.title') }), h('p', { class: 'muted', text: t('deploy.lead') }),
+    h('p', { class: 'small muted mono', 'data-palette': t('about.version'), text: t('about.provenance', [b.version, String(b.commit || '').slice(0, 12), b.builtUtc]) })]), kindSeg]));
   const nameField = text(t('dep.name'), draft.name, (v) => { draft.name = v; }, { info: 'info.depName', help: t('dep.nameHelp') });
   if (draft.kind === 'server') serverDeploy(root, app, nameField); else liteDeploy(root, app, nameField);
 }

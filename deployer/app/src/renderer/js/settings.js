@@ -68,10 +68,10 @@ export async function settingsPage(root, app) {
   const logoPrev = h('img', { src: s.logo || 'img/tempdesk.svg', alt: '', style: { width: '40px', height: '40px', borderRadius: '10px', objectFit: 'contain', background: 'var(--s0)' } });
   sec('appearance', [
     row('theme', t('set.theme'), t('set.themeHelp'), select([['dark', t('opt.dark')], ['light', t('opt.light')], ['system', t('opt.system')]], s.theme, (v) => set({ theme: v }, 'set.theme', v))),
-    row('accent', t('set.accent'), t('set.accentHelp'), h('div', { class: 'row', style: { alignItems: 'flex-start', gap: '18px' } }, [wheel, h('div', { class: 'stack' }, [h('div', { class: 'row' }, [swatch, h('label', { class: 'sr-only', for: 'accent-hex', text: t('set.accentHex') }), Object.assign(hex, { id: 'accent-hex' }), resetAccent]), contrast])]), 'color colour'),
+    row('accent', t('set.accent'), t('set.accentHelp'), h('div', { class: 'row', style: { alignItems: 'flex-start', gap: '18px' } }, [wheel, h('div', { class: 'stack' }, [h('div', { class: 'row' }, [swatch, h('label', { class: 'sr-only', for: 'accent-hex', text: t('set.accentHex') }), (hex.id = 'accent-hex', hex), resetAccent]), contrast])]), 'color colour'),
     row('radius', t('set.radius'), t('set.radiusHelp'), radius),
     row('density', t('set.density'), t('set.densityHelp'), select([['compact', t('opt.compact')], ['comfortable', t('opt.comfortable')], ['spacious', t('opt.spacious')]], s.density, (v) => set({ density: v }, 'set.density', v))),
-    row('textScale', t('set.textScale'), t('set.textScaleHelp'), h('div', { class: 'row' }, [Object.assign(scale, { id: 'textScale-in', 'aria-label': t('set.textScale') }), scaleLab])),
+    row('textScale', t('set.textScale'), t('set.textScaleHelp'), h('div', { class: 'row' }, [(scale.id = 'textScale-in', scale.setAttribute('aria-label', t('set.textScale')), scale), scaleLab])),
     row('highContrast', t('set.highContrast'), t('set.highContrastHelp'), select([['system', t('opt.system')], ['on', t('opt.on')], ['off', t('opt.off')]], s.highContrast, (v) => set({ highContrast: v }, 'set.highContrast', v))),
     row('motion', t('set.motion'), t('set.motionHelp'), select([['system', t('opt.motionSystem')], ['on', t('opt.on')], ['off', t('opt.off')]], s.motion, (v) => set({ motion: v }, 'set.motion', v)), 'animation'),
     row('appName', t('set.appName'), t('set.appNameHelp'), (() => { const i = h('input', { type: 'text', value: s.appName, maxlength: '40' }); i.addEventListener('change', () => { const v = i.value.trim(); if (!v || /[<>]/.test(v)) { toast(t('set.appNameBad'), 'error'); i.value = s.appName; return; } set({ appName: v }, 'set.appName', v); }); return i; })(), 'rename title'),
@@ -93,7 +93,7 @@ export async function settingsPage(root, app) {
     const fl = h('span', { class: 'chip', text: t('funny.' + s.funny) });
     funny.addEventListener('input', () => { fl.textContent = t('funny.' + funny.value); funny.setAttribute('aria-valuetext', t('funny.' + funny.value)); });
     funny.addEventListener('change', () => set({ funny: Number(funny.value) }, 'set.funny', funny.value));
-    langRows.push(row('funny', t('set.funny'), t('set.funnyHelp'), h('div', { class: 'row' }, [Object.assign(funny, { id: 'funny-in', 'aria-label': t('set.funny') }), fl]), 'humor humour tone'));
+    langRows.push(row('funny', t('set.funny'), t('set.funnyHelp'), h('div', { class: 'row' }, [(funny.id = 'funny-in', funny.setAttribute('aria-label', t('set.funny')), funny), fl]), 'humor humour tone'));
     // Personal wording
     const stateLine = h('div', { class: 'small', role: 'status', text: app.wordingMap ? t('wording.active', [app.wordingMap.size]) : t('wording.none') });
     langRows.push(row('wording', t('set.wording'), t('set.wordingHelp'), h('div', { class: 'stack' }, [stateLine, h('div', { class: 'row' }, [
@@ -108,7 +108,7 @@ export async function settingsPage(root, app) {
   vol.addEventListener('change', () => { set({ volume: Number(vol.value) }, 'set.volume', vol.value); });
   sec('sound', [
     row('sounds', t('set.sounds'), t('set.soundsHelp'), sw(s.sounds, (v) => set({ sounds: v }, 'set.sounds', v), t('set.sounds')), 'audio mute'),
-    row('volume', t('set.volume'), t('set.volumeHelp'), h('div', { class: 'row' }, [Object.assign(vol, { id: 'volume-in', 'aria-label': t('set.volume') }), btn(t('set.test'), () => play('done'), 'btn-ghost btn-sm')]))
+    row('volume', t('set.volume'), t('set.volumeHelp'), h('div', { class: 'row' }, [(vol.id = 'volume-in', vol.setAttribute('aria-label', t('set.volume')), vol), btn(t('set.test'), () => play('done'), 'btn-ghost btn-sm')]))
   ]);
 
   // School mode (convenience lock)
@@ -137,7 +137,7 @@ export async function settingsPage(root, app) {
   const wsInfo = await td.invoke['ws:info']();
   sec('history', [
     h('p', { class: 'small ' + (wsInfo.kind === 'git' ? 'muted' : 'notice warn'), text: wsInfo.kind === 'git' ? t('hist.backendGit') : t('hist.backendJsonl') }),
-    row('gitRemote', t('set.gitRemote'), t('set.gitRemoteHelp'), h('div', { class: 'row' }, [Object.assign(remote, { id: 'gitRemote-in', 'aria-label': t('set.gitRemote') }), btn(t('set.gitSave'), async () => {
+    row('gitRemote', t('set.gitRemote'), t('set.gitRemoteHelp'), h('div', { class: 'row' }, [(remote.id = 'gitRemote-in', remote.setAttribute('aria-label', t('set.gitRemote')), remote), btn(t('set.gitSave'), async () => {
       const v = remote.value.trim();
       try { await td.invoke['ws:setRemote'](v); await set({ gitRemote: v }, 'set.gitRemote', v || 'none'); toast(t('set.gitSaved'), 'success'); } catch (e) { toast(e.message, 'error'); }
     }, 'btn-ghost btn-sm'), btn(t('set.gitPush'), async () => { try { await td.invoke['ws:push'](); toast(t('set.gitPushed'), 'success'); } catch (e) { toast(t('set.gitPushFailed', [e.message]), 'error'); } }, 'btn-ghost btn-sm', { disabled: !s.gitRemote || wsInfo.kind !== 'git' || undefined })]), 'git push remote'),

@@ -517,7 +517,7 @@ function New-TdIso {
         ISO9660 + Joliet + UDF, volume label TEMPDESK.
     #>
     param([Parameter(Mandatory)][string] $Folder, [Parameter(Mandatory)][string] $IsoPath, [string] $Label = 'TEMPDESK')
-    if (-not ($IsWindows -or $env:OS -eq 'Windows_NT')) { throw 'Building an ISO needs Windows (IMAPI2FS). Use the zip kit on other systems.' }
+    if (-not ($env:OS -eq 'Windows_NT' -or $IsWindows)) { throw 'Building an ISO needs Windows (IMAPI2FS). Use the zip kit on other systems.' }
     $fsi = New-Object -ComObject IMAPI2FS.MsftFileSystemImage
     # FsiFileSystemISO9660 = 1, Joliet = 2, UDF = 4
     $fsi.FileSystemsToCreate = 7

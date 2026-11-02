@@ -12,7 +12,7 @@
     "prepare-bundle": "node scripts/prepare-bundle.js",
     "start": "node scripts/prepare-bundle.js && electron .",
     "check": "node scripts/check-syntax.js",
-    "test": "node --test test/",
+    "test": "node --test test/*.test.js",
     "dist": "node scripts/prepare-bundle.js && electron-builder --win squirrel portable --publish never"
   },
   "devDependencies": {
@@ -25,28 +25,63 @@
     "productName": "TempDesk Deployer",
     "executableName": "TempDeskDeployer",
     "copyright": "TempDesk contributors, MIT License",
-    "directories": { "output": "../output", "buildResources": "build" },
-    "files": ["src/**/*", "package.json", "!src/**/*.map"],
+    "directories": {
+      "output": "../output",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json",
+      "!src/**/*.map",
+      "!src/renderer/js/package.json.bak"
+    ],
     "extraResources": [
-      { "from": "../../.bundle/payload", "to": "payload" },
-      { "from": "../engine", "to": "engine", "filter": ["*.ps1", "*.psm1"] },
-      { "from": "../../.bundle/docs", "to": "docs" }
+      {
+        "from": "../../.bundle/payload",
+        "to": "payload"
+      },
+      {
+        "from": "../engine",
+        "to": "engine",
+        "filter": [
+          "*.ps1",
+          "*.psm1"
+        ]
+      },
+      {
+        "from": "../../.bundle/docs",
+        "to": "docs"
+      }
     ],
     "asar": true,
     "win": {
       "icon": "../assets/tempdesk.ico",
-      "target": ["squirrel", "portable"],
+      "target": [
+        "squirrel",
+        "portable"
+      ],
       "signAndEditExecutable": true,
-      "forceCodeSigning": false
+      "forceCodeSigning": false,
+      "verifyUpdateCodeSignature": false
     },
     "squirrelWindows": {
-      "name": "TempDeskDeployer",
       "iconUrl": "https://raw.githubusercontent.com/Ding-Ding-Projects/tempdesk-/main/deployer/assets/tempdesk.ico",
       "msi": false,
-      "remoteReleases": false,
-      "useAppIdAsId": true
+      "useAppIdAsId": true,
+      "artifactName": "TempDeskDeployer-Setup-${version}.${ext}"
     },
-    "portable": { "artifactName": "TempDeskDeployer-${version}-portable.exe" },
+    "portable": {
+      "artifactName": "TempDeskDeployer-${version}-portable.exe"
+    },
+    "linux": {
+      "target": [
+        "dir"
+      ]
+    },
     "publish": null
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ding-Ding-Projects/tempdesk-.git"
   }
 }

@@ -1,7 +1,8 @@
 <#
 .SYNOPSIS
-    Strict validator for personal wording files (same rules as the desktop app's JavaScript
-    validator in deployer/app/src/shared/vocabulary.js).
+    Strict validator for personal wording files, for headless use and tests. The desktop app
+    validates with the shared JavaScript module site/assets/wording.js; both enforce the limits
+    below. The JavaScript module additionally allows tab and line breaks inside values.
 
 .DESCRIPTION
     Schema: {"schemaVersion":1,"entries":{"<ordinary>":"<replacement>"}}

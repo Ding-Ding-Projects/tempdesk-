@@ -93,12 +93,24 @@
     f.focus({ preventScroll: true }); pulse(f.closest('.field') || f);
   }
   function toast(msg) { if (host.toast) host.toast(msg); }
-  var ready = [];
+  var ready = [], paletteSources = [];
+  // The studio registers live search sources; the desktop palette (parent window) asks them.
+  window.TempDeskStudioPalette = function (q, regex) {
+    var out = [];
+    paletteSources.forEach(function (src) { try { out = out.concat(src(q, regex) || []); } catch (e) { /* ignore */ } });
+    return out;
+  };
   window.TempDeskSite = {
     t: t, tz: tz, h: h, ROOT: 'vendor/', LS: LS, prefs: prefs, translateAll: translateAll, render: render, toast: toast, pulse: pulse,
     openSheet: openSheet, closeSheet: closeSheet, trap: trap, makeMatcher: makeMatcher, focusTarget: focusTarget,
-    onLang: function (f) { ready.push(f); }, translate: function (x) { return translator(x); }
+    onLang: function (f) { ready.push(f); }, translate: function (x) { return translator(x); },
+    addPaletteSource: function (fn) { paletteSources.push(fn); }
   };
+  // Any API the website adds later falls back to a no-op instead of breaking the hosted studio.
+  if (typeof Proxy === 'function') {
+    var real = window.TempDeskSite;
+    window.TempDeskSite = new Proxy(real, { get: function (o, k) { if (k in o) return o[k]; if (typeof k === 'string' && P && P.console) P.console.warn('TempDeskSite.' + k + ' is not provided by the desktop host'); return function () { return undefined; }; } });
+  }
   // Electron has no window.prompt. Use the default value so "save version" still works with an
   // automatic name; the desktop History page offers named versions through its own dialog.
   window.prompt = function (msg, def) { return def === undefined ? null : String(def); };

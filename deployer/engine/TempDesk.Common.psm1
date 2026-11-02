@@ -237,7 +237,7 @@ function New-TdProtectedDirectory {
     #>
     param([Parameter(Mandatory)][string] $Path)
     if (-not (Test-Path -LiteralPath $Path)) { New-Item -ItemType Directory -Force -Path $Path | Out-Null }
-    if ($IsWindows -or $env:OS -eq 'Windows_NT') {
+    if ($env:OS -eq 'Windows_NT' -or $IsWindows) {
         $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
         $acl = New-Object System.Security.AccessControl.DirectorySecurity
         $acl.SetAccessRuleProtection($true, $false)

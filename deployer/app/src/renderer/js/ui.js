@@ -51,7 +51,6 @@ export function iconBtn(name, label, onclick, extra) {
 // ---- sounds -------------------------------------------------------------------------------
 const audioCache = {};
 export async function play(name) {
-  if (!state.settings.sounds || state.school.enabled && name === 'tada') { if (name !== 'invalid' && name !== 'error') return; }
   if (!state.settings.sounds) return;
   try {
     if (!(name in audioCache)) audioCache[name] = await window.td.invoke['sound:get'](name);
@@ -85,7 +84,6 @@ export function toast(text, kind, opts) {
     state.notifications = state.notifications.slice(0, 200);
     notifyListeners.forEach((f) => f());
   }
-  if (kind === 'error') play('error');
 }
 
 // ---- dialogs ------------------------------------------------------------------------------
@@ -300,7 +298,7 @@ export function celebrate(headline) {
   document.body.appendChild(box);
   announce(headline);
   // Animates in, holds 3 s, animates out; with motion off it shows statically for the same time.
-  setTimeout(() => box.remove(), state.motionOff ? 3000 : 3800);
+  setTimeout(() => box.remove(), state.motionOff ? 3000 : 3900);
 }
 
 // Focus an element and pulse it (used by the command palette teleport).

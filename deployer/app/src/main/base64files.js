@@ -28,6 +28,7 @@ class Job {
     this.cancelled = false;
     this.listeners = [];
     this.done = new Promise((res, rej) => { this.resolve = res; this.reject = rej; });
+    this.done.catch(() => {}); // callers use start(); this mirror must never be an unhandled rejection
   }
   on(fn) { this.listeners.push(fn); }
   emit(ev) { for (const f of this.listeners) f(ev); }

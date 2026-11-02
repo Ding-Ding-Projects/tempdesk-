@@ -131,7 +131,7 @@ export function progressPanel(opts) {
       status.textContent = ev.cancelled ? t('run.cancelled') : t('run.failed');
       const anyDone = [...steps.values()].some((s) => s.state === 'done');
       resumeBtn.hidden = !anyDone; startBtn.hidden = anyDone; restartBtn.hidden = !anyDone;
-      if (!ev.cancelled) toast(t('run.failedToast', [opts.title]), 'error');
+      if (!ev.cancelled) { play('error'); toast(t('run.failedToast', [opts.title]), 'error'); }
     }
   }
   async function exportLog() {

@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: Python and JavaScript tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Portal tests
+        run: |
+          if [ -d portal/tests ]; then
+            if [ -f portal/requirements-dev.txt ]; then pip install -r portal/requirements-dev.txt; elif [ -f portal/requirements.txt ]; then pip install -r portal/requirements.txt pytest; else pip install pytest; fi
+            python -m pytest portal -q
+          fi
+      - name: Samba agent tests
+        run: |
+          if [ -d samba/tests ]; then
+            if [ -f samba/requirements-dev.txt ]; then pip install -r samba/requirements-dev.txt; elif [ -f samba/requirements.txt ]; then pip install -r samba/requirements.txt pytest; else pip install pytest; fi
+            python -m pytest samba -q
+          fi
+      - name: Streaming tests
+        run: |
+          if [ -d streaming/tests ]; then
+            if [ -f streaming/requirements.txt ]; then pip install -r streaming/requirements.txt pytest; else pip install pytest; fi
+            python -m pytest streaming -q
+          fi
+      - name: Website and answer file tests
+        run: |
+          if [ -d site/tests ] && ls site/tests/*.test.* >/dev/null 2>&1; then node --test site/tests/; fi
+          if [ -d answerfile/tests ]; then node --test answerfile/tests/; fi
+      - name: Desktop app tests
+        working-directory: deployer/app
+        run: |
+          npm ci --no-audit --no-fund
+          node scripts/prepare-bundle.js
+          node scripts/check-syntax.js
+          node --test test/*.test.js
+      - name: Catalogs are up to date
+        run: |
+          python deployer/i18n/build_catalogs.py
+          git diff --exit-code -- deployer/i18n/en.json deployer/i18n/zh-HK.json
+
+  windows:
+    name: PowerShell, engine and Windows builds
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Parse-check every PowerShell file (Windows PowerShell 5.1)
+        shell: powershell
+        run: .\scripts\check-powershell.ps1
+      - name: Parse-check every PowerShell file (PowerShell 7)
+        shell: pwsh
+        run: ./scripts/check-powershell.ps1
+      - name: Engine tests (Pester)
+        shell: pwsh
+        run: |
+          Install-Module Pester -MinimumVersion 5.5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          $c = New-PesterConfiguration
+          $c.Run.Path = 'deployer/engine/tests'
+          $c.Run.Exit = $true
+          $c.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $c
+      - name: Compile the agent
+        shell: powershell
+        run: |
+          if (Test-Path agent/build.ps1) { & ./agent/build.ps1 } else { Write-Host 'agent/build.ps1 not present: skipped' }
+      - name: Build the desktop app
+        shell: cmd
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: build.bat /s

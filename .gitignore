@@ -10,3 +10,6 @@ deployer/bin/
 deployer/output/
 *.iso
 node_modules/
+# TempDesk Deployer build tools and staging (scripts/download-dependencies.ps1, prepare-bundle.js)
+.tools/
+.bundle/

@@ -307,11 +307,16 @@ async function doRedo() {
 app.undo = doUndo; app.redo = doRedo;
 
 // ---- command palette (Ctrl+Shift+F) ---------------------------------------------------------
-function paletteItems() {
+function paletteItems(q, regex) {
   const items = [];
   NAV.forEach(([id]) => items.push({ title: t('nav.' + id), group: t('palette.pages'), keywords: id, run: () => go(id) }));
   app.tabs.open.forEach((n) => items.push({ title: n, group: t('palette.tabs'), run: () => openTab(n) }));
   ACTIONS().forEach((a) => items.push(a));
+  // Answer File Studio results (every setting in every mode) when the studio is open.
+  const fr = document.querySelector('iframe.afb');
+  if (q && fr && fr.contentWindow && fr.contentWindow.TempDeskStudioPalette) {
+    try { fr.contentWindow.TempDeskStudioPalette(q, regex).forEach((x) => items.push({ title: x.label, group: t('studio.title') + (x.sub ? ' · ' + x.sub : ''), run: () => { if (x.action) x.action(); else if (x.href) fr.contentWindow.location.hash = x.href.split('#')[1] || ''; } })); } catch (e) { /* ignore */ }
+  }
   // Every labelled control currently on the page (fields carry data-palette).
   document.querySelectorAll('#view [data-palette]').forEach((el) => {
     items.push({ title: el.getAttribute('data-palette'), group: t('palette.onPage'), run: () => pulseFocus(el) });
@@ -330,6 +335,8 @@ function openPalette() {
   function close() { wrap.remove(); app.palette = null; if (prev && prev.focus) prev.focus(); }
   function draw(m) {
     const q = sb.input.value;
+    const rxOn = sb.querySelector('.rx').getAttribute('aria-pressed') === 'true';
+    if (document.querySelector('iframe.afb')) items = paletteItems(q, rxOn);
     const matcher = m || sb.matcher();
     shown = !q ? items.slice(0, 60) : matcher.ok && /[\\^$|()[\]{}*+?]/.test(q) && sb.querySelector('.rx').getAttribute('aria-pressed') === 'true'
       ? items.filter((it) => Core.testMatch(it.title + ' ' + (it.group || ''), matcher)).slice(0, 60)
