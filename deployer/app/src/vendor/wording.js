@@ -142,6 +142,7 @@
     if (!rep) return rep;
     if (src.length > 1 && src === src.toUpperCase() && /[A-Za-z]/.test(src)) return rep.toUpperCase();
     if (src[0] !== src[0].toLowerCase() && rep[0] === rep[0].toLowerCase()) return rep[0].toUpperCase() + rep.slice(1);
+    if (src[0] !== src[0].toUpperCase() && rep[0] !== rep[0].toLowerCase()) return rep[0].toLowerCase() + rep.slice(1);
     return rep;
   }
   // Returns translate(text) applying whole-word, longest-first, case-aware replacement in one pass.

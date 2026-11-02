@@ -14,11 +14,12 @@ const INVOKE = [
   'file:save', 'file:open', 'file:pickFolder', 'file:reveal', 'file:zip', 'docs:list', 'docs:read', 'shell:open', 'clipboard:write', 'clipboard:read',
   'media:writeKit', 'media:kitPayload', 'media:iso', 'disks:list',
   'ws:info', 'ws:save', 'ws:get', 'ws:flush', 'ws:undo', 'ws:redo', 'ws:restore', 'ws:log', 'ws:diff', 'ws:filesAt', 'ws:snapshot', 'ws:setRemote', 'ws:push',
+  'ws:branches', 'ws:switchBranch', 'studio:open', 'studio:openPath', 'studio:save', 'studio:recent', 'studio:watch', 'fs:isDir', 'usb:list', 'usb:write',
   'backup:export', 'backup:import',
   'b64:pick', 'b64:stat', 'b64:start', 'b64:pause', 'b64:resume', 'b64:cancel',
   'update:check', 'update:restart'
 ];
-const EVENTS = ['engine:event', 'b64:event', 'update:state', 'win:state', 'theme:system'];
+const EVENTS = ['studio:changed', 'engine:event', 'b64:event', 'update:state', 'win:state', 'theme:system'];
 
 const api = { invoke: {}, on: {} };
 for (const ch of INVOKE) api.invoke[ch] = (...args) => ipcRenderer.invoke(ch, ...args);

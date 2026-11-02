@@ -3,6 +3,7 @@
 // Writes model.disks (answer.js turns it into DiskConfiguration and InstallTo).
 import { h, iconButton, clone } from './dom.js';
 import { startDrag } from './drag.js';
+import { searchBox } from './search-ui.js';
 
 export const PART_TYPES = ['EFI', 'MSR', 'Primary', 'Recovery', 'Extended', 'Logical'];
 export const PRESETS = {
@@ -56,6 +57,18 @@ function fmtMB(mb) { return mb >= 1024 ? (mb / 1024).toFixed(mb >= 10240 ? 0 : 1
 export function mountDisk(root, ctx) {
   const t = ctx.t;
   let sel = { disk: 0, part: 0 };
+  let fm = null;
+  const finder = searchBox({ label: t('disk.find'), placeholder: t('disk.find'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
+    onChange: (q, re, m) => { fm = m; mark(); },
+    onKey: (e) => { if (e.key === 'Enter') { const f = root.querySelector('.part.found'); if (f) { e.preventDefault(); f.focus(); f.click(); } } } });
+  function mark() {
+    const parts = [...root.querySelectorAll('.part[role=option]')];
+    parts.forEach((p) => p.classList.remove('found'));
+    if (!fm || !fm.ok || fm.empty) { finder.setStatus(''); return; }
+    const hits = parts.filter((p) => fm.test(p.getAttribute('aria-label')));
+    hits.forEach((p) => p.classList.add('found'));
+    finder.setStatus(t('search.listCount', [hits.length, parts.length]), !hits.length);
+  }
   function L() { return clone(ctx.get()) || PRESETS.uefi(); }
   function commit(layout, key, args, co) { ctx.set(layout, { key, args }, co); draw(); }
   function draw() {
@@ -68,6 +81,7 @@ export function mountDisk(root, ctx) {
       layout ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm', text: t('disk.useMode'), onclick: () => commit(null, 'hist.diskMode', []) }) : null
     ]);
     root.appendChild(tools);
+    root.appendChild(finder.el);
     if (!layout) { root.appendChild(h('p', { class: 'notice', text: t('disk.fromMode') })); return; }
     if (!layout.disks.length) root.appendChild(h('p', { class: 'notice', text: t('disk.keepExisting') }));
     const errs = validateLayout(layout);
@@ -154,6 +168,7 @@ export function mountDisk(root, ctx) {
       root.appendChild(ed);
     }
     root.appendChild(h('p', { class: 'meter-label', text: t('disk.keysHelp') }));
+    mark();
   }
   draw();
   return { update: draw };

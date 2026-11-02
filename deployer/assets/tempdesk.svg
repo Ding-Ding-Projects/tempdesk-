@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="TempDesk">
+  <title>TempDesk</title>
+  <rect width="256" height="256" rx="56" fill="#0B1110"/>
+  <rect x="36" y="58" width="184" height="124" rx="40" fill="#7CF3E6"/>
+  <rect x="98" y="194" width="60" height="16" rx="8" fill="#7CF3E6"/>
+  <circle cx="128" cy="120" r="30" fill="#0B1110"/>
+</svg>

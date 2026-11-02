@@ -51,8 +51,31 @@ function main() {
   // The website's answer file builder page logic, hosted unchanged in the desktop app. One line is
   // appended so the desktop extras (ISO, media folder, Git history) can read the current model.
   if (copy(path.join(REPO, 'site', 'assets', 'builder.js'), path.join(VENDOR, 'builder.js'), false)) {
-    fs.appendFileSync(path.join(VENDOR, 'builder.js'), "\n// Added by deployer/app/scripts/prepare-bundle.js for the desktop host.\nwindow.TempDeskBuilderHost = { getModel: () => model, getHistory: () => history };\n");
+    fs.appendFileSync(path.join(VENDOR, 'builder.js'), [
+      '', '// Added by deployer/app/scripts/prepare-bundle.js for the desktop host (guarded: the page may rename these).',
+      'window.TempDeskBuilderHost = {',
+      "  getModel: () => { try { return model; } catch (e) { return null; } },",
+      "  getHistory: () => { try { return history; } catch (e) { return null; } },",
+      "  addDriverPath: (p) => { try { const f = model.custom; const lines = String(f.driversPE || '').split(/\\r?\\n/).filter(Boolean); if (lines.includes(p)) return 'exists'; lines.push(p); f.driversPE = lines.join('\\n'); commit({ key: 'hist.set', args: ['@f.driversPE', p] }); renderView(); return 'ok'; } catch (e) { return 'unsupported'; } },",
+      "  importText: (text, name) => { try { if (typeof importFile === 'function') { importFile(new File([text], name || 'autounattend.xml', { type: 'application/xml' })); return true; } } catch (e) { /* fall through */ } return false; }",
+      '};', ''].join('\n'));
   }
+  // Answer File Studio page: the website's page with site.js replaced by the desktop shim.
+  const pageSrc = path.join(REPO, 'site', 'answer-file.html');
+  if (fs.existsSync(pageSrc)) {
+    let page = fs.readFileSync(pageSrc, 'utf8');
+    page = page.replace(/<script>\/\* apply saved theme[^<]*<\/script>/, '');
+    page = page.replace(/<meta name="td-root" content="[^"]*">/, '<meta name="td-root" content="vendor/">');
+    page = page.replace(/<link rel="(icon|canonical)"[^>]*>/g, '').replace(/<meta (property|name)="(og|twitter):[^>]*>/g, '');
+    page = page.replace(/(href|src)="\.?\/?assets\//g, '$1="vendor/');
+    page = page.replace('<script src="vendor/site.js"></script>', '<script src="js/site-shim.js"></script>');
+    page = page.replace('<script src="vendor/history.js"></script>', '<script src="vendor/history.js"></script>\n<script src="js/history-mirror.js"></script>');
+    page = page.replace('</head>', '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'self\'; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data: blob:; connect-src \'self\'; font-src \'self\'; base-uri \'none\'; form-action \'none\'; object-src \'none\'">\n<link rel="stylesheet" href="css/builder-host.css">\n</head>');
+    // Website-only chrome (top bar links to other pages) stays out of the desktop window.
+    page = page.replace(/<header class="topbar">[\s\S]*?<\/header>/, '');
+    fs.writeFileSync(path.join(APP, 'src', 'renderer', 'studio.html'), page);
+    if (!page.includes('js/site-shim.js')) throw new Error('studio.html: could not swap site.js for the desktop shim');
+  } else console.warn('skip (not present yet): site/answer-file.html');
   copy(path.join(REPO, 'answerfile', 'generate.mjs'), path.join(VENDOR, 'answerfile', 'generate.mjs'), false);
   copy(path.join(REPO, 'answerfile', 'rules.mjs'), path.join(VENDOR, 'answerfile', 'rules.mjs'), false);
   copy(path.join(REPO, 'answerfile', 'unattend-catalog.json'), path.join(VENDOR, 'answerfile', 'unattend-catalog.json'), false);

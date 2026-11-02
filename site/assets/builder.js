@@ -114,9 +114,6 @@ const INFO_TABS = ['plan', 'history'];
 // State
 // ------------------------------------------------------------------------------------------------
 let model = A.defaultModel();
-let view = LS.get('td.builder.view', 'server');
-if (![...MODE_TABS, ...TOOL_TABS, ...INFO_TABS].includes(view)) view = 'server';
-let step = 0;
 let catalog = null;
 let history = null;
 const adv = new Set();
@@ -126,7 +123,7 @@ let ruleIssues = [];
 async function loadRules() {
   if (!catalog || catalog.origin !== 'full' || !catalog.raw) return;
   try {
-    const g = await import(ROOT + 'answerfile/generate.mjs');
+    const g = await import(new URL(ROOT + 'answerfile/generate.mjs', document.baseURI).href);
     rules = { parseXml: g.parseXml, validateModel: g.validateModel };
   } catch (e) { rules = null; }
 }
@@ -178,58 +175,173 @@ function undo() { if (!history) return; const e = history.undo(); if (e) { apply
 function redo() { if (!history) return; const e = history.redo(); if (e) { applyState(e.state); S.toast(t('hist.redone')); } updateUndo(); }
 
 // ------------------------------------------------------------------------------------------------
-// DOM skeleton
+// Studio shell: activity bar, side bar, editor tabs, inspector, bottom panel, status bar
 // ------------------------------------------------------------------------------------------------
 const $ = (s) => document.querySelector(s);
-const tabsEl = $('#b-tabs'), toolbarEl = $('#b-toolbar'), bodyEl = $('#b-body'), indexEl = $('#b-index'), mainEl = $('#b-main'), previewEl = $('#b-preview');
+const shell = $('#studio');
+let mainEl = h('div'), indexEl = h('nav');
 const live = h('div', { class: 'sr-only', 'aria-live': 'polite' });
 document.body.appendChild(live);
 function announce(text) { live.textContent = ''; setTimeout(() => { live.textContent = text; }, 30); }
-
-function buildTabs() {
-  tabsEl.replaceChildren();
-  const add = (id) => {
-    const b = h('button', { type: 'button', role: 'tab', id: 'tab-' + id, 'aria-controls': 'b-main', 'aria-selected': String(view === id), tabindex: view === id ? '0' : '-1', class: MODE_TABS.includes(id) && model.mode === id ? 'mode-current' : null, text: t('tab.' + id) });
-    b.addEventListener('click', () => setView(id));
-    b.addEventListener('keydown', (e) => {
-      const all = [...tabsEl.querySelectorAll('[role=tab]')];
-      const i = all.indexOf(b);
-      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); const n = all[(i + (e.key === 'ArrowRight' ? 1 : -1) + all.length) % all.length]; n.focus(); n.click(); }
-    });
-    tabsEl.appendChild(b);
-  };
-  MODE_TABS.forEach(add); tabsEl.appendChild(h('span', { class: 'sep', 'aria-hidden': 'true' }));
-  TOOL_TABS.forEach(add); tabsEl.appendChild(h('span', { class: 'sep', 'aria-hidden': 'true' }));
-  INFO_TABS.forEach(add);
-}
-function setView(id, opts) {
-  if (MODE_TABS.includes(id) && model.mode !== id) {
-    model.mode = id;
-    commit({ key: 'hist.mode', args: ['@tab.' + id] });
-  }
-  view = id; LS.set('td.builder.view', id);
-  if (!opts || !opts.keepStep) step = 0;
-  renderView();
-  const tb = $('#tab-' + id); if (tb && (!opts || !opts.noFocus)) tb.focus({ preventScroll: true });
-}
-
 function btn(key, onclick, cls, extra) { return h('button', Object.assign({ type: 'button', class: 'btn ' + (cls || 'btn-ghost'), onclick }, extra || {}), [t(key)]); }
+const outputLog = [];
+function output(text) { outputLog.push({ t: Date.now(), text }); if (outputLog.length > 500) outputLog.shift(); if (layout.panel === 'output') renderPanel(); }
+
+// Layout (remembered)
+const layout = Object.assign({ side: 'explorer', sideW: 280, inspW: 300, panelH: 220, sideOpen: true, inspOpen: true, panelOpen: true, panel: 'problems', split: false, pane: 'editor' }, (() => { try { return JSON.parse(LS.get('td.studio.layout', '{}')) || {}; } catch (e) { return {}; } })());
+function saveLayout() { LS.set('td.studio.layout', JSON.stringify(layout)); }
+function applyLayout() {
+  shell.style.setProperty('--side-w', layout.sideW + 'px');
+  shell.style.setProperty('--insp-w', layout.inspW + 'px');
+  shell.style.setProperty('--panel-h', layout.panelH + 'px');
+  shell.classList.toggle('no-side', !layout.sideOpen);
+  shell.classList.toggle('no-insp', !layout.inspOpen);
+  shell.classList.toggle('no-panel', !layout.panelOpen);
+  shell.dataset.pane = layout.pane;
+  document.querySelectorAll('.st-act [data-side]').forEach((b) => b.setAttribute('aria-pressed', String(layout.sideOpen && layout.side === b.dataset.side)));
+  document.querySelectorAll('.st-phonebar [data-pane]').forEach((b) => b.setAttribute('aria-pressed', String(layout.pane === b.dataset.pane)));
+  saveLayout();
+}
+
+// Tabs
+const TAB_KINDS = ['template', 'new', 'all', 'flow', 'disk', 'commands', 'map', 'plan', 'history', 'xml', 'firstboot', 'compare', 'simulate', 'secrets', 'snippets'];
+let tabs = (() => { try { const v = JSON.parse(LS.get('td.studio.tabs', 'null')); return Array.isArray(v) && v.length ? v.filter((x) => typeof x === 'string') : null; } catch (e) { return null; } })() || ['template', 'flow'];
+let view = LS.get('td.studio.active', tabs[0]);
+if (!tabs.includes(view)) view = tabs[0];
+let step = 0;
+let selected = null; // { comp, pass, path } for the inspector
+function saveTabs() { LS.set('td.studio.tabs', JSON.stringify(tabs)); LS.set('td.studio.active', view); }
+function tabTitle(id) {
+  if (id === 'template') return t('tab.' + model.mode);
+  if (id.startsWith('comp:')) return id.split('|')[1].replace(/^Microsoft-Windows-/, '') + ' (' + id.slice(5).split('|')[0] + ')';
+  if (id.startsWith('file:')) return id.slice(5).split('/').pop();
+  if (id === 'xml') return 'autounattend.xml';
+  if (id === 'firstboot') return 'firstboot.json';
+  return t('tab.' + id);
+}
+function tabIcon(id) {
+  if (id === 'xml' || id.startsWith('file:') || id === 'firstboot') return '‹›';
+  if (id.startsWith('comp:')) return '▦';
+  return { template: '☰', flow: '⇄', disk: '▭', commands: '≡', map: '◎', all: '☷', history: '⧖', compare: '⇌', simulate: '▶', new: '+', plan: '✓', secrets: '•', snippets: '{}' }[id] || '□';
+}
+function openTab(id, opts) {
+  opts = opts || {};
+  if (!tabs.includes(id)) { const at = tabs.indexOf(view); tabs.splice(at < 0 ? tabs.length : at + 1, 0, id); }
+  view = id;
+  if (isPhone()) layout.pane = 'editor';
+  saveTabs(); applyLayout();
+  renderView();
+  if (!opts.noFocus) { const tb = document.getElementById('tab-' + cssId(id)); if (tb) tb.focus({ preventScroll: true }); }
+}
+const setView = (id, opts) => {
+  if (MODE_TABS.includes(id)) { if (model.mode !== id) { model.mode = id; commit({ key: 'hist.mode', args: ['@tab.' + id] }); } return openTab('template', opts); }
+  return openTab(id, opts);
+};
+function closeTab(id) {
+  const i = tabs.indexOf(id);
+  if (i < 0) return;
+  tabs.splice(i, 1);
+  if (!tabs.length) tabs.push('new');
+  if (view === id) view = tabs[Math.min(i, tabs.length - 1)];
+  saveTabs(); renderView();
+}
+function moveTab(id, d) {
+  const i = tabs.indexOf(id), j = i + d;
+  if (i < 0 || j < 0 || j >= tabs.length) return;
+  [tabs[i], tabs[j]] = [tabs[j], tabs[i]];
+  saveTabs(); renderTabs();
+  const tb = document.getElementById('tab-' + cssId(id)); if (tb) tb.focus();
+}
+function cssId(id) { return id.replace(/[^A-Za-z0-9_-]/g, '_'); }
+function renderTabs() {
+  const strip = $('#st-tabs');
+  strip.replaceChildren();
+  tabs.forEach((id) => {
+    const sel = id === view;
+    const tb = h('div', { class: 'st-tab' + (sel ? ' on' : ''), role: 'tab', id: 'tab-' + cssId(id), 'aria-selected': String(sel), 'aria-controls': 'st-editor', tabindex: sel ? '0' : '-1', 'data-tab': id, title: tabTitle(id) }, [
+      h('span', { class: 'st-tab-ic', 'aria-hidden': 'true', text: tabIcon(id) }), h('span', { class: 'st-tab-t', text: tabTitle(id) }),
+      h('button', { type: 'button', class: 'st-tab-x', 'aria-label': t('studio.closeTab', [tabTitle(id)]), tabindex: '-1', text: '×', onclick: (e) => { e.stopPropagation(); closeTab(id); } })]);
+    tb.addEventListener('click', () => { if (view !== id) { view = id; saveTabs(); renderView(); } });
+    tb.addEventListener('auxclick', (e) => { if (e.button === 1) closeTab(id); });
+    tb.addEventListener('keydown', (e) => {
+      const ids = tabs, i = ids.indexOf(id);
+      if (e.altKey && e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); moveTab(id, e.key === 'ArrowLeft' ? -1 : 1); return; }
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); const n = ids[(i + (e.key === 'ArrowRight' ? 1 : -1) + ids.length) % ids.length]; view = n; saveTabs(); renderView(); const f = document.getElementById('tab-' + cssId(n)); if (f) f.focus(); }
+      if (e.key === 'Delete') { e.preventDefault(); closeTab(id); }
+    });
+    tb.addEventListener('contextmenu', (e) => { e.preventDefault(); contextMenu(e, [['ctx.close', () => closeTab(id)], ['ctx.closeOthers', () => { tabs = [id]; view = id; saveTabs(); renderView(); }], ['ctx.moveLeft', () => moveTab(id, -1)], ['ctx.moveRight', () => moveTab(id, 1)]]); });
+    // drag to reorder
+    tb.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 || e.target.closest('.st-tab-x')) return;
+      const sx = e.clientX; let moved = false;
+      const mv = (ev) => {
+        if (!moved && Math.abs(ev.clientX - sx) < 8) return;
+        moved = true; tb.classList.add('dragging');
+        const over = document.elementFromPoint(ev.clientX, ev.clientY);
+        const other = over && over.closest('.st-tab');
+        if (other && other !== tb) { const oi = tabs.indexOf(other.dataset.tab), ci = tabs.indexOf(id); tabs.splice(ci, 1); tabs.splice(oi, 0, id); saveTabs(); strip.insertBefore(tb, oi > ci ? other.nextSibling : other); }
+      };
+      const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); tb.classList.remove('dragging'); };
+      document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up);
+    });
+    strip.appendChild(tb);
+  });
+  strip.appendChild(h('button', { type: 'button', class: 'st-tab-new', 'aria-label': t('studio.newTab'), title: t('studio.newTab'), text: '+', onclick: () => openTab('new') }));
+  const splitB = $('#st-split');
+  if (splitB) { splitB.setAttribute('aria-pressed', String(layout.split)); splitB.disabled = view === 'xml'; }
+}
+
+// Context menu (right-click quick actions)
+function contextMenu(e, items) {
+  document.querySelectorAll('.st-menu').forEach((m) => m.remove());
+  const menu = h('ul', { class: 'st-menu', role: 'menu', style: { left: Math.min(e.clientX, innerWidth - 220) + 'px', top: Math.min(e.clientY, innerHeight - items.length * 44 - 10) + 'px' } });
+  items.forEach(([k, fn]) => { const li = h('li', { role: 'menuitem', tabindex: '-1', text: t(k) }); li.addEventListener('click', () => { menu.remove(); fn(); }); li.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); li.click(); } }); menu.appendChild(li); });
+  menu.addEventListener('keydown', (ev) => {
+    const lis = [...menu.children], i = lis.indexOf(document.activeElement);
+    if (ev.key === 'ArrowDown') { ev.preventDefault(); (lis[i + 1] || lis[0]).focus(); }
+    if (ev.key === 'ArrowUp') { ev.preventDefault(); (lis[i - 1] || lis[lis.length - 1]).focus(); }
+    if (ev.key === 'Escape') { menu.remove(); }
+  });
+  document.body.appendChild(menu);
+  menu.firstChild.focus();
+  setTimeout(() => document.addEventListener('pointerdown', function off(ev) { if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('pointerdown', off); } }), 0);
+}
+
+// Resizable panels (pointer and keyboard)
+function makeSplitter(el, prop, axis, min, max, invert) {
+  el.setAttribute('role', 'separator'); el.setAttribute('tabindex', '0');
+  el.setAttribute('aria-orientation', axis === 'x' ? 'vertical' : 'horizontal');
+  const sync = () => { el.setAttribute('aria-valuenow', String(layout[prop])); el.setAttribute('aria-valuemin', String(min)); el.setAttribute('aria-valuemax', String(max)); };
+  sync();
+  el.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    const start = axis === 'x' ? e.clientX : e.clientY, v0 = layout[prop];
+    el.setPointerCapture(e.pointerId);
+    const mv = (ev) => { const d = (axis === 'x' ? ev.clientX : ev.clientY) - start; layout[prop] = Math.max(min, Math.min(max, v0 + (invert ? -d : d))); applyLayout(); sync(); };
+    const up = () => { el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); };
+    el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up);
+  });
+  el.addEventListener('keydown', (e) => {
+    const step = e.shiftKey ? 40 : 10;
+    const dec = axis === 'x' ? 'ArrowLeft' : 'ArrowUp', inc = axis === 'x' ? 'ArrowRight' : 'ArrowDown';
+    if (e.key === dec || e.key === inc) { e.preventDefault(); layout[prop] = Math.max(min, Math.min(max, layout[prop] + ((e.key === inc) !== !!invert ? step : -step))); applyLayout(); sync(); }
+    if (e.key === 'Home') { layout[prop] = min; applyLayout(); sync(); }
+    if (e.key === 'End') { layout[prop] = max; applyLayout(); sync(); }
+  });
+}
+
 let undoBtn, redoBtn;
-function buildToolbar() {
+function buildTopbar() {
   const fileIn = h('input', { type: 'file', accept: '.xml,.json,application/xml,text/xml,application/json', class: 'sr-only', id: 'b-import-file', 'aria-label': t('tb.import') });
   fileIn.addEventListener('change', () => { const f = fileIn.files[0]; fileIn.value = ''; if (f) importFile(f); });
   undoBtn = h('button', { type: 'button', class: 'iconbtn', html: ICONS.left, 'aria-label': t('tb.undo'), title: t('tb.undo') + ' (Ctrl+Z)', onclick: undo });
   redoBtn = h('button', { type: 'button', class: 'iconbtn', html: ICONS.right, 'aria-label': t('tb.redo'), title: t('tb.redo') + ' (Ctrl+Y)', onclick: redo });
-  undoBtn.style.border = redoBtn.style.border = '1px solid var(--outline2)';
-  toolbarEl.replaceChildren(undoBtn, redoBtn,
-    btn('tb.import', () => fileIn.click(), 'btn-ghost', { id: 'b-import', 'data-palette-field': t('tb.import'), 'data-palette-group': t('tb.group') }), fileIn,
-    btn('tb.export', openExport, 'btn-ghost', { 'data-palette-field': t('tb.export'), 'data-palette-group': t('tb.group') }),
-    btn('tb.presets', openPresets, 'btn-ghost', { 'data-palette-field': t('tb.presets'), 'data-palette-group': t('tb.group') }),
-    btn('tb.save', saveVersion, 'btn-ghost', { 'data-palette-field': t('tb.save'), 'data-palette-group': t('tb.group') }),
-    h('span', { class: 'grow' }),
-    btn('tb.copy', copyXml, 'btn-ghost'),
-    btn('tb.downloadXml', downloadXml, 'btn-primary', { id: 'b-dl-xml' }),
-    btn('tb.downloadZip', downloadZip, 'btn-inverse', { id: 'b-dl-zip' }));
+  const fileMenu = h('button', { type: 'button', class: 'btn btn-ghost btn-sm', 'aria-haspopup': 'menu', text: t('studio.file'), onclick: (e) => contextMenu({ clientX: e.currentTarget.getBoundingClientRect().left, clientY: e.currentTarget.getBoundingClientRect().bottom + 4 }, [
+    ['studio.newFromTemplate', () => openTab('new')], ['tb.import', () => fileIn.click()], ['tb.export', openExport], ['tb.downloadXml', downloadXml], ['tb.downloadZip', downloadZip], ['tb.copy', copyXml], ['tb.save', saveVersion], ['tb.presets', () => sidebar('presets')], ['studio.shortcuts', openShortcuts]]) });
+  $('#st-file').replaceChildren(fileMenu, fileIn, h('span', { class: 'st-fname', id: 'st-fname' }, [h('span', { class: 'mono', text: 'autounattend.xml' }), h('span', { class: 'st-dirty', id: 'st-dirty', title: t('studio.unsaved'), 'aria-label': t('studio.unsaved'), hidden: true })]), undoBtn, redoBtn);
+  $('#st-actions').replaceChildren(
+    h('button', { type: 'button', class: 'btn btn-ghost btn-sm', id: 'st-validate', text: t('studio.validate'), onclick: () => { computeIssues(); layout.panelOpen = true; layout.panel = 'problems'; if (isPhone()) layout.pane = 'problems'; applyLayout(); renderPanel(); announce(t('studio.validated', [problemCount()])); } }),
+    h('button', { type: 'button', class: 'btn btn-primary btn-sm', id: 'b-dl-zip', text: t('studio.buildKit'), onclick: downloadZip }));
   updateUndo();
 }
 function updateUndo() {
@@ -238,6 +350,309 @@ function updateUndo() {
   redoBtn.disabled = !history || !history.canRedo();
   document.querySelectorAll('[data-undo]').forEach((b) => { b.disabled = undoBtn.disabled; });
   document.querySelectorAll('[data-redo]').forEach((b) => { b.disabled = redoBtn.disabled; });
+  const dirty = $('#st-dirty');
+  if (dirty && history) { const hd = history.head(); dirty.hidden = !!hd && (hd.kind === 'save' || hd.kind === 'download' || hd.kind === 'start'); }
+  renderStatusBar();
+}
+
+// Activity bar and side bar
+const SIDES = [['explorer', '☰'], ['search', '⌕'], ['catalog', '☷'], ['history', '⧖'], ['presets', '★'], ['tools', '⚒']];
+function buildActivity() {
+  $('#st-act').replaceChildren(...SIDES.map(([id, ic]) => h('button', { type: 'button', class: 'st-act-b', 'data-side': id, 'aria-label': t('side.' + id), title: t('side.' + id), 'aria-pressed': 'false', text: ic, onclick: () => sidebar(id, true) })));
+}
+function sidebar(id, toggle) {
+  if (toggle && layout.side === id && layout.sideOpen && !isPhone()) layout.sideOpen = false;
+  else { layout.side = id; layout.sideOpen = true; }
+  if (isPhone()) layout.pane = 'explorer';
+  applyLayout(); renderSide();
+}
+function renderSide() {
+  const box = $('#st-side');
+  const head = h('div', { class: 'st-side-h' }, [h('h2', { id: 'st-side-title', text: t('side.' + layout.side) })]);
+  box.replaceChildren(head);
+  const body = h('div', { class: 'st-side-b' });
+  box.appendChild(body);
+  ({ explorer: renderExplorer, search: renderSearchSide, catalog: renderCatalogSide, history: renderHistorySide, presets: renderPresetsSide, tools: renderToolsSide })[layout.side](body);
+  S.translateAll(box);
+}
+function treeItem(label, opts) {
+  const li = h('li', { role: 'treeitem', tabindex: '-1', 'aria-level': String(opts.level || 1), 'aria-expanded': opts.children ? String(!!opts.open) : null, class: 'st-ti' + (opts.active ? ' on' : '') }, [
+    h('span', { class: 'st-ti-row', style: { paddingLeft: (8 + (opts.level - 1) * 14) + 'px' } }, [
+      opts.children ? h('span', { class: 'st-caret', 'aria-hidden': 'true', text: opts.open ? '▾' : '▸' }) : h('span', { class: 'st-caret', 'aria-hidden': 'true' }),
+      h('span', { class: 'st-ti-l', text: label }),
+      opts.problem ? h('span', { class: 'st-badge bad', title: t('studio.problems'), text: String(opts.problem) }) : null,
+      opts.count !== undefined ? h('span', { class: 'st-badge', text: String(opts.count) }) : null])]);
+  if (opts.children) { const ul = h('ul', { role: 'group', hidden: !opts.open }); opts.children.forEach((c) => ul.appendChild(c)); li.appendChild(ul); }
+  li.addEventListener('click', (e) => { e.stopPropagation(); if (opts.children) { const o = li.getAttribute('aria-expanded') !== 'true'; li.setAttribute('aria-expanded', String(o)); li.querySelector(':scope > ul').hidden = !o; li.querySelector('.st-caret').textContent = o ? '▾' : '▸'; if (opts.onToggle) opts.onToggle(o); } if (opts.onOpen) opts.onOpen(); });
+  if (opts.menu) li.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); contextMenu(e, opts.menu); });
+  return li;
+}
+function treeKeys(ul) {
+  ul.addEventListener('keydown', (e) => {
+    const items = [...ul.querySelectorAll('.st-ti')].filter((x) => x.offsetParent !== null);
+    const cur = document.activeElement.closest('.st-ti'), i = items.indexOf(cur);
+    if (e.key === 'ArrowDown') { e.preventDefault(); (items[i + 1] || items[0]).focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); (items[i - 1] || items[items.length - 1]).focus(); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (cur) cur.click(); }
+    else if (e.key === 'ArrowRight' && cur && cur.getAttribute('aria-expanded') === 'false') { e.preventDefault(); cur.click(); }
+    else if (e.key === 'ArrowLeft' && cur && cur.getAttribute('aria-expanded') === 'true') { e.preventDefault(); cur.click(); }
+    else if (e.key === 'ContextMenu' && cur) { e.preventDefault(); const r = cur.getBoundingClientRect(); cur.dispatchEvent(new MouseEvent('contextmenu', { clientX: r.left + 20, clientY: r.bottom, bubbles: true })); }
+  });
+  ul.addEventListener('focusin', () => { if (!ul.querySelector('.st-ti[tabindex="0"]')) { const f = ul.querySelector('.st-ti'); if (f) f.tabIndex = 0; } });
+  const first = ul.querySelector('.st-ti'); if (first) first.tabIndex = 0;
+}
+const openTree = new Set(JSON.parse(LS.get('td.studio.tree', '["passes","kit","tools"]') || '[]'));
+function saveTree() { LS.set('td.studio.tree', JSON.stringify([...openTree])); }
+function issuesFor(prefix) { return computeIssuesCached().filter((i) => (i.where + '/').startsWith(prefix + '/')).length; }
+function renderExplorer(body) {
+  const ul = h('ul', { class: 'st-tree', role: 'tree', 'aria-labelledby': 'st-side-title' });
+  const tree = A.buildModelTree(model);
+  const formErr = Object.keys(fieldErrors()).length;
+  ul.appendChild(treeItem(t('tab.' + model.mode) + ' · ' + t('studio.template'), { level: 1, problem: formErr, active: view === 'template', onOpen: () => openTab('template') }));
+  const passKids = A.PASS_ORDER.map((pass) => {
+    const set = tree.c.find((s) => s.a.pass === pass);
+    const comps = set ? set.c : [];
+    const kids = comps.map((c) => {
+      const key = pass + '|' + c.a.name;
+      return treeItem(c.a.name.replace(/^Microsoft-Windows-/, ''), { level: 3, count: countSet(A.elementToValue(c)), problem: issuesFor(pass + '/' + c.a.name), active: view === 'comp:' + key,
+        onOpen: () => openTab('comp:' + key),
+        menu: [['ctx.open', () => openTab('comp:' + key)], ['ctx.revealXml', () => revealInXml(c.a.name, pass)], ['ctx.inspect', () => { selected = { comp: c.a.name, pass }; layout.inspOpen = true; applyLayout(); renderInspector(); }], ['ctx.copyName', () => navigator.clipboard && navigator.clipboard.writeText(c.a.name)],
+          model.all[key] ? ['ctx.clearExtra', () => { delete model.all[key]; commit({ key: 'hist.unset', args: [c.a.name] }); renderView(); }] : null].filter(Boolean) });
+    });
+    return treeItem(pass, { level: 2, children: kids, count: comps.length, problem: issuesFor(pass), open: openTree.has('p:' + pass) || (!openTree.size && comps.length > 0), onToggle: (o) => { if (o) openTree.add('p:' + pass); else openTree.delete('p:' + pass); saveTree(); } });
+  });
+  ul.appendChild(treeItem(t('studio.passes'), { level: 1, children: passKids, open: openTree.has('passes'), onToggle: (o) => { if (o) openTree.add('passes'); else openTree.delete('passes'); saveTree(); } }));
+  // kit files
+  const files = [treeItem('autounattend.xml', { level: 2, active: view === 'xml', onOpen: () => openTab('xml'), menu: [['ctx.open', () => openTab('xml')], ['tb.downloadXml', downloadXml], ['tb.copy', copyXml]] })];
+  if (model.mode === 'server') {
+    files.push(treeItem('TempDesk/firstboot.json', { level: 2, active: view === 'firstboot', onOpen: () => openTab('firstboot') }));
+    const payload = treeItem('TempDesk/ (' + t('studio.payload') + ')', { level: 2, children: payloadItems(), open: openTree.has('payload'), onToggle: (o) => { if (o) { openTree.add('payload'); loadManifest().then(() => renderSide()); } else openTree.delete('payload'); saveTree(); } });
+    files.push(payload);
+  }
+  ul.appendChild(treeItem(t('studio.kit'), { level: 1, children: files, open: openTree.has('kit'), onToggle: (o) => { if (o) openTree.add('kit'); else openTree.delete('kit'); saveTree(); } }));
+  const tools = ['flow', 'disk', 'commands', 'map', 'all', 'simulate', 'compare', 'plan', 'snippets', 'secrets', 'history'].map((id) => treeItem(t('tab.' + id), { level: 2, active: view === id, onOpen: () => openTab(id) }));
+  ul.appendChild(treeItem(t('studio.views'), { level: 1, children: tools, open: openTree.has('tools'), onToggle: (o) => { if (o) openTree.add('tools'); else openTree.delete('tools'); saveTree(); } }));
+  body.appendChild(ul);
+  treeKeys(ul);
+}
+let manifest = null;
+async function loadManifest() {
+  if (manifest) return manifest;
+  try { const r = await fetch(ROOT + 'payload/manifest.json', { cache: 'no-cache' }); manifest = r.ok ? await r.json() : { files: [] }; } catch (e) { manifest = { files: [] }; }
+  return manifest;
+}
+function payloadItems() {
+  if (!manifest) return [h('li', { class: 'st-ti', role: 'treeitem', 'aria-level': '3' }, [h('span', { class: 'st-ti-row meter-label', style: { paddingLeft: '36px' }, text: t('cat.loading') })])];
+  return A.kitLayout(manifest, model.server.portalsMode).map((it) => treeItem(it.dest.slice('TempDesk/'.length), { level: 3, active: view === 'file:' + it.src, onOpen: () => openTab('file:' + it.src) }));
+}
+let gsSideHost = null;
+function renderSearchSide(body) {
+  const host = h('div', { class: 'st-search-side' });
+  body.appendChild(host);
+  gsSideHost = host;
+  buildSearchUi(host, 'side');
+}
+function renderCatalogSide(body) {
+  if (!catalog) { body.appendChild(h('p', { class: 'empty', text: t('cat.loading') })); return; }
+  let q = '', re = false;
+  const list = h('ul', { class: 'st-tree', role: 'tree', 'aria-label': t('side.catalog') });
+  const draw = () => {
+    list.replaceChildren();
+    const m = compileQuery(q, re);
+    if (!m.ok) return;
+    catalog.components.filter((c) => m.empty || m.test(c.name + ' ' + c.help)).forEach((c) => {
+      const n = c.passes.reduce((s, p) => s + countSet(model.all[p + '|' + c.name]), 0);
+      list.appendChild(treeItem(c.name.replace(/^Microsoft-Windows-/, ''), { level: 1, count: n || undefined, children: c.passes.map((p) => treeItem(p, { level: 2, count: countSet(model.all[p + '|' + c.name]) || undefined, onOpen: () => openTab('comp:' + p + '|' + c.name) })),
+        onToggle: () => { selected = { comp: c.name, pass: c.passes[0] }; renderInspector(); },
+        menu: [['ctx.openAll', () => openEditor(c.passes[0], c.name)], ['ctx.inspect', () => { selected = { comp: c.name, pass: c.passes[0] }; layout.inspOpen = true; applyLayout(); renderInspector(); }]] }));
+    });
+    treeKeys(list);
+  };
+  const sb = searchBox({ label: t('cat.search'), placeholder: t('cat.search'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'), onChange: (qq, r) => { q = qq; re = r; draw(); } });
+  body.append(sb.el, h('p', { class: 'meter-label', text: catalog.origin === 'full' ? t('cat.full', [catalog.components.length, catalog.version]) : t('cat.notBuilt', [catalog.components.length]) }), list);
+  draw();
+}
+function renderHistorySide(body) {
+  if (!history) { body.appendChild(h('p', { text: t('hist.unavailable') })); return; }
+  body.appendChild(h('div', { class: 'cta' }, [btn('tb.undo', undo, 'btn-ghost btn-sm', { 'data-undo': '' }), btn('tb.redo', redo, 'btn-ghost btn-sm', { 'data-redo': '' }), btn('studio.openHistory', () => openTab('history'), 'btn-primary btn-sm')]));
+  const ul = h('ul', { class: 'hist-list compact' });
+  let q = '', re = false;
+  const draw = () => {
+    ul.replaceChildren();
+    const fr = filterList(history.entries.slice().reverse(), q, (e) => msgText(e.msg) + ' #' + e.id, re);
+    (fr.ok ? fr.items : []).slice(0, 200).forEach(({ it: e }) => ul.appendChild(h('li', { class: e === history.head() ? 'cur' : null }, [h('span', { class: 'msg' }, [msgText(e.msg), h('br'), h('small', { text: '#' + e.id + ' · ' + new Date(e.t).toLocaleTimeString() })]),
+      e === history.head() ? null : h('button', { type: 'button', class: 'btn btn-ghost btn-sm', text: t('hist.restoreBtn'), onclick: () => { const r = history.restore(e.id); if (r) { applyState(r.state); output(t('hist.restored')); } } })])));
+  };
+  const sb = searchBox({ label: t('search.history'), placeholder: t('search.history'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'), onChange: (qq, r) => { q = qq; re = r; draw(); } });
+  body.append(sb.el, ul);
+  draw();
+}
+let branch = LS.get('td.studio.branch', '');
+function renderPresetsSide(body) {
+  const nameIn = h('input', { type: 'text', id: 'side-pre-name', maxlength: '80', placeholder: t('pre.namePh') });
+  const inc = h('input', { type: 'checkbox' });
+  const list = h('div', { class: 'list-ed' });
+  let q = '', re = false;
+  const draw = () => {
+    const p = loadPresets(); list.replaceChildren();
+    const fr = filterList(Object.keys(p).sort(), q, (n) => n, re);
+    if (!Object.keys(p).length) list.appendChild(h('p', { class: 'empty', text: t('pre.none') }));
+    (fr.ok ? fr.items : []).forEach(({ it: n }) => list.appendChild(h('div', { class: 'list-row' + (n === branch ? ' cur' : '') }, [h('b', { text: n }), h('small', { class: 'meter-label', text: t('tab.' + (p[n].mode || 'server')) }),
+      h('div', { class: 'row-tools' }, [btn('pre.load', () => { const r = A.normalizeModel(p[n]); if (!r.ok) { S.toast(t('pre.badOne')); return; } model = mergeSecrets(r.model, model); branch = n; LS.set('td.studio.branch', n); commit({ key: 'hist.presetLoad', args: [n] }); renderView(); }, 'btn-primary btn-sm'),
+        btn('pre.delete', () => { if (!window.confirm(t('pre.deleteConfirm', [n]))) return; delete p[n]; savePresets(p); if (branch === n) { branch = ''; LS.set('td.studio.branch', ''); } draw(); renderStatusBar(); }, 'btn-ghost btn-sm')])])));
+  };
+  const sb = searchBox({ label: t('search.presets'), placeholder: t('search.presets'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'), onChange: (qq, r) => { q = qq; re = r; draw(); } });
+  body.append(h('div', { class: 'field' }, [h('label', { for: 'side-pre-name', text: t('pre.name') }), nameIn]), h('label', { class: 'check' }, [inc, t('pre.includePw')]),
+    btn('pre.save', () => { const n = nameIn.value.trim(); if (!n || ['__proto__', 'prototype', 'constructor'].includes(n)) { S.toast(t('pre.nameBad')); return; } const p = loadPresets(); if (p[n] && !window.confirm(t('pre.replace', [n]))) return; p[n] = inc.checked ? clone(model) : A.stripSecrets(model); if (savePresets(p)) { branch = n; LS.set('td.studio.branch', n); nameIn.value = ''; draw(); renderStatusBar(); output(t('pre.saved', [n])); } }, 'btn-primary btn-sm'),
+    sb.el, list, h('div', { class: 'cta' }, [btn('pre.export', () => openPresets(), 'btn-ghost btn-sm')]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('studio.branchHelp') }));
+  draw();
+}
+function renderToolsSide(body) {
+  const items = [['snippets', 'studio.tool.snippets'], ['secrets', 'studio.tool.secrets'], ['compare', 'studio.tool.compare'], ['simulate', 'studio.tool.simulate'], ['plan', 'studio.tool.plan']];
+  items.forEach(([id, k]) => body.appendChild(h('button', { type: 'button', class: 'st-tool', onclick: () => openTab(id) }, [h('b', { text: t('tab.' + id) }), h('small', { text: t(k) })])));
+  body.appendChild(h('a', { class: 'st-tool', href: ROOT + 'tools/base64.html', target: '_blank', rel: 'noopener' }, [h('b', { text: t('nav.base64') }), h('small', { text: t('home.b64') })]));
+  body.appendChild(h('button', { type: 'button', class: 'st-tool', onclick: openShortcuts }, [h('b', { text: t('studio.shortcuts') }), h('small', { text: 'F1 / ?' })]));
+}
+
+// Inspector
+function renderInspector() {
+  const box = $('#st-insp');
+  box.replaceChildren(h('div', { class: 'st-side-h' }, [h('h2', { text: t('studio.inspector') })]));
+  const body = h('div', { class: 'st-side-b' });
+  box.appendChild(body);
+  if (!selected && view.startsWith('comp:')) { const [p, c] = view.slice(5).split('|'); selected = { comp: c, pass: p }; }
+  if (!selected) { body.appendChild(h('p', { class: 'empty', text: t('studio.inspectEmpty') })); return; }
+  const comp = catalog && catalog.byName.get(selected.comp);
+  body.appendChild(h('h3', { class: 'mono', style: { overflowWrap: 'anywhere', margin: '0 0 6px', fontSize: '.95rem' }, text: selected.comp }));
+  if (!comp) { body.appendChild(h('p', { class: 'help', text: t('studio.notInCatalog') })); return; }
+  if (comp.help) body.appendChild(h('p', { class: 'help', text: comp.help }));
+  body.appendChild(h('div', { class: 'pass-chips' }, comp.passes.map((p) => h('button', { type: 'button', class: 'pass-chip' + (p === selected.pass ? ' on' : ''), text: p, onclick: () => openTab('comp:' + p + '|' + comp.name) }))));
+  if (comp.deprecated) body.appendChild(h('p', { class: 'notice warn', text: t('cat.deprecated') }));
+  let setting = null;
+  if (selected.path) { let list = comp.settings; selected.path.split('/').forEach((seg) => { setting = list && list.find((s) => s.name === seg); list = setting ? setting.children : null; }); }
+  if (setting) {
+    body.appendChild(h('h4', { class: 'mono', text: selected.path }));
+    body.appendChild(h('p', { class: 'help', text: setting.help || '' }));
+    body.appendChild(h('dl', { class: 'st-dl' }, [h('dt', { text: t('studio.type') }), h('dd', { text: setting.type }), h('dt', { text: t('cat.pass') }), h('dd', { text: (setting.passes.length ? setting.passes : comp.passes).join(', ') }),
+      setting.default !== undefined ? h('dt', { text: t('studio.default') }) : null, setting.default !== undefined ? h('dd', { text: String(setting.default) }) : null,
+      setting.min !== undefined ? h('dt', { text: t('studio.range') }) : null, setting.min !== undefined ? h('dd', { text: setting.min + ' .. ' + (setting.max ?? '') }) : null]));
+    if (setting.values.length) body.appendChild(h('ul', { class: 'st-values' }, setting.values.map((v) => h('li', null, [h('code', { text: v.value }), ' ', v.label]))));
+  }
+  body.appendChild(h('h4', { text: t('studio.related') }));
+  const rel = h('ul', { class: 'st-values' });
+  comp.settings.slice(0, 40).forEach((s) => {
+    const v = countSet(model.all[selected.pass + '|' + comp.name] && model.all[selected.pass + '|' + comp.name][s.name]);
+    rel.appendChild(h('li', null, [h('button', { type: 'button', class: 'linkish', text: s.name, onclick: () => { selected = { comp: comp.name, pass: selected.pass, path: s.name }; renderInspector(); } }), v ? h('span', { class: 'setmark', text: t('cat.set') }) : null]));
+  });
+  body.appendChild(rel);
+  body.appendChild(h('div', { class: 'cta' }, [btn('ctx.open', () => openTab('comp:' + selected.pass + '|' + comp.name), 'btn-ghost btn-sm'), btn('ctx.revealXml', () => revealInXml(comp.name, selected.pass), 'btn-ghost btn-sm')]));
+}
+document.addEventListener('focusin', (e) => {
+  const cs = e.target.closest && e.target.closest('[data-setting-path]');
+  if (!cs || !$('#st-editor').contains(cs)) return;
+  const [comp, ...rest] = cs.dataset.settingPath.split('/');
+  const pass = view.startsWith('comp:') ? view.slice(5).split('|')[0] : (allState.pass !== 'all' ? allState.pass : (catalog && catalog.byName.get(comp) ? catalog.byName.get(comp).passes[0] : ''));
+  const next = { comp, pass, path: rest.join('/') };
+  if (!selected || selected.comp !== next.comp || selected.path !== next.path) { selected = next; if (layout.inspOpen) renderInspector(); }
+});
+
+// Bottom panel: Problems, XML, Search results, History, Output
+const PANELS = ['problems', 'xml', 'search', 'history', 'output'];
+let issuesCache = null;
+function computeIssuesCached() { if (!issuesCache) issuesCache = computeIssues(); return issuesCache; }
+function problemCount() { return Object.keys(fieldErrors()).length + computeIssuesCached().filter((i) => i.level === 'error' || i.level === 'warning').length; }
+function renderPanel() {
+  const tabsBar = $('#st-panel-tabs');
+  tabsBar.replaceChildren(...PANELS.map((id) => h('button', { type: 'button', role: 'tab', 'aria-selected': String(layout.panel === id), class: 'st-ptab', text: t('panel.' + id) + (id === 'problems' ? ' ' + problemCount() : ''), onclick: () => { layout.panel = id; layout.panelOpen = true; applyLayout(); renderPanel(); } })),
+    h('span', { class: 'grow' }), h('button', { type: 'button', class: 'iconbtn', 'aria-label': t('studio.togglePanel'), title: t('studio.togglePanel') + ' (Ctrl+J)', text: layout.panelOpen ? '▾' : '▴', onclick: () => { layout.panelOpen = !layout.panelOpen; applyLayout(); renderPanel(); } }));
+  const box = $('#st-panel-body');
+  box.replaceChildren();
+  if (layout.panel === 'problems') renderProblems(box);
+  else if (layout.panel === 'xml') box.appendChild(h('pre', { class: 'st-code-ro', tabindex: '0', html: A.highlightXml(A.buildXml(model)) }));
+  else if (layout.panel === 'search') { const host = h('div'); box.appendChild(host); buildSearchUi(host, 'panel'); }
+  else if (layout.panel === 'history') { const host = h('div'); box.appendChild(host); renderHistorySide(host); }
+  else if (layout.panel === 'output') box.appendChild(h('ul', { class: 'st-output' }, outputLog.slice().reverse().map((o) => h('li', null, [h('small', { text: new Date(o.t).toLocaleTimeString() }), ' ', o.text]))));
+}
+function renderProblems(box) {
+  const ul = h('ul', { class: 'st-problems' });
+  const fe = fieldErrors();
+  Object.keys(fe).forEach((k) => ul.appendChild(h('li', { class: 'error' }, [h('span', { class: 'sensitive', text: t('studio.form') }), h('span', { class: 'msg', text: fe[k] }), h('small', { class: 'mono', text: k }),
+    btn('studio.reveal', () => revealField(k), 'btn-ghost btn-sm')])));
+  computeIssuesCached().forEach((i) => {
+    const fix = A.fixFor(i);
+    ul.appendChild(h('li', { class: i.level }, [h('span', { class: i.level === 'error' ? 'sensitive' : 'pass-chip', text: i.level }), h('span', { class: 'msg', text: i.message }), h('small', { class: 'mono', text: i.where + ' (' + i.id + ')' }),
+      fix ? btn(fix.label, () => quickFix(i), 'btn-primary btn-sm') : null, btn('studio.reveal', () => revealIssue(i), 'btn-ghost btn-sm')]));
+  });
+  if (!ul.children.length) ul.appendChild(h('li', null, [rules ? t('checks.ok') : t('checks.unavailable')]));
+  box.appendChild(ul);
+}
+function quickFix(issue) {
+  const xml = A.applyFix(A.buildXml(model), issue, catalog && catalog.raw);
+  if (!xml) { S.toast(t('fix.notApplied')); return; }
+  try {
+    const r = A.syncFromXml(model, xml, { knownComponent });
+    model = r.model;
+    commit({ key: 'hist.quickFix', args: [issue.id] });
+    output(t('hist.quickFix', [issue.id]));
+    renderView();
+  } catch (e) { S.toast(t('fix.notApplied')); }
+}
+function revealField(k) {
+  const id = k.split('.')[0] === 'accounts' ? 'accounts' : k;
+  const sec = SECTIONS.find((s) => sectionFields(s, model.mode).includes(id));
+  openTab('template', { noFocus: true });
+  const el = mainEl.querySelector(`[data-field="${CSS.escape(id)}"]`) || (sec && document.getElementById('sec-' + sec.id));
+  if (sec && isPhone()) { const s = document.getElementById('sec-' + sec.id); if (s) { step = Number(s.dataset.sectionIndex); renderView(); } }
+  const el2 = mainEl.querySelector(`[data-field="${CSS.escape(id)}"]`) || el;
+  if (el2) S.focusTarget(el2);
+}
+function revealIssue(i) {
+  const parts = String(i.where).split('/');
+  if (parts.length >= 2) {
+    const key = parts[0] + '|' + parts[1];
+    selected = { comp: parts[1], pass: parts[0], path: parts.slice(2).map((p) => p.replace(/\[\d+\]$/, '')).join('/') };
+    openTab('comp:' + key, { noFocus: true });
+    const target = selected.path && mainEl.querySelector(`[data-setting-path="${CSS.escape(parts[1] + '/' + selected.path)}"]`);
+    if (target) S.focusTarget(target); else revealInXml(parts[1], parts[0]);
+    renderInspector();
+  }
+}
+function revealInXml(comp, pass) {
+  openTab('xml', { noFocus: true });
+  const ta = mainEl.querySelector('textarea.st-code');
+  if (!ta) return;
+  const text = ta.value;
+  const passAt = text.indexOf('<settings pass="' + pass + '"');
+  const at = text.indexOf('name="' + comp + '"', Math.max(0, passAt));
+  if (at >= 0) { ta.focus(); ta.setSelectionRange(at, at + comp.length + 7); const line = text.slice(0, at).split('\n').length; ta.scrollTop = Math.max(0, (line - 4) * 19); ta.dispatchEvent(new Event('scroll')); }
+}
+
+// Status bar
+function renderStatusBar() {
+  const sb = $('#st-status');
+  if (!sb) return;
+  let comps = 0, sets = 0;
+  try { const tree = A.buildModelTree(model); tree.c.forEach((s) => s.c.forEach((c) => { comps++; sets += countSet(A.elementToValue(c)); })); } catch (e) { /* ignore */ }
+  const hd = history && history.head();
+  const undoDepth = history ? (function () { let n = 0, e = history.head(); while (e && e.back !== null && e.back !== undefined && n < 9999) { n++; e = history.byId(e.back); } return n; })() : 0;
+  const target = model.mode === 'server' ? 'Windows Server 2025' : model.mode === 'guest' ? 'Windows 11' : (model.custom.target === 'server' ? 'Windows Server' : 'Windows');
+  const pc = problemCount();
+  sb.replaceChildren(
+    h('button', { type: 'button', class: 'st-sb', title: t('studio.branchHelp'), onclick: () => sidebar('presets') }, ['⎇ ', branch || 'main']),
+    h('button', { type: 'button', class: 'st-sb', onclick: () => sidebar('history') }, [hd ? '#' + hd.id : '-']),
+    h('span', { class: 'st-sb', text: t('studio.undoDepth', [undoDepth]) }),
+    h('button', { type: 'button', class: 'st-sb' + (pc ? ' bad' : ''), onclick: () => { layout.panel = 'problems'; layout.panelOpen = true; if (isPhone()) layout.pane = 'problems'; applyLayout(); renderPanel(); } }, [(pc ? '✖ ' : '✔ ') + t('studio.problemCount', [pc])]),
+    h('span', { class: 'grow' }),
+    h('span', { class: 'st-sb', text: t('studio.counts', [sets, comps]) }),
+    h('span', { class: 'st-sb', text: target + ' · ' + (model.mode === 'server' ? 'amd64' : (model[model.mode].arch || 'amd64')) }),
+    h('span', { class: 'st-sb', text: 'UTF-8 · CRLF' }));
+}
+
+// Shortcuts sheet
+function openShortcuts() {
+  const rows = [['Ctrl+Shift+F', 'sc.search'], ['Ctrl+Z', 'tb.undo'], ['Ctrl+Y / Ctrl+Shift+Z', 'tb.redo'], ['Ctrl+S', 'tb.save'], ['Ctrl+B', 'sc.side'], ['Ctrl+J', 'sc.panel'], ['Ctrl+Alt+I', 'sc.insp'], ['Ctrl+\\', 'sc.split'],
+    ['Alt+1 .. Alt+9', 'sc.tabN'], ['Alt+Shift+Left / Right', 'sc.moveTab'], ['Delete', 'sc.closeTab'], ['F1 / ?', 'studio.shortcuts'], ['Shift+F10', 'sc.context'], ['Arrow keys', 'sc.tree']];
+  sheet('studio.shortcuts', () => [h('div', { class: 'tablebox' }, [h('table', null, [h('tbody', null, rows.map(([k, d]) => h('tr', null, [h('td', null, [h('kbd', { text: k })]), h('td', { text: t(d) })])))])])]);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -450,7 +865,7 @@ function renderMode(mode) {
   secs.forEach((sec, i) => {
     const status = sectionStatus(sec, mode, errors);
     const a = h('a', { href: '#sec-' + sec.id, 'aria-current': stepper && i === step ? 'step' : undefined, 'data-sec': sec.id }, [h('span', { class: 'sdot', 'data-s': status, 'aria-hidden': 'true' }), h('span', { text: t('sec.' + sec.id) }), h('span', { class: 'sr-only', text: ', ' + t('status.' + status) })]);
-    a.addEventListener('click', (e) => { if (stepper) { e.preventDefault(); step = i; renderView(); const s = document.getElementById('sec-' + sec.id); if (s) s.scrollIntoView({ block: 'start' }); } });
+    a.addEventListener('click', (e) => { if (stepper) { e.preventDefault(); step = i; renderEditorOnly(); const s = document.getElementById('sec-' + sec.id); if (s) s.scrollIntoView({ block: 'start' }); } });
     indexEl.appendChild(a);
     const isAdv = adv.has(sec.id);
     const advBtn = h('button', { type: 'button', class: 'btn btn-ghost btn-sm', 'aria-pressed': String(isAdv), text: isAdv ? t('adv.hide') : t('adv.show') });
@@ -486,14 +901,14 @@ function renderMode(mode) {
     advBtn.addEventListener('click', () => { if (adv.has(sec.id)) adv.delete(sec.id); else adv.add(sec.id); const on = adv.has(sec.id); advBtn.setAttribute('aria-pressed', String(on)); advBtn.textContent = on ? t('adv.hide') : t('adv.show'); advBox.hidden = !on; if (on) renderAdvanced(sec, advBox); });
     el.appendChild(advBox);
     el.appendChild(h('div', { class: 'b-step-nav' }, [
-      btn('step.prev', () => { step = Math.max(0, i - 1); renderView(); window.scrollTo({ top: 0 }); }, 'btn-ghost', { disabled: i === 0 || undefined }),
+      btn('step.prev', () => { step = Math.max(0, i - 1); renderEditorOnly(); mainEl.scrollTop = 0; }, 'btn-ghost', { disabled: i === 0 || undefined }),
       h('span', { class: 'meter-label', style: { alignSelf: 'center' }, text: t('step.of', [i + 1, secs.length]) }),
-      btn('step.next', () => { step = Math.min(secs.length - 1, i + 1); renderView(); window.scrollTo({ top: 0 }); }, 'btn-primary', { disabled: i === secs.length - 1 || undefined })]));
+      btn('step.next', () => { step = Math.min(secs.length - 1, i + 1); renderEditorOnly(); mainEl.scrollTop = 0; }, 'btn-primary', { disabled: i === secs.length - 1 || undefined })]));
     mainEl.appendChild(el);
   });
 }
 function updateStatus() {
-  if (!MODE_TABS.includes(view)) return;
+  if (view !== 'template') return;
   const errors = fieldErrors();
   SECTIONS.forEach((sec) => {
     const s = sectionStatus(sec, model.mode, errors);
@@ -613,8 +1028,10 @@ function runGlobalSearch() {
 }
 function jumpTo(e) {
   closeGlobalSheet();
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  if (isPhone()) { layout.pane = 'editor'; applyLayout(); }
   if (e.kind === 'field') {
-    if (model.mode !== e.mode || view !== e.mode) setView(e.mode, { noFocus: true });
+    if (model.mode !== e.mode || view !== 'template') setView(e.mode, { noFocus: true });
     const secs = [...mainEl.querySelectorAll('.b-sec[data-section-index]')];
     const sec = document.getElementById('sec-' + e.section);
     if (sec && isPhone()) { step = Number(sec.dataset.sectionIndex); secs.forEach((x) => x.classList.toggle('active', x === sec)); }
@@ -626,11 +1043,14 @@ function jumpTo(e) {
     setView('all', { noFocus: true });
   }
 }
-let gsBox = null, gsResults = null, gsFilterSel = null;
-function resultItem(r, i) {
+// Search UI instances: the top command search (dropdown, or full-screen sheet on phones), the Search
+// side bar and the Search results panel all share the same query state (gs).
+const gsUis = [];
+let gsBox = null;
+function resultItem(r, i, prefix) {
   const e = r.entry;
   const where = e.kind === 'field' ? e.sectionLabel : t('tab.all') + ' / ' + e.comp + (e.isSet ? ' (' + e.pass + ')' : '');
-  const li = h('li', { role: 'option', id: 'gs-r-' + i, tabindex: '-1', class: 'gs-item' }, [
+  const li = h('li', { role: 'option', id: prefix + '-r-' + i, tabindex: '-1', class: 'gs-item' }, [
     h('span', { class: 'gs-label' }, [e.kind === 'field' ? e.label : e.path]),
     h('small', { text: where + (e.value ? ' · ' + String(e.value).slice(0, 80) : '') }),
     h('span', { class: 'gs-flags' }, [e.isSet ? h('span', { class: 'setmark', text: t('cat.set') }) : null, e.problem ? h('span', { class: 'sensitive', text: t('status.error') }) : null])
@@ -638,57 +1058,92 @@ function resultItem(r, i) {
   li.addEventListener('click', () => jumpTo(e));
   return li;
 }
+const STUDIO_CMDS = () => [
+  ['studio.validate', () => $('#st-validate').click()], ['studio.buildKit', downloadZip], ['tb.downloadXml', downloadXml], ['tb.import', () => $('#b-import-file').click()], ['tb.export', openExport], ['tb.save', saveVersion],
+  ['studio.newFromTemplate', () => openTab('new')], ['studio.shortcuts', openShortcuts], ['studio.toggleSplit', () => { layout.split = !layout.split; applyLayout(); renderView(); }],
+  ...['flow', 'disk', 'commands', 'map', 'all', 'simulate', 'compare', 'snippets', 'secrets', 'plan', 'history', 'xml'].map((id) => ['tab.' + id, () => openTab(id)]),
+  ...Object.keys(A.SNIPPETS).map((id) => ['snip.' + id, () => { model = A.applySnippet(model, id); commit({ key: 'hist.snippet', args: ['@snip.' + id] }); refreshAround(); if (view === 'template') renderEditorOnly(); S.toast(t('snip.inserted', [t('snip.' + id)])); }])
+];
 function renderGlobalResults() {
-  if (!gsBox) return;
   const res = runGlobalSearch();
-  gsResults.replaceChildren();
-  if (!res.ok) { gsBox.setStatus(t('palette.badRegex') + ' ' + res.error, true); gsBox.input.setAttribute('aria-invalid', 'true'); return; }
-  gsBox.input.setAttribute('aria-invalid', 'false');
-  const active = gs.q.trim() || gs.filter !== 'all';
-  gsResults.hidden = !active;
-  document.getElementById('gs-panel').classList.toggle('has-results', !!active);
-  if (!active) { gsBox.setStatus(''); return; }
-  gsBox.setStatus(t('search.global.count', [res.total, res.sections.size]), res.total === 0);
-  res.results.slice(0, 80).forEach((r, i) => gsResults.appendChild(resultItem(r, i)));
-  if (res.total > 80) gsResults.appendChild(h('li', { class: 'gs-more', text: t('search.global.more', [res.total - 80]) }));
-  if (!res.total) gsResults.appendChild(h('li', { class: 'gs-more', text: gs.filter === 'problems' ? t('search.global.noProblems') : t('palette.empty') }));
+  const m = compileQuery(gs.q, gs.regex);
+  const cmds = gs.q.trim() && m.ok ? STUDIO_CMDS().filter(([k]) => m.test(t(k))) : [];
+  let files = [];
+  if (gs.q.trim() && m.ok && manifest) files = A.kitLayout(manifest, model.server.portalsMode).filter((f) => m.test(f.dest)).slice(0, 10);
+  gsUis.forEach((ui) => {
+    if (!ui.results.isConnected) return;
+    ui.results.replaceChildren();
+    if (!res.ok) { ui.box.setStatus(t('palette.badRegex') + ' ' + res.error, true); ui.box.input.setAttribute('aria-invalid', 'true'); ui.results.hidden = ui.kind === 'top'; return; }
+    ui.box.input.setAttribute('aria-invalid', 'false');
+    const active = gs.q.trim() || gs.filter !== 'all';
+    if (ui.kind === 'top') ui.results.hidden = !active || !ui.open;
+    if (!active) { ui.box.setStatus(''); if (ui.kind !== 'top') ui.results.appendChild(h('li', { class: 'gs-more', text: t('search.global.hint') })); return; }
+    ui.box.setStatus(t('search.global.count', [res.total, res.sections.size]), res.total === 0 && !cmds.length);
+    cmds.slice(0, 6).forEach(([k, fn], i) => { const li = h('li', { role: 'option', id: ui.kind + '-c-' + i, tabindex: '-1', class: 'gs-item gs-cmd' }, [h('span', { class: 'gs-label', text: '› ' + t(k) }), h('small', { text: t('studio.command') })]); li.addEventListener('click', () => { closeGlobalSheet(); fn(); }); ui.results.appendChild(li); });
+    files.forEach((f, i) => { const li = h('li', { role: 'option', id: ui.kind + '-f-' + i, tabindex: '-1', class: 'gs-item gs-cmd' }, [h('span', { class: 'gs-label mono', text: f.dest }), h('small', { text: t('studio.file') })]); li.addEventListener('click', () => { closeGlobalSheet(); openTab('file:' + f.src); }); ui.results.appendChild(li); });
+    res.results.slice(0, 80).forEach((r, i) => ui.results.appendChild(resultItem(r, i, ui.kind)));
+    if (res.total > 80) ui.results.appendChild(h('li', { class: 'gs-more', text: t('search.global.more', [res.total - 80]) }));
+    if (!res.total && !cmds.length) ui.results.appendChild(h('li', { class: 'gs-more', text: gs.filter === 'problems' ? t('search.global.noProblems') : t('palette.empty') }));
+  });
 }
 function closeGlobalSheet() {
-  const p = document.getElementById('gs-panel');
-  if (p && p.classList.contains('as-sheet')) { p.classList.remove('as-sheet'); document.body.style.overflow = ''; p.removeAttribute('role'); p.removeAttribute('aria-modal'); }
+  gsUis.forEach((ui) => { if (ui.kind === 'top') { ui.open = false; ui.results.hidden = true; ui.panel.classList.remove('as-sheet', 'open'); ui.panel.removeAttribute('role'); ui.panel.removeAttribute('aria-modal'); ui.box.input.setAttribute('aria-expanded', 'false'); } });
 }
-function buildGlobalSearch() {
-  const host = document.getElementById('b-search');
-  if (!host) return;
-  gsResults = h('ul', { class: 'gs-results', id: 'gs-results', role: 'listbox', 'aria-label': t('search.global.results'), hidden: true });
-  gsBox = searchBox({ label: t('search.global'), placeholder: t('search.global.ph'), value: gs.q, regex: gs.regex, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
-    onChange: (q, regex) => { gs.q = q; gs.regex = regex; renderGlobalResults(); },
+// kind: 'top' (top bar), 'side' or 'panel'
+function buildSearchUi(host, kind) {
+  kind = kind || 'top';
+  for (let i = gsUis.length - 1; i >= 0; i--) if (gsUis[i].kind === kind || !gsUis[i].results.isConnected) gsUis.splice(i, 1);
+  if (!host) { renderGlobalResults(); gsUis.forEach((u) => { u.box.input.value = gs.q; }); return; }
+  const results = h('ul', { class: 'gs-results', id: kind + '-gs-results', role: 'listbox', 'aria-label': t('search.global.results'), hidden: kind === 'top' });
+  const n = catalog ? catalog.components.reduce((a, c) => { let k = 0; (function w(l) { l.forEach((x) => { k++; w(x.children || []); }); })(c.settings); return a + k; }, 0) : 0;
+  const box = searchBox({ label: t('search.global'), placeholder: kind === 'top' ? t('studio.searchPh', [n || '']) : t('search.global.ph'), value: gs.q, regex: gs.regex, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
+    onChange: (q, regex) => { gs.q = q; gs.regex = regex; gsUis.forEach((u) => { if (u.box !== box) u.box.input.value = q; }); if (kind === 'top' && (q.trim() || gs.filter !== 'all')) openTop(); renderGlobalResults(); },
     onKey: (e) => {
-      const items = [...gsResults.querySelectorAll('.gs-item')];
-      if (e.key === 'ArrowDown' && items.length) { e.preventDefault(); items[0].focus(); }
-      if (e.key === 'Enter') { e.preventDefault(); const r = runGlobalSearch(); if (r.ok && r.results[0]) jumpTo(r.results[0].entry); }
+      const items = [...results.querySelectorAll('.gs-item')];
+      if (e.key === 'ArrowDown' && items.length) { e.preventDefault(); if (kind === 'top') openTop(); items[0].focus(); }
+      if (e.key === 'Enter') { e.preventDefault(); const first = results.querySelector('.gs-item'); if (first) first.click(); }
+      if (e.key === 'Escape' && kind === 'top') { closeGlobalSheet(); }
     } });
-  gsBox.input.id = 'gs-input';
-  gsBox.input.setAttribute('aria-controls', 'gs-results');
-  gsResults.addEventListener('keydown', (e) => {
-    const items = [...gsResults.querySelectorAll('.gs-item')];
+  box.input.id = kind + '-gs-input';
+  box.input.setAttribute('aria-controls', results.id);
+  if (kind === 'top') { box.input.setAttribute('role', 'combobox'); box.input.setAttribute('aria-expanded', 'false'); }
+  results.addEventListener('keydown', (e) => {
+    const items = [...results.querySelectorAll('.gs-item')];
     const i = items.indexOf(document.activeElement);
     if (e.key === 'ArrowDown') { e.preventDefault(); (items[i + 1] || items[i]).focus(); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); (i > 0 ? items[i - 1] : gsBox.input).focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); (i > 0 ? items[i - 1] : box.input).focus(); }
     else if (e.key === 'Enter' && i >= 0) { e.preventDefault(); items[i].click(); }
-    else if (e.key === 'Escape') { e.preventDefault(); gsBox.input.focus(); }
+    else if (e.key === 'Escape') { e.preventDefault(); box.input.focus(); if (kind === 'top') closeGlobalSheet(); }
   });
-  gsFilterSel = h('select', { id: 'gs-filter', 'aria-label': t('search.show') }, [['all', 'search.show.all'], ['set', 'search.show.set'], ['problems', 'search.show.problems']].map(([v, k]) => h('option', { value: v, text: t(k) })));
-  gsFilterSel.value = gs.filter;
-  gsFilterSel.addEventListener('change', () => { gs.filter = gsFilterSel.value; renderGlobalResults(); });
-  const closeB = h('button', { type: 'button', class: 'btn btn-ghost btn-sm gs-close', text: t('common.close'), onclick: () => { closeGlobalSheet(); gsBox.input.blur(); } });
-  const panel = h('div', { class: 'gs-panel', id: 'gs-panel' }, [h('div', { class: 'gs-row' }, [gsBox.el, h('label', { class: 'gs-show', for: 'gs-filter' }, [h('span', { text: t('search.show') }), gsFilterSel]), closeB]), gsResults]);
-  gsBox.input.addEventListener('focus', () => { if (isPhone()) { panel.classList.add('as-sheet'); panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-modal', 'true'); document.body.style.overflow = 'hidden'; } });
-  panel.addEventListener('keydown', (e) => { if (e.key === 'Escape' && panel.classList.contains('as-sheet')) { closeGlobalSheet(); gsBox.input.blur(); } });
+  const filterSel = h('select', { id: kind + '-gs-filter', 'aria-label': t('search.show') }, [['all', 'search.show.all'], ['set', 'search.show.set'], ['problems', 'search.show.problems']].map(([v, k]) => h('option', { value: v, text: t(k) })));
+  filterSel.value = gs.filter;
+  filterSel.addEventListener('change', () => { gs.filter = filterSel.value; gsUis.forEach((u) => { u.filter.value = gs.filter; }); if (kind === 'top') openTop(); renderGlobalResults(); });
+  const closeB = h('button', { type: 'button', class: 'btn btn-ghost btn-sm gs-close', text: t('common.close'), onclick: () => { closeGlobalSheet(); box.input.blur(); } });
+  const kbd = kind === 'top' ? h('kbd', { class: 'gs-kbd', 'aria-hidden': 'true', text: 'Ctrl Shift F' }) : null;
+  const panel = h('div', { class: 'gs-panel gs-' + kind, id: kind + '-gs-panel' }, [h('div', { class: 'gs-row' }, [box.el, kbd, h('label', { class: 'gs-show', for: kind + '-gs-filter' }, [h('span', { text: t('search.show') }), filterSel]), closeB]), results]);
+  const ui = { kind, box, results, panel, filter: filterSel, open: false };
+  function openTop() {
+    if (kind !== 'top' || ui.open) return;
+    ui.open = true; panel.classList.add('open'); box.input.setAttribute('aria-expanded', 'true');
+    if (isPhone()) { panel.classList.add('as-sheet'); panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-modal', 'true'); }
+  }
+  if (kind === 'top') {
+    box.input.addEventListener('focus', () => { if (gs.q || isPhone()) { openTop(); renderGlobalResults(); } });
+    document.addEventListener('pointerdown', (e) => { if (ui.open && !panel.contains(e.target)) closeGlobalSheet(); });
+    panel.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeGlobalSheet(); box.input.blur(); } });
+  }
+  gsUis.push(ui);
   host.replaceChildren(panel);
+  if (kind === 'top') gsBox = box;
   renderGlobalResults();
+  return ui;
 }
-// The command palette (Ctrl+Shift+F) also offers every setting.
+function buildGlobalSearch() { buildSearchUi(document.getElementById('st-search'), 'top'); }
+// In the studio, Ctrl+Shift+F focuses the command search in the top bar (capture phase, before the site palette).
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'F' || e.key === 'f') && gsBox) { e.preventDefault(); e.stopImmediatePropagation(); gsBox.input.focus(); gsBox.input.select(); }
+}, true);
+// The site command palette also offers every setting.
 S.addPaletteSource((q, regex) => {
   if (!q || !q.trim()) return [];
   const saved = { q: gs.q, regex: gs.regex, filter: gs.filter };
@@ -880,45 +1335,10 @@ function saveVersion() {
 }
 
 // ------------------------------------------------------------------------------------------------
-// Preview
+// Preview refresh (the studio shows XML in the split view, the XML tab and the XML panel)
 // ------------------------------------------------------------------------------------------------
-let pvFile = 'xml', pvTimer = null;
-function schedulePreview() { clearTimeout(pvTimer); pvTimer = setTimeout(renderPreview, 120); }
-function currentFiles() {
-  const files = [['xml', 'autounattend.xml', A.buildXml(model)]];
-  if (model.mode === 'server') files.push(['json', 'TempDesk/firstboot.json', A.buildFirstboot(model.server)]);
-  return files;
-}
-function renderPreview() {
-  const files = currentFiles();
-  if (!files.find((f) => f[0] === pvFile)) pvFile = 'xml';
-  const file = files.find((f) => f[0] === pvFile);
-  lastXml = files[0][2];
-  let ok = true, msg;
-  if (pvFile === 'xml') { try { A.parseXml(file[2]); msg = t('pv.ok', [file[2].split('\n').length - 1, new Blob([file[2]]).size]); } catch (e) { ok = false; msg = t('pv.bad', [e.message]); } }
-  else msg = t('pv.json', [new Blob([file[2]]).size]);
-  const errs = Object.keys(fieldErrors()).length;
-  if (errs) msg += ' · ' + t('pv.problems', [errs]);
-  const iss = computeIssues();
-  const pre = h('pre', { tabindex: '0', 'aria-label': file[1], html: pvFile === 'xml' ? A.highlightXml(file[2]) : file[2].replace(/&/g, '&amp;').replace(/</g, '&lt;') });
-  const seg = h('div', { class: 'seg', role: 'group', 'aria-label': t('pv.file') }, files.map(([k, n]) => h('button', { type: 'button', 'aria-pressed': String(k === pvFile), text: n, onclick: () => { pvFile = k; renderPreview(); } })));
-  const closeB = h('button', { type: 'button', class: 'iconbtn', 'aria-label': t('common.close'), html: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>', onclick: closePreviewSheet, hidden: !previewEl.classList.contains('as-sheet') });
-  const scroll = previewEl.querySelector('pre') ? previewEl.querySelector('pre').scrollTop : 0;
-  previewEl.replaceChildren(h('div', { class: 'pv' }, [h('div', { class: 'pv-head' }, [h('b', { text: t('pv.title') }), seg, h('div', { class: 'inline' }, [btn('tb.copy', copyXml, 'btn-ghost btn-sm'), closeB])]), pre, h('div', { class: 'pv-status' + (ok && !errs ? '' : ' bad'), role: 'status', text: msg }), checksEl(iss)]));
-  previewEl.querySelector('pre').scrollTop = scroll;
-}
-function checksEl(iss) {
-  if (!rules) return h('div', { class: 'pv-checks meter-label', text: catalog && catalog.origin === 'full' ? t('checks.loading') : t('checks.unavailable') });
-  const box = h('details', { class: 'pv-checks', open: iss.some((i) => i.level === 'error') || undefined }, [h('summary', { text: iss.length ? t('checks.count', [iss.filter((i) => i.level === 'error').length, iss.filter((i) => i.level === 'warning').length]) : t('checks.ok') })]);
-  const ul = h('ul', { class: 'hist-list' });
-  iss.slice(0, 50).forEach((i) => ul.appendChild(h('li', null, [h('span', { class: i.level === 'error' ? 'sensitive' : 'pass-chip', text: i.level }), h('span', { class: 'msg', text: i.message }), h('small', { class: 'mono', style: { overflowWrap: 'anywhere' }, text: i.where })])));
-  box.appendChild(ul);
-  return box;
-}
-function openPreviewSheet() { previewEl.classList.add('as-sheet'); previewEl.setAttribute('role', 'dialog'); previewEl.setAttribute('aria-modal', 'true'); previewEl.setAttribute('aria-label', t('pv.title')); document.body.style.overflow = 'hidden'; renderPreview(); const c = previewEl.querySelector('.iconbtn'); if (c) c.focus(); }
-function closePreviewSheet() { previewEl.classList.remove('as-sheet'); previewEl.removeAttribute('role'); previewEl.removeAttribute('aria-modal'); document.body.style.overflow = ''; renderPreview(); const b = document.getElementById('bar-preview'); if (b) b.focus(); }
-previewEl.addEventListener('keydown', (e) => { if (e.key === 'Escape' && previewEl.classList.contains('as-sheet')) closePreviewSheet(); });
-
+let pvTimer = null;
+function schedulePreview() { clearTimeout(pvTimer); pvTimer = setTimeout(() => { lastXml = A.buildXml(model); refreshAround(); }, 150); }
 // ------------------------------------------------------------------------------------------------
 // Downloads, copy, export
 // ------------------------------------------------------------------------------------------------
@@ -1106,60 +1526,284 @@ function openPresets() {
 }
 
 // ------------------------------------------------------------------------------------------------
-// View
+// Editors
 // ------------------------------------------------------------------------------------------------
+function renderNew() {
+  const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'new-h', text: t('studio.newTitle') })]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('studio.newHelp') })]);
+  const grid = h('div', { class: 'st-gallery' });
+  MODE_TABS.forEach((m) => grid.appendChild(h('button', { type: 'button', class: 'st-card' + (model.mode === m ? ' on' : ''), onclick: () => {
+    if (model.mode !== m) { model.mode = m; commit({ key: 'hist.mode', args: ['@tab.' + m] }); }
+    tabs = tabs.filter((x) => x !== 'new'); openTab('template');
+  } }, [h('b', { text: t('tab.' + m) }), h('span', { text: t('mode.' + m + '.intro') }), model.mode === m ? h('small', { class: 'setmark', text: t('studio.current') }) : null])));
+  grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => { if (window.confirm(t('studio.blankConfirm'))) { const keepMode = model.mode; model = A.defaultModel(); model.mode = keepMode; commit({ key: 'hist.blank', args: [] }); tabs = ['template']; view = 'template'; saveTabs(); renderView(); } } }, [h('b', { text: t('studio.blank') }), h('span', { text: t('studio.blankHelp') })]));
+  grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => $('#b-import-file').click() }, [h('b', { text: t('tb.import') }), h('span', { text: t('studio.importHelp') })]));
+  sec.appendChild(grid);
+  mainEl.appendChild(sec);
+}
+function renderComponentTab(key) {
+  const [pass, name] = key.split('|');
+  const comp = catalog && catalog.byName.get(name);
+  const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'comp-h', class: 'mono', style: { overflowWrap: 'anywhere' }, text: name }), h('span', { class: 'pass-chip', text: pass })])]);
+  mainEl.appendChild(sec);
+  // what the template already writes for this component (read only)
+  const tree = A.buildModelTree(Object.assign({}, model, { all: {}, raw: '' }));
+  const set = tree.c.find((s) => s.a.pass === pass);
+  const gen = set && set.c.find((c) => c.a.name === name);
+  if (gen) sec.appendChild(h('details', { class: 'st-gen' }, [h('summary', { text: t('studio.fromTemplate', [countSet(A.elementToValue(gen))]) }), h('pre', { class: 'st-code-ro', html: A.highlightXml(A.serialize(gen, { newline: '\n' }).replace(/^<\?xml[^>]*>\n/, '')) })]));
+  if (!comp) { sec.appendChild(h('p', { class: 'notice', text: catalog ? t('studio.notInCatalog') : t('cat.loading') })); return; }
+  if (comp.help) sec.appendChild(h('p', { class: 'help', style: { color: 'var(--muted)' }, text: comp.help }));
+  if (!comp.passes.includes(pass)) sec.appendChild(h('p', { class: 'notice warn', text: t('flow.compNotInPass', [name, pass]) }));
+  const ff = searchBox({ label: t('search.fields'), placeholder: t('search.fields'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
+    onChange: (q, re, m) => { let n = 0, total = 0; holder.querySelectorAll('.cat-set').forEach((f) => { total++; const ok = m.ok && (m.empty || !!m.test(f.textContent)); f.hidden = !ok; if (ok) n++; if (ok && !m.empty) { let p = f.parentElement; while (p && p !== holder) { if (p.tagName === 'DETAILS') p.open = true; if (p.hidden) p.hidden = false; p = p.parentElement; } } }); if (m.ok) ff.setStatus(m.empty ? '' : t('search.fieldCount', [n, total]), !n); } });
+  sec.querySelector('header').appendChild(h('div', { class: 'sec-tools' }, [ff.el]));
+  const holder = h('div');
+  holder.appendChild(renderSettings(comp, model.all[key], (v, msg, co) => allChange(key, v, msg, co, null), { t, pass, expandPath: selected && selected.comp === name ? selected.path : null, idPrefix: 'ct-' + name.replace(/[^A-Za-z0-9]/g, '') + '-' + pass }));
+  sec.appendChild(holder);
+}
+// Code editor: a textarea over a highlighted layer, with line numbers. Two-way for autounattend.xml.
+function codeEditor(text, opts) {
+  const wrap = h('div', { class: 'st-codewrap' });
+  const gutter = h('pre', { class: 'st-gutter', 'aria-hidden': 'true' });
+  const hl = h('pre', { class: 'st-hl', 'aria-hidden': 'true' });
+  const ta = h('textarea', { class: 'st-code', spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off', wrap: 'off', 'aria-label': opts.label, readonly: opts.readonly || undefined });
+  ta.value = text;
+  const status = h('div', { class: 'pv-status', role: 'status', 'aria-live': 'polite' });
+  const paint = () => {
+    hl.innerHTML = (opts.lang === 'xml' ? A.highlightXml(ta.value) : ta.value.replace(/&/g, '&amp;').replace(/</g, '&lt;')) + '\n';
+    gutter.textContent = ta.value.split('\n').map((_, i) => i + 1).join('\n');
+  };
+  ta.addEventListener('scroll', () => { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; gutter.scrollTop = ta.scrollTop; });
+  ta.addEventListener('keydown', (e) => { if (e.key === 'Tab' && !e.shiftKey && !opts.readonly && !e.ctrlKey) { e.preventDefault(); const s = ta.selectionStart; ta.setRangeText('  ', s, ta.selectionEnd, 'end'); ta.dispatchEvent(new Event('input')); } });
+  let tm;
+  ta.addEventListener('input', () => { paint(); clearTimeout(tm); if (opts.onEdit) tm = setTimeout(() => opts.onEdit(ta.value, status), 500); });
+  paint();
+  wrap.append(gutter, h('div', { class: 'st-codebox' }, [hl, ta]));
+  return { el: h('div', { class: 'st-editorbox' }, [wrap, status]), ta, status, set(v) { if (document.activeElement !== ta) { const st = ta.scrollTop; ta.value = v; paint(); ta.scrollTop = st; } } };
+}
+let xmlEditor = null;
+function xmlEdited(text, status) {
+  try {
+    const r = A.syncFromXml(model, text, { knownComponent });
+    const before = A.buildXml(model);
+    model = r.model;
+    const after = A.buildXml(model);
+    status.className = 'pv-status';
+    status.textContent = r.unknown.length ? t('studio.syncUnknown', [r.unknown.length]) : t('studio.synced');
+    if (after !== before) { commit({ key: 'hist.xmlEdit', args: [] }, 'xml-edit'); refreshAround(); }
+  } catch (e) {
+    status.className = 'pv-status bad';
+    status.textContent = t('studio.xmlNotApplied', [e.message]);
+  }
+}
+function renderXmlTab() {
+  const ed = codeEditor(A.buildXml(model), { lang: 'xml', label: 'autounattend.xml', onEdit: xmlEdited });
+  xmlEditor = ed;
+  mainEl.appendChild(h('div', { class: 'b-sec st-fill' }, [h('header', null, [h('h2', { id: 'xml-h', class: 'mono', text: 'autounattend.xml' }), h('span', { class: 'meter-label', text: t('studio.twoWay') })]), ed.el]));
+}
+function renderFirstbootTab() {
+  const ed = codeEditor(A.buildFirstboot(model.server), { lang: 'json', label: 'firstboot.json', onEdit: (text, status) => {
+    try { const f = A.importFirstboot(text, model.server); model.server = Object.assign(model.server, f); status.className = 'pv-status'; status.textContent = t('studio.synced'); commit({ key: 'hist.importFirstboot', args: ['firstboot.json'] }, 'fb-edit'); refreshAround(); }
+    catch (e) { status.className = 'pv-status bad'; status.textContent = t('studio.xmlNotApplied', [e.message]); }
+  } });
+  mainEl.appendChild(h('div', { class: 'b-sec st-fill' }, [h('header', null, [h('h2', { class: 'mono', text: 'TempDesk/firstboot.json' }), h('span', { class: 'meter-label', text: t('studio.fbNote') })]), ed.el]));
+}
+async function renderFileTab(src) {
+  const sec = h('div', { class: 'b-sec st-fill' }, [h('header', null, [h('h2', { class: 'mono', style: { overflowWrap: 'anywhere' }, text: src }), h('span', { class: 'meter-label', text: t('studio.readOnly') })])]);
+  mainEl.appendChild(sec);
+  try {
+    const r = await fetch(ROOT + 'payload/' + src.split('/').map(encodeURIComponent).join('/'));
+    if (!r.ok) throw new Error(String(r.status));
+    const text = await r.text();
+    if (view !== 'file:' + src) return;
+    sec.appendChild(codeEditor(text, { lang: /\.xml$/.test(src) ? 'xml' : 'text', label: src, readonly: true }).el);
+  } catch (e) { sec.appendChild(h('p', { class: 'notice warn', text: t('dl.fileMissing', [src]) })); }
+}
+// Compare: against the last saved version, a history entry, or another file
+let compareWith = { kind: 'saved', id: null, text: null, name: '' };
+function renderCompare() {
+  const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'cmp-h', text: t('tab.compare') })])]);
+  mainEl.appendChild(sec);
+  const sel = h('select', { id: 'cmp-src', 'aria-label': t('cmp.with') }, [h('option', { value: 'saved', text: t('cmp.saved') }), h('option', { value: 'history', text: t('cmp.history') }), h('option', { value: 'file', text: t('cmp.file') })]);
+  sel.value = compareWith.kind;
+  const histSel = h('select', { 'aria-label': t('cmp.history') }, (history ? history.entries.slice().reverse() : []).slice(0, 300).map((e) => h('option', { value: String(e.id), text: '#' + e.id + ' ' + msgText(e.msg) })));
+  if (compareWith.id !== null) histSel.value = String(compareWith.id);
+  const fileIn = h('input', { type: 'file', accept: '.xml,application/xml,text/xml', 'aria-label': t('cmp.file') });
+  const out = h('div');
+  const run = () => {
+    let other = null, label = '';
+    if (compareWith.kind === 'saved') { const e = history && history.entries.slice().reverse().find((x) => x.kind === 'save' || x.kind === 'download'); if (e) { other = xmlOf(e.state); label = '#' + e.id + ' ' + msgText(e.msg); } }
+    else if (compareWith.kind === 'history') { const e = history && history.byId(Number(histSel.value)); if (e) { other = xmlOf(e.state); label = '#' + e.id; compareWith.id = e.id; } }
+    else if (compareWith.text) { other = compareWith.text; label = compareWith.name; }
+    out.replaceChildren();
+    if (!other) { out.appendChild(h('p', { class: 'empty', text: t('cmp.nothing') })); return; }
+    let c;
+    try { c = A.compareXml(other, A.buildXml(model)); } catch (e) { out.appendChild(h('p', { class: 'notice warn', text: t('imp.badXml', [e.message]) })); return; }
+    out.appendChild(h('p', { class: 'meter-label', text: t('cmp.summary', [label, c.added.length, c.removed.length, c.changed.length, c.same]) }));
+    const tb = h('table', null, [h('thead', null, [h('tr', null, [h('th', { text: t('cmp.change') }), h('th', { text: t('cmp.setting') }), h('th', { text: t('cmp.before') }), h('th', { text: t('cmp.after') })])])]);
+    const body = h('tbody');
+    c.changed.forEach((x) => body.appendChild(h('tr', { class: 'chg' }, [h('td', { text: t('cmp.changed') }), h('td', { class: 'mono', text: x.path }), h('td', { text: x.from }), h('td', { text: x.to })])));
+    c.added.forEach((x) => body.appendChild(h('tr', { class: 'add' }, [h('td', { text: t('cmp.added') }), h('td', { class: 'mono', text: x.path }), h('td', { text: '' }), h('td', { text: x.value })])));
+    c.removed.forEach((x) => body.appendChild(h('tr', { class: 'del' }, [h('td', { text: t('cmp.removed') }), h('td', { class: 'mono', text: x.path }), h('td', { text: x.value }), h('td', { text: '' })])));
+    tb.appendChild(body);
+    out.appendChild(h('div', { class: 'tablebox', tabindex: '0' }, [tb]));
+    out.appendChild(h('details', null, [h('summary', { text: t('cmp.lines') }), diffView(other, A.buildXml(model))]));
+  };
+  sel.addEventListener('change', () => { compareWith.kind = sel.value; histSel.hidden = sel.value !== 'history'; fileIn.hidden = sel.value !== 'file'; run(); });
+  histSel.addEventListener('change', run);
+  fileIn.addEventListener('change', async () => { const f = fileIn.files[0]; if (!f) return; compareWith.text = await f.text(); compareWith.name = f.name; run(); });
+  histSel.hidden = compareWith.kind !== 'history'; fileIn.hidden = compareWith.kind !== 'file';
+  sec.appendChild(h('div', { class: 'inline', style: { flexWrap: 'wrap', gap: '8px', marginBottom: '10px' } }, [sel, histSel, fileIn]));
+  sec.appendChild(out);
+  run();
+}
+// Simulate: play the setup pass by pass
+let simStep = 0, simTimer = null;
+function renderSimulate() {
+  let steps;
+  try { steps = A.simulate(A.buildXml(model)); } catch (e) { mainEl.appendChild(h('p', { class: 'notice warn', text: e.message })); return; }
+  const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'sim-h', text: t('tab.simulate') })]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('sim.help') })]);
+  mainEl.appendChild(sec);
+  const ol = h('ol', { class: 'st-sim' });
+  const detail = h('div', { class: 'st-sim-detail', role: 'region', 'aria-live': 'polite', 'aria-label': t('sim.current') });
+  const show = () => {
+    simStep = Math.max(0, Math.min(steps.length - 1, simStep));
+    [...ol.children].forEach((li, i) => { li.classList.toggle('on', i === simStep); li.classList.toggle('done', i < simStep); li.setAttribute('aria-current', i === simStep ? 'step' : 'false'); });
+    const s = steps[simStep];
+    detail.replaceChildren(h('h3', { text: (simStep + 1) + '. ' + s.pass + ' · ' + t('sim.when.' + s.when) }));
+    if (s.skipped) detail.appendChild(h('p', { class: 'notice', text: t(s.pass === 'generalize' ? 'sim.skipGeneralize' : 'sim.skipAudit') }));
+    if (!s.applies.length && !s.skipped) detail.appendChild(h('p', { class: 'empty', text: t('sim.nothing') }));
+    s.applies.forEach((a) => detail.appendChild(h('details', { open: s.applies.length <= 3 || undefined }, [h('summary', { class: 'mono', text: a.comp + ' (' + a.settings.length + ')' }), h('ul', { class: 'st-values' }, a.settings.slice(0, 80).map((x) => h('li', { class: 'mono', text: x })))])));
+    if (s.commands.length) detail.appendChild(h('ol', { class: 'st-values' }, s.commands.map((c) => h('li', null, [c.text, c.reboot ? h('span', { class: 'reboot', text: ' ' + t('sim.reboot.' + c.reboot) }) : null]))));
+    if (s.reboot) detail.appendChild(h('p', { class: 'reboot', text: t('sim.restart') }));
+  };
+  steps.forEach((s, i) => ol.appendChild(h('li', { class: s.skipped ? 'sim-skip' : null }, [h('button', { type: 'button', onclick: () => { simStep = i; show(); } }, [h('b', { text: s.pass }), h('small', { text: s.skipped ? t('sim.skipped') : t('sim.count', [s.applies.reduce((n, a) => n + a.settings.length, 0), s.commands.length]) }), s.reboot ? h('span', { class: 'reboot', text: '↻' }) : null])])));
+  const play = h('button', { type: 'button', class: 'btn btn-primary btn-sm', text: t('sim.play') });
+  play.addEventListener('click', () => {
+    if (simTimer) { clearInterval(simTimer); simTimer = null; play.textContent = t('sim.play'); return; }
+    play.textContent = t('sim.pause');
+    const delay = document.documentElement.dataset.motion === 'off' ? 1500 : 1200;
+    simTimer = setInterval(() => { if (simStep >= steps.length - 1 || view !== 'simulate') { clearInterval(simTimer); simTimer = null; play.textContent = t('sim.play'); return; } simStep++; show(); }, delay);
+  });
+  sec.append(h('div', { class: 'cta' }, [btn('sim.prev', () => { simStep--; show(); }, 'btn-ghost btn-sm'), play, btn('sim.next', () => { simStep++; show(); }, 'btn-ghost btn-sm')]), h('div', { class: 'st-simgrid' }, [ol, detail]));
+  show();
+}
+function renderSnippets() {
+  const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'snip-h', text: t('tab.snippets') })]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('snip.help') })]);
+  const grid = h('div', { class: 'st-gallery' });
+  Object.keys(A.SNIPPETS).forEach((id) => grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => {
+    model = A.applySnippet(model, id); commit({ key: 'hist.snippet', args: ['@snip.' + id] }); output(t('hist.snippet', [t('snip.' + id)])); S.toast(t('snip.inserted', [t('snip.' + id)])); refreshAround();
+  } }, [h('b', { text: t('snip.' + id) }), h('span', { text: t('snip.' + id + '.d') })])));
+  sec.appendChild(grid);
+  mainEl.appendChild(sec);
+}
+function renderSecrets() {
+  const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'sec-h2', text: t('tab.secrets') })]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('secrets.help') })]);
+  const rows = [];
+  Object.keys(A.SECRET_FIELDS).forEach((mode) => A.SECRET_FIELDS[mode].forEach((k) => { if (mode === model.mode) rows.push([t('tab.' + mode) + ' / ' + label(k), model[mode][k], k === 'joinPassword' ? 'plain' : 'encoded', () => revealField(k)]); }));
+  if (model.mode === 'custom') model.custom.accounts.forEach((a, i) => rows.push([t('f.account') + ' ' + (i + 1) + ' (' + (a.name || '?') + ')', a.password, 'encoded', () => revealField('accounts')]));
+  Object.keys(model.commands).forEach((k) => (model.commands[k] || []).forEach((it, i) => { if (it.credentials && (it.credentials.username || it.credentials.password)) rows.push([t('cmd.' + k) + ' #' + (i + 1), it.credentials.password, 'plain', () => openTab('commands')]); }));
+  (function walk(v, p) { if (!v || typeof v !== 'object') return; Object.keys(v).forEach((k) => { if (k === '@password') rows.push([p.join(' / '), v[k], 'encoded', () => { const [ps, c] = p[0].split('|'); openTab('comp:' + ps + '|' + c); }]); else walk(v[k], p.concat(k)); }); })(model.all, []);
+  const tb = h('table', null, [h('thead', null, [h('tr', null, [h('th', { text: t('secrets.where') }), h('th', { text: t('secrets.value') }), h('th', { text: t('secrets.stored') }), h('th', { text: '' })])])]);
+  const body = h('tbody');
+  rows.forEach(([where, val, how, go]) => {
+    const masked = h('span', { class: 'mono', text: val ? '•'.repeat(Math.min(16, val.length)) : t('secrets.empty') });
+    body.appendChild(h('tr', null, [h('td', { text: where }), h('td', null, [masked]), h('td', { text: t('secrets.' + how) }), h('td', null, [h('button', { type: 'button', class: 'btn btn-ghost btn-sm', text: t('studio.reveal'), onclick: go }),
+      val ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm', 'aria-pressed': 'false', text: t('pw.show'), onclick: (e) => { const on = e.currentTarget.getAttribute('aria-pressed') !== 'true'; e.currentTarget.setAttribute('aria-pressed', String(on)); masked.textContent = on ? val : '•'.repeat(Math.min(16, val.length)); } }) : null])]));
+  });
+  if (!rows.length) body.appendChild(h('tr', null, [h('td', { colspan: '4', text: t('secrets.none') })]));
+  tb.appendChild(body);
+  const rememberCb = h('input', { type: 'checkbox', checked: remember() });
+  rememberCb.addEventListener('change', () => { LS.set('td.rememberPw', rememberCb.checked ? '1' : '0'); S.toast(t(rememberCb.checked ? 'hist.rememberOn' : 'hist.rememberOff')); });
+  sec.append(h('div', { class: 'tablebox', tabindex: '0' }, [tb]), h('label', { class: 'check' }, [rememberCb, t('hist.remember')]), h('p', { class: 'notice warn', text: t('exp.pwWarn') }));
+  mainEl.appendChild(sec);
+}
+
+// Keep the editor, explorer, inspector, panel and status in step after a change made elsewhere.
+function refreshAround() {
+  issuesCache = null;
+  if (layout.sideOpen && layout.side === 'explorer') renderSide();
+  if (layout.panelOpen) renderPanel();
+  if (layout.split && view !== 'xml' && splitEditor) splitEditor.set(A.buildXml(model));
+  if (xmlEditor && view === 'xml') xmlEditor.set(A.buildXml(model));
+  renderStatusBar();
+}
+let splitEditor = null;
 function renderView() {
   const focusId = document.activeElement && document.activeElement.id;
   const sel = focusId && document.activeElement.selectionStart !== undefined ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
-  buildTabs();
-  mainEl.replaceChildren();
-  indexEl.replaceChildren();
-  const isMode = MODE_TABS.includes(view);
-  bodyEl.classList.toggle('wide', !isMode);
-  indexEl.hidden = !isMode;
-  mainEl.setAttribute('aria-labelledby', 'tab-' + view);
-  if (isMode) { if (model.mode !== view) model.mode = view; renderMode(view); }
-  else if (view === 'all') renderAll();
-  else if (TOOL_TABS.includes(view)) renderCanvas(view);
-  else if (view === 'plan') renderPlan();
-  else if (view === 'history') renderHistory();
-  schedulePreview();
+  issuesCache = null;
+  renderTabs();
+  const ed = $('#st-editor');
+  mainEl = h('div', { class: 'b-main st-main', id: 'b-main', role: 'tabpanel', 'aria-labelledby': 'tab-' + cssId(view), tabindex: '-1' });
+  indexEl = h('nav', { class: 'b-index', id: 'b-index', 'aria-label': t('studio.sections') });
+  xmlEditor = null;
+  const content = h('div', { class: 'st-content' + (view === 'template' ? ' with-index' : '') });
+  if (view === 'template') content.appendChild(indexEl);
+  content.appendChild(mainEl);
+  const parts = [content];
+  splitEditor = null;
+  if (layout.split && view !== 'xml' && view !== 'firstboot' && !view.startsWith('file:') && !isPhone()) {
+    splitEditor = codeEditor(A.buildXml(model), { lang: 'xml', label: 'autounattend.xml', onEdit: (text, status) => { xmlEdited(text, status); renderEditorOnly(); } });
+    parts.push(h('div', { class: 'st-splitxml' }, [h('div', { class: 'st-splitxml-h mono', text: 'autounattend.xml' }), splitEditor.el]));
+  }
+  ed.replaceChildren(...parts);
+  ed.classList.toggle('split', parts.length > 1);
+  renderEditorContent();
+  renderSide(); renderInspector(); renderPanel(); renderStatusBar();
   updateUndo();
-  S.translateAll(mainEl);
+  S.translateAll(ed);
   if (focusId) { const f = document.getElementById(focusId); if (f && f !== document.activeElement) { f.focus({ preventScroll: true }); if (sel && f.setSelectionRange) try { f.setSelectionRange(sel[0], sel[1]); } catch (e) { /* ignore */ } } }
 }
-
-// Command palette reveal: switch to the step that holds the element.
-document.addEventListener('td:reveal', (e) => {
-  const sec = e.detail && e.detail.closest && e.detail.closest('.b-sec[data-section-index]');
-  if (sec && isPhone()) { step = Number(sec.dataset.sectionIndex); document.querySelectorAll('.b-sec').forEach((s) => s.classList.toggle('active', s === sec)); }
-});
-// keyboard undo/redo
-document.addEventListener('keydown', (e) => {
-  if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
-  const k = e.key.toLowerCase();
-  if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
-  else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
-});
-document.addEventListener('focusout', (e) => { if (history && e.target && e.target.matches && e.target.matches('input, textarea')) { if (history.flush()) updateUndo(); } });
-window.addEventListener('beforeunload', () => { if (history) history.flush(); });
-let wasPhone = isPhone();
-window.addEventListener('resize', () => { if (isPhone() !== wasPhone) { wasPhone = isPhone(); if (!wasPhone && previewEl.classList.contains('as-sheet')) closePreviewSheet(); renderView(); } });
-
-function buildBar() {
-  const bar = $('#b-bar');
-  bar.replaceChildren(
-    h('button', { type: 'button', class: 'iconbtn', html: ICONS.left, 'aria-label': t('tb.undo'), 'data-undo': '', onclick: undo }),
-    h('button', { type: 'button', class: 'iconbtn', html: ICONS.right, 'aria-label': t('tb.redo'), 'data-redo': '', onclick: redo }),
-    h('button', { type: 'button', class: 'btn btn-ghost', id: 'bar-preview', text: t('bar.preview'), onclick: openPreviewSheet }),
-    h('button', { type: 'button', class: 'btn btn-primary', text: t('bar.download'), onclick: () => sheet('bar.download', (close) => [
-      btn('tb.downloadXml', () => { close(); downloadXml(); }, 'btn-primary'), btn('tb.downloadZip', () => { close(); downloadZip(); }, 'btn-inverse'), btn('tb.export', () => { close(); openExport(); }, 'btn-ghost'), btn('tb.copy', () => { close(); copyXml(); }, 'btn-ghost')]) }));
+function renderEditorOnly() {
+  const scroll = mainEl.scrollTop;
+  mainEl.replaceChildren(); indexEl.replaceChildren();
+  renderEditorContent();
+  mainEl.scrollTop = scroll;
+}
+function renderEditorContent() {
+  if (view === 'template') renderMode(model.mode);
+  else if (view === 'new') renderNew();
+  else if (view === 'all') renderAll();
+  else if (['flow', 'disk', 'commands', 'map'].includes(view)) renderCanvas(view);
+  else if (view === 'plan') renderPlan();
+  else if (view === 'history') renderHistory();
+  else if (view === 'xml') renderXmlTab();
+  else if (view === 'firstboot') renderFirstbootTab();
+  else if (view === 'compare') renderCompare();
+  else if (view === 'simulate') renderSimulate();
+  else if (view === 'snippets') renderSnippets();
+  else if (view === 'secrets') renderSecrets();
+  else if (view.startsWith('comp:')) renderComponentTab(view.slice(5));
+  else if (view.startsWith('file:')) renderFileTab(view.slice(5));
+  else renderNew();
 }
 
+// Global keys
+document.addEventListener('keydown', (e) => {
+  const inField = e.target && e.target.matches && e.target.matches('input, textarea, select, [contenteditable]');
+  if ((e.key === 'F1' || (e.key === '?' && !inField)) && !e.ctrlKey) { e.preventDefault(); openShortcuts(); return; }
+  if (!(e.ctrlKey || e.metaKey)) { if (e.altKey && /^[1-9]$/.test(e.key)) { e.preventDefault(); const id = tabs[Number(e.key) - 1]; if (id) { view = id; saveTabs(); renderView(); } } return; }
+  const k = e.key.toLowerCase();
+  if (e.target && e.target.classList && e.target.classList.contains('st-code') && (k === 'z' || k === 'y')) return; // native textarea undo inside code editors
+  if (k === 'z' && !e.shiftKey && !e.altKey) { e.preventDefault(); undo(); }
+  else if ((k === 'y' || (k === 'z' && e.shiftKey)) && !e.altKey) { e.preventDefault(); redo(); }
+  else if (k === 's' && !e.shiftKey) { e.preventDefault(); saveVersion(); }
+  else if (k === 'b' && !e.shiftKey) { e.preventDefault(); layout.sideOpen = !layout.sideOpen; applyLayout(); }
+  else if (k === 'j' && !e.shiftKey) { e.preventDefault(); layout.panelOpen = !layout.panelOpen; applyLayout(); renderPanel(); }
+  else if (k === 'i' && e.altKey) { e.preventDefault(); layout.inspOpen = !layout.inspOpen; applyLayout(); renderInspector(); }
+  else if (k === '\\') { e.preventDefault(); layout.split = !layout.split; applyLayout(); renderView(); }
+});
+document.addEventListener('contextmenu', (e) => {
+  const f = e.target.closest && e.target.closest('#st-editor [data-field], #st-editor [data-setting-path]');
+  if (!f) return;
+  e.preventDefault();
+  const sp = f.dataset.settingPath;
+  contextMenu(e, sp ? [['ctx.inspect', () => { const [c, ...r] = sp.split('/'); selected = { comp: c, pass: view.startsWith('comp:') ? view.slice(5).split('|')[0] : '', path: r.join('/') }; layout.inspOpen = true; applyLayout(); renderInspector(); }], ['ctx.revealXml', () => revealInXml(sp.split('/')[0], view.startsWith('comp:') ? view.slice(5).split('|')[0] : '')], ['ctx.copyPath', () => navigator.clipboard && navigator.clipboard.writeText(sp)]]
+    : [['ctx.revealXml', () => openTab('xml')], ['ctx.search', () => { gs.q = label(f.dataset.field); buildSearchUi(null); sidebar('search'); }]]);
+});
+
 async function init() {
-  // datalists
-  document.body.appendChild(h('datalist', { id: 'dl-locales' }, A.LOCALES.map((l) => h('option', { value: l }))));
-  document.body.appendChild(h('datalist', { id: 'dl-keyboards' }, A.KEYBOARDS.map(([v, l]) => h('option', { value: v, label: l }))));
+  shell.hidden = false;
   try {
     const store = await HI.openStore('builder');
     history = new HI.History({ store, initial: A.stripSecrets(A.defaultModel()), redact, onChange: () => updateUndo() });
@@ -1167,13 +1811,23 @@ async function init() {
     const r = A.normalizeModel(history.head().state);
     if (r.ok) model = r.model;
   } catch (e) { history = null; }
-  if (MODE_TABS.includes(view)) model.mode = view;
-  buildToolbar(); buildBar(); buildGlobalSearch();
+  if (isPhone()) layout.sideOpen = layout.pane === 'explorer';
+  buildActivity(); buildTopbar(); buildGlobalSearch();
+  makeSplitter($('#st-split-side'), 'sideW', 'x', 180, 520, false);
+  makeSplitter($('#st-split-insp'), 'inspW', 'x', 220, 560, true);
+  makeSplitter($('#st-split-panel'), 'panelH', 'y', 90, Math.round(innerHeight * 0.7), true);
+  $('#st-split').addEventListener('click', () => { layout.split = !layout.split; applyLayout(); renderView(); });
+  $('#st-insp-toggle').addEventListener('click', () => { layout.inspOpen = !layout.inspOpen; applyLayout(); renderInspector(); });
+  document.querySelectorAll('.st-phonebar [data-pane]').forEach((b) => b.addEventListener('click', () => { layout.pane = b.dataset.pane; if (layout.pane === 'explorer') layout.sideOpen = true; if (layout.pane === 'inspector') layout.inspOpen = true; if (layout.pane === 'problems') { layout.panelOpen = true; layout.panel = 'problems'; } applyLayout(); renderSide(); renderInspector(); renderPanel(); }));
+  applyLayout();
   renderView();
+  output(t('studio.ready'));
   catalog = await loadCatalog(ROOT);
   await loadRules();
-  renderGlobalResults();
-  if (view !== 'server' && view !== 'guest' && view !== 'custom') renderView();
-  S.onLang(() => { buildToolbar(); buildBar(); buildGlobalSearch(); renderView(); });
+  output(catalog.origin === 'full' ? t('cat.full', [catalog.components.length, catalog.version]) : t('cat.notBuilt', [catalog.components.length]));
+  if (rules) output(t('checks.loaded'));
+  buildGlobalSearch();
+  renderView();
+  S.onLang(() => { buildActivity(); buildTopbar(); buildGlobalSearch(); renderView(); applyLayout(); });
 }
 init();

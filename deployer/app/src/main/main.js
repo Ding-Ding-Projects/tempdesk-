@@ -2,8 +2,7 @@
 // PowerShell engine as a child process, Git-backed history, Base64 file jobs and the updater.
 'use strict';
 
-const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme, clipboard, Menu, session, systemPreferences, protocol, net } = require('electron');
-const { pathToFileURL } = require('url');
+const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme, clipboard, Menu, session, systemPreferences, protocol } = require('electron');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -44,8 +43,9 @@ function serveApp(request) {
   const base = SERVE[rootKey];
   const file = path.join(base, ...(parts.length ? parts : ['index.html']));
   if (!file.startsWith(base + path.sep) || !fs.existsSync(file)) return new Response('Not found', { status: 404 });
-  return net.fetch(pathToFileURL(file).toString());
+  return new Response(fs.readFileSync(file), { headers: { 'content-type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream' } });
 }
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.md': 'text/markdown; charset=utf-8', '.ico': 'image/x-icon' };
 
 // Squirrel install/update events: create or remove shortcuts and exit quickly.
 (function handleSquirrel() {
@@ -84,7 +84,7 @@ function createWindow() {
   win = new BrowserWindow({
     width: 1240, height: 820, minWidth: 720, minHeight: 540, frame: false, show: false,
     backgroundColor: s.theme === 'light' ? '#F4F8F7' : '#0B1110', title: s.appName,
-    icon: path.join(__dirname, '..', 'renderer', 'img', 'tempdesk.png'),
+    icon: fs.existsSync(path.join(__dirname, '..', 'renderer', 'img', 'tempdesk.png')) ? path.join(__dirname, '..', 'renderer', 'img', 'tempdesk.png') : undefined,
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true,
       webSecurity: true, allowRunningInsecureContent: false, spellcheck: false, devTools: !app.isPackaged
@@ -93,6 +93,7 @@ function createWindow() {
   win.removeMenu();
   win.loadURL('app://td/index.html');
   win.once('ready-to-show', () => win.show());
+  if (process.env.TEMPDESK_SMOKE) smokeTest();
   win.on('maximize', () => send('win:state', { maximized: true }));
   win.on('unmaximize', () => send('win:state', { maximized: false }));
   // Never navigate away or open new windows from the renderer.
@@ -105,7 +106,9 @@ function hardenSession() {
   // system browser; the update check runs in the main process through Update.exe.
   session.defaultSession.webRequest.onBeforeRequest((details, cb) => {
     const u = details.url;
-    cb({ cancel: !(u.startsWith('app://td/') || u.startsWith('devtools:') || u.startsWith('data:') || u.startsWith('blob:')) });
+    const ok = ['app://td/', 'devtools:', 'data:', 'blob:'].some((p) => u.startsWith(p));
+    if (!ok) console.warn('blocked request: ' + u.slice(0, 120));
+    cb({ cancel: !ok });
   });
   session.defaultSession.setPermissionRequestHandler((wc, perm, cb) => cb(perm === 'clipboard-sanitized-write'));
 }
@@ -376,6 +379,60 @@ function registerIpc() {
   handle('ws:setRemote', (url) => workspace.setRemote(url));
   handle('ws:push', () => workspace.push());
 
+  handle('ws:branches', () => workspace.branches());
+  handle('ws:switchBranch', (name, create) => workspace.switchBranch(name, !!create));
+
+  // Answer File Studio desktop extras: real files, recent list, file watching, USB, drivers.
+  handle('studio:open', async () => {
+    const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: 'Answer files', extensions: ['xml', 'json'] }] });
+    if (r.canceled) return null;
+    return readStudioFile(r.filePaths[0]);
+  });
+  handle('studio:openPath', (p) => readStudioFile(p));
+  handle('studio:save', async (p, text, saveAs) => {
+    let file = p;
+    if (!file || saveAs) {
+      const r = await dialog.showSaveDialog(win, { defaultPath: file || 'autounattend.xml', filters: [{ name: 'XML', extensions: ['xml'] }, { name: 'JSON', extensions: ['json'] }] });
+      if (r.canceled) return { ok: false, cancelled: true };
+      file = r.filePath;
+    }
+    watchers.ignoreUntil = Date.now() + 1500;
+    fs.writeFileSync(file, String(text));
+    addRecent(file);
+    watchFile(file);
+    return { ok: true, path: file };
+  });
+  handle('studio:recent', () => recentFiles().filter((f) => fs.existsSync(f)));
+  handle('studio:watch', (p) => { watchFile(p); return true; });
+  handle('fs:isDir', (p) => { try { return typeof p === 'string' && fs.statSync(p).isDirectory(); } catch (e) { return false; } });
+  handle('usb:list', () => new Promise((resolve) => {
+    if (process.platform !== 'win32') return resolve({ ok: false, error: 'windows' });
+    const ps = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+    const p = spawn(ps, ['-NoProfile', '-NonInteractive', '-Command', "Get-Volume | Where-Object { $_.DriveType -eq 'Removable' -and $_.DriveLetter } | Select-Object DriveLetter,FileSystemLabel,FileSystem,Size,SizeRemaining | ConvertTo-Json -Compress"], { windowsHide: true });
+    let o = '';
+    p.stdout.on('data', (d) => { o += d; });
+    p.on('close', () => { try { resolve({ ok: true, drives: [].concat(JSON.parse(o || '[]')).map((v) => ({ letter: String(v.DriveLetter), label: v.FileSystemLabel || '', fs: v.FileSystem || '', sizeMB: Math.floor((v.Size || 0) / 1048576), freeMB: Math.floor((v.SizeRemaining || 0) / 1048576) })) }); } catch (e) { resolve({ ok: false, error: 'parse' }); } });
+    p.on('error', () => resolve({ ok: false, error: 'spawn' }));
+  }));
+  // Copies the kit to the root of a removable drive, next to the Windows installer files.
+  // Nothing is formatted. Replacing an existing autounattend.xml needs confirm === the letter.
+  handle('usb:write', async (letter, kit, confirm) => {
+    if (!/^[D-Z]$/.test(letter)) throw new Error('Bad drive');
+    const root = letter + ':\\';
+    if (!fs.existsSync(root)) return { ok: false, error: 'missing' };
+    if (fs.existsSync(path.join(root, 'autounattend.xml')) && confirm !== letter) return { ok: false, exists: true };
+    const total = { files: 0 };
+    for (const f of kit.files) {
+      const rel = f.name.replace(/\\/g, '/');
+      if (!/^[A-Za-z0-9][A-Za-z0-9._ /-]{0,200}$/.test(rel) || rel.includes('..')) throw new Error('Bad kit path');
+      const abs = path.join(root, rel);
+      fs.mkdirSync(path.dirname(abs), { recursive: true });
+      fs.writeFileSync(abs, f.base64 !== undefined ? Buffer.from(f.base64, 'base64') : f.text);
+      total.files++;
+    }
+    return { ok: true, files: total.files, root };
+  });
+
   // Backup everything and restore (validated in full before anything is written)
   handle('backup:export', async () => {
     const files = [];
@@ -447,6 +504,58 @@ function registerIpc() {
   // Updates
   handle('update:check', () => updater.check());
   handle('update:restart', () => { if (updater.state.state === 'ready' && updater.restart()) app.quit(); });
+}
+
+// ---- studio files ----------------------------------------------------------------------------
+const watchers = { map: new Map(), ignoreUntil: 0 };
+function recentFiles() { try { return JSON.parse(fs.readFileSync(path.join(store.root, 'recent.json'), 'utf8')).filter((x) => typeof x === 'string'); } catch (e) { return []; } }
+function addRecent(f) { const l = [f].concat(recentFiles().filter((x) => x !== f)).slice(0, 12); fs.writeFileSync(path.join(store.root, 'recent.json'), JSON.stringify(l)); }
+function readStudioFile(f) {
+  const st = fs.statSync(f);
+  if (st.size > 4 * 1024 * 1024) return { tooLarge: true, path: f };
+  addRecent(f);
+  watchFile(f);
+  return { path: f, name: path.basename(f), text: fs.readFileSync(f, 'utf8'), mtime: st.mtimeMs };
+}
+function watchFile(f) {
+  if (watchers.map.has(f)) return;
+  try {
+    let t = null;
+    const w = fs.watch(f, () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        if (Date.now() < watchers.ignoreUntil) return;
+        try { send('studio:changed', { path: f, text: fs.readFileSync(f, 'utf8') }); } catch (e) { send('studio:changed', { path: f, removed: true }); }
+      }, 250);
+    });
+    watchers.map.set(f, w);
+  } catch (e) { /* watching is best effort */ }
+}
+
+// Development smoke test (TEMPDESK_SMOKE=1): visits every page, reports renderer errors, exits.
+function smokeTest() {
+  const errors = [];
+  win.webContents.on('console-message', (e) => { if (e.level === 'error' || e.level === 'warning') errors.push((e.sourceId || '') + ':' + (e.lineNumber || '') + ' ' + e.message); });
+  win.webContents.on('render-process-gone', (e, d) => errors.push('renderer gone: ' + d.reason));
+  win.webContents.once('did-finish-load', async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    await wait(2500);
+    const pages = ['deploy', 'answers', 'deployments', 'portals', 'base64', 'history', 'settings', 'help'];
+    const report = [];
+    for (const p of pages) {
+      const r = await win.webContents.executeJavaScript("(async () => { const ob = document.querySelector('.onb'); if (ob) ob.remove(); window.TempDeskApp.go('" + p + "'); await new Promise((r) => setTimeout(r, 1500)); const v = document.getElementById('view'); return { page: '" + p + "', text: v.innerText.slice(0, 160).replace(/\\s+/g, ' '), controls: v.querySelectorAll('button, input, select, textarea').length, unlabelled: [...v.querySelectorAll('button, input, select, textarea')].filter((c) => !(c.getAttribute('aria-label') || c.labels && c.labels.length || c.textContent.trim() || c.title || c.getAttribute('aria-labelledby'))).map((c) => c.outerHTML.slice(0, 80)) }; })()").catch((e) => ({ page: p, error: e.message }));
+      report.push(r);
+    }
+    const frame = await win.webContents.executeJavaScript("(() => { const f = document.querySelector('iframe.afb'); return f ? 'frame:' + (f.contentWindow.TempDeskBuilderHost ? 'host' : 'nohost') : 'noframe'; })()").catch((e) => e.message);
+    report.push({ studio: frame });
+    const pal = await win.webContents.executeJavaScript("(() => { window.TempDeskApp.openPalette(); const n = document.querySelectorAll('.palette li').length; document.querySelector('.palette').remove(); window.TempDeskApp.palette = null; return n; })()").catch((e) => e.message);
+    report.push({ paletteItems: pal });
+    await win.webContents.executeJavaScript("window.TempDeskApp.go('deploy')");
+    await wait(800);
+    try { const img = await win.webContents.capturePage(); fs.writeFileSync(process.env.TEMPDESK_SMOKE_SHOT || path.join(os.tmpdir(), 'tempdesk-smoke.png'), img.toPNG()); } catch (e) { errors.push('capture: ' + e.message); }
+    process.stdout.write('SMOKE ' + JSON.stringify({ report, errors }, null, 1) + '\n');
+    app.exit(errors.length ? 1 : 0);
+  });
 }
 
 function walkPayload(src, prefix, files) {

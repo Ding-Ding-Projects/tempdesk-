@@ -18,6 +18,7 @@ function passesOf(x) {
 function platformsOf(x) {
   const out = new Set();
   const p = x.platforms || x.appliesTo || x.editions || x.os;
+  if (Array.isArray(p) && p.length === 0) return ['client', 'server'];
   (Array.isArray(p) ? p : typeof p === 'string' ? [p] : []).forEach((v) => {
     const s = String(v).toLowerCase();
     if (/server/.test(s)) out.add('server');
@@ -32,27 +33,39 @@ function normSetting(s, parentPath) {
   const name = s.name || s.id || s.key;
   if (!name) return null;
   const path = parentPath ? parentPath + '/' + name : name;
-  const kids = arr(s.children || s.settings || s.properties || s.items || s.fields).map((c) => normSetting(c, path)).filter(Boolean);
+  const li = s.listItem && typeof s.listItem === 'object' ? s.listItem : null;
+  const keyValueStyle = !!(li && li.keyStyle === 'keyValue');
+  const textItems = !!(li && li.valueStyle === 'text');
+  let srcKids = li ? arr(li.settings) : arr(s.children || s.settings || s.properties || s.items || s.fields);
+  if (keyValueStyle && li.key) srcKids = srcKids.filter((c) => c.name !== li.key);
+  if (textItems) srcKids = [];
+  const kids = srcKids.map((c) => normSetting(c, path)).filter(Boolean);
   let raw = String(s.type || s.kind || '').toLowerCase();
   let type = TYPE_MAP[raw] || (kids.length ? 'container' : 'string');
+  if (li) type = 'list';
+  // An encoded password container (Value + PlainText) is one password control. A bare password leaf
+  // (for example Credentials/Password) is written as plain text, so it is a masked string.
+  if (s.encodedPassword) type = 'password';
+  else if (type === 'password') type = 'string';
   const values = (s.values || s.enum || s.allowedValues || s.options || []).map((v) => (v && typeof v === 'object' ? { value: String(v.value ?? v.name ?? v.id), label: String(v.label ?? v.value ?? v.name ?? v.id), help: v.help || v.description || '' } : { value: String(v), label: String(v) }));
   if (s.list === true || s.repeat === true || s.multiple === true || s.wcmAction === 'add' || s['wcm:action'] === 'add') type = 'list';
   if (type === 'string' && values.length) type = 'enum';
   if (type === 'boolean' && values.length && !values.every((v) => /^(true|false)$/i.test(v.value))) type = 'enum';
   if (type === 'list' && !kids.length) type = 'stringList';
   return {
-    name, path, type, children: kids, values,
+    name, path, type, children: type === 'password' ? [] : kids, values, suggestions: (s.suggestions || []).map((v) => (v && typeof v === 'object' ? String(v.value ?? v.name) : String(v))),
     min: s.min ?? s.minimum, max: s.max ?? s.maximum, maxLength: s.maxLength,
-    help: s.help || s.description || s.doc || '', passes: passesOf(s), sensitive: !!(s.sensitive || type === 'password' || /password/i.test(name) && type !== 'container'),
-    keyed: !!(s.keyed || s.keyValue || s['wcm:keyValue']), deprecated: !!s.deprecated, default: s.default
+    help: s.help || s.description || '', passes: passesOf(s), sensitive: !!(s.sensitive || type === 'password' || /password/i.test(name) && type !== 'container'),
+    keyed: !!(keyValueStyle || s.keyValue || s['wcm:keyValue']), deprecated: !!s.deprecated, default: s.default
   };
 }
 export function normalizeCatalog(src, origin) {
   const comps = arr(src && (src.components || src.Components || src)).map((c) => {
     const name = c.name || c.id;
     if (!name || !/^[A-Za-z0-9.-]+$/.test(name)) return null;
-    return { name, passes: passesOf(c), platforms: platformsOf(c), help: c.help || c.description || '', settings: arr(c.settings || c.children || c.properties).map((s) => normSetting(s, '')).filter(Boolean), deprecated: !!c.deprecated };
+    return { name, passes: passesOf(c), platforms: platformsOf(c), help: c.summary || c.help || c.description || '', settings: arr(c.settings || c.children || c.properties).map((s) => normSetting(s, '')).filter(Boolean), deprecated: !!c.deprecated, popular: !!c.popular };
   }).filter((c) => c && c.passes.length);
+  comps.sort((a, b) => (b.popular - a.popular) || (a.deprecated - b.deprecated) || a.name.localeCompare(b.name));
   const byName = new Map(comps.map((c) => [c.name, c]));
   return { origin: origin || 'core', version: (src && (src.version || src.schemaVersion)) || '', components: comps, byName };
 }
@@ -148,7 +161,7 @@ export async function loadCatalog(root) {
     if (r.ok) {
       const j = await r.json();
       const n = normalizeCatalog(j, 'full');
-      if (n.components.length) { current = n; return current; }
+      if (n.components.length) { n.raw = j; current = n; return current; }
     }
   } catch (e) { /* fall through to core */ }
   current = normalizeCatalog(CORE_CATALOG, 'core');
@@ -182,6 +195,20 @@ export function prune(v) {
   }
   return v;
 }
+// Reorders a value object to catalog (documentation) order, the order Windows SIM writes.
+export function orderLike(settings, v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v) || v['@password'] !== undefined) return v;
+  const out = {};
+  const names = settings.map((s) => s.name);
+  Object.keys(v).filter((k) => k[0] === '@' || k === '#text').forEach((k) => { out[k] = v[k]; });
+  names.concat(Object.keys(v).filter((k) => !names.includes(k))).forEach((k) => {
+    if (!(k in v) || k[0] === '@' || k === '#text') return;
+    const s = settings.find((x) => x.name === k);
+    const kids = s ? s.children : [];
+    out[k] = Array.isArray(v[k]) ? v[k].map((it) => orderLike(kids, it)) : orderLike(kids, v[k]);
+  });
+  return out;
+}
 export function settingAllowedPasses(comp, setting) { return setting && setting.passes && setting.passes.length ? setting.passes.filter((p) => comp.passes.includes(p)) : comp.passes; }
 
 // Flatten names for search: "Component Setting/Child ..."
@@ -199,7 +226,7 @@ export function renderSettings(comp, value, onChange, ctx) {
   const t = ctx.t;
   const state = { v: clone(value || {}) };
   const root = h('div', { class: 'cat-settings' });
-  function commit(msgKey, args, coalesce) { onChange(prune(state.v), { key: msgKey, args }, coalesce); }
+  function commit(msgKey, args, coalesce) { onChange(orderLike(comp.settings, prune(state.v)), { key: msgKey, args }, coalesce); }
   function getAt(obj, key) { return obj ? obj[key] : undefined; }
   function setAt(obj, key, v) { if (v === undefined) delete obj[key]; else obj[key] = v; }
   let uid = 0;
@@ -208,7 +235,7 @@ export function renderSettings(comp, value, onChange, ctx) {
     const passes = settingAllowedPasses(comp, setting);
     if (ctx.pass && !passes.includes(ctx.pass)) return null;
     const cur = getAt(holder(), setting.name);
-    const wrap = h('div', { class: 'cat-set', 'data-palette-field': comp.name + ' / ' + setting.path, 'data-palette-group': t('tab.all', null, 'All settings') });
+    const wrap = h('div', { class: 'cat-set', 'data-setting-path': comp.name + '/' + setting.path, 'data-palette-field': comp.name + ' / ' + setting.path, 'data-palette-group': t('tab.all', null, 'All settings') });
     const head = h('div', { class: 'cat-name' }, [h('label', { for: id, text: setting.name })]);
     const mark = h('span', { class: 'setmark', hidden: isEmpty(cur), text: t('cat.set', null, 'set') });
     head.appendChild(mark);
@@ -219,7 +246,8 @@ export function renderSettings(comp, value, onChange, ctx) {
     const msgPath = comp.name + ' ' + setting.path;
     let control;
     if (setting.type === 'container') {
-      const det = h('details', { class: 'cat-group', open: !isEmpty(cur) || undefined });
+      const wantOpen = ctx.expandPath && (ctx.expandPath === setting.path || ctx.expandPath.startsWith(setting.path + '/'));
+      const det = h('details', { class: 'cat-group', open: !isEmpty(cur) || wantOpen || undefined });
       det.appendChild(h('summary', { text: setting.name + (setting.children.length ? ' (' + setting.children.length + ')' : '') }));
       const box = h('div');
       const sub = () => { const hld = holder(); if (!hld[setting.name] || typeof hld[setting.name] !== 'object' || Array.isArray(hld[setting.name])) hld[setting.name] = {}; return hld[setting.name]; };

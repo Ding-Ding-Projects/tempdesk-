@@ -3,74 +3,72 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Answer file builder | TempDesk</title>
+<title>Answer File Studio | TempDesk</title>
 <meta name="td-root" content="./">
-<meta name="td-title" content="b.title">
-<meta name="description" content="Build autounattend.xml for unattended Windows Server and Windows 11 installs in your browser. Server, guest PC and custom modes, every unattend setting, import, presets and history. Nothing is uploaded.">
+<meta name="td-title" content="studio.title">
+<meta name="description" content="Answer File Studio: build and check autounattend.xml for unattended Windows Server and Windows 11 installs in your browser. Templates, every unattend setting, canvases, two-way XML, problems with quick fixes, compare, simulate and history. Nothing is uploaded.">
 <meta name="theme-color" content="#0B1110">
 <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
 <link rel="canonical" href="https://ding-ding-projects.github.io/tempdesk-/answer-file.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="TempDesk">
-<meta property="og:title" content="Answer file builder | TempDesk">
-<meta property="og:description" content="Build autounattend.xml for unattended Windows Server and Windows 11 installs in your browser. Server, guest PC and custom modes, every unattend setting, import, presets and history. Nothing is uploaded.">
+<meta property="og:title" content="Answer File Studio | TempDesk">
+<meta property="og:description" content="Answer File Studio: build and check autounattend.xml for unattended Windows Server and Windows 11 installs in your browser. Templates, every unattend setting, canvases, two-way XML, problems with quick fixes, compare, simulate and history. Nothing is uploaded.">
 <meta property="og:url" content="https://ding-ding-projects.github.io/tempdesk-/answer-file.html">
 <meta property="og:image" content="https://ding-ding-projects.github.io/tempdesk-/assets/social-preview.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="TempDesk: Shared computers. Disposable sign-ins.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Answer file builder | TempDesk">
-<meta name="twitter:description" content="Build autounattend.xml for unattended Windows Server and Windows 11 installs in your browser. Server, guest PC and custom modes, every unattend setting, import, presets and history. Nothing is uploaded.">
+<meta name="twitter:title" content="Answer File Studio | TempDesk">
+<meta name="twitter:description" content="Answer File Studio: build and check autounattend.xml for unattended Windows Server and Windows 11 installs in your browser. Templates, every unattend setting, canvases, two-way XML, problems with quick fixes, compare, simulate and history. Nothing is uploaded.">
 <meta name="twitter:image" content="https://ding-ding-projects.github.io/tempdesk-/assets/social-preview.png">
 <meta name="twitter:image:alt" content="TempDesk: Shared computers. Disposable sign-ins.">
 <link rel="stylesheet" href="./assets/site.css">
 <script>/* apply saved theme and motion before first paint */try{var d=document.documentElement,t=localStorage.getItem('td.theme'),m=localStorage.getItem('td.motion'),s=localStorage.getItem('td.size');if(t&&t!=='system')d.setAttribute('data-theme',t);if(m)d.setAttribute('data-motion',m);if(s)d.style.setProperty('--text-scale',s);}catch(e){}</script>
 <link rel="stylesheet" href="assets/builder.css">
+<link rel="stylesheet" href="assets/studio.css">
 </head>
-<body>
-<a class="skip" href="#main" data-i18n="common.skip">Skip to content</a>
-<div class="page">
-<header class="topbar">
-  <a class="logo" href="./" aria-label="TempDesk home">
-    <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="4" width="28" height="20" rx="7" fill="var(--primary)"></rect><rect x="11" y="25.5" width="10" height="3" rx="1.5" fill="var(--primary)"></rect><circle cx="16" cy="14" r="5" fill="var(--ground)"></circle></svg>
-    TempDesk
-  </a>
-  <nav class="topnav" aria-label="Main">
-    <a class="navlink" href="./docs/" data-i18n="nav.docs">Docs</a>
-    <a class="btn btn-inverse btn-get" href="./#deploy" data-i18n="nav.getStarted">Get started</a>
+<body class="studio-body">
+<a class="skip" href="#st-editor" data-i18n="common.skip">Skip to content</a>
+<div class="studio" id="studio" hidden>
+  <header class="st-top">
+    <a class="logo st-logo" href="./" aria-label="TempDesk home"><svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="4" width="28" height="20" rx="7" fill="var(--primary)"></rect><rect x="11" y="25.5" width="10" height="3" rx="1.5" fill="var(--primary)"></rect><circle cx="16" cy="14" r="5" fill="var(--ground)"></circle></svg><span class="st-logo-t" data-i18n="studio.title">Answer File Studio</span></a>
+    <div class="st-file" id="st-file"></div>
+    <div class="st-search" id="st-search" role="search"></div>
+    <div class="st-actions" id="st-actions"></div>
+    <nav class="topnav st-nav" aria-label="Main"><a class="navlink" href="docs/" data-i18n="nav.docs">Docs</a></nav>
+  </header>
+  <nav class="st-act" id="st-act" aria-label="Activity bar"></nav>
+  <aside class="st-side" id="st-side" aria-labelledby="st-side-title"></aside>
+  <div class="st-splitter st-split-side" id="st-split-side" aria-label="Resize the side bar" data-i18n-attr="aria-label:studio.resizeSide"></div>
+  <section class="st-center" aria-label="Editor">
+    <div class="st-tabbar">
+      <div class="st-tabs" id="st-tabs" role="tablist" aria-label="Open editors" data-i18n-attr="aria-label:studio.openEditors"></div>
+      <button type="button" class="btn btn-ghost btn-sm st-split-b" id="st-split" aria-pressed="false" data-i18n="studio.splitXml">Split with XML</button>
+      <button type="button" class="iconbtn" id="st-insp-toggle" aria-label="Toggle the inspector" data-i18n-attr="aria-label:studio.toggleInsp;title:studio.toggleInsp" title="Toggle the inspector">&#9707;</button>
+    </div>
+    <div class="st-editor" id="st-editor"></div>
+  </section>
+  <div class="st-splitter st-split-insp" id="st-split-insp" aria-label="Resize the inspector" data-i18n-attr="aria-label:studio.resizeInsp"></div>
+  <aside class="st-insp" id="st-insp" aria-label="Inspector" data-i18n-attr="aria-label:studio.inspector"></aside>
+  <div class="st-splitter st-split-panel" id="st-split-panel" aria-label="Resize the panel" data-i18n-attr="aria-label:studio.resizePanel"></div>
+  <section class="st-panel" id="st-panel" aria-label="Panel">
+    <div class="st-panel-tabs" id="st-panel-tabs" role="tablist" aria-label="Panel"></div>
+    <div class="st-panel-body" id="st-panel-body"></div>
+  </section>
+  <footer class="st-status" id="st-status" aria-label="Status bar"></footer>
+  <nav class="st-phonebar" aria-label="Panes">
+    <button type="button" data-pane="explorer" aria-pressed="false" data-i18n="side.explorer">Explorer</button>
+    <button type="button" data-pane="editor" aria-pressed="true" data-i18n="studio.editor">Editor</button>
+    <button type="button" data-pane="inspector" aria-pressed="false" data-i18n="studio.inspector">Inspector</button>
+    <button type="button" data-pane="problems" aria-pressed="false" data-i18n="panel.problems">Problems</button>
   </nav>
-</header>
-<main id="main">
-<div class="b-head">
-  <nav class="crumbs" aria-label="Breadcrumb"><a href="./" data-i18n="nav.home">Home</a><span aria-hidden="true">/</span><span data-i18n="nav.builder">Answer file builder</span></nav>
-  <h1 data-i18n="b.title">Answer file builder</h1>
-  <p data-i18n="b.lead">Build autounattend.xml for a fully unattended Windows install: the TempDesk server, guest PCs that join the domain, or any Windows or Windows Server setup.</p>
-  <span class="b-local"><span class="dot" aria-hidden="true"></span><span data-i18n="b.local">Runs entirely in your browser. Nothing is uploaded.</span></span>
 </div>
-<div class="b-search" id="b-search" role="search" aria-label="Search every setting"></div>
-<div class="b-tabs" id="b-tabs" role="tablist" aria-label="Builder views"></div>
-<div class="b-toolbar" id="b-toolbar" role="toolbar" aria-label="Builder actions"></div>
-<p class="wrap notice warn" id="b-errors" role="alert" hidden></p>
-<div class="b-body" id="b-body">
-  <nav class="b-index" id="b-index" aria-label="Sections"></nav>
-  <div class="b-main" id="b-main" role="tabpanel" tabindex="-1"></div>
-  <aside class="b-preview" id="b-preview" aria-label="Preview"></aside>
-</div>
-<noscript><p class="wrap notice warn">The builder needs JavaScript. It runs only in this browser.</p></noscript>
-<div class="b-bar" id="b-bar"></div>
-</main>
-<footer class="foot">
-  <span data-i18n="foot.license">MIT licensed.</span>
-  <a href="./docs/" data-i18n="nav.docs">Docs</a>
-  <a href="./answer-file.html" data-i18n="nav.builder">Answer file builder</a>
-  <a href="./tools/base64.html" data-i18n="nav.base64">Base64 toolkit</a>
-  <a href="https://github.com/Ding-Ding-Projects/tempdesk-">GitHub</a>
-  <span data-i18n="foot.local">This site keeps your settings in your browser only.</span>
-</footer>
-</div>
-<script src="./assets/wording.js"></script>
-<script src="./assets/site.js"></script>
+<noscript><p class="notice warn" style="margin:16px">Answer File Studio needs JavaScript. It runs only in this browser and uploads nothing.</p></noscript>
+<p class="sr-only" data-i18n="b.local">Runs entirely in your browser. Nothing is uploaded.</p>
+<script src="assets/wording.js"></script>
+<script src="assets/site.js"></script>
 <script src="assets/answer.js"></script>
 <script src="assets/zip.js"></script>
 <script src="assets/history.js"></script>

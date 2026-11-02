@@ -133,6 +133,15 @@ class GitBackend {
     if (file) args.push('--', file);
     return this.run(args);
   }
+  async branches() {
+    const cur = (await this.run(['rev-parse', '--abbrev-ref', 'HEAD'])).trim();
+    const list = (await this.run(['branch', '--format=%(refname:short)'])).split('\n').map((x) => x.trim()).filter(Boolean);
+    return { current: cur, list };
+  }
+  async switchBranch(name, create) {
+    if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,60}$/.test(name) || name.includes('..') || name.endsWith('.lock') || name.endsWith('/')) throw new Error('Use letters, numbers, dot, dash, underscore or slash for the branch name.');
+    await this.run(create ? ['checkout', '-q', '-b', name] : ['checkout', '-q', name]);
+  }
   async setRemote(url) {
     const remotes = (await this.run(['remote'])).split('\n').map((s) => s.trim());
     if (!url) { if (remotes.includes('origin')) await this.run(['remote', 'remove', 'origin']); return; }
@@ -187,6 +196,8 @@ class JsonlBackend {
     }
     return out;
   }
+  async branches() { return { current: 'main', list: ['main'], unsupported: true }; }
+  async switchBranch() { throw new Error('Branches need Git. Install Git for Windows to use them.'); }
   async setRemote() { throw new Error('Pushing to a remote needs Git. Install Git for Windows to use it.'); }
   async push() { throw new Error('Pushing to a remote needs Git.'); }
 }
@@ -322,6 +333,17 @@ class Workspace {
   async log(limit) { await this.queue; return this.b.log(limit); }
   async diff(a, b, file) { await this.queue; return this.b.diff(a, b, file); }
   async filesAt(id) { await this.queue; return this.b.readAll(id); }
+  async branches() { await this.flush(); await this.queue; return this.b.branches(); }
+  // Switching branch replaces the working state with that branch's head (one variant per branch).
+  async switchBranch(name, create) {
+    await this.flush();
+    return this.serial(async () => {
+      await this.b.switchBranch(name, create);
+      const head = (await this.b.log(1))[0];
+      this.files = head ? await this.b.readAll(head.id) : {};
+      return { branch: name };
+    });
+  }
   setRemote(url) { return this.b.setRemote(url); }
   push() { return this.b.push(); }
   settle() { return this.queue; }
