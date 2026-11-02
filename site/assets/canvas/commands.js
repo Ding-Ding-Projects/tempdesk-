@@ -4,6 +4,7 @@
 // Writes model.commands (see answer.js COMMAND_LISTS).
 import { h, iconButton, clone, ICONS } from './dom.js';
 import { startDrag } from './drag.js';
+import { searchBox } from './search-ui.js';
 
 export const LISTS = [
   { id: 'runSync', pass: 'specialize', reboot: true, creds: true },
@@ -27,6 +28,20 @@ export function moveCommand(cmds, from, fromIdx, to, toIdx) {
 // ctx: { t, get() -> commands, set(commands, msg, coalesceKey), generated(listId) -> [{command, description}] }
 export function mountCommands(root, ctx) {
   const t = ctx.t;
+  let fq = { q: '', m: null };
+  const finder = searchBox({ label: t('cmd.find'), placeholder: t('cmd.find'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
+    onChange: (q, re, m) => { fq = { q, m }; applyFilter(); } });
+  function applyFilter() {
+    const m = fq.m;
+    let n = 0, total = 0;
+    root.querySelectorAll('.cmd-card[data-i]').forEach((c) => {
+      total++;
+      const text = c.textContent + ' ' + [...c.querySelectorAll('textarea, input[type=text]')].map((x) => x.value).join(' ');
+      const ok = !m || !m.ok || m.empty || !!m.test(text);
+      c.hidden = !ok; if (ok) n++;
+    });
+    if (m && m.ok) finder.setStatus(m.empty ? '' : t('search.listCount', [n, total]), !n);
+  }
   function C() { const c = clone(ctx.get()) || {}; LISTS.forEach((l) => { c[l.id] = c[l.id] || []; }); return c; }
   function commit(c, key, args, co) { ctx.set(c, { key, args }, co); if (!co) draw(); }
   function draw() {
@@ -100,7 +115,8 @@ export function mountCommands(root, ctx) {
       laneEls.push(lane);
       lanes.appendChild(lane);
     });
-    root.replaceChildren(h('p', { class: 'meter-label', text: t('cmd.keysHelp') }), lanes);
+    root.replaceChildren(finder.el, h('p', { class: 'meter-label', text: t('cmd.keysHelp') }), lanes);
+    applyFilter();
   }
   draw();
   return { update: draw };

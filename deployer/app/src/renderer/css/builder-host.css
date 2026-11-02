@@ -1,0 +1,6 @@
+/* Adjustments for hosting the website builder inside the desktop window. */
+html, body { background: var(--ground); }
+body { overflow-x: hidden; }
+.b-head { padding-top: 16px; }
+.b-head h1 { font-size: 1.7rem; }
+.b-local { display: none; }

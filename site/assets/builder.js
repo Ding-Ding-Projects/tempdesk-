@@ -6,6 +6,8 @@ import { mountFlow } from './canvas/flow.js';
 import { mountDisk, validateLayout } from './canvas/disk.js';
 import { mountCommands } from './canvas/commands.js';
 import { mountDeploy } from './canvas/deploy.js';
+import { buildIndex, search as searchIndex, problemKeys, filterList, compileQuery } from './canvas/search.js';
+import { searchBox, combobox } from './canvas/search-ui.js';
 
 const A = window.TempDeskAnswer, Z = window.TempDeskZip, HI = window.TempDeskHistory, S = window.TempDeskSite;
 const t = (k, args, fb) => S.t(k, args, fb);
@@ -119,6 +121,24 @@ let catalog = null;
 let history = null;
 const adv = new Set();
 let lastXml = '';
+let rules = null; // { parseXml, validateModel, raw catalog } from answerfile/ when the build ships them
+let ruleIssues = [];
+async function loadRules() {
+  if (!catalog || catalog.origin !== 'full' || !catalog.raw) return;
+  try {
+    const g = await import(ROOT + 'answerfile/generate.mjs');
+    rules = { parseXml: g.parseXml, validateModel: g.validateModel };
+  } catch (e) { rules = null; }
+}
+function computeIssues() {
+  ruleIssues = [];
+  if (!rules) return ruleIssues;
+  try {
+    const parsed = rules.parseXml(A.buildXml(model), catalog.raw);
+    ruleIssues = rules.validateModel(parsed.model, catalog.raw).filter((i) => i.level !== 'info');
+  } catch (e) { ruleIssues = [{ id: 'xml', level: 'error', where: '', message: e.message }]; }
+  return ruleIssues;
+}
 const remember = () => LS.get('td.rememberPw', '0') === '1';
 
 function getVal(id) { return id.startsWith('x.') ? model.extras[id.slice(2)] : id === 'raw' ? model.raw : model[model.mode][id]; }
@@ -140,8 +160,10 @@ function mergeSecrets(target, from) {
 function redact(state) { return remember() ? state : A.stripSecrets(state); }
 
 // Record a change. msg = { key, args }. coalesce = field id for typing.
+let gsTimer = null;
 function commit(msg, coalesce) {
   if (history) history.change(model, msg, coalesce || null);
+  if (gs.q || gs.filter !== 'all') { clearTimeout(gsTimer); gsTimer = setTimeout(renderGlobalResults, 400); }
   schedulePreview();
   updateStatus();
   updateUndo();
@@ -268,7 +290,12 @@ function renderField(id, mode, errors) {
     wrap.appendChild(h('label', { class: 'check', for: domId }, [cb, h('span', { text: lab })]));
   } else {
     wrap.appendChild(h('label', { for: domId, text: lab }));
-    if (def.type === 'select' || def.type === 'edition') {
+    if (id === 'timeZone' || def.type === 'datalist') {
+      const opts = id === 'timeZone' ? TZ_OPTS().map(([v, l]) => [v, l]) : (def.list === 'dl-keyboards' ? A.KEYBOARDS.map(([v, l]) => [v, v + ' (' + l + ')']) : A.LOCALES.map((l) => [l, l]));
+      const cb = combobox({ id: domId, options: opts, value: v === undefined ? '' : String(v), allowCustom: id !== 'timeZone', mono: true, emptyText: t('palette.empty'), openLabel: t('combo.open'), describedby: described,
+        onChange: (val, shown) => { setVal(id, val); const e = fieldErrors(); err.textContent = e[id] || ''; cb.input.setAttribute('aria-invalid', String(!!e[id])); commit({ key: 'hist.setField', args: ['@f.' + id, shown] }); updateStatus(); } });
+      wrap.appendChild(cb.el);
+    } else if (def.type === 'select' || def.type === 'edition') {
       const opts = def.type === 'edition' ? editionOptions(mode) : (typeof def.options === 'function' ? def.options() : def.options);
       const sel = h('select', { id: domId, 'aria-describedby': described }, opts.map(([ov, ol, raw]) => h('option', { value: ov, text: raw ? ol : t(ol) })));
       if (def.type === 'edition' && !opts.some((o) => o[0] === String(v))) sel.appendChild(h('option', { value: String(v), text: String(v) + ': ' + t('opt.customIndex') }));
@@ -335,8 +362,13 @@ function renderField(id, mode, errors) {
 function accountsEditor(mode) {
   const box = h('div', { class: 'list-ed' });
   const list = model.custom.accounts;
+  if (list.length > 1) {
+    const sb = searchBox({ label: t('search.list'), placeholder: t('search.list'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
+      onChange: (q, regex) => { const r = filterList(list, q, (a) => [a.name, a.displayName, a.group].join(' '), regex); if (!r.ok) return; const keep = new Set(r.items.map((x) => x.i)); box.querySelectorAll('.list-row[data-i]').forEach((row) => { row.hidden = !keep.has(Number(row.dataset.i)); }); sb.setStatus(q ? t('search.listCount', [keep.size, list.length]) : ''); } });
+    box.appendChild(sb.el);
+  }
   list.forEach((a, i) => {
-    const row = h('div', { class: 'list-row' });
+    const row = h('div', { class: 'list-row', 'data-i': String(i) });
     const mk = (k, type) => {
       const id = `acc-${i}-${k}`;
       const inp = h('input', { type, id, value: a[k] || '', autocomplete: type === 'password' ? 'new-password' : 'off', spellcheck: 'false' });
@@ -405,6 +437,14 @@ function renderMode(mode) {
   mainEl.classList.toggle('stepper', stepper);
   const secs = SECTIONS.filter((s) => sectionFields(s, mode).length || (s.adv && s.adv.length) || s.canvas);
   if (step >= secs.length) step = 0;
+  const secFilter = searchBox({ label: t('search.sections'), placeholder: t('search.sections'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
+    onChange: (q, regex, m) => {
+      let n = 0;
+      indexEl.querySelectorAll('a[data-sec]').forEach((a) => { const ok = m.ok && (m.empty || !!m.test(a.textContent)); a.hidden = !ok; if (ok) n++; });
+      if (!stepper) mainEl.querySelectorAll('.b-sec[data-section-index]').forEach((sx) => { const a = indexEl.querySelector('a[data-sec="' + sx.id.slice(4) + '"]'); sx.hidden = !!(a && a.hidden); });
+      if (m.ok) secFilter.setStatus(m.empty ? '' : t('search.sectionCount', [n]), n === 0);
+    } });
+  indexEl.appendChild(secFilter.el);
   const intro = h('div', { class: 'notice' }, [t('mode.' + mode + '.intro')]);
   mainEl.appendChild(intro);
   secs.forEach((sec, i) => {
@@ -414,7 +454,19 @@ function renderMode(mode) {
     indexEl.appendChild(a);
     const isAdv = adv.has(sec.id);
     const advBtn = h('button', { type: 'button', class: 'btn btn-ghost btn-sm', 'aria-pressed': String(isAdv), text: isAdv ? t('adv.hide') : t('adv.show') });
-    const head = h('header', null, [h('h2', { id: 'sec-' + sec.id + '-h' }, [h('span', { class: 'sdot', 'data-s': status, 'aria-hidden': 'true' }), t('sec.' + sec.id)]), sec.adv && sec.adv.length ? advBtn : null]);
+    const fieldFilter = searchBox({ label: t('search.fields'), placeholder: t('search.fields'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
+      onChange: (q, regex, m) => {
+        let shown = 0, total = 0;
+        el.querySelectorAll('.grid2 > .field, .cat-set').forEach((f) => {
+          total++;
+          const ok = !m.ok ? false : m.empty || !!m.test(f.textContent + ' ' + [...f.querySelectorAll('input, select, textarea')].map((x) => x.type === 'password' ? '' : x.value).join(' '));
+          f.hidden = !ok; if (ok) shown++;
+        });
+        if (!m.ok) return;
+        fieldFilter.setStatus(m.empty ? '' : t('search.fieldCount', [shown, total]), shown === 0);
+        if (!m.empty && !adv.has(sec.id) && shown === 0) fieldFilter.setStatus(t('search.tryAdvanced'), true);
+      } });
+    const head = h('header', null, [h('h2', { id: 'sec-' + sec.id + '-h' }, [h('span', { class: 'sdot', 'data-s': status, 'aria-hidden': 'true' }), t('sec.' + sec.id)]), h('div', { class: 'sec-tools' }, [fieldFilter.el, sec.adv && sec.adv.length ? advBtn : null])]);
     const el = h('section', { class: 'b-sec' + (i === step ? ' active' : ''), id: 'sec-' + sec.id, 'aria-labelledby': 'sec-' + sec.id + '-h', 'data-section-index': String(i) }, [head]);
     const secHelp = t('sec.' + sec.id + '.help', null, '');
     if (secHelp && secHelp !== 'sec.' + sec.id + '.help') el.appendChild(h('p', { class: 'help', style: { color: 'var(--muted)', marginTop: '-4px' }, text: secHelp }));
@@ -460,16 +512,17 @@ function renderAll() {
   else mainEl.appendChild(h('p', { class: 'notice ok', text: t('cat.full', [catalog.components.length, catalog.version]) }));
   const passSeg = h('div', { class: 'seg', role: 'group', 'aria-label': t('cat.pass') }, ['all'].concat(PASSES).map((p) => h('button', { type: 'button', 'aria-pressed': String(allState.pass === p), text: p === 'all' ? t('cat.allPasses') : p, onclick: () => { allState.pass = p; LS.set('td.all.pass', p); renderView(); } })));
   const platSeg = h('div', { class: 'seg', role: 'group', 'aria-label': t('cat.platform') }, ['all', 'client', 'server'].map((p) => h('button', { type: 'button', 'aria-pressed': String(allState.platform === p), text: t('cat.plat.' + p), onclick: () => { allState.platform = p; renderView(); } })));
-  const q = h('input', { type: 'search', id: 'cat-search', value: allState.q, placeholder: t('cat.search'), 'aria-label': t('cat.search') });
-  const reBtn = h('button', { type: 'button', class: 'iconbtn regex-toggle', 'aria-pressed': String(allState.regex), 'aria-label': t('search.regex'), title: t('search.regex'), text: '.*' });
+  const sb = searchBox({ label: t('cat.search'), placeholder: t('cat.search'), value: allState.q, regex: allState.regex, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
+    onChange: (qq, regex) => { allState.q = qq; allState.regex = regex; draw(); } });
+  sb.input.id = 'cat-search';
   const onlySet = h('input', { type: 'checkbox', checked: allState.onlySet });
   const list = h('div', { id: 'cat-list' });
   const count = h('div', { class: 'meter-label', 'aria-live': 'polite' });
   mainEl.appendChild(h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'all-h', text: t('tab.all') })]),
-    h('div', { class: 'cat-tools' }, [h('div', { class: 'searchrow' }, [q, reBtn]), h('div', { class: 'cat-filters' }, [passSeg]), h('div', { class: 'cat-filters' }, [platSeg, h('label', { class: 'check' }, [onlySet, t('cat.onlySet')])]), count]), list]));
+    h('div', { class: 'cat-tools' }, [sb.el, h('div', { class: 'cat-filters' }, [passSeg]), h('div', { class: 'cat-filters' }, [platSeg, h('label', { class: 'check' }, [onlySet, t('cat.onlySet')])]), count]), list]));
   const draw = () => {
-    const m = S.makeMatcher(allState.q, allState.regex);
-    q.setAttribute('aria-invalid', String(!m.ok));
+    const m = compileQuery(allState.q, allState.regex);
+    const mt = { ok: m.ok, test: (x) => !!m.test(x) };
     list.replaceChildren();
     let n = 0;
     catalog.components.forEach((comp) => {
@@ -477,7 +530,7 @@ function renderAll() {
       if (allState.platform !== 'all' && !comp.platforms.includes(allState.platform)) return;
       const setCount = comp.passes.reduce((s, p) => s + countSet(model.all[p + '|' + comp.name]), 0);
       if (allState.onlySet && !setCount) return;
-      if (!m.test(searchText(comp))) return;
+      if (!mt.test(searchText(comp))) return;
       n++;
       const det = h('details', { class: 'cat-comp', 'data-comp': comp.name, open: allState.open === comp.name || undefined }, [h('summary', null, [
         h('span', { text: comp.name }), h('small', { class: 'cnt', text: setCount ? t('cat.countSet', [setCount]) : '' }),
@@ -487,11 +540,11 @@ function renderAll() {
         if (body.childNodes.length) return;
         if (comp.help) body.appendChild(h('p', { class: 'help', text: comp.help }));
         const passes = allState.pass === 'all' ? comp.passes : [allState.pass];
-        let pass = passes.find((p) => countSet(model.all[p + '|' + comp.name])) || passes[0];
+        let pass = (allState.focusPass && passes.includes(allState.focusPass) ? allState.focusPass : null) || passes.find((p) => countSet(model.all[p + '|' + comp.name])) || passes[0];
         const holder = h('div');
         const drawPass = () => {
           const key = pass + '|' + comp.name;
-          holder.replaceChildren(renderSettings(comp, model.all[key], (v, msg, co) => allChange(key, v, msg, co, det), { t, pass, idPrefix: 'all-' + comp.name.replace(/[^A-Za-z0-9]/g, '') + '-' + pass }));
+          holder.replaceChildren(renderSettings(comp, model.all[key], (v, msg, co) => allChange(key, v, msg, co, det), { t, pass, expandPath: allState.focusPath, idPrefix: 'all-' + comp.name.replace(/[^A-Za-z0-9]/g, '') + '-' + pass }));
         };
         if (passes.length > 1) {
           const ps = h('select', { 'aria-label': t('cat.pass') }, passes.map((p) => h('option', { value: p, text: p + (countSet(model.all[p + '|' + comp.name]) ? ' (' + t('cat.countSet', [countSet(model.all[p + '|' + comp.name])]) + ')' : '') })));
@@ -507,20 +560,144 @@ function renderAll() {
       list.appendChild(det);
     });
     count.textContent = t('cat.shown', [n, catalog.components.length]);
+    if (m.ok) sb.setStatus('');
     if (!n) list.appendChild(h('p', { class: 'empty', text: m.ok ? t('cat.noMatch') : t('palette.badRegex') }));
   };
-  let tm;
-  q.addEventListener('input', () => { allState.q = q.value; clearTimeout(tm); tm = setTimeout(draw, 150); });
-  reBtn.addEventListener('click', () => { allState.regex = !allState.regex; reBtn.setAttribute('aria-pressed', String(allState.regex)); draw(); });
   onlySet.addEventListener('change', () => { allState.onlySet = onlySet.checked; draw(); });
   draw();
-  if (allState.open) { const d = list.querySelector(`[data-comp="${CSS.escape(allState.open)}"]`); if (d) d.scrollIntoView({ block: 'start' }); }
+  if (allState.open) {
+    const d = list.querySelector(`[data-comp="${CSS.escape(allState.open)}"]`);
+    if (d) {
+      const target = allState.focusPath && d.querySelector(`[data-setting-path="${CSS.escape(allState.open + '/' + allState.focusPath)}"]`);
+      if (target) S.focusTarget(target); else d.scrollIntoView({ block: 'start' });
+    }
+    allState.focusPath = null; allState.focusPass = null;
+  }
 }
 function openEditor(pass, comp) {
   allState.pass = pass; allState.open = comp; allState.q = ''; allState.onlySet = false;
   if (catalog && !catalog.byName.get(comp)) { S.toast(t('flow.notInCatalog', [comp])); return; }
   setView('all');
 }
+
+// ------------------------------------------------------------------------------------------------
+// Global search: every setting in every mode, section and the full catalog
+// ------------------------------------------------------------------------------------------------
+const gs = { q: '', regex: false, filter: 'all', open: false };
+function friendlyEntries() {
+  const out = [];
+  const errsByMode = {};
+  MODE_TABS.forEach((mode) => {
+    const saved = model.mode; model.mode = mode;
+    errsByMode[mode] = fieldErrors();
+    SECTIONS.forEach((sec) => sectionFields(sec, mode).forEach((id) => {
+      const def = FIELDS[id];
+      if (!def) return;
+      const v = getVal(id);
+      const d = A.defaultModel();
+      const dv = id.startsWith('x.') ? d.extras[id.slice(2)] : id === 'raw' ? '' : d[mode][id];
+      const helpKey = 'h.' + id.replace(/^x\./, 'x_');
+      const help = t(helpKey, null, '');
+      out.push({ id, mode, section: sec.id, sectionLabel: t('tab.' + mode) + ' / ' + t('sec.' + sec.id), label: label(id), help: help === helpKey ? '' : help,
+        value: def.type === 'select' && def.options && typeof def.options !== 'function' ? [v, ...(def.options.find((o) => o[0] === String(v)) || []).slice(1).map((k) => t(k))].join(' ') : v,
+        sensitive: def.type === 'password', isSet: !isEmpty(v) && JSON.stringify(v) !== JSON.stringify(dv), problem: !!errsByMode[mode][id] || (id === 'accounts' && Object.keys(errsByMode[mode]).some((k) => k.startsWith('accounts.'))) });
+    }));
+    model.mode = saved;
+  });
+  return out;
+}
+function runGlobalSearch() {
+  const problems = problemKeys(computeIssues());
+  const idx = buildIndex({ model, catalog, friendly: friendlyEntries(), problems });
+  return searchIndex(idx, gs.q, { regex: gs.regex, filter: gs.filter });
+}
+function jumpTo(e) {
+  closeGlobalSheet();
+  if (e.kind === 'field') {
+    if (model.mode !== e.mode || view !== e.mode) setView(e.mode, { noFocus: true });
+    const secs = [...mainEl.querySelectorAll('.b-sec[data-section-index]')];
+    const sec = document.getElementById('sec-' + e.section);
+    if (sec && isPhone()) { step = Number(sec.dataset.sectionIndex); secs.forEach((x) => x.classList.toggle('active', x === sec)); }
+    const el = mainEl.querySelector(`[data-field="${CSS.escape(e.id)}"]`) || sec;
+    if (el) S.focusTarget(el);
+  } else {
+    allState.pass = 'all'; allState.platform = 'all'; allState.q = ''; allState.onlySet = false;
+    allState.open = e.comp; allState.focusPath = e.path; allState.focusPass = e.pass;
+    setView('all', { noFocus: true });
+  }
+}
+let gsBox = null, gsResults = null, gsFilterSel = null;
+function resultItem(r, i) {
+  const e = r.entry;
+  const where = e.kind === 'field' ? e.sectionLabel : t('tab.all') + ' / ' + e.comp + (e.isSet ? ' (' + e.pass + ')' : '');
+  const li = h('li', { role: 'option', id: 'gs-r-' + i, tabindex: '-1', class: 'gs-item' }, [
+    h('span', { class: 'gs-label' }, [e.kind === 'field' ? e.label : e.path]),
+    h('small', { text: where + (e.value ? ' · ' + String(e.value).slice(0, 80) : '') }),
+    h('span', { class: 'gs-flags' }, [e.isSet ? h('span', { class: 'setmark', text: t('cat.set') }) : null, e.problem ? h('span', { class: 'sensitive', text: t('status.error') }) : null])
+  ]);
+  li.addEventListener('click', () => jumpTo(e));
+  return li;
+}
+function renderGlobalResults() {
+  if (!gsBox) return;
+  const res = runGlobalSearch();
+  gsResults.replaceChildren();
+  if (!res.ok) { gsBox.setStatus(t('palette.badRegex') + ' ' + res.error, true); gsBox.input.setAttribute('aria-invalid', 'true'); return; }
+  gsBox.input.setAttribute('aria-invalid', 'false');
+  const active = gs.q.trim() || gs.filter !== 'all';
+  gsResults.hidden = !active;
+  document.getElementById('gs-panel').classList.toggle('has-results', !!active);
+  if (!active) { gsBox.setStatus(''); return; }
+  gsBox.setStatus(t('search.global.count', [res.total, res.sections.size]), res.total === 0);
+  res.results.slice(0, 80).forEach((r, i) => gsResults.appendChild(resultItem(r, i)));
+  if (res.total > 80) gsResults.appendChild(h('li', { class: 'gs-more', text: t('search.global.more', [res.total - 80]) }));
+  if (!res.total) gsResults.appendChild(h('li', { class: 'gs-more', text: gs.filter === 'problems' ? t('search.global.noProblems') : t('palette.empty') }));
+}
+function closeGlobalSheet() {
+  const p = document.getElementById('gs-panel');
+  if (p && p.classList.contains('as-sheet')) { p.classList.remove('as-sheet'); document.body.style.overflow = ''; p.removeAttribute('role'); p.removeAttribute('aria-modal'); }
+}
+function buildGlobalSearch() {
+  const host = document.getElementById('b-search');
+  if (!host) return;
+  gsResults = h('ul', { class: 'gs-results', id: 'gs-results', role: 'listbox', 'aria-label': t('search.global.results'), hidden: true });
+  gsBox = searchBox({ label: t('search.global'), placeholder: t('search.global.ph'), value: gs.q, regex: gs.regex, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
+    onChange: (q, regex) => { gs.q = q; gs.regex = regex; renderGlobalResults(); },
+    onKey: (e) => {
+      const items = [...gsResults.querySelectorAll('.gs-item')];
+      if (e.key === 'ArrowDown' && items.length) { e.preventDefault(); items[0].focus(); }
+      if (e.key === 'Enter') { e.preventDefault(); const r = runGlobalSearch(); if (r.ok && r.results[0]) jumpTo(r.results[0].entry); }
+    } });
+  gsBox.input.id = 'gs-input';
+  gsBox.input.setAttribute('aria-controls', 'gs-results');
+  gsResults.addEventListener('keydown', (e) => {
+    const items = [...gsResults.querySelectorAll('.gs-item')];
+    const i = items.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); (items[i + 1] || items[i]).focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); (i > 0 ? items[i - 1] : gsBox.input).focus(); }
+    else if (e.key === 'Enter' && i >= 0) { e.preventDefault(); items[i].click(); }
+    else if (e.key === 'Escape') { e.preventDefault(); gsBox.input.focus(); }
+  });
+  gsFilterSel = h('select', { id: 'gs-filter', 'aria-label': t('search.show') }, [['all', 'search.show.all'], ['set', 'search.show.set'], ['problems', 'search.show.problems']].map(([v, k]) => h('option', { value: v, text: t(k) })));
+  gsFilterSel.value = gs.filter;
+  gsFilterSel.addEventListener('change', () => { gs.filter = gsFilterSel.value; renderGlobalResults(); });
+  const closeB = h('button', { type: 'button', class: 'btn btn-ghost btn-sm gs-close', text: t('common.close'), onclick: () => { closeGlobalSheet(); gsBox.input.blur(); } });
+  const panel = h('div', { class: 'gs-panel', id: 'gs-panel' }, [h('div', { class: 'gs-row' }, [gsBox.el, h('label', { class: 'gs-show', for: 'gs-filter' }, [h('span', { text: t('search.show') }), gsFilterSel]), closeB]), gsResults]);
+  gsBox.input.addEventListener('focus', () => { if (isPhone()) { panel.classList.add('as-sheet'); panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-modal', 'true'); document.body.style.overflow = 'hidden'; } });
+  panel.addEventListener('keydown', (e) => { if (e.key === 'Escape' && panel.classList.contains('as-sheet')) { closeGlobalSheet(); gsBox.input.blur(); } });
+  host.replaceChildren(panel);
+  renderGlobalResults();
+}
+// The command palette (Ctrl+Shift+F) also offers every setting.
+S.addPaletteSource((q, regex) => {
+  if (!q || !q.trim()) return [];
+  const saved = { q: gs.q, regex: gs.regex, filter: gs.filter };
+  gs.q = q; gs.regex = regex; gs.filter = 'all';
+  const r = runGlobalSearch();
+  Object.assign(gs, saved);
+  if (!r.ok) return [];
+  return r.results.slice(0, 30).map((x) => ({ kind: 'field', label: x.entry.kind === 'field' ? x.entry.label : x.entry.path, sub: x.entry.kind === 'field' ? x.entry.sectionLabel : x.entry.comp, action: () => jumpTo(x.entry) }));
+});
 
 // ------------------------------------------------------------------------------------------------
 // Canvases
@@ -634,9 +811,16 @@ async function renderHistory() {
   sec.append(h('div', { class: 'field', style: { maxWidth: '280px' } }, [h('label', { text: t('hist.filter') }), filter]));
   const ul = h('ul', { class: 'hist-list' });
   const cur = xmlOf(model);
+  let hq = '', hre = false;
+  const hsb = searchBox({ label: t('search.history'), placeholder: t('search.history'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'), onChange: (q, re) => { hq = q; hre = re; drawList(); } });
+  sec.append(hsb.el);
   const drawList = () => {
     ul.replaceChildren();
-    const entries = history.entries.slice().reverse().filter((e) => filter.value === 'all' || e.kind === 'save' || e.kind === 'download');
+    let entries = history.entries.slice().reverse().filter((e) => filter.value === 'all' || e.kind === 'save' || e.kind === 'download');
+    const fr = filterList(entries, hq, (e) => msgText(e.msg) + ' ' + new Date(e.t).toLocaleString() + ' #' + e.id + ' ' + (e.label || ''), hre);
+    if (!fr.ok) return;
+    entries = fr.items.map((x) => x.it);
+    if (hq) hsb.setStatus(t('search.listCount', [entries.length, history.entries.length]), !entries.length);
     entries.slice(0, 500).forEach((e, idx) => {
       const li = h('li', { class: e === history.head() ? 'cur' : null }, [
         h('span', { class: 'msg' }, [h('span', { text: msgText(e.msg) }), h('br'), h('small', { text: new Date(e.t).toLocaleString() + ' · #' + e.id + ' · ' + t('hist.kind.' + e.kind) })]),
@@ -715,12 +899,21 @@ function renderPreview() {
   else msg = t('pv.json', [new Blob([file[2]]).size]);
   const errs = Object.keys(fieldErrors()).length;
   if (errs) msg += ' · ' + t('pv.problems', [errs]);
+  const iss = computeIssues();
   const pre = h('pre', { tabindex: '0', 'aria-label': file[1], html: pvFile === 'xml' ? A.highlightXml(file[2]) : file[2].replace(/&/g, '&amp;').replace(/</g, '&lt;') });
   const seg = h('div', { class: 'seg', role: 'group', 'aria-label': t('pv.file') }, files.map(([k, n]) => h('button', { type: 'button', 'aria-pressed': String(k === pvFile), text: n, onclick: () => { pvFile = k; renderPreview(); } })));
   const closeB = h('button', { type: 'button', class: 'iconbtn', 'aria-label': t('common.close'), html: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>', onclick: closePreviewSheet, hidden: !previewEl.classList.contains('as-sheet') });
   const scroll = previewEl.querySelector('pre') ? previewEl.querySelector('pre').scrollTop : 0;
-  previewEl.replaceChildren(h('div', { class: 'pv' }, [h('div', { class: 'pv-head' }, [h('b', { text: t('pv.title') }), seg, h('div', { class: 'inline' }, [btn('tb.copy', copyXml, 'btn-ghost btn-sm'), closeB])]), pre, h('div', { class: 'pv-status' + (ok && !errs ? '' : ' bad'), role: 'status', text: msg })]));
+  previewEl.replaceChildren(h('div', { class: 'pv' }, [h('div', { class: 'pv-head' }, [h('b', { text: t('pv.title') }), seg, h('div', { class: 'inline' }, [btn('tb.copy', copyXml, 'btn-ghost btn-sm'), closeB])]), pre, h('div', { class: 'pv-status' + (ok && !errs ? '' : ' bad'), role: 'status', text: msg }), checksEl(iss)]));
   previewEl.querySelector('pre').scrollTop = scroll;
+}
+function checksEl(iss) {
+  if (!rules) return h('div', { class: 'pv-checks meter-label', text: catalog && catalog.origin === 'full' ? t('checks.loading') : t('checks.unavailable') });
+  const box = h('details', { class: 'pv-checks', open: iss.some((i) => i.level === 'error') || undefined }, [h('summary', { text: iss.length ? t('checks.count', [iss.filter((i) => i.level === 'error').length, iss.filter((i) => i.level === 'warning').length]) : t('checks.ok') })]);
+  const ul = h('ul', { class: 'hist-list' });
+  iss.slice(0, 50).forEach((i) => ul.appendChild(h('li', null, [h('span', { class: i.level === 'error' ? 'sensitive' : 'pass-chip', text: i.level }), h('span', { class: 'msg', text: i.message }), h('small', { class: 'mono', style: { overflowWrap: 'anywhere' }, text: i.where })])));
+  box.appendChild(ul);
+  return box;
 }
 function openPreviewSheet() { previewEl.classList.add('as-sheet'); previewEl.setAttribute('role', 'dialog'); previewEl.setAttribute('aria-modal', 'true'); previewEl.setAttribute('aria-label', t('pv.title')); document.body.style.overflow = 'hidden'; renderPreview(); const c = previewEl.querySelector('.iconbtn'); if (c) c.focus(); }
 function closePreviewSheet() { previewEl.classList.remove('as-sheet'); previewEl.removeAttribute('role'); previewEl.removeAttribute('aria-modal'); document.body.style.overflow = ''; renderPreview(); const b = document.getElementById('bar-preview'); if (b) b.focus(); }
@@ -886,10 +1079,15 @@ function openPresets() {
     const inc = h('input', { type: 'checkbox' });
     const fileIn = h('input', { type: 'file', accept: '.json,application/json', class: 'sr-only' });
     fileIn.addEventListener('change', async () => { const f = fileIn.files[0]; fileIn.value = ''; if (!f) return; try { importPresetBundle(JSON.parse(await f.text()), f.name); draw(); } catch (e) { report([t('imp.badJson')], false); } });
+    let pq = '', pre = false;
+    const psb = searchBox({ label: t('search.presets'), placeholder: t('search.presets'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'), onChange: (q, re) => { pq = q; pre = re; draw(); } });
     const draw = () => {
       const p = loadPresets();
       box.replaceChildren();
-      const names = Object.keys(p).sort();
+      const all = Object.keys(p).sort();
+      const fr = filterList(all, pq, (n) => n + ' ' + t('tab.' + (p[n].mode || 'server')), pre);
+      const names = fr.ok ? fr.items.map((x) => x.it) : [];
+      if (pq) psb.setStatus(t('search.listCount', [names.length, all.length]), !names.length);
       if (!names.length) box.appendChild(h('p', { class: 'empty', text: t('pre.none') }));
       names.forEach((n) => box.appendChild(h('div', { class: 'list-row' }, [h('b', { text: n }), h('small', { class: 'meter-label', text: t('tab.' + (p[n].mode || 'server')) }), h('div', { class: 'row-tools' }, [
         btn('pre.load', () => { const r = A.normalizeModel(p[n]); if (!r.ok) { S.toast(t('pre.badOne')); return; } model = mergeSecrets(r.model, model); view = model.mode; commit({ key: 'hist.presetLoad', args: [n] }); close(); renderView(); }, 'btn-primary btn-sm'),
@@ -900,7 +1098,7 @@ function openPresets() {
       h('div', { class: 'field' }, [h('label', { for: 'pre-name', text: t('pre.name') }), nameIn]),
       h('label', { class: 'check' }, [inc, t('pre.includePw')]),
       h('div', { class: 'cta' }, [btn('pre.save', () => { const n = nameIn.value.trim(); if (!n || ['__proto__', 'prototype', 'constructor'].includes(n)) { S.toast(t('pre.nameBad')); return; } const p = loadPresets(); if (p[n] && !window.confirm(t('pre.replace', [n]))) return; p[n] = inc.checked ? clone(model) : A.stripSecrets(model); if (savePresets(p)) { S.toast(t('pre.saved', [n])); nameIn.value = ''; draw(); } }, 'btn-primary')]),
-      h('h3', { text: t('pre.saved.title') }), box,
+      h('h3', { text: t('pre.saved.title') }), psb.el, box,
       h('div', { class: 'cta' }, [btn('pre.export', () => { const p = loadPresets(); const out = {}; Object.keys(p).forEach((k) => { out[k] = inc.checked ? p[k] : A.stripSecrets(p[k]); }); download('tempdesk-presets.json', JSON.stringify({ schema: 'tempdesk-presets', version: 1, presets: out }, null, 2) + '\n', 'application/json'); }, 'btn-ghost'),
         btn('pre.import', () => fileIn.click(), 'btn-ghost'), fileIn]),
       h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('pre.help') })];
@@ -970,10 +1168,12 @@ async function init() {
     if (r.ok) model = r.model;
   } catch (e) { history = null; }
   if (MODE_TABS.includes(view)) model.mode = view;
-  buildToolbar(); buildBar();
+  buildToolbar(); buildBar(); buildGlobalSearch();
   renderView();
   catalog = await loadCatalog(ROOT);
+  await loadRules();
+  renderGlobalResults();
   if (view !== 'server' && view !== 'guest' && view !== 'custom') renderView();
-  S.onLang(() => { buildToolbar(); buildBar(); renderView(); });
+  S.onLang(() => { buildToolbar(); buildBar(); buildGlobalSearch(); renderView(); });
 }
 init();

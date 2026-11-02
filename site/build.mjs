@@ -90,7 +90,7 @@ export function renderMarkdown(md, opts = {}) {
     const html = (ordered ? `<ol${startNum !== 1 ? ` start="${startNum}"` : ''}>` : '<ul>') + items.map((it) => {
       const body = it.join('\n');
       const inner = renderMarkdown(body, Object.assign({}, opts, { nested: true, used })).html;
-      return '<li>' + (it.length === 1 || !/\n\s*\n/.test(body) ? inner.replace(/^<p>([\s\S]*?)<\/p>/, '$1') : inner) + '</li>';
+      return '<li>' + (it.length === 1 || !/\n\s*\n/.test(body) ? inner.replace(/^<p>([\s\S]*?)<\/p>\n?/, '$1') : inner) + '</li>';
     }).join('') + (ordered ? '</ol>' : '</ul>');
     return { html, next: j };
   }
@@ -314,7 +314,7 @@ ${r.html}
 
   // 6. answer file catalog and generator (owned by answerfile/)
   const af = [];
-  for (const f of ['unattend-catalog.json', 'generate.mjs']) {
+  for (const f of ['unattend-catalog.json', 'generate.mjs', 'rules.mjs']) {
     const src = path.join(REPO, 'answerfile', f);
     if (existsSync(src)) { await copyFile(src, path.join(OUT, 'answerfile', f)); af.push(f); }
   }

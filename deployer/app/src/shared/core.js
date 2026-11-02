@@ -132,21 +132,23 @@
     var mode = opts.mode || 'en';
     var funny = opts.funny || 0;
     var wording = opts.wording || null;
-    function one(lang, key, args) {
+    // Personal wording applies to the interface template only, before arguments are filled in,
+    // so data such as host names, paths and log text is never changed.
+    function one(lang, key, args, plain) {
       var v = pickVariant(cats[lang] && cats[lang][key], funny, key);
       if (v === undefined) v = pickVariant(cats.en && cats.en[key], funny, key);
       if (v === undefined) return key;
-      return format(v, args);
+      return format(wording && !plain ? wording(v) : v, args);
     }
     function t(key, args) {
-      var text;
       if (mode === 'bilingual') {
         var a = one('en', key, args), b = one('zh-HK', key, args);
-        text = a === b ? a : a + ' / ' + b;
-      } else text = one(mode === 'zh-HK' ? 'zh-HK' : 'en', key, args);
-      return wording ? wording(text) : text;
+        return a === b ? a : a + ' / ' + b;
+      }
+      return one(mode === 'zh-HK' ? 'zh-HK' : 'en', key, args);
     }
-    t.raw = function (key, args) { return one(mode === 'zh-HK' ? 'zh-HK' : 'en', key, args); };
+    t.raw = function (key, args) { return one(mode === 'zh-HK' ? 'zh-HK' : 'en', key, args, true); };
+    t.has = function (key) { return !!(cats.en && key in cats.en); };
     t.mode = mode;
     return t;
   }

@@ -97,7 +97,7 @@ class Store {
     const open = (t.open || []).filter((n) => typeof n === 'string' && /^[A-Za-z0-9][A-Za-z0-9._ -]{0,63}$/.test(n)).slice(0, 30);
     writeAtomic(this.p('tabs.json'), JSON.stringify({ open, active: open.includes(t.active) ? t.active : null }) + '\n');
   }
-  vocabulary() { return readJson(this.p('vocabulary.json'), null); }
+  vocabulary() { try { return fs.readFileSync(this.p('vocabulary.json'), 'utf8'); } catch (e) { return null; } }
   saveVocabulary(text) { writeAtomic(this.p('vocabulary.json'), text); }
   clearVocabulary() { fs.rmSync(this.p('vocabulary.json'), { force: true }); }
 }

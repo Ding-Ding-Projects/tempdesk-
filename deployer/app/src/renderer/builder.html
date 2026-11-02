@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" data-motion="full">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Answer file builder</title>
+<meta name="td-root" content="vendor/">
+<meta name="td-title" content="b.title">
+<link rel="stylesheet" href="vendor/site.css">
+<link rel="stylesheet" href="vendor/builder.css">
+<link rel="stylesheet" href="css/builder-host.css">
+<script src="js/site-shim.js"></script>
+<script src="vendor/zip.js"></script>
+<script src="vendor/history.js"></script>
+<script src="js/history-mirror.js"></script>
+<script src="vendor/answer.js"></script>
+<script type="module" src="vendor/builder.js"></script>
+</head>
+<body>
+<main id="main">
+<div class="b-head">
+  <h1 data-i18n="b.title">Answer file builder</h1>
+  <p data-i18n="b.lead">Build autounattend.xml for a fully unattended Windows install: the TempDesk server, guest PCs that join the domain, or any Windows or Windows Server setup.</p>
+</div>
+<div class="b-tabs" id="b-tabs" role="tablist" aria-label="Builder views"></div>
+<div class="b-toolbar" id="b-toolbar" role="toolbar" aria-label="Builder actions"></div>
+<p class="wrap notice warn" id="b-errors" role="alert" hidden></p>
+<div class="b-body" id="b-body">
+  <nav class="b-index" id="b-index" aria-label="Sections"></nav>
+  <div class="b-main" id="b-main" role="tabpanel" tabindex="-1"></div>
+  <aside class="b-preview" id="b-preview" aria-label="Preview"></aside>
+</div>
+<div class="b-bar" id="b-bar"></div>
+</main>
+</body>
+</html>

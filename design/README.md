@@ -11,9 +11,9 @@ The approved visual design for TempDesk, as a design canvas export. Each `.dc.ht
 | `Admin-Gpo.dc.html` | Admin console: Administrative Templates editor |
 | `Admin-Server.dc.html` | Admin console: server overview |
 | `Deployer.dc.html` | Deployer desktop app: unattended setup progress |
-| `Answer-Builder.dc.html` | Answer file builder: section index, Basic and Advanced fields, live XML and checks |
+| `Answer-Builder.dc.html` | Answer File Studio: explorer, tabbed canvases and code, inspector, problems with quick fixes, status bar |
 | `Answer-AllSettings.dc.html` | Answer file builder: every catalog setting by component |
-| `Answer-Builder-Phone.dc.html` | Answer file builder on a phone: stepper with a sticky action bar |
+| `Answer-Builder-Phone.dc.html` | Answer File Studio on a phone: one pane with a bottom tab bar |
 | `Answer-Canvas.dc.html` | Setup flow canvas: passes as lanes, drag components between passes |
 | `Answer-Disk.dc.html` | Disk layout canvas and command timeline |
 | `Base64.dc.html` / `Base64-Phone.dc.html` | Base64 toolkit on desktop and phone |

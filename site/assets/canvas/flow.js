@@ -5,6 +5,7 @@
 import { h, iconButton, clone } from './dom.js';
 import { PASSES, countSet, settingAllowedPasses } from './catalog.js';
 import { startDrag } from './drag.js';
+import { searchBox } from './search-ui.js';
 
 const LANE_W = 230;
 
@@ -66,6 +67,25 @@ export function mountFlow(root, ctx) {
     h('button', { type: 'button', class: 'btn btn-ghost btn-sm', 'aria-pressed': 'false', text: t('cv.listView'), onclick: (e) => { listView = !listView; e.currentTarget.setAttribute('aria-pressed', String(listView)); draw(); } }),
     h('span', { class: 'help', style: { color: 'var(--muted)', fontSize: '.84rem' }, text: t('flow.keys') })
   ]);
+  const finder = searchBox({ label: t('flow.find'), placeholder: t('flow.find'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
+    onChange: (q, re, m) => {
+      const cards = [...world.querySelectorAll('.ccard')];
+      cards.forEach((c) => c.classList.remove('found'));
+      if (!m.ok || m.empty) { finder.setStatus(''); return; }
+      const hits = cards.filter((c) => m.test(c.dataset.key + ' ' + c.textContent));
+      hits.forEach((c) => c.classList.add('found'));
+      finder.setStatus(t('flow.found', [hits.length]), !hits.length);
+      if (hits[0]) centreOn(hits[0]);
+    },
+    onKey: (e) => { if (e.key === 'Enter') { const f = world.querySelector('.ccard.found'); if (f) { e.preventDefault(); f.focus({ preventScroll: true }); } } } });
+  tools.appendChild(finder.el);
+  function centreOn(card) {
+    const lane = card.closest('.lane');
+    const vr = viewport.getBoundingClientRect();
+    const cx = (lane.offsetLeft + card.offsetLeft + card.offsetWidth / 2) * scale, cy = (lane.offsetTop + card.offsetTop + card.offsetHeight / 2) * scale;
+    tx = vr.width / 2 - cx; ty = vr.height / 2 - cy; apply();
+    if (window.TempDeskSite) window.TempDeskSite.pulse(card);
+  }
   root.replaceChildren(tools, status, viewport, listBox);
 
   function apply() {

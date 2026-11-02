@@ -70,6 +70,8 @@
     <label class="check"><input type="checkbox" id="b64-keep"><span data-i18n="b64.keep">Store text payloads in history on this device</span></label>
     <p class="meter-label" id="b64-storage"></p>
     <div class="cta"><button type="button" class="btn btn-ghost btn-sm" id="b64-hist-export" data-i18n="hist.export">Export history</button><button type="button" class="btn btn-coral btn-sm" id="b64-hist-clear" data-i18n="hist.clear">Clear history</button></div>
-    <ul class="hist-list" id="b64-hist" style="margin-top:12px"></ul>
+    <div class="searchrow" style="margin-top:12px"><input type="search" id="b64-hist-q" data-i18n-attr="placeholder:search.history;aria-label:search.history" placeholder="Search history" aria-label="Search history" aria-describedby="b64-hist-count" autocomplete="off"><button type="button" class="iconbtn regex-toggle" id="b64-hist-re" aria-pressed="false" data-i18n-attr="aria-label:search.regex;title:search.regex" aria-label="Regular expression" title="Regular expression">.*</button></div>
+    <p class="meter-label" id="b64-hist-count" role="status" aria-live="polite"></p>
+    <ul class="hist-list" id="b64-hist" style="margin-top:8px"></ul>
   </section>
 </div>

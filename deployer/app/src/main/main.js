@@ -382,7 +382,7 @@ function registerIpc() {
     const add = (name, obj) => files.push({ name, data: JSON.stringify(obj, null, 2) + '\n' });
     add('settings.json', store.settings());
     const vocab = store.vocabulary();
-    if (vocab) files.push({ name: 'vocabulary.json', data: JSON.stringify(vocab) });
+    if (vocab) files.push({ name: 'vocabulary.json', data: vocab });
     add('tabs.json', store.tabs());
     for (const d of store.deployments()) add('deployments/' + d.name + '.json', Core.stripSecrets(d));
     const snap = workspace.snapshot();

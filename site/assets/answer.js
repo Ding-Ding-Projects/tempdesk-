@@ -133,8 +133,8 @@
   // ---------------------------------------------------------------------------------------------
   var NAME_RE = /^[A-Za-z_:][-A-Za-z0-9_:.]*/;
   function decodeEntities(s, lineOf) {
-    return s.replace(/&(#x[0-9A-Fa-f]+|#[0-9]+|[A-Za-z]+);?/g, function (m, g) {
-      if (m[m.length - 1] !== ';') throw xmlError('Unescaped & in text or attribute', lineOf());
+    return s.replace(/&(#x[0-9A-Fa-f]+|#[0-9]+|[A-Za-z]+)?;?/g, function (m, g) {
+      if (!g || m[m.length - 1] !== ';') throw xmlError('Unescaped & in text or attribute', lineOf());
       if (g[0] === '#') {
         var code = g[1] === 'x' ? parseInt(g.slice(2), 16) : parseInt(g.slice(1), 10);
         if (!(code === 9 || code === 10 || code === 13 || (code >= 0x20 && code <= 0x10ffff))) throw xmlError('Invalid character reference', lineOf());
@@ -250,7 +250,7 @@
   // value: string | {child: value} | [item objects (repeated, wcm:action="add")] | {"@password": pw}
   // ---------------------------------------------------------------------------------------------
   function isPasswordContainer(e) { return !!(child(e, 'Value') && child(e, 'PlainText') && e.c.length === 2); }
-  function passwordSuffix(name) { return name === 'AdministratorPassword' ? 'AdministratorPassword' : 'Password'; }
+  function passwordSuffix(name) { return /AdministratorPassword$/.test(name) ? 'AdministratorPassword' : 'Password'; }
 
   function elementToValue(e) {
     if (isPasswordContainer(e)) {

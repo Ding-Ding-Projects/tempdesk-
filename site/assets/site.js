@@ -211,7 +211,7 @@
   }
 
   // ---------- command palette ----------
-  var palette, palInput, palList, palRegex, palItems = [], palSel = 0, siteIndex = null;
+  var palette, palInput, palList, palRegex, palItems = [], palSel = 0, siteIndex = null, paletteSources = [];
   function loadIndex() {
     if (siteIndex) return Promise.resolve(siteIndex);
     return fetch(ROOT + 'search-index.json').then(function (r) { return r.ok ? r.json() : { pages: [] }; }).catch(function () { return { pages: [] }; })
@@ -246,6 +246,7 @@
     var m = makeMatcher(q, useRe);
     palInput.setAttribute('aria-invalid', String(!m.ok));
     var all = localItems();
+    paletteSources.forEach(function (src) { try { all = all.concat(src(q, useRe) || []); } catch (e) { /* ignore a broken source */ } });
     (siteIndex ? siteIndex.pages : []).forEach(function (p) {
       all.push({ kind: 'page', label: p.title, sub: p.summary || '', href: ROOT + p.url });
       (p.sections || []).forEach(function (s) { all.push({ kind: 'section', label: s.title, sub: p.title, href: ROOT + p.url + '#' + s.id }); });
@@ -288,6 +289,7 @@
     var it = palItems[i];
     if (!it) return;
     closeSheet(palette);
+    if (it.action) { it.action(); return; }
     if (it.setting) { openSheet(settingsSheet); var s = document.getElementById(it.setting); if (s) { s.scrollIntoView({ block: 'center' }); var b = s.querySelector('button, label'); if (b) b.focus(); pulse(s); } return; }
     if (it.target) { focusTarget(it.target); return; }
     if (it.href) {
@@ -348,7 +350,8 @@
   window.TempDeskSite = {
     t: t, tz: tz, h: h, ROOT: ROOT, LS: LS, prefs: prefs, translateAll: translateAll, render: render, toast: toast, pulse: pulse,
     openSheet: openSheet, closeSheet: closeSheet, trap: trap, makeMatcher: makeMatcher, focusTarget: focusTarget,
-    onLang: function (f) { ready.push(f); }, translate: function (s) { return translator(s); }
+    onLang: function (f) { ready.push(f); }, translate: function (s) { return translator(s); },
+    addPaletteSource: function (fn) { paletteSources.push(fn); }
   };
 
   function init() {

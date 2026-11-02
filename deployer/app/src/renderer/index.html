@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src data:; font-src 'self'; connect-src 'self'; frame-src 'self'; child-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TempDesk Deployer</title>
+<link rel="stylesheet" href="css/app.css">
+<script src="shared/core.js"></script>
+<script src="shared/qr.js"></script>
+<script src="vendor/wording.js"></script>
+<script src="vendor/base64.js"></script>
+<script src="vendor/answer.js"></script>
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+<a class="skip" href="#view">Skip to content</a>
+<div class="app" id="app">
+  <header class="titlebar" id="titlebar">
+    <img class="logo" id="tb-logo" alt="" src="img/tempdesk.svg">
+    <span class="name" id="tb-name">TempDesk Deployer</span>
+    <span class="ver" id="tb-ver"></span>
+    <div class="tb-actions" id="tb-actions"></div>
+    <div class="winbtns">
+      <button type="button" class="winbtn" id="win-min" aria-label="Minimize"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h10" stroke="currentColor" stroke-width="1.2"/></svg></button>
+      <button type="button" class="winbtn" id="win-max" aria-label="Maximize"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
+      <button type="button" class="winbtn close" id="win-close" aria-label="Close"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1.2"/></svg></button>
+    </div>
+  </header>
+  <div id="banner-slot"></div>
+  <div class="body">
+    <nav class="rail" id="rail" aria-label="Pages"><span class="indicator" id="rail-ind" aria-hidden="true"></span></nav>
+    <div class="main">
+      <div class="tabs" id="tabs" role="tablist" aria-label="Open deployments"></div>
+      <main class="view" id="view" tabindex="-1"></main>
+    </div>
+  </div>
+</div>
+</body>
+</html>
