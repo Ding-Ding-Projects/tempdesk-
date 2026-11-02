@@ -80,6 +80,14 @@ try {
         Add-ADGroupMember -Identity ($settings.adminGroup -replace '\s', '') -Members $AdminUser -ErrorAction SilentlyContinue
     }
 
+    # The AD Recycle Bin lets the admin console undo deletions (Restore-ADObject keeps all attributes).
+    Write-Step 'Active Directory Recycle Bin'
+    $rb = Get-ADOptionalFeature -Filter "Name -eq 'Recycle Bin Feature'"
+    if (-not $rb.EnabledScopes) {
+        Enable-ADOptionalFeature -Identity 'Recycle Bin Feature' -Scope ForestOrConfigurationSet -Target $domain.Forest -Confirm:$false
+        Write-Host '    enabled (this cannot be turned off)'
+    }
+
     if ($RedirectNewComputers) {
         Write-Step 'Redirecting newly joined computers to the TempDesk Computers OU'
         & redircmp.exe $computersOuDn | Out-Host
