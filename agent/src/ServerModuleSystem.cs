@@ -265,68 +265,9 @@ namespace TempDesk.Agent
 
         private List<object> SearchUpdates(RequestContext ctx, bool installed)
         {
-            // Drive the WUA COM API from PowerShell with New-Object. The search
-            // criterion is a fixed string, never built from user input.
-            string criterion = installed ? "IsInstalled=1" : "IsInstalled=0 and IsHidden=0";
-            object session = NewComObject(ctx, "Microsoft.Update.Session");
-            // The COM method sequence (CreateUpdateSearcher().Search(criterion))
-            // is executed through the host's COM invocation helper exposed by the
-            // agent owner. We fall back to the Windows Update module if present.
-            List<Dictionary<string, object>> rows = WuaSearch(ctx, criterion);
-            List<object> list = new List<object>();
-            foreach (Dictionary<string, object> u in rows)
-            {
-                Dictionary<string, object> d = Srv.P();
-                d["id"] = Srv.Str(u, "UpdateId");
-                d["title"] = Srv.Str(u, "Title");
-                d["description"] = Srv.Str(u, "Description");
-                d["kb"] = Srv.Get(u, "KBArticleIDs");
-                d["severity"] = Srv.Str(u, "MsrcSeverity");
-                d["isDownloaded"] = Srv.Get(u, "IsDownloaded");
-                d["rebootRequired"] = Srv.Get(u, "RebootRequired");
-                list.Add(d);
-            }
-            return list;
-        }
-
-        private object NewComObject(RequestContext ctx, string progId)
-        {
-            // Returned for documentation purposes; actual COM work happens in
-            // WuaSearch / WuaInstall below using the allowlisted PowerShell host.
-            return progId;
-        }
-
-        private List<Dictionary<string, object>> WuaSearch(RequestContext ctx, string criterion)
-        {
-            // Use the host: New-Object -ComObject, then call Search. Because our
-            // host only binds parameters (never script), we pass the criterion as
-            // an -ArgumentList item to a small built-in search command the agent
-            // owner registers. If unavailable, return an empty list rather than
-            // fail the whole page.
-            try
-            {
-                IDictionary<string, object> p = SrvP.Of("ComObject", "Microsoft.Update.Session");
-                Dictionary<string, object> sessionRow = Srv.PsOne(ctx, "New-Object", p);
-                // The actual Search()/Download()/Install() invocation is performed
-                // by the agent's WUA helper; shaped rows come back as a list under
-                // "updates". When the helper is not present this yields nothing.
-                object updates = Srv.Get(sessionRow, "updates");
-                List<object> raw = Json.AsList(updates);
-                List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
-                if (raw != null)
-                {
-                    foreach (object o in raw)
-                    {
-                        Dictionary<string, object> dd = o as Dictionary<string, object>;
-                        if (dd != null) { rows.Add(dd); }
-                    }
-                }
-                return rows;
-            }
-            catch (AgentException)
-            {
-                return new List<Dictionary<string, object>>();
-            }
+            // WuaHelper drives the Windows Update Agent COM API on an STA thread
+            // with a fixed search criterion; nothing from the request reaches it.
+            return WuaHelper.Search(installed);
         }
 
         private object Install(RequestContext ctx)
@@ -339,18 +280,9 @@ namespace TempDesk.Agent
             }
             ctx.Audit("updates install", string.Join(",", ids.ToArray()));
             string[] idArr = ids.ToArray();
-            PowerShellHost ps = ctx.Ps;
             Job job = JobRegistry.Start("updates-install", delegate(Job j)
             {
-                j.AddOutput("Downloading " + idArr.Length + " update(s)");
-                j.SetProgress(20);
-                // Download then install through the WUA helper, by id.
-                IDictionary<string, object> p = SrvP.Of("ComObject", "Microsoft.Update.Session");
-                ps.Invoke("New-Object", p);
-                j.AddOutput("Installing");
-                j.SetProgress(70);
-                j.AddOutput("Install requested for: " + string.Join(", ", idArr));
-                j.SetProgress(100);
+                WuaHelper.Install(idArr, j);
             });
             Dictionary<string, object> result = Srv.P();
             result["jobId"] = job.Snapshot()["jobId"];

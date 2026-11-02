@@ -105,11 +105,7 @@ report, so the Samba backend and member servers show only what they support.
 - **Console sessions** expire after 20 minutes idle on the agent; the page shows
   a countdown and disables input when it lapses. A session belongs to the admin
   who opened it and cannot be used by another.
-- **Windows Update** is not finished. The routes exist, but the native WUA COM
-  driver (`Microsoft.Update.Session`, search `IsInstalled=0 and IsHidden=0`,
-  STA thread, download and install as jobs) has not been written yet, so the
-  available and installed lists currently come back empty and install jobs do
-  not install anything.
+- **Windows Update** uses the Windows Update Agent COM API (`Microsoft.Update.Session`) through `agent/src/WuaHelper.cs`, on a dedicated STA thread. Searches use fixed criteria (`IsInstalled=0 and IsHidden=0`, `IsInstalled=1`). Install jobs accept the license terms of the selected updates, download, install, and report each update's result code and whether a restart is required; a failed or aborted download or install fails the job. Not yet run against a live server.
 - **ACL writes** apply a full SDDL descriptor with `icacls /restore`; the SDDL
   is parsed in process first so a malformed descriptor is rejected before any
   change.
