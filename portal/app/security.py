@@ -191,6 +191,20 @@ class Session:
     user: dict
     expires_at: float
     created: float = field(default_factory=time.time)
+    elevation: str | None = None
+    elevation_expires: float = 0.0
+
+    @property
+    def elevated(self) -> bool:
+        return bool(self.elevation) and self.elevation_expires > time.time()
+
+    def elevation_token(self) -> str | None:
+        """The X-TempDesk-Elevation token if still fresh, else None."""
+        return self.elevation if self.elevated else None
+
+    def set_elevation(self, token: str, seconds: int = 600) -> None:
+        self.elevation = token
+        self.elevation_expires = time.time() + seconds
 
 
 class SessionStore:
@@ -250,6 +264,32 @@ class Flash:
         except (BadSignature, SignatureExpired):
             return None
         return {"kind": v.get("k", "info"), "text": v.get("t", "")} if isinstance(v, dict) else None
+
+
+class SuperConfirm:
+    """Two-key confirmation for destructive actions.
+
+    The page carries a signed token for (action, target). The browser only
+    copies it into the form after the hold-to-confirm button was held for
+    1.5 seconds, and the person must also type the target name. The server
+    checks both, so a destructive POST without them is refused."""
+
+    def __init__(self, secret: str):
+        self._s = URLSafeTimedSerializer(secret, salt="tempdesk-super-confirm")
+
+    def issue(self, action: str, target: str) -> str:
+        return self._s.dumps({"a": action, "t": target})
+
+    def check(self, action: str, target: str, typed: str | None, token: str | None) -> bool:
+        if typed is None or typed.strip() != target:
+            return False
+        if not token:
+            return False
+        try:
+            v = self._s.loads(token, max_age=1800)
+        except (BadSignature, SignatureExpired):
+            return False
+        return isinstance(v, dict) and v.get("a") == action and v.get("t") == target
 
 
 def safe_next(value: str | None, default: str = "/") -> str:

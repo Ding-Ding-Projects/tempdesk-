@@ -39,16 +39,16 @@ namespace TempDesk.Agent
             }
             catch (ArgumentException ex)
             {
-                throw ApiException.BadRequest("Request body is not valid JSON: " + ex.Message);
+                throw AgentException.BadRequest("Request body is not valid JSON: " + ex.Message);
             }
             catch (InvalidOperationException ex)
             {
-                throw ApiException.BadRequest("Request body is not valid JSON: " + ex.Message);
+                throw AgentException.BadRequest("Request body is not valid JSON: " + ex.Message);
             }
             Dictionary<string, object> dict = parsed as Dictionary<string, object>;
             if (dict == null)
             {
-                throw ApiException.BadRequest("Request body must be a JSON object.");
+                throw AgentException.BadRequest("Request body must be a JSON object.");
             }
             return dict;
         }
@@ -259,7 +259,7 @@ namespace TempDesk.Agent
             string s = v as string;
             if (s == null)
             {
-                throw ApiException.BadRequest("Field '" + key + "' must be a string.");
+                throw AgentException.BadRequest("Field '" + key + "' must be a string.");
             }
             return s;
         }
@@ -269,11 +269,11 @@ namespace TempDesk.Agent
             string s = GetString(d, key);
             if (string.IsNullOrEmpty(s))
             {
-                throw ApiException.BadRequest("Field '" + key + "' is required.");
+                throw AgentException.BadRequest("Field '" + key + "' is required.");
             }
             if (s.Length > maxLength)
             {
-                throw ApiException.BadRequest("Field '" + key + "' is too long (max " + maxLength + " characters).");
+                throw AgentException.BadRequest("Field '" + key + "' is too long (max " + maxLength + " characters).");
             }
             return s;
         }
@@ -287,7 +287,7 @@ namespace TempDesk.Agent
             }
             if (!(v is bool))
             {
-                throw ApiException.BadRequest("Field '" + key + "' must be true or false.");
+                throw AgentException.BadRequest("Field '" + key + "' must be true or false.");
             }
             return (bool)v;
         }
@@ -308,7 +308,7 @@ namespace TempDesk.Agent
             long result;
             if (!TryToLong(v, out result))
             {
-                throw ApiException.BadRequest("Field '" + key + "' must be an integer.");
+                throw AgentException.BadRequest("Field '" + key + "' must be an integer.");
             }
             return result;
         }
@@ -345,7 +345,7 @@ namespace TempDesk.Agent
             Dictionary<string, object> result = v as Dictionary<string, object>;
             if (result == null)
             {
-                throw ApiException.BadRequest("Field '" + key + "' must be an object.");
+                throw AgentException.BadRequest("Field '" + key + "' must be an object.");
             }
             return result;
         }
@@ -360,7 +360,7 @@ namespace TempDesk.Agent
             List<object> list = AsList(v);
             if (list == null)
             {
-                throw ApiException.BadRequest("Field '" + key + "' must be an array.");
+                throw AgentException.BadRequest("Field '" + key + "' must be an array.");
             }
             return list;
         }
@@ -398,7 +398,7 @@ namespace TempDesk.Agent
                 string s = item as string;
                 if (s == null)
                 {
-                    throw ApiException.BadRequest("Field '" + key + "' must be an array of strings.");
+                    throw AgentException.BadRequest("Field '" + key + "' must be an array of strings.");
                 }
                 result.Add(s);
             }

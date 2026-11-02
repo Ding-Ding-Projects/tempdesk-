@@ -22,9 +22,9 @@
 .PARAMETER AppsJson
     JSON array of apps: [{"id","name","program":"||alias","hostPath":"C:\\...","arguments","host"}].
     "hostPath" (full path of the exe on this server) is required for each app to
-    publish. Entries without "||" in program are skipped (full path RemoteApps
-    need no allow list entry when fDisabledAllowList is 0? No: they are blocked,
-    so publish them through an alias instead).
+    publish. Entries whose program is a full path instead of a "||alias" are
+    skipped: with the allow list on (fDisabledAllowList = 0) unlisted programs
+    are blocked, so publish every app through an alias.
 
 .PARAMETER SettingsPath
     Path to a TempDesk settings JSON (for example a copy of the agent's
@@ -106,6 +106,7 @@ if ([Environment]::OSVersion.Version.Build -lt 26100) {
 
 $domainNetbios = (Get-CimInstance Win32_NTDomain -Filter "DnsForestName IS NOT NULL" -ErrorAction SilentlyContinue |
     Where-Object { $_.DomainName } | Select-Object -First 1).DomainName
+if (-not $domainNetbios -and $env:USERDOMAIN -and $env:USERDOMAIN -ne $env:COMPUTERNAME) { $domainNetbios = $env:USERDOMAIN }
 $computerNames = @($env:COMPUTERNAME, "$($env:COMPUTERNAME).$($cs.Domain)") | ForEach-Object { $_.ToLowerInvariant() }
 try {
     $ips = Get-NetIPAddress -ErrorAction Stop | Where-Object { $_.IPAddress -notmatch '^(127\.|::1|fe80)' } | ForEach-Object { $_.IPAddress.ToLowerInvariant() }
@@ -155,7 +156,6 @@ if ($LicenseServer) {
             if ($ts.LicensingType -ne 4 -and $PSCmdlet.ShouldProcess('Win32_TerminalServiceSetting', 'ChangeMode 4 (Per User)')) {
                 Invoke-CimMethod -InputObject $ts -MethodName ChangeMode -Arguments @{ LicensingType = [uint32]4 } | Out-Null
             }
-            $current = @($ts.GetSpecifiedLicenseServerList | Out-Null)
             if ($PSCmdlet.ShouldProcess('Win32_TerminalServiceSetting', "SetSpecifiedLicenseServerList $($LicenseServer -join ',')")) {
                 Invoke-CimMethod -InputObject $ts -MethodName SetSpecifiedLicenseServerList -Arguments @{ SpecifiedLSList = [string[]]$LicenseServer } | Out-Null
             }
@@ -193,8 +193,15 @@ Write-Step "Allowing '$GuestGroup' to sign in over RDP"
 $rduSid = 'S-1-5-32-555'   # BUILTIN\Remote Desktop Users (name differs per language)
 $rdu = Get-LocalGroup -SID $rduSid
 $member = if ($domainNetbios) { "$domainNetbios\$GuestGroup" } else { $GuestGroup }
-$already = @(Get-LocalGroupMember -SID $rduSid -ErrorAction SilentlyContinue |
-    Where-Object { $_.Name -ieq $member -or $_.Name -like "*\$GuestGroup" })
+try {
+    $already = @(Get-LocalGroupMember -SID $rduSid -ErrorAction Stop |
+        Where-Object { $_.Name -ieq $member -or $_.Name -like "*\$GuestGroup" })
+} catch {
+    # Get-LocalGroupMember fails when the group holds an orphaned SID; fall back to ADSI.
+    $already = @(([ADSI]"WinNT://./$($rdu.Name),group").psbase.Invoke('Members') |
+        ForEach-Object { $_.GetType().InvokeMember('Name', 'GetProperty', $null, $_, $null) } |
+        Where-Object { $_ -ieq $GuestGroup })
+}
 if ($already.Count -gt 0) {
     Write-Host "    already a member of $($rdu.Name)"
 } elseif ($PSCmdlet.ShouldProcess($rdu.Name, "Add $member")) {
@@ -235,7 +242,7 @@ foreach ($app in $apps) {
     $expanded = [Environment]::ExpandEnvironmentVariables($path)
     if (-not (Test-Path -LiteralPath $expanded -PathType Leaf)) { Write-Warning "Skipping '$id': '$expanded' does not exist on this server."; continue }
     $name = & $get 'name'; if (-not $name) { $name = $alias }
-    $args = & $get 'arguments'
+    $appArgs = & $get 'arguments'
 
     $key = Join-Path $AllowApps $alias
     Set-RegValue -Path $key -Name 'Name' -Value $name -Type String
@@ -245,10 +252,10 @@ foreach ($app in $apps) {
     Set-RegValue -Path $key -Name 'IconIndex' -Value 0 -Type DWord
     Set-RegValue -Path $key -Name 'ShowInTSWA' -Value 0 -Type DWord
     Set-RegValue -Path $key -Name 'SecurityDescriptor' -Value '' -Type String
-    if ($args) {
+    if ($appArgs) {
         # 2 = always use these arguments; clients cannot add their own.
         Set-RegValue -Path $key -Name 'CommandLineSetting' -Value 2 -Type DWord
-        Set-RegValue -Path $key -Name 'RequiredCommandLine' -Value "$args" -Type String
+        Set-RegValue -Path $key -Name 'RequiredCommandLine' -Value "$appArgs" -Type String
     } else {
         # 0 = do not allow command-line arguments from the client.
         Set-RegValue -Path $key -Name 'CommandLineSetting' -Value 0 -Type DWord
