@@ -24,3 +24,16 @@ async def prefs(request: Request):
     if fun in ("0", "1", "2", "3"):
         set_cookie(request, resp, PREF_FUN, fun, max_age=YEAR, httponly=False)
     return resp
+
+
+tools_router = APIRouter()
+
+
+@tools_router.get("/tools/base64")
+async def base64_tool(request: Request):
+    """Client-side Base64 toolkit. Nothing is uploaded to the portal."""
+    from .web import render, require_admin
+
+    if request.app.state.settings.mode == "admin":
+        await require_admin(request)
+    return await render(request, "tools/base64.html", {})

@@ -22,6 +22,7 @@ from .agent_client import AgentError, AgentUnavailable
 from .docs import changelog_html, docs_index, render_doc
 from .security import ONCE_COOKIE, SESSION_COOKIE, Session, client_ip, safe_next
 from .tables import table
+from .undo_routes import check_spec, gpo_snapshot, http_inv, track
 from .vocab import WordingError, headline_for
 from .web import (
     agent_message,
@@ -350,6 +351,11 @@ async def guest_create(request: Request, sess: Session = Depends(require_admin))
         created = await call(request, sess, "POST", "/guests", json=body)
     except AgentError as exc:
         return fail(request, "/guests", exc)
+    uname = (created or {}).get("username", "")
+    track(request, sess, action="guest.create", target=f"guest:{uname}", summary=f"Create guest {uname}",
+          request={"method": "POST", "path": "/guests", "json": body}, after={"username": uname},
+          inverse=http_inv("DELETE", f"/guests/{quote(uname, safe='')}"),
+          redo=None)
     once = request.app.state.once.put(created)
     resp = RedirectResponse("/guests/created", status_code=303)
     set_cookie(request, resp, ONCE_COOKIE, once, max_age=600)
@@ -374,11 +380,37 @@ async def guest_extend(username: str, request: Request, sess: Session = Depends(
         minutes = int(form.get("minutes") or "")
     except ValueError:
         return fail(request, "/guests", "Enter the extension as a whole number of minutes.")
+    before = await guest_expiry(request, sess, username)
     try:
         await call(request, sess, "POST", f"/guests/{quote(username, safe='')}/extend", json={"minutes": minutes})
     except AgentError as exc:
         return fail(request, "/guests", exc)
+    track_extend(request, sess, username, minutes, before)
     return ok(request, "/guests", "Expiry updated for {name}.", name=username)
+
+
+async def guest_expiry(request: Request, sess: Session, username: str):
+    try:
+        rows = await call(request, sess, "GET", "/guests") or []
+    except AgentError:
+        return None
+    g = next((r for r in rows if r.get("username") == username), None)
+    return g.get("expiresAt") if g else None
+
+
+def track_extend(request: Request, sess: Session, username: str, minutes: int, before) -> None:
+    if before is None:
+        inv, reason = http_inv("POST", f"/guests/{quote(username, safe='')}/extend", None, {"minutes": 0}), ""
+    else:
+        try:
+            left = (datetime.fromisoformat(str(before).replace("Z", "+00:00")) - datetime.now(timezone.utc)).total_seconds() / 60
+        except ValueError:
+            left = -1
+        inv = http_inv("POST", f"/guests/{quote(username, safe='')}/extend", None, {"minutes": max(1, round(left))}) if left > 0 else None
+        reason = "" if inv else "The previous expiry has already passed."
+    track(request, sess, action="guest.extend", target=f"guest:{username}", summary=f"Change expiry of {username}",
+          request={"method": "POST", "path": f"/guests/{quote(username, safe='')}/extend", "json": {"minutes": minutes}},
+          before=before, inverse=inv, undoable=inv is not None, reason=reason)
 
 
 @router.get("/guests/{username}/delete")
@@ -397,6 +429,9 @@ async def guest_delete(username: str, request: Request, sess: Session = Depends(
         await call(request, sess, "DELETE", f"/guests/{quote(username, safe='')}")
     except AgentError as exc:
         return fail(request, "/guests", exc)
+    track(request, sess, action="guest.delete", target=f"guest:{username}", summary=f"Delete guest {username}",
+          request={"method": "DELETE", "path": f"/guests/{quote(username, safe='')}"}, undoable=False,
+          reason="A deleted guest account cannot be restored from the guest list. Create a new one instead.")
     return ok(request, "/guests", "Deleted {name}.", name=username)
 
 
@@ -517,9 +552,20 @@ async def directory_attr(request: Request, sess: Session = Depends(require_admin
     else:
         return fail(request, url, "Choose an operation.")
     try:
-        await call(request, sess, "PATCH", "/ad/object", json=body)
+        before_obj = await call(request, sess, "GET", "/ad/object", params={"dn": dn}) or {}
+        before = (before_obj.get("attributes") or {}).get(attr)
+        res = await call(request, sess, "PATCH", "/ad/object", json=body)
+        after = ((res or {}).get("attributes") or {}).get(attr) if isinstance(res, dict) else None
+        if not isinstance(res, dict):
+            after_obj = await call(request, sess, "GET", "/ad/object", params={"dn": dn}) or {}
+            after = (after_obj.get("attributes") or {}).get(attr)
     except AgentError as exc:
         return fail(request, url, exc)
+    inv_body = {"dn": dn, "set": {attr: before}} if before else {"dn": dn, "clear": [attr]}
+    track(request, sess, action=f"attribute.{op}", target=dn, summary=f"{op} {attr} on {dn}",
+          request={"method": "PATCH", "path": "/ad/object", "json": body}, before=before, after=after,
+          inverse=http_inv("PATCH", "/ad/object", None, inv_body),
+          check=check_spec("/ad/object", {"dn": dn}, f"attributes.{attr}"))
     return ok(request, url, "Saved {name}.", name=attr)
 
 
@@ -546,6 +592,11 @@ async def directory_create(request: Request, sess: Session = Depends(require_adm
         res = await call(request, sess, "POST", "/ad/object", json={"parentDn": parent, "objectClass": oc, "rdn": rdn, "attributes": attrs})
     except AgentError as exc:
         return fail(request, "/directory/create?parent=" + dn_q(parent), exc)
+    new_dn = (res or {}).get("dn") or f"{rdn},{parent}"
+    track(request, sess, action="object.create", target=new_dn, summary=f"Create {oc} {new_dn}",
+          request={"method": "POST", "path": "/ad/object", "json": {"parentDn": parent, "objectClass": oc, "rdn": rdn, "attributes": attrs}},
+          before=None, after=new_dn, inverse=http_inv("DELETE", "/ad/object", {"dn": new_dn, "recursive": "false"}),
+          check=check_spec("/ad/object", {"dn": new_dn}, "dn"))
     return ok(request, "/directory/object?dn=" + dn_q((res or {}).get("dn") or f"{rdn},{parent}"), "Created {name}.", name=rdn)
 
 
@@ -562,7 +613,43 @@ async def directory_move(request: Request, sess: Session = Depends(require_admin
         res = await call(request, sess, "POST", "/ad/object/move", json=body)
     except AgentError as exc:
         return fail(request, "/directory/object?dn=" + dn_q(dn), exc)
+    new_dn = (res or {}).get("dn") or dn
+    old_rdn, old_parent = (dn.split(",", 1) + [""])[:2]
+    track(request, sess, action="object.move", target=new_dn, summary=f"Move {dn} to {new_dn}",
+          request={"method": "POST", "path": "/ad/object/move", "json": body}, before=dn, after=new_dn,
+          inverse=http_inv("POST", "/ad/object/move", None, {"dn": new_dn, "newParentDn": old_parent, "newRdn": old_rdn}),
+          check=check_spec("/ad/object", {"dn": new_dn}, "dn"))
     return ok(request, "/directory/object?dn=" + dn_q((res or {}).get("dn") or dn), "Moved.")
+
+
+async def recycle_info(request: Request, sess: Session, dn: str) -> tuple[str | None, bool, str]:
+    """Decide whether deleting *dn* can be undone through the AD Recycle Bin."""
+    health = await agent(request).health()
+    if (health or {}).get("backend") == "samba" or "cmdlets" not in set((health or {}).get("capabilities") or []):
+        return None, False, "Undo is not available on this backend: deleted objects cannot be restored from here."
+    try:
+        obj = await call(request, sess, "GET", "/ad/object", params={"dn": dn}) or {}
+    except AgentError:
+        return None, False, "The object could not be read before deletion."
+    vals = (obj.get("attributes") or {}).get("objectGUID") or []
+    guid = vals[0] if isinstance(vals, list) and vals else (vals or None)
+    if not guid:
+        return None, False, "The object GUID could not be recorded, so the AD Recycle Bin cannot be used."
+    if isinstance(guid, str) and guid.startswith("b64:"):
+        import base64
+        import uuid as _uuid
+
+        try:
+            guid = str(_uuid.UUID(bytes_le=base64.b64decode(guid[4:])))
+        except (ValueError, TypeError):
+            return None, False, "The object GUID could not be read."
+    return str(guid), True, ""
+
+
+def delete_undo_note(health: dict | None) -> tuple[bool, str]:
+    if (health or {}).get("backend") == "samba" or "cmdlets" not in set((health or {}).get("capabilities") or []):
+        return False, "Deleted objects cannot be restored on this backend."
+    return True, "It can be restored from the AD Recycle Bin with Undo."
 
 
 @router.post("/directory/delete", dependencies=CSRF)
@@ -575,10 +662,15 @@ async def directory_delete(request: Request, sess: Session = Depends(require_adm
     params = {"dn": dn, "recursive": "true" if form.get("recursive") == "on" else "false"}
     if form.get("force") == "on":
         params["force"] = "true"
+    guid, undoable, reason = await recycle_info(request, sess, dn)
     try:
         await call(request, sess, "DELETE", "/ad/object", params=params)
     except AgentError as exc:
         return fail(request, url, exc)
+    track(request, sess, action="object.delete", target=dn, summary=f"Delete {dn}",
+          request={"method": "DELETE", "path": "/ad/object", "params": params}, before={"dn": dn, "objectGUID": guid}, after=None,
+          inverse={"kind": "recycle", "guid": guid, "name": dn} if undoable else None, undoable=undoable, reason=reason,
+          check=None)
     parent = dn.split(",", 1)[1] if "," in dn else ""
     return ok(request, "/directory" + ("?dn=" + dn_q(parent) if parent else ""), "Deleted {name}.", name=dn)
 
@@ -594,12 +686,21 @@ async def directory_user(action: str, request: Request, sess: Session = Depends(
             if len(pw) < 8:
                 return fail(request, url, "The new password must be at least 8 characters.")
             await call(request, sess, "POST", "/ad/user/password", json={"dn": dn, "password": pw, "mustChange": form.get("mustChange") == "on"})
+            track(request, sess, action="user.password", target=dn, summary=f"Reset password of {dn}",
+                  request={"method": "POST", "path": "/ad/user/password", "json": {"dn": dn, "password": pw}},
+                  undoable=False, reason="A password reset cannot be undone: the old password is never stored.")
             return ok(request, url, "Password reset.")
         if action in ("enable", "disable"):
             await call(request, sess, "POST", "/ad/user/enable", json={"dn": dn, "enabled": action == "enable"})
+            track(request, sess, action=f"user.{action}", target=dn, summary=f"{action.capitalize()} {dn}",
+                  request={"method": "POST", "path": "/ad/user/enable", "json": {"dn": dn, "enabled": action == "enable"}},
+                  inverse=http_inv("POST", "/ad/user/enable", None, {"dn": dn, "enabled": action != "enable"}))
             return ok(request, url, "Account enabled." if action == "enable" else "Account disabled.")
         if action == "unlock":
             await call(request, sess, "POST", "/ad/user/unlock", json={"dn": dn})
+            track(request, sess, action="user.unlock", target=dn, summary=f"Unlock {dn}", undoable=False,
+                  request={"method": "POST", "path": "/ad/user/unlock", "json": {"dn": dn}},
+                  reason="Unlocking has no inverse: an account cannot be locked on purpose.")
             return ok(request, url, "Account unlocked.")
     except AgentError as exc:
         return fail(request, url, exc)
@@ -618,6 +719,9 @@ async def directory_members(request: Request, sess: Session = Depends(require_ad
         await call(request, sess, "POST", "/ad/group/members", json={"groupDn": gdn, "add": add, "remove": remove})
     except AgentError as exc:
         return fail(request, url, exc)
+    track(request, sess, action="group.members", target=gdn, summary=f"Change members of {gdn}",
+          request={"method": "POST", "path": "/ad/group/members", "json": {"groupDn": gdn, "add": add, "remove": remove}},
+          before={"add": add, "remove": remove}, inverse=http_inv("POST", "/ad/group/members", None, {"groupDn": gdn, "add": remove, "remove": add}))
     return ok(request, url, "Members updated.")
 
 
@@ -707,6 +811,10 @@ async def gpo_create(request: Request, sess: Session = Depends(require_admin)):
         g = await call(request, sess, "POST", "/gpo", json={"name": name, "comment": (form.get("comment") or "").strip()})
     except AgentError as exc:
         return fail(request, "/gpo", exc)
+    if g and g.get("id"):
+        track(request, sess, action="gpo.create", target=f"gpo:{g['id']}", summary=f"Create policy {name}",
+              request={"method": "POST", "path": "/gpo", "json": {"name": name}}, after={"id": g["id"]},
+              inverse=http_inv("DELETE", f"/gpo/{quote(g['id'], safe='')}"), redo=None)
     return ok(request, f"/gpo/{(g or {}).get('id', '')}" if g and g.get("id") else "/gpo", "Created {name}.", name=name)
 
 
@@ -864,6 +972,7 @@ async def gpo_update(gid: str, request: Request, sess: Session = Depends(require
             body[k] = form.get(k).strip()
     if form.get("status") in GPO_STATUS:
         body["status"] = form.get("status")
+    snap = await gpo_snapshot(request, sess, gid)
     try:
         await call(request, sess, "PATCH", url, json=body)
         if form.get("wmiFilter") is not None:
@@ -871,7 +980,14 @@ async def gpo_update(gid: str, request: Request, sess: Session = Depends(require
             await call(request, sess, "PUT", f"{url}/wmifilter", json={"name": name})
     except AgentError as exc:
         return fail(request, url, exc)
+    track_gpo(request, sess, gid, snap, "gpo.update", "Edit policy properties", {"method": "PATCH", "path": url, "json": body})
     return ok(request, url, "Saved.")
+
+
+def track_gpo(request: Request, sess: Session, gid: str, snap: str | None, action: str, summary: str, req: dict) -> None:
+    track(request, sess, action=action, target=f"gpo:{gid}", summary=f"{summary} ({gid})", request=req,
+          before={"backupId": snap}, inverse={"kind": "gpo-restore", "gpoId": gid, "backupId": snap} if snap else None,
+          undoable=bool(snap), reason="" if snap else "The policy could not be backed up before the change.")
 
 
 @router.post("/gpo/{gid}/delete", dependencies=CSRF)
@@ -881,10 +997,15 @@ async def gpo_delete(gid: str, request: Request, sess: Session = Depends(require
     name = g.get("displayName") or gid
     if not super_ok(request, form, "delete-gpo", name):
         return fail(request, f"/gpo/{quote(gid, safe='')}", "Deletion was not confirmed. Type the name and hold the button.")
+    snap = await gpo_snapshot(request, sess, gid)
     try:
         await call(request, sess, "DELETE", f"/gpo/{quote(gid, safe='')}")
     except AgentError as exc:
         return fail(request, f"/gpo/{quote(gid, safe='')}", exc)
+    track(request, sess, action="gpo.delete", target=f"gpo:{gid}", summary=f"Delete policy {name}",
+          request={"method": "DELETE", "path": f"/gpo/{gid}"}, before={"backupId": snap, "name": name},
+          inverse=http_inv("POST", "/gpo/import", None, {"backupId": snap, "targetName": name, "createIfNeeded": True}) if snap else None,
+          undoable=bool(snap), reason="" if snap else "The policy could not be backed up first. Links are not restored by undo.")
     return ok(request, "/gpo", "Deleted {name}.", name=name)
 
 
@@ -906,6 +1027,7 @@ async def gpo_links(gid: str, request: Request, sess: Session = Depends(require_
     if not target:
         return fail(request, url, "Enter the target distinguished name.")
     path = f"/gpo/{quote(gid, safe='')}/links"
+    snap = await gpo_snapshot(request, sess, gid)
     try:
         if op == "remove":
             await call(request, sess, "DELETE", path, params={"target": target})
@@ -919,6 +1041,7 @@ async def gpo_links(gid: str, request: Request, sess: Session = Depends(require_
             await call(request, sess, "POST" if op == "add" else "PATCH", path, json=body)
     except AgentError as exc:
         return fail(request, url, exc)
+    track_gpo(request, sess, gid, snap, "gpo.links", f"Change link {target}", {"method": op, "path": path, "json": {"target": target}})
     return ok(request, url, "Links updated.")
 
 
@@ -938,14 +1061,17 @@ async def gpo_registry(gid: str, request: Request, sess: Session = Depends(requi
     url = f"/gpo/{quote(gid, safe='')}?tab=" + ("preferences" if pref else "registry")
     path = f"/gpo/{quote(gid, safe='')}/" + ("preferences/registry" if pref else "registry")
     key, name = (form.get("key") or "").strip(), (form.get("valueName") or "").strip()
+    snap = None
     if not re.match(r"^(HKLM|HKCU|HKEY_LOCAL_MACHINE|HKEY_CURRENT_USER)\\", key, re.IGNORECASE):
         return fail(request, url, "The key must start with HKLM\\ or HKCU\\.")
+    snap = await gpo_snapshot(request, sess, gid)
     try:
         if form.get("op") == "delete":
             params = {"key": key, "valueName": name}
             if pref:
                 params["context"] = form.get("context") or "Computer"
             await call(request, sess, "DELETE", path, params=params)
+            track_gpo(request, sess, gid, snap, "gpo.registry", f"Remove {key}\\{name}", {"method": "DELETE", "path": path, "params": params})
             return ok(request, url, "Value removed.")
         type_ = form.get("type") or "String"
         if type_ not in REG_TYPES:
@@ -961,6 +1087,7 @@ async def gpo_registry(gid: str, request: Request, sess: Session = Depends(requi
         await call(request, sess, "PUT", path, json=body)
     except AgentError as exc:
         return fail(request, url, exc)
+    track_gpo(request, sess, gid, snap, "gpo.registry", f"Set {key}\\{name}", {"method": "PUT", "path": path, "json": body})
     return ok(request, url, "Value saved.")
 
 
@@ -974,10 +1101,12 @@ async def gpo_permissions(gid: str, request: Request, sess: Session = Depends(re
             "replace": form.get("replace") == "on"}
     if not body["trustee"]:
         return fail(request, url, "Enter a user, group or computer name.")
+    snap = await gpo_snapshot(request, sess, gid)
     try:
         await call(request, sess, "PUT", f"/gpo/{quote(gid, safe='')}/permissions", json=body)
     except AgentError as exc:
         return fail(request, url, exc)
+    track_gpo(request, sess, gid, snap, "gpo.permissions", f"Permission for {body['trustee']}", {"method": "PUT", "path": "permissions", "json": body})
     return ok(request, url, "Permissions updated.")
 
 
@@ -1117,10 +1246,12 @@ async def gpo_admx_save(gid: str, pid: str, request: Request, sess: Session = De
         values, err = admx_values(pol, form)
         if err:
             return redirect(request, url, ("error", err))
+    snap = await gpo_snapshot(request, sess, gid)
     try:
         await call(request, sess, "PUT", f"/gpo/{quote(gid, safe='')}/admx/{quote(pid, safe='')}", json={"class": cls, "state": state, "values": values})
     except AgentError as exc:
         return fail(request, url, exc)
+    track_gpo(request, sess, gid, snap, "gpo.admx", f"{pid} set to {state}", {"method": "PUT", "path": f"admx/{pid}", "json": {"class": cls, "state": state, "values": values}})
     return ok(request, url, "Policy saved.")
 
 
@@ -1250,10 +1381,12 @@ async def gpo_security_save(gid: str, request: Request, sess: Session = Depends(
     new_sec = (form.get("new_section") or "").strip()
     if new_sec and re.fullmatch(r"[A-Za-z][A-Za-z ]{1,60}", new_sec):
         sections.setdefault(new_sec, {})
+    snap = await gpo_snapshot(request, sess, gid)
     try:
         await call(request, sess, "PUT", url, json={"sections": sections})
     except AgentError as exc:
         return fail(request, url, exc)
+    track_gpo(request, sess, gid, snap, "gpo.security", "Security settings", {"method": "PUT", "path": url, "json": {"sections": sections}})
     return ok(request, url, "Security settings saved.")
 
 
@@ -1474,10 +1607,21 @@ async def wifi_save(request: Request, sess: Session = Depends(require_admin)):
     body = {"ssid": ssid, "auth": auth, "hidden": form.get("hidden") == "on", "autoConnect": form.get("autoConnect") == "on"}
     if key:
         body["key"] = key
+    existing = None
     try:
+        existing = next((w for w in await call(request, sess, "GET", "/wifi") or [] if w.get("id") == pid), None)
         await call(request, sess, "PUT", f"/wifi/{quote(pid, safe='')}", json=body)
     except AgentError as exc:
         return fail(request, "/wifi", exc)
+    if existing is None:
+        inv, reason = http_inv("DELETE", f"/wifi/{quote(pid, safe='')}"), ""
+    elif key:
+        inv, reason = None, "The previous Wi-Fi key is never stored, so a key change cannot be undone."
+    else:
+        inv, reason = http_inv("PUT", f"/wifi/{quote(pid, safe='')}", None, {k: existing.get(k) for k in ("ssid", "auth", "hidden", "autoConnect")}), ""
+    track(request, sess, action="wifi.save", target=f"wifi:{pid}", summary=f"Save Wi-Fi profile {ssid}",
+          request={"method": "PUT", "path": f"/wifi/{pid}", "json": body}, before=existing, inverse=inv,
+          undoable=inv is not None, reason=reason)
     return ok(request, "/wifi", "Saved {name}.", name=ssid)
 
 
@@ -1490,6 +1634,9 @@ async def wifi_delete(pid: str, request: Request, sess: Session = Depends(requir
         await call(request, sess, "DELETE", f"/wifi/{quote(pid, safe='')}")
     except AgentError as exc:
         return fail(request, "/wifi", exc)
+    track(request, sess, action="wifi.delete", target=f"wifi:{pid}", summary=f"Delete Wi-Fi profile {form.get('ssid') or pid}",
+          request={"method": "DELETE", "path": f"/wifi/{pid}"}, undoable=False,
+          reason="The Wi-Fi key is never stored, so a deleted profile cannot be restored. Import it again instead.")
     return ok(request, "/wifi", "Deleted {name}.", name=form.get("ssid") or pid)
 
 
@@ -1564,10 +1711,24 @@ async def script_save(request: Request, sess: Session = Depends(require_admin)):
         return fail(request, "/scripts", "Script names may use letters, digits, dot, dash and underscore, up to 64 characters, ending in .ps1 or .cmd.")
     if len((form.get("content") or "").encode()) > 1024 * 1024:
         return fail(request, "/scripts", "Scripts are limited to 1 MB.")
+    spath = f"/scripts/{kind}/{quote(name, safe='')}"
     try:
-        await call(request, sess, "PUT", f"/scripts/{kind}/{quote(name, safe='')}", json={"content": form.get("content") or ""})
+        old = (await call(request, sess, "GET", spath) or {}).get("content")
+    except AgentError:
+        old = None
+    new = form.get("content") or ""
+    try:
+        await call(request, sess, "PUT", spath, json={"content": new})
     except AgentError as exc:
-        return fail(request, f"/scripts/{kind}/{quote(name, safe='')}", exc)
+        return fail(request, spath, exc)
+    hist = request.app.state.history
+    if old is not None and not hist.list(f"script-{kind}", name):
+        hist.record(f"script-{kind}", name, old, "(before history)")
+    hist.record(f"script-{kind}", name, new, str(sess.user.get("sam") or "admin"))
+    track(request, sess, action="script.save", target=f"script:{kind}/{name}", summary=f"Save {kind} script {name}",
+          request={"method": "PUT", "path": spath, "json": {"content": new}}, before=old, after=new,
+          inverse=http_inv("PUT", spath, None, {"content": old}) if old is not None else http_inv("DELETE", spath),
+          check=check_spec(spath, None, "content"))
     return ok(request, f"/scripts/{kind}/{quote(name, safe='')}", "Saved {name}.", name=name)
 
 
@@ -1578,10 +1739,15 @@ async def script_delete(kind: str, name: str, request: Request, sess: Session = 
         raise HTTPException(404)
     if not super_ok(request, form, "delete-script", name):
         return fail(request, f"/scripts/{kind}/{quote(name, safe='')}", "Deletion was not confirmed. Type the name and hold the button.")
+    spath = f"/scripts/{kind}/{quote(name, safe='')}"
     try:
-        await call(request, sess, "DELETE", f"/scripts/{kind}/{quote(name, safe='')}")
+        old = (await call(request, sess, "GET", spath) or {}).get("content")
+        await call(request, sess, "DELETE", spath)
     except AgentError as exc:
         return fail(request, "/scripts", exc)
+    track(request, sess, action="script.delete", target=f"script:{kind}/{name}", summary=f"Delete {kind} script {name}",
+          request={"method": "DELETE", "path": spath}, before=old, after=None,
+          inverse=http_inv("PUT", spath, None, {"content": old or ""}))
     return ok(request, "/scripts", "Deleted {name}.", name=name)
 
 
@@ -1644,6 +1810,10 @@ async def allowlist_save(request: Request, sess: Session = Depends(require_admin
         await call(request, sess, "PUT", "/allowlist", json={"enabled": enabled, "apps": uniq})
     except AgentError as exc:
         return fail(request, "/allowlist", exc)
+    track(request, sess, action="allowlist.update", target="allowlist", summary="Edit the app allowlist",
+          request={"method": "PUT", "path": "/allowlist", "json": {"enabled": enabled, "apps": uniq}},
+          before=data, after={"enabled": enabled, "apps": uniq}, inverse=http_inv("PUT", "/allowlist", None, data),
+          check=check_spec("/allowlist"))
     return ok(request, "/allowlist", "Allowlist saved.")
 
 
@@ -1678,6 +1848,15 @@ async def settings_save(request: Request, sess: Session = Depends(require_admin)
         await call(request, sess, "PUT", "/settings", json=clean)
     except AgentError as exc:
         return fail(request, "/settings", exc)
+    from .history import settings_text
+
+    hist = request.app.state.history
+    if not hist.list("settings", "settings"):
+        hist.record("settings", "settings", settings_text(current), "(before history)")
+    hist.record("settings", "settings", settings_text(clean), str(sess.user.get("sam") or "admin"))
+    track(request, sess, action="settings.update", target="settings", summary="Edit TempDesk settings",
+          request={"method": "PUT", "path": "/settings", "json": clean}, before=current, after=clean,
+          inverse=http_inv("PUT", "/settings", None, current), check=check_spec("/settings"))
     return ok(request, "/settings", "Settings saved.")
 
 

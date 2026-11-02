@@ -27,6 +27,8 @@ from .security import (
     SuperConfirm,
     is_https,
 )
+from .history import History
+from .undo import Journal
 from .vocab import Vocabulary
 from .web import install_error_handlers
 
@@ -79,6 +81,8 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
     app.state.login_limiter = RateLimiter(settings.login_limit, settings.login_window_seconds)
     app.state.sessions = SessionStore(settings.session_secret)
     app.state.vocab = Vocabulary(settings.data_dir)
+    app.state.history = History(settings.data_dir)
+    app.state.journal = Journal(settings.data_dir)
 
     @app.middleware("http")
     async def headers_mw(request: Request, call_next):
@@ -122,11 +126,18 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
         return FileResponse(p, media_type=ctype, headers={"Cache-Control": "no-cache"})
 
     from .common_routes import router as common_router
+    from .common_routes import tools_router
 
     app.include_router(common_router)
+    app.include_router(tools_router)
     if settings.mode == "admin":
         from .admin_routes import router as admin_router
 
+        from .io_routes import router as io_router
+        from .undo_routes import router as undo_router
+
+        app.include_router(io_router)
+        app.include_router(undo_router)
         app.include_router(admin_router)
         try:
             from . import server_routes  # built separately; optional

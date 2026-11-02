@@ -314,6 +314,8 @@ def install_error_handlers(app) -> None:
 
     @app.exception_handler(HTTPException)
     async def _http(request: Request, exc: HTTPException):
+        if exc.status_code in (302, 303) and exc.headers and exc.headers.get("Location"):
+            return RedirectResponse(exc.headers["Location"], status_code=303)
         if exc.status_code == 403 and exc.detail == "csrf":
             return await error_page(request, 403, "This form has expired",
                                     "For your safety the form could not be accepted. Go back, reload the page and try again.")

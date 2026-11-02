@@ -202,3 +202,70 @@ def set_gpo_permission(sddl: str, sid: str, permission: str, replace: bool = Tru
     aces = aces[:idx] + [n for n in new if n.upper() not in {x.upper() for x in aces}] + aces[idx:]
     parts["D"] = build_dacl(flags, aces)
     return join(parts)
+
+
+def inherit_sddl(parent_sddl: str, is_dir: bool) -> str:
+    """Compute the SDDL a new child object gets from its parent folder,
+    following Windows inheritance rules for the DACL:
+
+    files take ACEs with OI; folders take ACEs with CI (keeping OI/CI so
+    they propagate further, unless NP) and ACEs with only OI as inherit
+    only. Inherited ACEs get the ID flag. CREATOR OWNER / CREATOR GROUP
+    entries are replaced by the owner / group for the effective ACE.
+    Owner and group are copied from the parent."""
+    parts = split(parent_sddl)
+    _, aces = dacl_flags_and_aces(parts.get("D", ""))
+    owner, group = parts.get("O"), parts.get("G")
+    out = []
+    for a in aces:
+        f = ace_fields(a)
+        flags = f[1].upper()
+        fl = {flags[i:i + 2] for i in range(0, len(flags), 2)}
+        oi, ci, np_ = "OI" in fl, "CI" in fl, "NP" in fl
+        if not (oi or ci):
+            continue
+        if not is_dir:
+            if not oi:
+                continue
+            new_fl = ["ID"]
+            g = list(f)
+            if g[5].upper() == "CO" and owner:
+                g[5] = owner
+            elif g[5].upper() == "CG" and group:
+                g[5] = group
+            g[1] = "".join(new_fl)
+            out.append(";".join(g))
+            continue
+        # directory
+        if ci:
+            effective = list(f)
+            if np_:
+                effective[1] = "ID"
+            else:
+                keep = [x for x in ("OI", "CI") if x in fl]
+                effective[1] = "".join(keep) + "ID"
+            if effective[5].upper() in ("CO", "CG"):
+                # effective ACE for the creator plus an inherit only template
+                sub = owner if effective[5].upper() == "CO" else group
+                if sub:
+                    e2 = list(f)
+                    e2[5] = sub
+                    e2[1] = "ID"
+                    out.append(";".join(e2))
+                if not np_:
+                    t = list(f)
+                    t[1] = "".join(x for x in ("OI", "CI") if x in fl) + "IOID"
+                    out.append(";".join(t))
+                continue
+            out.append(";".join(effective))
+        elif oi and not np_:
+            t = list(f)
+            t[1] = "OIIOID"
+            out.append(";".join(t))
+    res = {}
+    if owner:
+        res["O"] = owner
+    if group:
+        res["G"] = group
+    res["D"] = "AI" + "".join(f"({a})" for a in out)
+    return join(res)
