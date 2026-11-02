@@ -40,7 +40,7 @@ jobs:
       - name: Website and answer file tests
         run: |
           if [ -d site/tests ] && ls site/tests/*.test.* >/dev/null 2>&1; then node --test site/tests/; fi
-          if [ -d answerfile/tests ]; then node --test answerfile/tests/; fi
+          if [ -d answerfile/tests ]; then node --test answerfile/tests/*.test.mjs; fi
       - name: Desktop app tests
         working-directory: deployer/app
         run: |

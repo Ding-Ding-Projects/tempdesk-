@@ -4,10 +4,17 @@
     file has a syntax error. Works on Windows PowerShell 5.1 and PowerShell 7.
 #>
 [CmdletBinding()]
-param([string] $Root = (Split-Path -Parent $PSScriptRoot))
+param([string] $Root)
 $ErrorActionPreference = 'Stop'
+# $PSScriptRoot can be empty in a param default on Windows PowerShell 5.1, so resolve it here.
+if (-not $Root) {
+    $here = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+    $Root = Split-Path -Parent $here
+}
 $skip = '\\(node_modules|\.tools|\.bundle|\.git|bin|output)\\|/(node_modules|\.tools|\.bundle|\.git|bin|output)/'
-$files = Get-ChildItem -LiteralPath $Root -Recurse -File -Include *.ps1, *.psm1 | Where-Object { $_.FullName -notmatch $skip }
+# Windows PowerShell 5.1 ignores -Include together with -LiteralPath, so filter by extension explicitly.
+$files = Get-ChildItem -LiteralPath $Root -Recurse -File |
+    Where-Object { ($_.Extension -eq '.ps1' -or $_.Extension -eq '.psm1') -and $_.FullName -notmatch $skip }
 $bad = 0
 foreach ($f in $files) {
     $tokens = $null; $errors = $null
