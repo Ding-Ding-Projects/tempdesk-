@@ -81,7 +81,7 @@ function main() {
   // The canvas modules are ES modules; the classic scripts load as globals.
   fs.writeFileSync(path.join(VENDOR, 'package.json'), '{ "type": "commonjs" }\n');
   if (fs.existsSync(path.join(VENDOR, 'canvas'))) fs.writeFileSync(path.join(VENDOR, 'canvas', 'package.json'), '{ "type": "module" }\n');
-  copy(path.join(REPO, 'deployer', 'i18n'), path.join(VENDOR, 'i18n'), true);
+  for (const f of ['en.json', 'zh-HK.json']) copy(path.join(REPO, 'deployer', 'i18n', f), path.join(VENDOR, 'i18n', f), true);
   copy(path.join(REPO, 'CHANGELOG.md'), path.join(VENDOR, 'CHANGELOG.md'), false);
 
   // Provenance baked at build time.
