@@ -13,3 +13,8 @@ node_modules/
 # TempDesk Deployer build tools and staging (scripts/download-dependencies.ps1, prepare-bundle.js)
 .tools/
 .bundle/
+
+# Runtime state databases (never commit)
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal

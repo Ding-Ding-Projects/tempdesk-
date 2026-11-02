@@ -1,6 +1,0 @@
-{% extends "layouts/admin.html" %}
-{% block title %}{{ ta('Changelog') }}{% endblock %}
-{% block content %}
-<h1>{{ t('Changelog') }}</h1>
-<article class="card prose">{% if html %}{{ html }}{% else %}<p class="muted">{{ t('No changelog is bundled in this image.') }}</p>{% endif %}</article>
-{% endblock %}
