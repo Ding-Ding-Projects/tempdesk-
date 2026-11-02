@@ -1,0 +1,81 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ ta("Files") }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/css/server.css">
+{% set parts = (path or "").replace("/","\\").split("\\") if path else [] %}
+<div class="srv">
+  <div class="srv-head"><h1>{{ t("Files") }}</h1></div>
+  {% if error %}<div class="srv-err">{{ error }}</div>{% endif %}
+
+  <div class="srv-crumbs">
+    <a href="/server/files">{{ t("Drives") }}</a>
+    {% set acc = [] %}
+    {% for p in parts if p %}
+      {% set _ = acc.append(p) %}
+      <span class="sep">\</span><a href="/server/files?path={{ (acc | join('\\')) | urlencode }}\">{{ p }}</a>
+    {% endfor %}
+  </div>
+
+  {% if path %}
+  <form id="srv-upload-form" class="srv-toolbar" method="post" action="/server/files/upload?path={{ path | urlencode }}" enctype="multipart/form-data">
+    <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+    <input type="hidden" name="path" value="{{ path }}">
+    <input type="file" name="file" required aria-label="{{ ta('File to upload') }}">
+    <button class="srv-btn primary" type="submit">{{ t("Upload") }}</button>
+    <span id="srv-upload-status" class="srv-note"></span>
+    <div id="srv-upload-bar" class="srv-progress" hidden style="flex:1 1 120px"><span></span></div>
+  </form>
+  <form method="post" action="/server/files/mkdir" class="srv-toolbar">
+    <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+    <input class="srv-search" name="path" value="{{ path }}" aria-label="{{ ta('New folder path') }}" style="flex:1 1 220px">
+    <button class="srv-btn" type="submit">{{ t("New folder") }}</button>
+  </form>
+  {% endif %}
+
+  <div data-srv-table>
+    <div class="srv-toolbar">
+      <input class="srv-search" data-srv-search placeholder="{{ ta('Search') }}">
+      <label class="srv-toggle"><input type="checkbox" data-srv-regex> {{ t("Regex") }}</label>
+      <span data-srv-regex-error class="srv-err" role="alert" style="padding:4px 8px"></span>
+    </div>
+    <div class="srv-tablewrap">
+      <table class="srv-table">
+        <thead><tr>
+          <th data-col="name">{{ t("Name") }}</th>
+          <th data-col="size">{{ t("Size") }}</th>
+          <th data-col="modified">{{ t("Modified") }}</th>
+          <th data-no-sort>{{ t("Actions") }}</th>
+        </tr></thead>
+        <tbody>
+        {% for e in (listing.entries if listing else []) %}
+          <tr data-ctx>
+            <td>
+              {% if e.isDirectory %}
+              <a href="/server/files?path={{ e.path | urlencode }}{{ '\\' if not e.path.endswith('\\') else '' }}">&#128193; {{ e.name }}</a>
+              {% else %}&#128196; {{ e.name }}{% endif %}
+            </td>
+            <td data-sort="{{ e.sizeBytes or 0 }}">{% if e.isDirectory %}&mdash;{% else %}{{ ((e.sizeBytes or 0)/1024) | round(1) }} KB{% endif %}</td>
+            <td>{{ e.modified }}</td>
+            <td>
+              {% if not e.isDirectory %}
+              <a class="srv-btn" href="/server/files/download?path={{ e.path | urlencode }}">{{ t("Download") }}</a>
+              {% endif %}
+              <form method="post" action="/server/files/delete" class="srv-inline">
+                <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+                <input type="hidden" name="path" value="{{ e.path }}">
+                <input type="hidden" name="confirm_name" value="{{ e.name }}">
+                <button class="srv-btn danger" type="submit">{{ t("Delete") }}</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/server-table.js"></script>
+<script src="/static/js/server-files.js"></script>
+{% endblock %}

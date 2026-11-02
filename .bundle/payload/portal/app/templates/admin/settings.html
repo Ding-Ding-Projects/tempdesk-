@@ -1,0 +1,111 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import csrf, info with context %}
+{% block title %}{{ ta('Settings') }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ t('Settings') }}</h1>
+  <a class="btn" href="/settings/export" download>{{ t('Export settings') }}</a><a class="btn" href="/history/settings">{{ t('Version history') }}</a></div>
+<div class="field" style="max-width:480px"><label for="settings-search">{{ t('Search settings') }}</label><input id="settings-search" type="search" data-settings-search placeholder="{{ ta('Type to filter settings') }}"></div>
+<p class="subtle" data-settings-count aria-live="polite"></p>
+
+<form method="post" action="/settings" class="stack" novalidate>{{ csrf() }}
+<section class="card rise" data-setting-section><h2>{{ t('TempDesk settings') }}</h2>
+  {% if doc_error %}<p class="alert error" role="alert">{{ doc_error }}</p>{% endif %}
+  {% if errors %}<p class="alert error" role="alert">{{ t('Some settings need attention. Nothing was saved.') }}</p>{% endif %}
+  <div class="form-grid">
+  {% for name, kind, label, help, extra in fields %}{% set v = doc.get(name) %}{% set err = errors.get(name) %}
+    {% if kind == 'choices' %}
+    <fieldset class="field" style="grid-column:1/-1" data-setting="{{ ta(label) }} {{ ta(help) }}"><legend>{{ t(label) }}</legend><span class="hint">{{ t(help) }}</span>
+      {% if err %}<span class="error-text" role="alert">{{ err }}</span>{% endif %}
+      <div class="stack tight" data-rows>
+      {% for c in v or [] %}<div class="cluster" data-row>
+        <input name="exp_id" value="{{ c.id }}" aria-label="{{ ta('Id') }}" placeholder="{{ ta('Id') }}" style="flex:0 1 110px"><input name="exp_label" value="{{ c.label }}" aria-label="{{ ta('Label') }}" placeholder="{{ ta('Label') }}" style="flex:1 1 180px">
+        <input name="exp_minutes" type="number" value="{{ c.minutes }}" min="0" aria-label="{{ ta('Minutes') }}" placeholder="{{ ta('Minutes') }}" style="flex:0 1 130px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div>{% endfor %}
+      </div>
+      <template data-row-template><div class="cluster" data-row><input name="exp_id" aria-label="{{ ta('Id') }}" placeholder="{{ ta('Id') }}" style="flex:0 1 110px"><input name="exp_label" aria-label="{{ ta('Label') }}" placeholder="{{ ta('Label') }}" style="flex:1 1 180px"><input name="exp_minutes" type="number" min="0" aria-label="{{ ta('Minutes') }}" placeholder="{{ ta('Minutes') }}" style="flex:0 1 130px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div></template>
+      <button type="button" class="btn sm tonal" data-add-template-row style="align-self:flex-start">{{ t('Add choice') }}</button>
+    </fieldset>
+    {% elif kind == 'bool' %}
+    <div class="field" data-setting="{{ ta(label) }} {{ ta(help) }}"><label class="check"><input type="checkbox" name="{{ name }}" {% if v %}checked{% endif %}> {{ t(label) }}</label><span class="hint">{{ t(help) }}</span></div>
+    {% elif kind == 'textarea' %}
+    <div class="field" style="grid-column:1/-1" data-setting="{{ ta(label) }} {{ ta(help) }}"><label for="s-{{ name }}">{{ t(label) }}</label><textarea id="s-{{ name }}" name="{{ name }}" rows="3" {% if err %}aria-invalid="true"{% endif %}>{{ v or '' }}</textarea><span class="hint">{{ t(help) }}</span>{% if err %}<span class="error-text">{{ err }}</span>{% endif %}</div>
+    {% else %}
+    <div class="field" data-setting="{{ ta(label) }} {{ ta(help) }}"><label for="s-{{ name }}">{{ t(label) }}</label>
+      <input id="s-{{ name }}" name="{{ name }}" value="{{ v if v is not none else '' }}" {% if kind == 'int' %}type="number" min="{{ extra.min }}" max="{{ extra.max }}" inputmode="numeric"{% endif %} {% if err %}aria-invalid="true" aria-describedby="e-{{ name }}"{% endif %} spellcheck="false">
+      <span class="hint">{{ t(help) }}</span>{% if err %}<span class="error-text" id="e-{{ name }}">{{ err }}</span>{% endif %}</div>
+    {% endif %}
+  {% endfor %}
+  </div>
+  <p class="hint">{{ t('Every save is kept in the version history and can be undone.') }}</p>
+  <div class="form-actions"><button class="btn filled" type="submit">{{ t('Save settings') }}</button></div>
+</section>
+</form>
+
+<section class="card rise" id="import" data-setting-section data-setting="{{ ta('Import settings') }} json"><h2>{{ t('Import settings') }}</h2>
+  <p class="hint">{{ t('Upload a settings JSON file. You see a preview of every change before anything is saved, and an invalid file changes nothing.') }}</p>
+  <form method="post" action="/settings/import" enctype="multipart/form-data" class="cluster">{{ csrf() }}
+    <label class="sr-only" for="si">{{ t('Settings file') }}</label><input id="si" type="file" name="file" accept=".json,application/json" required><button class="btn tonal" type="submit">{{ t('Preview import') }}</button></form>
+</section>
+
+<section class="card rise" data-setting-section data-setting="{{ ta('Display') }} {{ ta('Language') }} {{ ta('Motion') }} {{ ta('Theme') }} {{ ta('Text size') }} {{ ta('Density') }} {{ ta('High contrast') }} {{ ta('Focus ring') }} {{ ta('Accent color') }} {{ ta('Corner roundness') }} {{ ta('Funny level') }} {{ ta('School mode') }}" id="appearance">
+  <h2>{{ t('Display and accessibility') }}</h2>
+  <p class="hint">{{ t('These choices are saved in this browser only.') }}</p>
+  <div class="form-grid">
+    <form method="post" action="/prefs" class="field" data-setting="{{ ta('Language') }}">{{ csrf() }}<input type="hidden" name="next" value="/settings#appearance">
+      <label for="p-lang">{{ t('Language') }}</label>
+      <select id="p-lang" name="lang" data-autosubmit {% if school %}disabled{% endif %}>{% for k, v in lang_modes.items() %}<option value="{{ k }}" {% if tr.mode == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+      <span class="hint">{{ t('English, Cantonese (Traditional Chinese) or both lines together.') }}</span></form>
+    <div class="field" data-setting="{{ ta('Theme') }}"><label for="p-theme">{{ t('Theme') }}</label><select id="p-theme" data-pref="theme"><option value="system">{{ t('System') }}</option><option value="dark">{{ t('Dark') }}</option><option value="light">{{ t('Light') }}</option></select><span class="hint">{{ t('Dark is the default look.') }}</span></div>
+    <div class="field" data-advanced data-setting="{{ ta('Motion') }}"><label for="p-motion">{{ t('Motion') }} {{ info('Reduced uses short fades only. Off turns every animation off. Follow the system uses your device setting.') }}</label><select id="p-motion" data-pref="motion"><option value="system">{{ t('Follow the system') }}</option><option value="full">{{ t('Full') }}</option><option value="reduced">{{ t('Reduced (fades only)') }}</option><option value="off">{{ t('Off') }}</option></select><span class="hint">{{ t('Controls page transitions and other animation.') }}</span></div>
+    <div class="field" data-setting="{{ ta('Text size') }}"><label for="p-text">{{ t('Text size') }} <output data-out-for="p-text"></output></label><input id="p-text" type="range" min="90" max="160" step="5" data-pref="text" value="100"><span class="hint">{{ t('From 90 to 160 percent.') }}</span></div>
+    <div class="field" data-advanced data-setting="{{ ta('Density') }}"><label for="p-density">{{ t('Density') }} {{ info('Compact uses less padding so more rows fit on screen.') }}</label><select id="p-density" data-pref="density"><option value="comfortable">{{ t('Comfortable') }}</option><option value="compact">{{ t('Compact') }}</option></select><span class="hint">{{ t('Compact fits more rows on screen.') }}</span></div>
+    <div class="field" data-advanced data-setting="{{ ta('High contrast') }}"><label class="check"><input type="checkbox" data-pref="contrast" value="high"> {{ t('High contrast') }}</label> {{ info('Makes outlines and secondary text stronger for better legibility.') }}<span class="hint">{{ t('Stronger outlines and text.') }}</span></div>
+    <div class="field" data-advanced data-setting="{{ ta('Focus ring') }}"><label class="check"><input type="checkbox" data-pref="focus" value="always"> {{ t('Always show the focus ring') }}</label> {{ info('Shows the keyboard focus ring after mouse clicks too, not only when using the keyboard.') }}<span class="hint">{{ t('Also shows it after mouse clicks.') }}</span></div>
+    <div class="field" data-setting="{{ ta('Accent color') }} {{ ta('Color picker') }} {{ ta('Hue') }}" data-advanced style="grid-column:1/-1"><span style="font-weight:600">{{ t('Accent color') }}</span> {{ info('Drag on the ring to pick a hue and in the square for saturation and brightness, or type a hex or RGB value. Arrow keys adjust the focused control; hold Shift for bigger steps. The check below compares the color with the page background.') }}
+      <input type="hidden" id="p-accent" data-pref="accent" value="#7cf3e6">
+      <div data-colorpicker data-target="#p-accent" role="group" aria-label="{{ ta('Color picker') }}"></div>
+      <button type="button" class="btn sm text" data-accent-reset style="align-self:flex-start">{{ t('Reset') }}</button></div>
+    <div class="field" data-advanced data-setting="{{ ta('Corner roundness') }}"><label for="p-radius">{{ t('Corner roundness') }} <output data-out-for="p-radius"></output> {{ info('How rounded corners are on cards, buttons and fields.') }}</label><input id="p-radius" type="range" min="0" max="150" step="10" data-pref="radius" value="100"><span class="hint">{{ t('0 is square corners, 100 is the default.') }}</span></div>
+    {% if not school %}
+    <form method="post" action="/prefs" class="field" data-setting="{{ ta('Funny level') }}">{{ csrf() }}<input type="hidden" name="next" value="/settings#appearance">
+      <label for="p-fun">{{ t('Funny level') }} <output>{{ fun }}</output></label><input id="p-fun" type="range" min="0" max="3" step="1" name="fun" value="{{ fun }}" data-autosubmit-change>
+      <span class="hint">{{ t('0 is serious, 3 is playful. Errors and security messages always stay serious.') }}</span></form>
+    {% endif %}
+    <div class="field" data-setting="{{ ta('School mode') }}" id="school"><span style="font-weight:600">{{ t('School mode') }}</span>
+      <p class="hint">{{ t('Forces English and hides the funny level, personal wording and playful extras. The PIN lock is a convenience for this browser, not a security control.') }}</p>
+      <div class="cluster"><label class="sr-only" for="school-pin">{{ t('PIN') }}</label><input id="school-pin" type="password" inputmode="numeric" maxlength="12" placeholder="{{ ta('PIN') }}" style="width:140px" autocomplete="off">
+        {% if school %}<button type="button" class="btn sm tonal" data-school="off">{{ t('Turn off school mode') }}</button>{% else %}<button type="button" class="btn sm tonal" data-school="on">{{ t('Turn on school mode') }}</button>{% endif %}</div>
+      <label for="school-name" class="small">{{ t('Name shown for this mode') }}</label><input id="school-name" data-school-name maxlength="40" placeholder="{{ ta('School mode') }}"></div>
+  </div>
+</section>
+
+<section class="card rise" data-setting-section data-setting="{{ ta('Organization logo') }}" id="logo"><h2>{{ t('Organization logo') }}</h2>
+  <p class="hint">{{ t('Shown in the Admin console and on the guest portal. PNG, JPEG or WebP, up to 512 KB.') }}</p>
+  {% if has_logo %}<img src="/logo" alt="{{ ta('Current logo') }}" style="max-height:64px;border-radius:8px">{% endif %}
+  <form method="post" action="/settings/logo" enctype="multipart/form-data" class="cluster">{{ csrf() }}
+    <label class="sr-only" for="lf">{{ t('Logo image') }}</label><input id="lf" type="file" name="file" accept="image/png,image/jpeg,image/webp"><button class="btn tonal" type="submit">{{ t('Upload logo') }}</button>
+    {% if has_logo %}<button class="btn text" type="submit" name="op" value="clear">{{ t('Remove logo') }}</button>{% endif %}</form>
+</section>
+
+{% if not school %}
+<section class="card rise" id="wording" data-setting-section data-setting="{{ ta('Personal wording') }} {{ ta('Upload personal wording file') }} {{ ta('Replace personal wording file') }} {{ ta('Clear personal wording (restore original wording)') }} {{ ta('Personal wording status') }} vocabulary">
+  <h2>{{ t('Personal wording') }} {{ info('A JSON file that replaces ordinary words in the interface text with your own. It never changes data such as names, attributes or passwords, and never shows before sign-in.') }}</h2>
+  <div id="wording-status" class="alert {{ 'success' if wording.count else ('error' if wording.invalid else '') }}" role="status">
+    {% if wording.count %}<span class="grow">{{ t('Loaded: {count} entries.', count=wording.count) }}</span>
+    {% elif wording.invalid %}<span class="grow">{{ t('The stored file is not valid, so the original wording is used. Upload a new file or clear it.') }}</span>
+    {% else %}<span class="grow">{{ t('No file loaded. The original wording is used.') }}</span>{% endif %}
+  </div>
+  <p class="hint">{{ t('Format: {"schemaVersion":1,"entries":{"ordinary phrase":"replacement"}}. Up to 256 KiB. You can also drop the file anywhere in the Admin console.') }}</p>
+  <form method="post" action="/settings/wording" enctype="multipart/form-data" class="cluster">{{ csrf() }}
+    <label for="wf">{{ t('Replace personal wording file') if wording.count else t('Upload personal wording file') }}</label>
+    <input id="wf" type="file" name="file" accept=".json,application/json" required>
+    <button class="btn filled" type="submit">{{ t('Replace') if wording.count else t('Upload') }}</button></form>
+  {% if wording.count or wording.invalid %}
+  <form method="post" action="/settings/wording/clear" id="wording-clear" style="margin-top:12px">{{ csrf() }}<button class="btn danger" type="submit">{{ t('Clear personal wording (restore original wording)') }}</button></form>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="card rise" data-setting-section data-setting="{{ ta('First-run setup') }} onboarding wizard"><h2>{{ t('First-run setup') }}</h2>
+  <form method="post" action="/welcome/restart">{{ csrf() }}<button class="btn" type="submit">{{ t('Run the setup wizard again') }}</button></form></section>
+{% endblock %}
+{% block scripts %}{{ super() }}<script src="/static/js/colorpicker.js" defer></script>{% endblock %}

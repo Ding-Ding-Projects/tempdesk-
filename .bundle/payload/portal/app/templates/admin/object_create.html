@@ -1,0 +1,17 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import csrf, info with context %}
+{% block title %}{{ ta('Create directory object') }}{% endblock %}
+{% block content %}
+<h1>{{ t('Create directory object') }}</h1>
+<form class="card lg stack rise" method="post" action="/directory/create" style="max-width:760px">{{ csrf() }}
+  <div class="form-grid">
+    <div class="field"><label for="pd">{{ t('Parent container') }}</label><input id="pd" name="parentDn" value="{{ parent }}" required spellcheck="false"></div>
+    <div class="field" data-advanced><label for="oc">{{ t('Object class') }} {{ info('The LDAP class of the new object, for example user, group or organizationalUnit.') }}</label><input id="oc" name="objectClass" list="classes" required spellcheck="false">
+      <datalist id="classes">{% for c in ['user','group','organizationalUnit','contact','computer','container','inetOrgPerson'] %}<option value="{{ c }}">{% endfor %}</datalist></div>
+    <div class="field"><label for="rdn">{{ t('Name (RDN)') }} {{ info('The first part of the distinguished name, for example CN=Front desk or OU=Labs.') }}</label><input id="rdn" name="rdn" placeholder="CN=Example" required spellcheck="false"></div>
+  </div>
+  <div class="field" data-advanced><label for="attrs">{{ t('Attributes') }} {{ info('Extra attributes to set on creation. Required attributes for the class must be included.') }}</label><textarea id="attrs" name="attributes" class="mono" rows="6" placeholder="sAMAccountName=frontdesk&#10;description=Front desk PC"></textarea><span class="hint">{{ t('One name=value per line. Repeat a name for multiple values.') }}</span></div>
+  <p class="hint">{{ t('You can undo this afterwards.') }}</p>
+  <div class="form-actions"><button class="btn filled" type="submit">{{ t('Create') }}</button><a class="btn" href="/directory">{{ t('Cancel') }}</a></div>
+</form>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ ta("PowerShell") }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/css/server.css">
+<div class="srv" id="srv-console-root" data-csrf="{{ csrf_token }}">
+  <div class="srv-head"><h1>{{ t("PowerShell") }}</h1>
+    <span id="srv-console-timer" class="srv-timer"></span>
+    <button id="srv-console-clear" type="button" class="srv-btn">{{ t("Clear") }}</button>
+  </div>
+  <div class="srv-banner" role="alert">{{ t("Commands run as SYSTEM on the domain controller. Every command is recorded in the audit log.") }}</div>
+  <div id="srv-console-out" class="srv-console" aria-live="polite"></div>
+  <input id="srv-console-input" class="srv-console-input" disabled
+         placeholder="{{ ta('Type a command and press Enter. Up and Down arrows recall history.') }}"
+         autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="{{ ta('PowerShell command') }}">
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/server-console.js"></script>{% endblock %}

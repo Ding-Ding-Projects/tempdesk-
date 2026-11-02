@@ -1,0 +1,51 @@
+# TempDesk app streaming: Apache Guacamole with Encrypted JSON authentication only.
+#
+# Image tag 1.6.0 was confirmed on Docker Hub (guacamole/guacamole and
+# guacamole/guacd, published 2025-06-23) as the newest stable release.
+#
+# Authentication: only the JSON extension is enabled (no database, no LDAP).
+# The extension accepts nothing but a signed and encrypted "data" payload made
+# by the TempDesk portal with JSON_SECRET_KEY, so the normal Guacamole login
+# form is shown but cannot sign anyone in: there are no stored users or
+# passwords to check against.
+#
+# Start:  cp .env.example .env  (then set JSON_SECRET_KEY)  &&  docker compose up -d
+name: tempdesk-streaming
+
+services:
+  guacd:
+    image: guacamole/guacd:1.6.0
+    restart: unless-stopped
+    # No published port: only the guacamole container talks to guacd (4822)
+    # over the private compose network. guacd itself makes the RDP
+    # connections, so this host must reach the app hosts on TCP 3389.
+    networks: [guac]
+    environment:
+      GUACD_LOG_LEVEL: ${GUACD_LOG_LEVEL:-info}
+
+  guacamole:
+    image: guacamole/guacamole:1.6.0
+    restart: unless-stopped
+    depends_on: [guacd]
+    networks: [guac]
+    ports:
+      # LAN access. Put a TLS reverse proxy in front for anything beyond a
+      # trusted LAN (see README.md), and bind to one address with
+      # GUAC_BIND=192.168.1.10 if the host has several.
+      - "${GUAC_BIND:-0.0.0.0}:${GUAC_PORT:-8090}:8080"
+    environment:
+      GUACD_HOSTNAME: guacd
+      GUACD_PORT: "4822"
+      # Serve at http://host:8090/ instead of /guacamole/
+      WEBAPP_CONTEXT: ROOT
+      # Encrypted JSON auth (guacamole-auth-json). JSON_ENABLED installs the
+      # extension (1.6.x); JSON_SECRET_KEY is the 128-bit key as 32 hex digits
+      # and must match the portal's GUAC_JSON_SECRET_KEY.
+      JSON_ENABLED: "true"
+      JSON_SECRET_KEY: ${JSON_SECRET_KEY:?set JSON_SECRET_KEY in .env (32 hex digits)}
+      # Trust X-Forwarded-For only when a reverse proxy is in front.
+      REMOTE_IP_VALVE_ENABLED: ${REMOTE_IP_VALVE_ENABLED:-false}
+
+networks:
+  guac:
+    driver: bridge

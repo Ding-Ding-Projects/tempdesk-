@@ -1,0 +1,40 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ ta("Networks") }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/css/server.css">
+<div class="srv">
+  <div class="srv-head"><h1>{{ t("Networks") }}</h1></div>
+  {% if error %}<div class="srv-err">{{ error }}</div>{% endif %}
+  {% for a in adapters %}
+  <section class="srv-card">
+    <h2>{{ a.name }} <span class="srv-pill">{{ a.status }}</span></h2>
+    <div class="srv-sub">{{ a.description }} &middot; {{ a.macAddress }} &middot; {{ a.linkSpeed }}</div>
+    <form method="post" action="/server/network/adapters/{{ a.ifIndex }}" class="srv-form" style="max-width:420px;margin-top:10px">
+      <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+      <label class="srv-toggle"><input type="checkbox" name="dhcp"> {{ t("Use DHCP") }}</label>
+      <div class="srv-field"><label>{{ t("IPv4 address") }}</label><input name="ipAddress" placeholder="10.0.0.5"></div>
+      <div class="srv-field"><label>{{ t("Prefix length") }}</label><input name="prefixLength" placeholder="24"></div>
+      <div class="srv-field"><label>{{ t("Gateway") }}</label><input name="gateway"></div>
+      <div class="srv-field"><label>{{ t("DNS servers (one per line)") }}</label><textarea name="dnsServers"></textarea></div>
+      <button class="srv-btn primary" type="submit">{{ t("Apply") }}</button>
+    </form>
+  </section>
+  {% endfor %}
+  <section class="srv-card">
+    <h2>{{ t("Test a connection") }}</h2>
+    <form method="post" action="/server/network/test" class="srv-toolbar">
+      <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+      <input class="srv-search" name="target" placeholder="host or IP" required>
+      <input class="srv-search" name="port" placeholder="port" style="flex:0 1 100px">
+      <button class="srv-btn" type="submit">{{ t("Test") }}</button>
+    </form>
+  </section>
+  <section class="srv-card">
+    <h2>{{ t("Routes") }}</h2>
+    <div class="srv-tablewrap"><table class="srv-table">
+      <thead><tr><th>{{ t("Destination") }}</th><th>{{ t("Next hop") }}</th><th>{{ t("Metric") }}</th></tr></thead>
+      <tbody>{% for r in routes %}<tr data-ctx><td>{{ r.destinationPrefix }}</td><td>{{ r.nextHop }}</td><td>{{ r.routeMetric }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+</div>
+{% endblock %}

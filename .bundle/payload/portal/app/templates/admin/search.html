@@ -1,0 +1,28 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel, info with context %}
+{% block title %}{{ ta('LDAP search') }}{% endblock %}
+{% block content %}
+<h1>{{ t('LDAP search') }}</h1>
+<form class="card form-grid rise" method="get" action="/directory/search">
+  <div class="field"><label for="f">{{ t('Filter') }} {{ info('An LDAP filter such as (&(objectClass=user)(sAMAccountName=guest-*)).') }}</label><input id="f" name="filter" value="{{ f.get('filter', '') }}" required class="mono" spellcheck="false" placeholder="(objectClass=user)"></div>
+  <div class="field"><label for="b">{{ t('Search base') }} <span class="optional">({{ t('optional') }})</span></label><input id="b" name="base" value="{{ f.get('base', '') }}" spellcheck="false"></div>
+  <div class="field" data-advanced><label for="s">{{ t('Scope') }} {{ info('Subtree searches everything below the base. One level searches only direct children. Base only reads the base object.') }}</label><select id="s" name="scope">{% for s, l in [('sub','Subtree'),('one','One level'),('base','Base only')] %}<option value="{{ s }}" {% if f.get('scope') == s %}selected{% endif %}>{{ t(l) }}</option>{% endfor %}</select></div>
+  <div class="field" data-advanced><label for="a">{{ t('Attributes to show') }} {{ info('Comma separated attribute names to return and show as columns.') }}</label><input id="a" name="attrs" value="{{ attrs }}" spellcheck="false"></div>
+  <div class="field" data-advanced><label for="l">{{ t('Limit') }} {{ info('The most results to return. Large searches can be slow on big directories.') }}</label><input id="l" name="limit" type="number" min="1" max="5000" value="{{ f.get('limit', '500') }}"></div>
+  <div class="field" style="justify-content:flex-end"><button class="btn filled" type="submit">{{ t('Search') }}</button></div>
+</form>
+{% if error %}<p class="alert error" role="alert">{{ error }}</p>{% endif %}
+{% if results is not none %}
+<section class="card rise" style="--i:1">
+  {{ search_box(tv, regex_error, 'Filter results') }}
+  {% if tv.rows %}
+  <form method="post" action="/directory/bulk" data-bulk-form>{{ csrf() }}<input type="hidden" name="back" value="{{ request.url.path }}?{{ request.url.query }}">
+  <div class="table-wrap"><table><thead><tr>{{ sel_all() }}{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}</tr></thead>
+    <tbody>{% for r in tv.rows %}<tr data-ctx='[{"label":"{{ ta('Open') }}","href":"/directory/object?dn={{ r.dn|urlencode }}"}]'>{{ sel(r.dn, r.dn) }}<td class="mono small break"><a href="/directory/object?dn={{ r.dn|urlencode }}">{{ r.dn }}</a></td>
+      {% for k, l in tv.columns[1:] %}{% set v = r.attributes.get(l) %}<td class="small break">{{ v|join(', ') if v is iterable and v is not string else (v or '') }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+  {{ bulk_bar([('enable','Enable'),('disable','Disable'),('move','Move to'),('add-to-group','Add to group'),('delete','Delete')], bulk_token, 'Target DN (for move or add to group)') }}
+  </form>
+  {% else %}{{ empty('No objects matched', 'Try a broader filter, a different base, or the subtree scope.') }}{% endif %}
+</section>
+{% endif %}
+{% endblock %}

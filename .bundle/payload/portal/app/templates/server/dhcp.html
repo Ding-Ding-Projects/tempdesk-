@@ -1,0 +1,13 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ ta("DHCP server") }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/css/server.css">
+<div class="srv">
+  <div class="srv-head"><h1>{{ t("DHCP server") }}</h1></div>
+  {% if error %}<div class="srv-err">{{ error }}</div>{% endif %}
+  <div class="srv-tablewrap"><table class="srv-table">
+    <thead><tr><th>{{ t("Scope") }}</th><th>{{ t("Name") }}</th><th>{{ t("Range") }}</th><th>{{ t("State") }}</th></tr></thead>
+    <tbody>{% for s in scopes %}<tr data-ctx><td>{{ s.scopeId }}</td><td>{{ s.name }}</td><td>{{ s.startRange }} - {{ s.endRange }}</td><td>{{ s.state }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ ta("Performance") }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/css/server.css">
+<div class="srv">
+  <div class="srv-head"><h1>{{ t("Performance monitor") }}</h1></div>
+  {% if error %}<div class="srv-err">{{ error }}</div>{% endif %}
+  <section class="srv-card">
+    <h2>{{ t("Sample counters") }}</h2>
+    <form method="post" action="/server/perfmon/sample" class="srv-form" style="max-width:480px">
+      <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+      <div class="srv-field"><label>{{ t("Counter paths (one per line)") }}</label><textarea name="paths" placeholder="\Processor(_Total)\% Processor Time"></textarea></div>
+      <div class="srv-field"><label>{{ t("Samples") }}</label><input name="samples" value="1"></div>
+      <button class="srv-btn primary" type="submit">{{ t("Sample") }}</button>
+    </form>
+  </section>
+  <div data-srv-table>
+    <div class="srv-toolbar"><input class="srv-search" data-srv-search placeholder="{{ ta('Search counter sets') }}"></div>
+    <div class="srv-tablewrap"><table class="srv-table">
+      <thead><tr><th data-col="counterSetName">{{ t("Counter set") }}</th><th data-col="description">{{ t("Description") }}</th></tr></thead>
+      <tbody>{% for s in counter_sets %}<tr data-ctx><td>{{ s.counterSetName }}</td><td>{{ s.description }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/server-table.js"></script>{% endblock %}

@@ -1,0 +1,19 @@
+#!/bin/sh
+# Healthy when the directory answers over LDAP and the agent answers /health.
+set -eu
+ldbsearch -H ldap://127.0.0.1 -P -s base -b "" dnsHostName >/dev/null 2>&1 \
+  || samba-tool domain info 127.0.0.1 >/dev/null 2>&1 \
+  || exit 1
+python3 - <<'EOF'
+import json, ssl, sys, urllib.request
+cfg = json.load(open("/var/lib/tempdesk/agent.json"))
+ctx = ssl.create_default_context(cafile=cfg["certFile"])
+ctx.check_hostname = False
+req = urllib.request.Request("https://127.0.0.1:%d/api/v1/health" % cfg.get("port", 8443),
+                             headers={"X-TempDesk-Key": cfg["guestKey"]})
+try:
+    with urllib.request.urlopen(req, context=ctx, timeout=10) as r:
+        sys.exit(0 if json.load(r).get("status") == "ok" else 1)
+except Exception:
+    sys.exit(1)
+EOF

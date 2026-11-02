@@ -1,0 +1,15 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import icon with context %}
+{% block title %}{{ ta('More') }}{% endblock %}
+{% block content %}
+<h1>{{ t('All sections') }}</h1>
+{% for group, items in nav_items|groupby('group') %}
+<section class="card rise" style="--i:{{ loop.index0 }}"><h2>{{ t(group) }}</h2>
+  <div class="grid">{% for item in items %}<a class="btn tonal" style="justify-content:flex-start" href="{{ item.href }}">{{ icon(item.icon) }} {{ t(item.label) }}</a>{% endfor %}</div>
+</section>
+{% endfor %}
+<section class="card"><h2>{{ t('Help') }}</h2><div class="cluster">
+  <a class="btn" href="/docs">{{ t('Documentation') }}</a><a class="btn" href="/changelog">{{ t('Changelog') }}</a>
+  <a class="btn" href="/history">{{ t('Undo history') }}</a><a class="btn" href="/import">{{ t('CSV import') }}</a>
+  <a class="btn" href="/tools/base64">{{ t('Base64 tools') }}</a><a class="btn" href="/welcome">{{ t('First-run setup') }}</a></div></section>
+{% endblock %}

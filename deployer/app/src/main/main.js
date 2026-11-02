@@ -21,12 +21,26 @@ const Wording = require('../vendor/wording.js');
 // Bundled files are served from app://td/ so ES modules, fetch and a strict CSP all work.
 protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: false } }]);
 const SERVE = { '': path.join(__dirname, '..', 'renderer'), vendor: path.join(__dirname, '..', 'vendor'), shared: path.join(__dirname, '..', 'shared') };
+// The builder's zip kit fetches payload/manifest.json and the payload files (verified by SHA-256).
+let payloadManifest = null;
+function servePayload(parts) {
+  if (!payloadManifest) {
+    const files = [];
+    for (const f of ['server', 'agent', 'client', 'portal']) walkPayload(path.join(PAYLOAD, f), f, files);
+    payloadManifest = { schema: 'tempdesk-payload', version: 1, generated: new Date().toISOString(), files: files.map((x) => { const b = Buffer.from(x.base64, 'base64'); return { path: x.name, size: b.length, sha256: require('crypto').createHash('sha256').update(b).digest('hex') }; }) };
+  }
+  const rel = parts.join('/');
+  if (rel === 'manifest.json') return new Response(JSON.stringify(payloadManifest), { headers: { 'content-type': 'application/json' } });
+  if (!payloadManifest.files.some((f) => f.path === rel)) return new Response('Not found', { status: 404 });
+  return new Response(fs.readFileSync(path.join(PAYLOAD, ...parts)), { headers: { 'content-type': 'application/octet-stream' } });
+}
 function serveApp(request) {
   const u = new URL(request.url);
   if (u.host !== 'td') return new Response('Not found', { status: 404 });
   const parts = decodeURIComponent(u.pathname).split('/').filter(Boolean);
   if (parts.some((p) => p === '..' || p.includes('\\') || p.includes(':'))) return new Response('Bad path', { status: 400 });
   const rootKey = parts[0] === 'vendor' || parts[0] === 'shared' ? parts.shift() : '';
+  if (rootKey === 'vendor' && parts[0] === 'payload') return servePayload(parts.slice(1));
   const base = SERVE[rootKey];
   const file = path.join(base, ...(parts.length ? parts : ['index.html']));
   if (!file.startsWith(base + path.sep) || !fs.existsSync(file)) return new Response('Not found', { status: 404 });

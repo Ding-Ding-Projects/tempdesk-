@@ -1,0 +1,86 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import csrf, search_box, th_sort, empty, super_confirm, info with context %}
+{% block title %}{{ tab_title }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1 class="break">{{ tab_title }}</h1>
+  <a class="btn sm" href="/directory/export?dn={{ dn|urlencode }}&format=json" download>{{ t('Export JSON') }}</a>
+  <a class="btn sm" href="/directory/export?dn={{ dn|urlencode }}&format=ldif" download>{{ t('Export LDIF') }}</a>
+  <a class="btn sm" href="/directory/export?dn={{ dn|urlencode }}&format=csv" download>{{ t('Export CSV') }}</a></div>
+<p class="subtle mono break">{{ dn }}</p>
+<p class="cluster">{% for c in obj.objectClass or [] %}<span class="chip">{{ c }}</span>{% endfor %}</p>
+<div class="row">
+<section class="grow card rise" style="flex-basis:560px">
+  <h2>{{ t('Attributes') }}</h2>
+  {{ search_box(tv, regex_error, 'Filter attributes') }}
+  {% if tv.rows %}
+  <div class="table-wrap"><table>
+    <thead><tr>{{ th_sort(tv, 'name', 'Attribute') }}<th scope="col">{{ t('Values') }}</th><th><span class="sr-only">{{ t('Actions') }}</span></th></tr></thead>
+    <tbody>
+    {% for a in tv.rows %}
+    <tr data-ctx='[{"label":"{{ ta('Edit') }}","focus":"#edit-{{ loop.index }}"}]'><td class="mono">{{ a.name }}</td>
+      <td class="mono small break">{% for v in a['values'] %}<div>{{ v }}</div>{% endfor %}</td>
+      <td class="actions"><button type="button" class="btn sm" id="edit-{{ loop.index }}" data-fill-attr="{{ a.name }}" data-fill-values="{{ a['values']|join('\n') if a['values'][0] is string else '' }}">{{ t('Edit') }}</button></td></tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}{{ empty('No attributes match', 'Clear the filter to see all attributes.') }}{% endif %}
+</section>
+<div class="side stack" style="flex-basis:340px">
+  <section class="card raised" id="attr-editor">
+    <h2>{{ t('Edit an attribute') }} {{ info('Set replaces all values. Add and Remove change single values in a multi-valued attribute. Clear removes the attribute.') }}</h2>
+    <form method="post" action="/directory/object/attr" class="stack">{{ csrf() }}<input type="hidden" name="dn" value="{{ dn }}">
+      <div class="field"><label for="attr">{{ t('Attribute') }}</label><input id="attr" name="attr" list="schema-attrs" required autocomplete="off" spellcheck="false">
+        <datalist id="schema-attrs">{% for a in obj.schemaAllowed or [] %}<option value="{{ a }}">{% endfor %}</datalist></div>
+      <div class="field"><label for="vals">{{ t('Values, one per line') }}</label><textarea id="vals" name="values" class="mono" rows="4"></textarea></div>
+      <div class="segmented" role="radiogroup" aria-label="{{ ta('Operation') }}">
+        {% for op, l in [('set','Set'),('add','Add'),('remove','Remove'),('clear','Clear')] %}<label><input type="radio" name="op" value="{{ op }}" {% if loop.first %}checked{% endif %}>{{ t(l) }}</label>{% endfor %}
+      </div>
+      <p class="hint">{{ t('You can undo this afterwards.') }}</p>
+      <button class="btn filled" type="submit">{{ t('Save') }}</button>
+    </form>
+  </section>
+  {% if is_user %}
+  <section class="card">
+    <h2>{{ t('User actions') }}</h2>
+    <div class="cluster">
+      {% for a, l in [('enable','Enable'),('disable','Disable'),('unlock','Unlock')] %}
+      <form method="post" action="/directory/user/{{ a }}">{{ csrf() }}<input type="hidden" name="dn" value="{{ dn }}"><button class="btn sm tonal" type="submit">{{ t(l) }}</button></form>
+      {% endfor %}
+    </div>
+    <form method="post" action="/directory/user/password" class="stack" style="margin-top:12px" autocomplete="off">{{ csrf() }}<input type="hidden" name="dn" value="{{ dn }}">
+      <div class="field"><label for="npw">{{ t('New password') }}</label><input id="npw" type="password" name="password" minlength="8" required autocomplete="new-password"></div>
+      <label class="check" data-advanced><input type="checkbox" name="mustChange"> {{ t('User must change the password at next sign-in') }}</label> {{ info('The user must pick a new password at the next sign-in.') }}
+      <p class="alert warn small">{{ t('A password reset cannot be undone.') }}</p>
+      <button class="btn" type="submit">{{ t('Reset password') }}</button>
+    </form>
+  </section>
+  {% endif %}
+  {% if is_group %}
+  <section class="card">
+    <h2>{{ t('Members') }}</h2>
+    <form method="post" action="/directory/group/members" class="stack">{{ csrf() }}<input type="hidden" name="groupDn" value="{{ dn }}">
+      {% if members %}<fieldset><legend>{{ t('Select members to remove') }}</legend>
+        {% for m in members %}<label class="check small mono break"><input type="checkbox" name="remove" value="{{ m }}"> {{ m }}</label>{% endfor %}</fieldset>
+      {% else %}<p class="muted">{{ t('This group has no members yet.') }}</p>{% endif %}
+      <div class="field"><label for="addm">{{ t('Add members (distinguished names, one per line)') }}</label><textarea id="addm" name="add" rows="3" class="mono"></textarea></div>
+      <button class="btn tonal" type="submit">{{ t('Update members') }}</button>
+    </form>
+  </section>
+  {% endif %}
+  <section class="card">
+    <h2>{{ t('Move or rename') }}</h2>
+    <form method="post" action="/directory/move" class="stack">{{ csrf() }}<input type="hidden" name="dn" value="{{ dn }}">
+      <div class="field"><label for="np">{{ t('New parent') }}</label><input id="np" name="newParentDn" value="{{ dn.split(',', 1)[1] if ',' in dn else '' }}" required spellcheck="false"></div>
+      <div class="field" data-advanced><label for="nr">{{ t('New name') }} <span class="optional">({{ t('optional, for example CN=New name') }})</span> {{ info('A new relative name such as CN=New name renames the object. Leave empty to keep the current name.') }}</label><input id="nr" name="newRdn" spellcheck="false"></div>
+      <button class="btn" type="submit">{{ t('Move') }}</button>
+    </form>
+  </section>
+  <section class="card">
+    <h2>{{ t('Delete') }}</h2>
+    <form method="post" action="/directory/delete" class="stack">{{ csrf() }}<input type="hidden" name="dn" value="{{ dn }}">
+      <label class="check" data-advanced><input type="checkbox" name="recursive"> {{ t('Also delete everything inside') }}</label> {{ info('Deletes every object inside this container too. Without it, deleting a non-empty container fails.') }}
+      <label class="check" data-advanced><input type="checkbox" name="force"> {{ t('Override protection from accidental deletion') }}</label> {{ info('Deletes even when the object is protected from accidental deletion.') }}
+      {{ super_confirm(dn, delete_token, 'Delete', undo_note) }}
+    </form>
+  </section>
+</div>
+</div>
+{% endblock %}

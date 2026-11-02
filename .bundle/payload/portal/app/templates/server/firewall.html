@@ -1,0 +1,65 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ ta("Firewall") }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/css/server.css">
+<div class="srv">
+  <div class="srv-head"><h1>{{ t("Firewall") }}</h1></div>
+  {% if error %}<div class="srv-err">{{ error }}</div>{% endif %}
+
+  <section class="srv-card">
+    <h2>{{ t("Profiles") }}</h2>
+    <div class="srv-grid">
+      {% for p in profiles %}
+      <form method="post" action="/server/firewall/profiles/{{ p.name }}" class="srv-form">
+        <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+        <strong>{{ p.name }}</strong>
+        <label class="srv-toggle"><input type="checkbox" name="enabled" value="true" {{ 'checked' if p.enabled in [true,'True'] else '' }}> {{ t("Enabled") }}</label>
+        <button class="srv-btn" type="submit">{{ t("Save") }}</button>
+      </form>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="srv-card">
+    <h2>{{ t("New rule") }}</h2>
+    <form method="post" action="/server/firewall/rules" class="srv-form" style="max-width:420px">
+      <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+      <div class="srv-field"><label>{{ t("Display name") }}</label><input name="displayName" required></div>
+      <div class="srv-field"><label>{{ t("Direction") }}</label><select name="direction"><option>Inbound</option><option>Outbound</option></select></div>
+      <div class="srv-field"><label>{{ t("Action") }}</label><select name="action"><option>Allow</option><option>Block</option></select></div>
+      <div class="srv-field"><label>{{ t("Protocol") }}</label><input name="protocol" placeholder="TCP"></div>
+      <div class="srv-field"><label>{{ t("Local port") }}</label><input name="localPort" placeholder="443"></div>
+      <button class="srv-btn primary" type="submit">{{ t("Create rule") }}</button>
+    </form>
+  </section>
+
+  <div data-srv-table>
+    <div class="srv-toolbar">
+      <input class="srv-search" data-srv-search placeholder="{{ ta('Search') }}">
+      <label class="srv-toggle"><input type="checkbox" data-srv-regex> {{ t("Regex") }}</label>
+      <span data-srv-regex-error class="srv-err" role="alert" style="padding:4px 8px"></span>
+      <button type="button" class="srv-btn" data-srv-export="csv">CSV</button>
+    </div>
+    <div class="srv-tablewrap">
+      <table class="srv-table">
+        <thead><tr><th data-col="displayName">{{ t("Name") }}</th><th data-col="direction">{{ t("Direction") }}</th><th data-col="action">{{ t("Action") }}</th><th data-col="enabled">{{ t("Enabled") }}</th><th data-no-sort></th></tr></thead>
+        <tbody>
+        {% for r in rules %}
+          <tr data-ctx>
+            <td>{{ r.displayName }}</td><td>{{ r.direction }}</td><td>{{ r.action }}</td><td>{{ r.enabled }}</td>
+            <td>
+              <form method="post" action="/server/firewall/rules/{{ r.name | urlencode }}/delete" class="srv-inline">
+                <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+                <input type="hidden" name="confirm_name" value="{{ r.name }}">
+                <button class="srv-btn danger" type="submit">{{ t("Delete") }}</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/server-table.js"></script>{% endblock %}

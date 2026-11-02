@@ -1,0 +1,51 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ ta("Processes") }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/css/server.css">
+<div class="srv">
+  <div class="srv-head"><h1>{{ t("Processes") }}</h1></div>
+  {% if error %}<div class="srv-err">{{ error }}</div>{% endif %}
+  <div data-srv-table>
+    <div class="srv-toolbar">
+      <input class="srv-search" data-srv-search placeholder="{{ ta('Search') }}" aria-label="{{ ta('Search') }}">
+      <label class="srv-toggle"><input type="checkbox" data-srv-regex> {{ t("Regex") }}</label>
+      <span data-srv-regex-error class="srv-err" role="alert" style="padding:4px 8px"></span>
+      <button type="button" class="srv-btn" data-srv-export="csv">CSV</button>
+      <button type="button" class="srv-btn" data-srv-export="json">JSON</button>
+    </div>
+    <div class="srv-tablewrap">
+      <table class="srv-table">
+        <thead><tr>
+          <th data-col="pid">PID</th>
+          <th data-col="name">{{ t("Name") }}</th>
+          <th data-col="cpu">CPU</th>
+          <th data-col="memoryBytes">{{ t("Memory") }}</th>
+          <th data-col="path">{{ t("Path") }}</th>
+          <th data-no-sort>{{ t("Actions") }}</th>
+        </tr></thead>
+        <tbody>
+        {% for p in processes %}
+          <tr data-ctx>
+            <td>{{ p.pid }}</td>
+            <td>{{ p.name }}</td>
+            <td data-sort="{{ p.cpu or 0 }}">{{ "%.1f"|format(p.cpu or 0) }}</td>
+            <td data-sort="{{ p.memoryBytes or 0 }}">{{ ((p.memoryBytes or 0) / 1048576) | round(1) }} MB</td>
+            <td>{{ p.path }}</td>
+            <td>
+              <form method="post" action="/server/processes/{{ p.pid }}/kill" class="srv-inline"
+                    onsubmit="this.confirm_name.value=this.dataset.name" data-name="{{ p.name }}">
+                <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+                <input type="hidden" name="confirm_name" value="{{ p.name }}">
+                <button class="srv-btn danger" type="submit">{{ t("End task") }}</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="srv-note">{{ t("Ending a process needs its exact name as confirmation; the form sends it for you.") }}</p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/server-table.js"></script>{% endblock %}

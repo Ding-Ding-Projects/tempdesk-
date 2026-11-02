@@ -46,6 +46,13 @@ function main() {
   copy(path.join(REPO, 'site', 'assets', 'history.js'), path.join(VENDOR, 'history.js'), false);
   copy(path.join(REPO, 'site', 'assets', 'builder.css'), path.join(VENDOR, 'builder.css'), false);
   copy(path.join(REPO, 'site', 'assets', 'canvas'), path.join(VENDOR, 'canvas'), false);
+  copy(path.join(REPO, 'site', 'assets', 'site.css'), path.join(VENDOR, 'site.css'), false);
+  copy(path.join(REPO, 'site', 'i18n'), path.join(VENDOR, 'site-i18n'), false);
+  // The website's answer file builder page logic, hosted unchanged in the desktop app. One line is
+  // appended so the desktop extras (ISO, media folder, Git history) can read the current model.
+  if (copy(path.join(REPO, 'site', 'assets', 'builder.js'), path.join(VENDOR, 'builder.js'), false)) {
+    fs.appendFileSync(path.join(VENDOR, 'builder.js'), "\n// Added by deployer/app/scripts/prepare-bundle.js for the desktop host.\nwindow.TempDeskBuilderHost = { getModel: () => model, getHistory: () => history };\n");
+  }
   copy(path.join(REPO, 'answerfile', 'generate.mjs'), path.join(VENDOR, 'answerfile', 'generate.mjs'), false);
   copy(path.join(REPO, 'answerfile', 'rules.mjs'), path.join(VENDOR, 'answerfile', 'rules.mjs'), false);
   copy(path.join(REPO, 'answerfile', 'unattend-catalog.json'), path.join(VENDOR, 'answerfile', 'unattend-catalog.json'), false);

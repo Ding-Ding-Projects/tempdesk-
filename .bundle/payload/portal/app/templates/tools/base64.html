@@ -1,0 +1,51 @@
+{% extends "layouts/admin.html" if mode == "admin" else "layouts/guest.html" %}
+{% from "macros.html" import info with context %}
+{% block title %}{{ ta('Base64 tools') }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ t('Base64 tools') }}</h1></div>
+<p class="muted">{{ t('Everything runs in this browser. Nothing you enter or open here is sent to the server.') }}</p>
+<div class="row" data-b64-app>
+<section class="grow card stack" style="flex-basis:520px">
+  <div class="segmented" role="radiogroup" aria-label="{{ ta('Direction') }}"><label><input type="radio" name="b64dir" value="encode" checked>{{ t('Encode') }}</label><label><input type="radio" name="b64dir" value="decode">{{ t('Decode') }}</label></div>
+  <div class="form-grid">
+    <div class="field" data-advanced><label for="b64-alpha">{{ t('Alphabet') }} {{ info('Standard uses + and /. URL-safe uses - and _ so the result can go in URLs and file names.') }}</label><select id="b64-alpha"><option value="standard">{{ t('Standard') }}</option><option value="url">{{ t('URL-safe') }}</option></select></div>
+    <div class="field" data-advanced><label for="b64-wrap">{{ t('Line wrapping') }} {{ info('MIME splits lines at 76 characters with CRLF, as in email. PEM uses 64. None keeps one long line.') }}</label><select id="b64-wrap"><option value="0">{{ t('None') }}</option><option value="76">{{ t('MIME (76, CRLF)') }}</option><option value="64">{{ t('PEM (64)') }}</option><option value="custom">{{ t('Custom') }}</option></select></div>
+    <div class="field" hidden data-b64-custom><label for="b64-len">{{ t('Line length') }}</label><input id="b64-len" type="number" min="4" max="1000" step="4" value="80"></div>
+    <div class="field" data-advanced><label for="b64-charset">{{ t('Text encoding') }} {{ info('How text is turned into bytes before encoding, and bytes back into text after decoding.') }}</label><select id="b64-charset"><option value="utf-8">UTF-8</option><option value="utf-16le">UTF-16 LE</option><option value="utf-16be">UTF-16 BE</option><option value="latin1">Latin-1</option></select></div>
+    <label class="check" data-advanced><input type="checkbox" id="b64-pad" checked> {{ t('Padding (=)') }}</label> {{ info('Adds = signs so the output length is a multiple of 4. Some systems need it, URL tokens usually leave it out.') }}
+    <label class="check" data-advanced><input type="checkbox" id="b64-strict" checked> {{ t('Strict decoding (exact error position)') }}</label> {{ info('Strict stops at the first invalid character and reports its position. Lenient skips spaces and stray characters.') }}
+  </div>
+  <div class="field"><label for="b64-in">{{ t('Input') }}</label><textarea id="b64-in" class="code" style="min-height:180px" spellcheck="false"></textarea></div>
+  <div class="cluster">
+    <button type="button" class="btn filled" data-b64="run">{{ t('Convert') }}</button>
+    <button type="button" class="btn" data-b64="paste">{{ t('Paste from clipboard') }}</button>
+    <label class="btn" for="b64-file">{{ t('Open a file') }}</label><input id="b64-file" type="file" class="sr-only" multiple>
+    <button type="button" class="btn text" data-b64="undo" aria-keyshortcuts="Control+Z">{{ t('Undo') }}</button><button type="button" class="btn text" data-b64="redo">{{ t('Redo') }}</button>
+  </div>
+  <p class="error-text" data-b64-error role="alert" aria-live="assertive"></p>
+  <div class="field"><label for="b64-out">{{ t('Output') }}</label><textarea id="b64-out" class="code" style="min-height:180px" readonly spellcheck="false"></textarea></div>
+  <div class="cluster">
+    <button type="button" class="btn" data-b64="copy">{{ t('Copy') }}</button>
+    <button type="button" class="btn" data-b64="save">{{ t('Save as file') }}</button>
+    <button type="button" class="btn" data-b64="dataurl">{{ t('Make data: URL') }}</button>
+    <button type="button" class="btn" data-b64="parseurl">{{ t('Parse data: URL') }}</button>
+    <button type="button" class="btn" data-b64="json">{{ t('Save JSON record') }}</button>
+  </div>
+</section>
+<aside class="side stack" style="flex-basis:320px">
+  <section class="card"><h2>{{ t('Files') }}</h2>
+    <p class="hint">{{ t('Large files are processed in chunks with progress. Encoding a file also checks a SHA-256 round trip.') }}</p>
+    <div class="progress" aria-hidden="true"><span data-b64-progress style="width:0"></span></div>
+    <p class="subtle" data-b64-status aria-live="polite">{{ t('No file open.') }}</p>
+    <div class="cluster"><button type="button" class="btn sm" data-b64="pause" disabled>{{ t('Pause') }}</button><button type="button" class="btn sm" data-b64="cancel" disabled>{{ t('Cancel') }}</button><button type="button" class="btn sm" data-b64="zip" disabled>{{ t('Download all as zip') }}</button></div>
+    <ul class="small" data-b64-files></ul></section>
+  <section class="card"><h2>{{ t('Detected type') }}</h2><p data-b64-type class="muted">{{ t('Nothing decoded yet.') }}</p>
+    <div data-b64-preview class="inset small mono" style="max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-all"></div>
+    <p class="hint">{{ t('Previews are shown as text or as an image only. Decoded content is never run.') }}</p></section>
+  <section class="card"><h2>{{ t('History') }}</h2>
+    <label class="check" data-advanced><input type="checkbox" id="b64-keep"> {{ t('Keep input and output in history (stored in this browser)') }}</label> {{ info('Keeps your input and output in this browser\'s storage so they survive a reload. Off by default for privacy.') }}
+    <ol class="small" data-b64-history></ol><button type="button" class="btn sm text" data-b64="clearhist">{{ t('Clear history') }}</button></section>
+</aside>
+</div>
+{% endblock %}
+{% block scripts %}{{ super() }}<script src="/static/js/zip.js" defer></script><script src="/static/js/base64.js" defer></script><script src="/static/js/base64-tool.js" defer></script>{% endblock %}

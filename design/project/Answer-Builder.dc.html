@@ -36,8 +36,22 @@ body{margin:0;background:#0B1110}
     <button type="button" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 0; background: #7CF3E6; color: #04201D; font-weight: 800">Download kit</button>
   </div>
 
+  <div style="display: flex; gap: 8px; align-items: center">
+    <label for="gq" style="position: absolute; left: -9999px">Search every setting</label>
+    <span style="flex: 1; display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 18px; border-radius: 25px; background: #121A19; border: 1px solid #2E4642">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#A9BBB8" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <input id="gq" type="search" value="remote desktop" style="flex: 1; min-width: 0; border: 0; background: transparent; color: #E8F1EF; font-size: 16px">
+      <span style="font-size: 13px; color: #7CF3E6; font-weight: 700">23 results in 4 sections</span>
+      <span style="font-size: 12px; padding: 3px 8px; border-radius: 8px; background: #1A2725; color: #A9BBB8">Ctrl Shift F</span>
+    </span>
+    <button type="button" aria-label="Regular expression" aria-pressed="false" style="width: 50px; height: 50px; border-radius: 25px; border: 1px solid #2E4642; background: transparent; color: #A9BBB8; font-family: Consolas, monospace; font-weight: 700">.*</button>
+    <label style="height: 50px; padding: 0 16px; border-radius: 25px; border: 1px solid #2E4642; display: flex; align-items: center; gap: 8px; color: #A9BBB8; font-size: 14px">Show <select style="background: transparent; border: 0; color: #E8F1EF; font-size: 14px"><option>All settings</option><option>Only set</option><option>Only with problems</option></select></label>
+  </div>
+
   <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
     <nav aria-label="Sections" style="flex: 0 1 236px; min-width: 200px; padding: 10px; border-radius: 22px; background: #121A19; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 1px">
+      <label for="sq" style="position: absolute; left: -9999px">Filter sections</label>
+      <input id="sq" type="search" placeholder="Filter sections" style="height: 40px; margin: 2px 2px 8px; padding: 0 12px; border-radius: 20px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF; font-size: 14px">
       <span class="b-n"><span class="b-dot" style="background:#7CF3E6"></span>Disk</span>
       <span class="b-n"><span class="b-dot" style="background:#7CF3E6"></span>Image and edition</span>
       <span class="b-n"><span class="b-dot" style="background:#4C625E"></span>Product key and activation</span>
@@ -63,6 +77,8 @@ body{margin:0;background:#0B1110}
     <form class="b-rise" style="flex: 3 1 520px; min-width: 0; padding: 20px; border-radius: 22px; background: #121A19; border: 1px solid #22322F; display: flex; flex-direction: column; gap: 16px">
       <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
         <h2 style="margin: 0; font-size: 20px; flex: 1">Security and UAC</h2>
+        <label for="fq" style="position: absolute; left: -9999px">Filter fields in this section</label>
+        <input id="fq" type="search" placeholder="Filter fields" style="width: 180px; height: 38px; padding: 0 12px; border-radius: 19px; border: 1px solid #2E4642; background: #0F1716; color: #E8F1EF; font-size: 14px">
         <div role="tablist" aria-label="Detail" style="display: flex; padding: 3px; border-radius: 999px; background: #0F1716; border: 1px solid #22322F">
           <button type="button" role="tab" aria-selected="false" style="height: 34px; padding: 0 14px; border-radius: 17px; border: 0; background: transparent; color: #A9BBB8">Basic</button>
           <button type="button" role="tab" aria-selected="true" style="height: 34px; padding: 0 14px; border-radius: 17px; border: 0; background: #E8F1EF; color: #0B1110; font-weight: 700">Advanced</button>

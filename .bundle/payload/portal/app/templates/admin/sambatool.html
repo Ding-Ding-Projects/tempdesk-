@@ -1,0 +1,11 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import search_box, th_sort, empty with context %}
+{% block title %}{{ ta('samba-tool runner') }}{% endblock %}
+{% block content %}
+<h1>{{ t('samba-tool runner') }}</h1>
+<p class="muted">{{ t('Run allowed samba-tool subcommands. Arguments are passed as a list, never through a shell.') }}</p>
+<section class="card rise">{{ search_box(tv, regex_error, 'Search commands') }}
+  {% if tv.rows %}<div class="table-wrap"><table><thead><tr>{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}</tr></thead><tbody>
+  {% for c in tv.rows %}<tr data-ctx><td><a class="mono" href="/sambatool/run?command={{ c.command|urlencode }}">samba-tool {{ c.command }}</a></td><td>{{ c.argCount }}</td><td>{% if c.destructive %}<span class="chip warn">{{ t('Yes') }}</span>{% else %}{{ t('No') }}{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>{% else %}{{ empty('No commands', 'The agent did not report any samba-tool commands.') }}{% endif %}</section>
+{% endblock %}

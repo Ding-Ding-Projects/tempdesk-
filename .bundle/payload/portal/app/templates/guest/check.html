@@ -1,0 +1,26 @@
+{% extends "layouts/guest.html" %}
+{% from "macros.html" import csrf, local_time with context %}
+{% block title %}{{ ta('Check my sign-in') }}{% endblock %}
+{% block content %}
+<div class="row" style="gap:40px">
+  <div class="grow"><h1 class="hero rise">{{ t('Check my sign-in') }}</h1><p class="lead rise" style="--i:1">{{ t('See when your sign-in ends and whether it is still active.') }}</p></div>
+  <div class="grow stack">
+    <form class="card lg stack rise" style="--i:2" method="post" action="/check" autocomplete="off">
+      {{ csrf() }}
+      {% if error_key %}<p class="alert error" role="alert">{{ tr.html(error_key, serious=True) }}</p>{% endif %}
+      <div class="field"><label for="u">{{ t('Username') }}</label><input id="u" name="username" type="text" required autocapitalize="off" spellcheck="false" autocomplete="username"></div>
+      <div class="field"><label for="p">{{ t('Password') }}</label><input id="p" name="password" type="password" required autocomplete="current-password"></div>
+      <button class="btn filled lg" type="submit">{{ t('Check') }}</button>
+    </form>
+    {% if result %}
+    <section class="card lg pop" aria-live="polite">
+      <h2>{{ result.username }}</h2>
+      <dl class="kv">
+        <dt>{{ t('Status') }}</dt><dd>{% if result.enabled %}<span class="chip ok">{{ t('Active') }}</span>{% else %}<span class="chip bad">{{ t('Disabled') }}</span>{% endif %}</dd>
+        <dt>{{ t('Ends') }}</dt><dd>{{ local_time(result.expiresAt, 'No expiry') }}</dd>
+      </dl>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
