@@ -17,7 +17,7 @@ export const WIDGET_KINDS = [
 ];
 export const RISK_LEVELS = ['none', 'caution', 'danger'];
 const ENTRY_FIELDS = new Set(['widget', 'description', 'example', 'default', 'unit', 'min', 'max', 'step', 'valueHelp', 'values', 'risk', 'related', 'docUrl',
-  'source', 'presets', 'format', 'sep', 'options', 'storage', 'units', 'allowCustom', 'allowIpv6', 'columns', 'maxLength', 'placeholder', 'meaning', 'imageSize', 'note']);
+  'source', 'presets', 'format', 'sep', 'fieldSep', 'options', 'storage', 'units', 'allowCustom', 'allowIpv6', 'columns', 'maxLength', 'placeholder', 'imageSize', 'accept', 'note']);
 
 // ---- small text helpers ------------------------------------------------------------------------
 /** Number of sentences: a period, ! or ? followed by whitespace and a capital (or the end). */
@@ -37,11 +37,16 @@ export function cleanHelp(help) {
     if (end < 30) return '';
     s = cut.slice(0, end + 1).replace(/;$/, '.');
   }
-  if (!s || /^(Existing information|This is new in|This is an optional setting|These settings don't apply|Parent Hierarchy|Functionality in)/.test(s)) return '';
+  if (!s || /^(Existing information|This is new in|This is an optional setting|These settings don't apply|Parent Hierarchy|Functionality in|This setting (has been|is) (deprecated|removed|now deprecated)|This setting is deprecated|It was first deprecated|Users can still|This is not used|This information is included|Gadgets are not|Starting with Windows 10|By default, the Initial|Works with other settings|The Wi-Fi Sense|This field should|Theme files can no longer|The default background color during OOBE|Name displayed in the Get Help|You can configure the Trade-in|To customize the Get Help|Used with the setting|Lets the China|Lets the OEM to|Lets you to specify a plan|Use to enable)/.test(s)) return '';
+  s = s.replace(/^[A-Z][A-Za-z0-9_]+ (?:\([^)]*\) )?specifies (?=whether|the|a|an|how|when|which)/, 'Sets ');
+  s = s.replace(/^[A-Z][A-Za-z0-9_]+ (disables|enables|identifies) /, (m, v) => v[0].toUpperCase() + v.slice(1) + ' ');
   if (/^That\s/.test(s)) s = 'Sets ' + s.slice(5);
-  if (/^(Whether|Which|How|When|In what|The|A|An)\b/.test(s) && !/\b(is|are|was|specifies|sets|controls|holds)\b/.test(s.split(/[.;]/)[0])) s = 'Sets ' + s[0].toLowerCase() + s.slice(1);
+  if (/^(Whether|Which|How|In what|When)\b/.test(s)) s = 'Sets ' + s[0].toLowerCase() + s.slice(1);
+  else if (/^(The|A|An)\b/.test(s) && !/\b(is|are|was|specifies|sets|controls|holds)\b/.test(s.split(/[.;]/)[0])) s = 'Sets ' + s[0].toLowerCase() + s.slice(1);
+  if (/^Choose whether /.test(s)) s = 'Sets whether ' + s.slice(15);
+  if (/^Choose /.test(s)) s = 'Sets ' + s.slice(7);
   if (/^Lets you to /.test(s)) s = 'Lets you ' + s.slice(11);
-  if (/^Lets the /.test(s) && /\blets the [A-Z]/.test(s) === false) s = s.replace(/^Lets the /, 'Turns on the ');
+  if (/^Lets the /.test(s)) s = s.replace(/^Lets the /, 'Turns on the ');
   if (!/[.!?]$/.test(s)) s += '.';
   return s.replace(/\s+/g, ' ');
 }
@@ -94,7 +99,7 @@ export function compileWidgets(json) {
     return Object.assign({}, r, { test: {
       type: w.type ? [].concat(w.type) : null, name: w.name ? new RegExp(w.name) : null, path: w.path ? new RegExp(w.path) : null,
       component: w.component ? new RegExp(w.component) : null, help: w.help ? new RegExp(w.help, 'i') : null,
-      valuesMin: w.valuesMin, valuesMax: w.valuesMax, valueLenMax: w.valueLenMax, flags: w.flags, sensitive: w.sensitive, hasMin: w.hasMin
+      valuesMin: w.valuesMin, valuesMax: w.valuesMax, valueLenMax: w.valueLenMax, valuePattern: w.valuePattern ? new RegExp(w.valuePattern) : null, flags: w.flags, sensitive: w.sensitive, hasMin: w.hasMin
     } });
   });
   const shapes = (j.shapes || []).map((s) => Object.assign({}, s, { compRe: globToRe(s.component || '*', false), pathRe: globToRe(s.path, true) }));
@@ -110,6 +115,7 @@ function ruleMatches(t, comp, s) {
   if (t.valuesMin !== undefined && vals.length < t.valuesMin) return false;
   if (t.valuesMax !== undefined && vals.length > t.valuesMax) return false;
   if (t.valueLenMax !== undefined && vals.some((v) => String(v.value).length > t.valueLenMax)) return false;
+  if (t.valuePattern && !vals.every((v) => t.valuePattern.test(String(v.value)))) return false;
   if (t.flags !== undefined && !!s.flags !== t.flags) return false;
   if (t.sensitive !== undefined && !!s.sensitive !== t.sensitive) return false;
   if (t.hasMin !== undefined && (s.min !== undefined) !== t.hasMin) return false;
@@ -128,37 +134,30 @@ export function resolveHint(W, catalog, compName, s) {
   const out = { widget: null, description: '', descriptionSource: '', valueHelp: {}, related: [] };
   const vars = { name: s.name, words: lowerWords(s.name), Words: cap(lowerWords(s.name)), help: cleanHelp(s.help), path: s.path, component: compName,
     profile: (/^(Domain|Private|Public)Profile/.exec(s.name) || [])[1] || '' };
-  // rules (widget and parameters)
+  // rules: the first match assigns the widget and its parameters
   for (const r of W.rules) {
     if (!ruleMatches(r.test, compName, s)) continue;
     out.widget = r.widget; out.rule = r.id;
-    Object.assign(out, r.set || {});
+    Object.assign(out, JSON.parse(JSON.stringify(r.set || {})));
     break;
   }
-  // shapes (first match), then explicit
-  const shape = W.shapes.find((x) => x.compRe.test(compName) && x.pathRe.test(s.path));
+  // shapes: every match merges, earlier shapes win field by field; the explicit entry wins over shapes
+  const shapes = W.shapes.filter((x) => x.compRe.test(compName) && x.pathRe.test(s.path)).reverse();
   const explicit = (W.settings[compName] || {})[s.path];
-  for (const src of [shape, explicit]) {
-    if (!src) continue;
+  for (const src of shapes.concat(explicit ? [explicit] : [])) {
     for (const [k, v] of Object.entries(src)) {
       if (!ENTRY_FIELDS.has(k)) continue;
       if (k === 'valueHelp') Object.assign(out.valueHelp, v);
       else if (k === 'description') { out.description = fill(v, vars); out.descriptionSource = src === explicit ? 'explicit' : 'shape'; }
-      else out[k] = Array.isArray(v) || (v && typeof v === 'object') ? JSON.parse(JSON.stringify(v)) : v;
+      else if (v === null) delete out[k];
+      else out[k] = typeof v === 'object' ? JSON.parse(JSON.stringify(v)) : v;
     }
   }
+  for (const k of Object.keys(out.valueHelp)) out.valueHelp[k] = fill(out.valueHelp[k], vars);
   if (!out.widget) out.widget = (W.typeDefaults || {})[s.type] || 'text';
   // values: catalog values, or values a hint declares for a free-form string (for example Allowed/Blocked)
-  const values = (s.values && s.values.length ? s.values.map((v) => ({ value: String(v.value), label: String(v.label || v.value) })) : null) || (out.values || null);
-  if (values) out.values = values.map((v) => ({ value: String(v.value), label: v.label || String(v.value) }));
-  // description template
-  if (!out.description) {
-    const comp = W.components[compName] || {};
-    const help = vars.help;
-    const ctx = comp.context || '';
-    const unset = fill((W.raw.unsetSentences || {})[s.type] || (W.raw.unsetSentences || {}).default || '', vars);
-    if (help) { out.description = [help, ctx, unset].filter(Boolean).join(' '); out.descriptionSource = 'template'; }
-  }
+  const values = s.values && s.values.length ? s.values.map((v) => ({ value: String(v.value), label: String(v.label || v.value) })) : (out.values || null);
+  if (values) out.values = values.map((v) => ({ value: String(v.value), label: v.label || String(v.value) })); else delete out.values;
   // valueHelp for every value (booleans always have true and false)
   if (s.type === 'boolean') {
     const gen = boolMeaning(s.name);
@@ -176,6 +175,25 @@ export function resolveHint(W, catalog, compName, s) {
   if (out.max === undefined && s.max !== undefined) out.max = s.max;
   if (out.maxLength === undefined && s.maxLength !== undefined) out.maxLength = s.maxLength;
   if (!out.presets && s.suggestions && s.suggestions.length) out.presets = s.suggestions.map((x) => ({ value: String(x.value), label: firstSentence(x.label) || String(x.value) }));
+  // description template, built last so it can name the default and what that default means
+  if (!out.description) {
+    const comp = W.components[compName] || {};
+    const sentences = (vars.help.match(/[^.!?]+[.!?]+(?=\s+["'(A-Z0-9]|\s*$)/g) || []).map((x) => x.trim());
+    const help = sentences.length ? sentences.slice(0, 2).join(' ') : fill(W.raw.fallbackSentence || '', vars);
+    const dv = out.default;
+    let defaultText = '';
+    if (dv !== undefined && dv !== '') {
+      const vh = out.valueHelp[dv] || out.valueHelp[String(dv).toLowerCase()] || '';
+      defaultText = ', which is ' + dv + (vh ? ' (' + vh.replace(/\.$/, '').replace(/^[A-Z](?=[a-z])/, (c) => c.toLowerCase()) + ')' : '');
+    }
+    const unset = fill((W.raw.unsetSentences || {})[s.type] || (W.raw.unsetSentences || {}).default || '', Object.assign({}, vars, { defaultText }));
+    const parts = [help];
+    if (comp.context && sentenceCount(help) < 3) parts.push(comp.context);
+    parts.push(unset);
+    while (parts.length > 2 && sentenceCount(parts.join(' ')) > 4) parts.splice(1, 1);
+    out.description = parts.filter(Boolean).join(' ');
+    out.descriptionSource = sentences.length ? 'template' : 'fallback';
+  }
   if (!out.risk) out.risk = { level: 'none' };
   out.related = (out.related || []).map((p) => (p.includes('|') ? p : compName + '|' + p));
   if (!out.docUrl && catalog) {

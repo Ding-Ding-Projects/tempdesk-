@@ -145,8 +145,8 @@ NODE_INDEX = _index(tree(), {})
 # ---------------------------------------------------------------------------
 # Item schemas (a representative subset with the exact ids the agent uses; the
 # portal renders controls from these). Kept intentionally compact but with the
-# rich bits — enums with per-value descriptions, the GPP common/targeting
-# blocks — so the UI can exercise them.
+# rich bits, enums with per-value descriptions, the GPP common/targeting
+# blocks, so the UI can exercise them.
 # ---------------------------------------------------------------------------
 
 def _f(fid, label, ftype, help_="", **extra):

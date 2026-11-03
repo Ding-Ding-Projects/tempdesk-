@@ -98,7 +98,7 @@ namespace TempDesk.Agent
             new Pair("{E437BC1C-AA7D-11D2-A382-00C04F991E27}",
                      "{DEA8AFA0-CC85-11D0-9CE2-0080C7221EBD}", null);
 
-        // ---- Preferences (GPP) — [MS-GPPREF] 1.9 -----------------------
+        // ---- Preferences (GPP), per [MS-GPPREF] 1.9 -----------------------
         // Keyed by the GPP area name used in the node tree.
         private static readonly Dictionary<string, Pair> _pref =
             new Dictionary<string, Pair>(StringComparer.OrdinalIgnoreCase);

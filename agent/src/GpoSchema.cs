@@ -40,8 +40,6 @@ namespace TempDesk.Agent
             return f;
         }
 
-        private static readonly string[] ActionValues4 = null;
-
         private static List<object> Fields(params Dictionary<string, object>[] fields)
         {
             return new List<object>(fields);
