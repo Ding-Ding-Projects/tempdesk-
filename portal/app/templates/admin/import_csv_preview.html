@@ -5,7 +5,7 @@
 <h1>{{ t('CSV import') }}: {{ t('preview') }}</h1>
 {% for e in errors %}<p class="alert error" role="alert">{{ e }}</p>{% endfor %}
 <p class="cluster"><span class="chip ok">{{ t('{count} ready', count=valid) }}</span><span class="chip {{ 'bad' if invalid else '' }}">{{ t('{count} with problems', count=invalid) }}</span>{% if ou %}<span class="chip mono">{{ ou }}</span>{% endif %}</p>
-{% if rows %}<section class="card"><div class="table-wrap"><table><thead><tr><th>{{ t('Line') }}</th><th>{{ t('Values') }}</th><th>{{ t('Check') }}</th></tr></thead><tbody>
+{% if rows %}<section class="card"><div class="ss-host" data-search-surface="import-csv-rows" data-search-kind="table" data-search-target="#import-csv-rows-table" data-search-label="{{ ta('Search the rows') }}"></div><div class="table-wrap"><table id="import-csv-rows-table" data-searchable="import-csv-rows"><thead><tr><th>{{ t('Line') }}</th><th>{{ t('Values') }}</th><th>{{ t('Check') }}</th></tr></thead><tbody>
 {% for r in rows %}<tr data-ctx><td>{{ r.line }}</td><td class="small mono break">{% for k, v in r.data.items() if v %}{{ k }}={{ v }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
   <td>{% if r.problems %}<span class="chip bad">{{ r.problems|join('; ') }}</span>{% else %}<span class="chip ok">{{ t('OK') }}</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div></section>{% endif %}
 <div class="cluster">

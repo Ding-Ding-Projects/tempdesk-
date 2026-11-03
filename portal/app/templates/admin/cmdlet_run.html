@@ -12,7 +12,7 @@
     {% if p.input == 'switch' %}<label class="check"><input type="checkbox" name="{{ f }}" {% if sub.get(f) == 'on' %}checked{% endif %}> <span class="mono">-{{ p.name }}</span></label>
     {% else %}
     <div class="field"><label for="{{ f }}"><span class="mono">-{{ p.name }}</span>{% if p.mandatory %} <span class="chip warn">{{ t('required') }}</span>{% endif %} <span class="subtle small">{{ p.type }}</span></label>
-      {% if p.input == 'bool' %}<select id="{{ f }}" name="{{ f }}"><option value="">{{ t('Not set') }}</option><option value="true">true</option><option value="false">false</option></select>
+      {% if p.input == 'bool' %}<select id="{{ f }}" name="{{ f }}" data-search-exempt="three fixed choices"><option value="">{{ t('Not set') }}</option><option value="true">true</option><option value="false">false</option></select>
       {% elif p.input == 'multi' or p.input == 'json' %}<textarea id="{{ f }}" name="{{ f }}" rows="3" class="mono" placeholder="{{ ta('One value per line') if p.input == 'multi' else '{ }' }}">{{ sub.get(f, '') }}</textarea>
       {% else %}<input id="{{ f }}" name="{{ f }}" {% if p.input == 'number' %}type="number" step="any"{% elif p.input == 'secret' %}type="password" autocomplete="off"{% endif %} value="{{ sub.get(f, '') if p.input != 'secret' else '' }}" class="mono">{% endif %}
       {% if p.sets %}<span class="hint">{{ p.sets|join(', ') }}</span>{% endif %}

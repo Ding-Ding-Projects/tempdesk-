@@ -438,3 +438,13 @@ button.pass-chip { cursor: pointer; font: inherit; font-size: .72rem; }
 /* deployment map nodes are narrow: give the field cards the full node width */
 .node .wf { padding: 10px; }
 .node .w-row > .w-input, .node .w-row > .w-affix { flex-basis: 100%; }
+
+/* Search surfaces (regex-builder.js): tab strip search rows, menu filter, list filters */
+.st-tabsearch { padding: 6px 10px; border-bottom: 1px solid var(--outline); background: var(--s1); }
+.st-tabsearch .rxb-tabclose .rxb-row { margin-top: 4px; }
+.st-tabsearch-b { flex: 0 0 auto; }
+.st-menu-box { min-width: 280px; max-width: calc(100vw - 8px); padding: 6px; }
+.st-menu-list { list-style: none; margin: 0; padding: 0; }
+.rxb-wrap { min-width: 0; }
+.st-side-b .rxb-filter, .st-insp .rxb-filter { margin: 0 0 6px; }
+.st-tools-list { display: flex; flex-direction: column; gap: 8px; }

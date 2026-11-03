@@ -80,30 +80,43 @@
     chain.forEach(function (d) { seq = seq.then(function () { if (nodes[d]) return toggle(d, true); }); });
     return seq;
   }
-  var filterText = '';
+  // Explorer search (search surface "dir-explorer"): keeps matching objects and their ancestors,
+  // opens the branches that hold a match and highlights the matched text. Only loaded objects are
+  // searched; the find box at the top searches the whole directory.
+  var S = window.TDSearch || { mount: function () { return null; } };
+  var treeSearch = S.mount($('[data-search-surface="dir-explorer"]'), { kind: 'custom', compact: true, onChange: function () { renderTree(); } });
+  function filtering() { return !!(treeSearch && treeSearch.active()); }
+  function selfMatch(dn) { var n = nodes[dn]; return !!n && treeSearch.test(String(n.name)); }
   function matches(dn) {
-    if (!filterText) return true;
+    if (!filtering()) return true;
     var n = nodes[dn]; if (!n) return false;
-    if (String(n.name).toLowerCase().indexOf(filterText) >= 0) return true;
+    if (selfMatch(dn)) return true;
     return (n.children || []).some(matches);
   }
   function renderTree() {
     var tree = $('[data-st-tree]'); var scroll = tree.scrollTop; tree.textContent = '';
-    var ul = el('ul'); ul.setAttribute('role', 'group');
+    var ul = el('ul'); /* search: dir-explorer */ ul.setAttribute('role', 'group');
     (cfg.root || []).forEach(function (r) { ul.appendChild(nodeLi(r.dn, 1)); });
     tree.appendChild(ul); tree.scrollTop = scroll;
     if (!(cfg.root || []).length) tree.appendChild(el('p', 'muted', t('The directory tree could not be read.')));
+    if (treeSearch) {
+      var hits = $$('[data-st-tree] [data-dn]').filter(function (r) { return filtering() && selfMatch(r.getAttribute('data-dn')); });
+      treeSearch.count(hits.length, Object.keys(nodes).length);
+      treeSearch.highlight(hits.map(function (r) { return r.querySelector('.t'); }).filter(Boolean));
+      if (filtering() && !hits.length) tree.appendChild(el('p', 'muted small', t('No loaded object matches. Press Enter in the find box to search the whole directory.'))).style.padding = '6px 12px';
+    }
   }
   function nodeLi(dn, level) {
     var n = nodes[dn], li = el('li'); li.setAttribute('role', 'none');
     if (!matches(dn)) { li.hidden = true; return li; }
+    var isOpen = n.open || (filtering() && !!n.children && n.children.some(matches));
     var row = el('div', 'st-n'); row.setAttribute('data-dn', dn);
     var tw = el('button', 'tw' + (n.hasChildren ? '' : ' leaf'), '▸'); tw.type = 'button'; tw.tabIndex = -1;
-    tw.setAttribute('aria-label', (n.open ? t('Collapse') : t('Expand')) + ' ' + n.name);
-    tw.setAttribute('aria-expanded', n.open ? 'true' : 'false');
+    tw.setAttribute('aria-label', (isOpen ? t('Collapse') : t('Expand')) + ' ' + n.name);
+    tw.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     tw.addEventListener('click', function (e) { e.stopPropagation(); toggle(dn); });
     var lb = el('button', 'lb'); lb.type = 'button'; lb.setAttribute('role', 'treeitem'); lb.setAttribute('aria-level', String(level));
-    if (n.hasChildren) lb.setAttribute('aria-expanded', n.open ? 'true' : 'false');
+    if (n.hasChildren) lb.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     lb.setAttribute('aria-selected', selected.indexOf(dn) >= 0 ? 'true' : 'false');
     lb.tabIndex = (selected[0] === dn || (!selected.length && level === 1)) ? 0 : -1;
     lb.appendChild(iconFor(n.objectClass));
@@ -124,8 +137,8 @@
       lb.addEventListener('drop', function (e) { e.preventDefault(); row.classList.remove('drop'); var list = []; try { list = JSON.parse(e.dataTransfer.getData('text/x-td-dn')); } catch (x) { return; } moveTo(list, dn); });
     }
     row.appendChild(tw); row.appendChild(lb); li.appendChild(row);
-    if (n.open && n.children) {
-      var ul = el('ul'); ul.setAttribute('role', 'group');
+    if (isOpen && n.children) {
+      var ul = el('ul'); /* search: dir-explorer */ ul.setAttribute('role', 'group');
       n.children.forEach(function (c) { ul.appendChild(nodeLi(c, level + 1)); });
       if (!n.children.length) { var e = el('li', 'subtle small', t('Empty')); e.style.padding = '4px 30px'; ul.appendChild(e); }
       li.appendChild(ul);
@@ -158,7 +171,6 @@
     renderTree(); updateStatus(); renderInspector();
     if (!(e.ctrlKey || e.metaKey || e.shiftKey) && e.type === 'click') openObject(dn, null, true);
   }
-  $('[data-st-filter]').addEventListener('input', function (e) { filterText = e.target.value.trim().toLowerCase(); renderTree(); });
 
   // ---------------------------------------------------------- context menu
   var menu = null;
@@ -183,7 +195,7 @@
       items.push([t('Disable'), function () { selected.forEach(function (d) { userAction(d, 'disable'); }); }]);
       items.push([t('Move'), function () { moveDialog(selected.slice()); }]);
     }
-    menu = el('div', 'ctx-menu'); menu.setAttribute('role', 'menu');
+    menu = el('div', 'ctx-menu'); menu.setAttribute('role', 'menu'); /* search-exempt: context menu of the actions for the selection, opened at the pointer */
     items.forEach(function (it) {
       var b = el('button'); b.type = 'button'; b.setAttribute('role', 'menuitem'); b.tabIndex = -1;
       b.appendChild(el('span', null, it[0])); if (it[2]) b.appendChild(el('kbd', null, it[2]));
@@ -222,7 +234,7 @@
     if (!list.length) return;
     var body = el('div', 'stack tight');
     body.appendChild(el('p', null, t('Move {count} object(s) to {target}?', { count: list.length, target: nodes[target] ? nodes[target].name : target })));
-    var ul = el('ul', 'small mono'); list.slice(0, 8).forEach(function (d) { ul.appendChild(el('li', null, d)); }); body.appendChild(ul);
+    var ul = el('ul', 'small mono'); /* search-exempt: confirmation preview of at most 8 objects */ list.slice(0, 8).forEach(function (d) { ul.appendChild(el('li', null, d)); }); body.appendChild(ul);
     body.appendChild(el('p', 'hint', t('You can undo this afterwards.')));
     ask(t('Move objects'), body, t('Move')).then(function (ok) {
       if (!ok) return;
@@ -321,6 +333,14 @@
       bar.appendChild(b);
     });
   }
+  var tabSearch = S.mount($('[data-search-surface="dir-tabs"]'), {
+    kind: 'tabs', target: $('[data-st-tabs]'), items: '.st-tab', compact: true,
+    tabs: {
+      list: function () { return tabs.map(function (x) { return { key: x.id, label: x.title + ' ' + (x.dn || ''), pinned: false, dirty: x.kind === 'bulk' && !!x.dirty && Object.keys(x.dirty).length > 0 }; }); },
+      close: function (keys) { keys.forEach(closeTab); }
+    }
+  });
+  void tabSearch;
   function activeDn() { var tb = tabs.filter(function (x) { return x.id === activeTab; })[0]; return tb && tb.kind === 'obj' ? tb.dn : null; }
   function renderActive() {
     var ed = $('[data-st-editor]'); var map = $('.st-map', host);
@@ -392,7 +412,7 @@
     if (isUser) subs.push('Profile', 'Sign-in history');
     subs.push('Attributes', 'Security');
     if (!tb.sub || subs.indexOf(tb.sub) < 0) tb.sub = isUser ? 'Account' : 'General';
-    var st = el('div', 'st-subtabs'); st.setAttribute('role', 'tablist'); st.setAttribute('aria-label', t('Object sections'));
+    var st = el('div', 'st-subtabs'); /* search-exempt: up to eight fixed object sections */ st.setAttribute('role', 'tablist'); st.setAttribute('aria-label', t('Object sections'));
     subs.forEach(function (s) {
       var b = el('button', null, t(s)); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', s === tb.sub ? 'true' : 'false'); b.tabIndex = s === tb.sub ? 0 : -1;
       b.addEventListener('click', function () { tb.sub = s; drawObject(ed, tb, o); });
@@ -502,7 +522,7 @@
     var bits = o.decoded.logonHours.decoded.slice();
     var w = el('div', 'st-f'); w.appendChild(el('span', null, t('Logon hours (your local time, drag to paint)')));
     var scroll = el('div'); scroll.style.overflowX = 'auto';
-    var g = el('div', 'hours'); g.setAttribute('data-hours', ''); g.setAttribute('role', 'grid'); g.setAttribute('aria-label', t('Logon hours'));
+    var g = el('div', 'hours'); g.setAttribute('data-hours', ''); /* search-exempt: fixed 7 by 24 schedule grid */ g.setAttribute('role', 'grid'); g.setAttribute('aria-label', t('Logon hours'));
     var off = -new Date().getTimezoneOffset() / 60; // UTC bits -> local display
     var days = [t('Sun'), t('Mon'), t('Tue'), t('Wed'), t('Thu'), t('Fri'), t('Sat')];
     g.appendChild(el('span'));
@@ -540,11 +560,12 @@
     $$('button', g).forEach(function (b) { if (b.getAttribute('aria-pressed') === 'true') { var i = parseInt(b.getAttribute('data-i'), 10); bytes[i >> 3] |= 1 << (i & 7); } });
     return btoa(String.fromCharCode.apply(null, bytes));
   }
-  function dnList(body, list, emptyText, onRemove, onAdd, addLabel) {
-    var wrap = el('div', 'stack tight');
+  function dnList(body, list, emptyText, onRemove, onAdd, addLabel, searchId) {
+    var wrap = el('div', 'stack tight'); wrap.setAttribute('role', 'list'); /* search: dir-member-of, dir-members */
+    if (list.length) { var sh = el('div', 'ss-host tight'); sh.setAttribute('data-search-surface', searchId); sh.setAttribute('data-search-manual', ''); body.appendChild(sh); S.mount(sh, { kind: 'list', target: wrap, items: '.item-row', compact: true, label: t('Search {count} entries', { count: list.length }) }); }
     if (!list.length) wrap.appendChild(el('p', 'muted', emptyText));
     list.forEach(function (d) {
-      var r = el('div', 'item-row');
+      var r = el('div', 'item-row'); r.setAttribute('role', 'listitem');
       r.appendChild(iconFor(/^CN=.*Computers?/i.test(d) ? 'computer' : 'user'));
       var n = el('button', 'nm'); n.type = 'button'; n.style.cssText = 'background:none;border:0;color:var(--text);text-align:left;font:inherit;cursor:pointer';
       n.appendChild(el('span', null, rdnName(d))); n.appendChild(el('span', 'sub mono', d));
@@ -570,10 +591,10 @@
   }
   function secMemberOf(body, o) {
     body.appendChild(el('p', 'hint', t('Groups this object belongs to. Adding or removing changes the group.')));
-    dnList(body, arr(o, 'memberOf'), t('Not a member of any group (apart from the primary group).'), function (g) { members(g, [], [o.dn]); }, function (g) { members(g, [o.dn], []); }, t('Add to group'));
+    dnList(body, arr(o, 'memberOf'), t('Not a member of any group (apart from the primary group).'), function (g) { members(g, [], [o.dn]); }, function (g) { members(g, [o.dn], []); }, t('Add to group'), 'dir-member-of');
   }
   function secMembers(body, o) {
-    dnList(body, arr(o, 'member'), t('This group has no members.'), function (m) { members(o.dn, [], [m]); }, function (m) { members(o.dn, [m], []); }, t('Add member'));
+    dnList(body, arr(o, 'member'), t('This group has no members.'), function (m) { members(o.dn, [], [m]); }, function (m) { members(o.dn, [m], []); }, t('Add member'), 'dir-members');
   }
   function secProfile(body, o) {
     var g = el('div', 'st-fields');
@@ -606,20 +627,20 @@
   // Attributes: every attribute, schema aware
   function secAttributes(body, o, tb) {
     var top = el('div', 'cluster');
-    var f = el('input'); f.type = 'search'; f.placeholder = t('Filter {count} attributes', { count: Object.keys(o.attributes || {}).length }); f.setAttribute('aria-label', t('Filter attributes')); f.style.cssText = 'flex:1 1 220px;min-height:42px;height:42px';
-    top.appendChild(f);
-    var addSel = el('select'); addSel.setAttribute('aria-label', t('Add an attribute')); addSel.style.cssText = 'width:auto;min-height:42px;height:42px';
+    var fh = el('div', 'ss-host tight'); fh.style.flex = '1 1 260px'; fh.setAttribute('data-search-surface', 'dir-attributes'); fh.setAttribute('data-search-manual', '');
+    top.appendChild(fh);
+    var ah = el('div', 'ss-host tight'); ah.style.flex = '0 1 220px'; ah.setAttribute('data-search-surface', 'dir-add-attribute'); ah.setAttribute('data-search-manual', '');
+    var addSel = el('select'); /* search: dir-add-attribute */ addSel.setAttribute('aria-label', t('Add an attribute')); addSel.style.cssText = 'width:auto;min-height:42px;height:42px';
     addSel.appendChild(new Option(t('Add an attribute'), ''));
     (o.schemaAllowed || []).filter(function (a) { return !(a in (o.attributes || {})); }).forEach(function (a) { addSel.appendChild(new Option(a, a)); });
-    top.appendChild(addSel); body.appendChild(top);
+    top.appendChild(ah); top.appendChild(addSel); body.appendChild(top);
     var wrap = el('div'); wrap.style.overflowX = 'auto';
-    var tbl = el('table', 'attr-tbl'); var tbody = el('tbody'); tbl.appendChild(tbody); wrap.appendChild(tbl); body.appendChild(wrap);
+    var tbl = el('table', 'attr-tbl'); /* search: dir-attributes */ var tbody = el('tbody'); tbl.appendChild(tbody); wrap.appendChild(tbl); body.appendChild(wrap);
     var names = Object.keys(o.attributes || {}).sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : 1; });
     function draw() {
-      tbody.textContent = ''; var q = f.value.trim().toLowerCase();
+      tbody.textContent = '';
       names.forEach(function (n) {
-        if (q && n.toLowerCase().indexOf(q) < 0 && JSON.stringify(o.attributes[n]).toLowerCase().indexOf(q) < 0) return;
-        var tr = el('tr'); if (inspectorAttr === n) tr.className = 'sel';
+        var tr = el('tr'); tr.setAttribute('data-attr-text', n + ' ' + JSON.stringify(o.attributes[n])); if (inspectorAttr === n) tr.className = 'sel';
         tr.appendChild(el('td', 'an', n));
         var td = el('td', 'av'); td.appendChild(attrView(o, n)); tr.appendChild(td);
         var ec = el('td'); ec.style.width = '1%'; var eb = btn(t('Edit'), function () { editAttr(o, n, td); }, 'sm'); eb.setAttribute('aria-label', t('Edit') + ' ' + n); ec.appendChild(eb); tr.appendChild(ec);
@@ -627,7 +648,8 @@
         tbody.appendChild(tr);
       });
     }
-    f.addEventListener('input', draw);
+    S.mount(fh, { kind: 'table', target: tbody, items: 'tr', textAttr: 'data-attr-text', compact: true, label: t('Filter {count} attributes', { count: names.length }) });
+    S.mount(ah, { kind: 'select', target: addSel, compact: true, label: t('Search {count} attributes the schema allows', { count: addSel.options.length - 1 }) });
     addSel.addEventListener('change', function () { var a = addSel.value; if (!a) return; names.push(a); o.attributes[a] = []; draw(); var rows = $$('tr', tbody); rows.forEach(function (r) { if (r.firstChild.textContent === a) editAttr(o, a, r.children[1]); }); });
     draw();
   }
@@ -716,7 +738,7 @@
   }
 
   // ---------------------------------------------------------- map
-  var view = { x: 0, y: 0, k: 1 };
+  var view = { x: 0, y: 0, k: 1 }, mapSearch = null;
   function renderMapIfOpen() { if (tabs.some(function (x) { return x.id === activeTab && x.kind === 'map'; })) renderMap(); }
   function layout() {
     // Tidy tree: leaves get consecutive x slots, parents centre over children.
@@ -743,10 +765,13 @@
       ctl.appendChild(mbtn(t('Fit'), t('Fit'), fit));
       ctl.appendChild(mbtn(t('Expand all'), t('Expand all'), expandVisible));
       m.appendChild(ctl);
+      var mh = el('div', 'ss-host tight st-map-search'); mh.setAttribute('data-search-surface', 'dir-map'); mh.setAttribute('data-search-manual', ''); m.appendChild(mh);
+      mapSearch = S.mount(mh, { kind: 'custom', compact: true, label: t('Search the map'), onChange: function () { renderMap(); } });
       bindPan(m);
     }
     var old = $('svg', m); if (old) old.remove();
-    var pos = layout(), s = C.svg('svg', { role: 'tree', 'aria-label': t('Directory map') });
+    var pos = layout(), s = C.svg('svg', { role: 'tree', 'aria-label': t('Directory map') }); /* search: dir-map */
+    var ms = mapSearch && mapSearch.active() ? mapSearch : null, mhits = 0;
     var g = C.svg('g', { transform: 'translate(' + view.x + ' ' + view.y + ') scale(' + view.k + ')' });
     var sel = activeDn() || selected[0] || '';
     Object.keys(pos).forEach(function (dn) {
@@ -755,7 +780,8 @@
     });
     Object.keys(pos).forEach(function (dn, i) {
       var n = nodes[dn], p = pos[dn], w = Math.min(176, 40 + String(n.name).length * 8);
-      var ng = C.svg('g', { class: 'mnode' + (n.parent ? '' : ' root') + (dn === sel ? ' sel' : ''), transform: 'translate(' + (p.x - w / 2) + ' ' + (p.y - 20) + ')', tabindex: '0', role: 'treeitem', 'aria-label': n.name + (n.hasChildren ? (n.open ? ', ' + t('expanded') : ', ' + t('collapsed')) : '') });
+      var hitM = ms && ms.test(String(n.name)); if (hitM) mhits++;
+      var ng = C.svg('g', { class: 'mnode' + (n.parent ? '' : ' root') + (dn === sel ? ' sel' : '') + (ms ? (hitM ? ' hit' : ' dim') : ''), transform: 'translate(' + (p.x - w / 2) + ' ' + (p.y - 20) + ')', tabindex: '0', role: 'treeitem', 'aria-label': n.name + (n.hasChildren ? (n.open ? ', ' + t('expanded') : ', ' + t('collapsed')) : '') });
       ng.style.animationDelay = Math.min(i * 20, 300) + 'ms';
       ng.appendChild(C.svg('rect', { width: w, height: 40, rx: 14 }));
       var tx = C.svg('text', { x: 14, y: 25 }); tx.textContent = String(n.name).length > 18 ? String(n.name).slice(0, 17) + '…' : n.name; ng.appendChild(tx);
@@ -768,6 +794,7 @@
       g.appendChild(ng);
     });
     s.appendChild(g); m.insertBefore(s, m.firstChild);
+    if (mapSearch) mapSearch.count(mhits, Object.keys(pos).length);
     if (!m.dataset.fitted) { m.dataset.fitted = '1'; requestAnimationFrame(fit); }
   }
   function mbtn(label, aria, fn) { var b = el('button', null, label); b.type = 'button'; b.setAttribute('aria-label', aria); b.addEventListener('click', function (e) { e.stopPropagation(); fn(); }); return b; }
@@ -833,20 +860,20 @@
     q.rows.forEach(function (r, i) {
       var row = el('div', 'qb-row');
       var a = el('input'); a.setAttribute('list', 'qb-attrs'); a.value = r.attr; a.setAttribute('aria-label', t('Attribute')); a.className = 'mono'; a.addEventListener('input', function () { r.attr = a.value.trim(); upd(); });
-      var o = el('select'); o.setAttribute('aria-label', t('Condition')); OPS.forEach(function (x) { o.appendChild(new Option(x[1], x[0], false, r.op === x[0])); }); o.addEventListener('change', function () { r.op = o.value; v.disabled = r.op === 'present' || r.op === 'absent'; upd(); });
+      var o = el('select'); /* search-exempt: eight fixed conditions */ o.setAttribute('aria-label', t('Condition')); OPS.forEach(function (x) { o.appendChild(new Option(x[1], x[0], false, r.op === x[0])); }); o.addEventListener('change', function () { r.op = o.value; v.disabled = r.op === 'present' || r.op === 'absent'; upd(); });
       var v = el('input'); v.value = r.value; v.setAttribute('aria-label', t('Value')); v.disabled = r.op === 'present' || r.op === 'absent'; v.addEventListener('input', function () { r.value = v.value; upd(); });
       v.addEventListener('keydown', function (e) { if (e.key === 'Enter') run(); });
       var x = el('button', 'st-btn sm', '×'); x.type = 'button'; x.setAttribute('aria-label', t('Remove condition')); x.addEventListener('click', function () { q.rows.splice(i, 1); renderQuery(ed, tb); });
       row.appendChild(a); row.appendChild(o); row.appendChild(v); row.appendChild(x); rows.appendChild(row);
     });
     ed.appendChild(rows);
-    var dl = el('datalist'); dl.id = 'qb-attrs'; ATTRS.forEach(function (x) { dl.appendChild(new Option(x)); }); ed.appendChild(dl);
+    var dl = el('datalist'); /* search-exempt: native suggestions of the attribute field */ dl.id = 'qb-attrs'; ATTRS.forEach(function (x) { dl.appendChild(new Option(x)); }); ed.appendChild(dl);
     var r2 = el('div', 'cluster');
     r2.appendChild(btn('+ ' + t('Condition'), function () { q.rows.push({ attr: 'name', op: 'contains', value: '' }); renderQuery(ed, tb); }, 'sm'));
     ed.appendChild(r2);
     var g = el('div', 'st-fields');
     var base = el('input'); base.value = q.base || ''; base.className = 'mono'; base.addEventListener('input', function () { q.base = base.value; });
-    var sc = el('select'); [['sub', t('Subtree')], ['one', t('One level')], ['base', t('Base only')]].forEach(function (x) { sc.appendChild(new Option(x[1], x[0], false, q.scope === x[0])); }); sc.addEventListener('change', function () { q.scope = sc.value; });
+    var sc = el('select'); /* search-exempt: three fixed scopes */ [['sub', t('Subtree')], ['one', t('One level')], ['base', t('Base only')]].forEach(function (x) { sc.appendChild(new Option(x[1], x[0], false, q.scope === x[0])); }); sc.addEventListener('change', function () { q.scope = sc.value; });
     var at = el('input'); at.value = q.attrs; at.className = 'mono'; at.addEventListener('input', function () { q.attrs = at.value; });
     g.appendChild(wrapF(t('Search base'), base)); g.appendChild(wrapF(t('Scope'), sc)); g.appendChild(wrapF(t('Columns'), at));
     ed.appendChild(g);
@@ -857,7 +884,9 @@
     var r3 = el('div', 'cluster'); r3.appendChild(btn(t('Run'), run, 'primary'));
     var bulkB = btn(t('Bulk edit results'), function () { if (tb.rows) openBulk(tb.rows.map(function (r) { return r.dn; }), (q.attrs || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean)); }); r3.appendChild(bulkB);
     var cnt = el('span', 'subtle'); r3.appendChild(cnt); ed.appendChild(r3);
+    var qh = el('div', 'ss-host tight'); qh.setAttribute('data-search-surface', 'dir-query-results'); qh.setAttribute('data-search-manual', ''); ed.appendChild(qh);
     var grid = el('div', 'grid-wrap'); ed.appendChild(grid);
+    S.mount(qh, { kind: 'table', target: grid, compact: true, label: t('Search the results') });
     function run() {
       var f = fl.value.trim() || '(objectClass=*)';
       if ((f.match(/\(/g) || []).length !== (f.match(/\)/g) || []).length) { cnt.textContent = t('The parentheses in the filter do not match.'); return; }
@@ -874,7 +903,7 @@
   function drawGrid(host2, rows, cols, editable, dirty) {
     host2.textContent = '';
     if (!rows.length) { host2.appendChild(el('p', 'muted', t('No objects matched'))).style.padding = '12px'; return; }
-    var tbl = el('table', 'dgrid'), thead = el('thead'), tr = el('tr');
+    var tbl = el('table', 'dgrid'), /* search: dir-query-results, dir-bulk-grid */ thead = el('thead'), tr = el('tr');
     tr.appendChild(el('th', null, 'DN')); cols.forEach(function (c) { tr.appendChild(el('th', 'mono', c)); });
     thead.appendChild(tr); tbl.appendChild(thead);
     var tb = el('tbody');
@@ -928,7 +957,9 @@
     var top = el('div', 'cluster'); var cw = wrapF(t('Columns'), colIn); cw.style.flex = '1 1 280px'; top.appendChild(cw);
     top.appendChild(btn(t('Load'), function () { tb.cols = colIn.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean); tb.data = null; renderBulk(ed, tb); }));
     ed.appendChild(top);
+    var bh = el('div', 'ss-host tight'); bh.setAttribute('data-search-surface', 'dir-bulk-grid'); bh.setAttribute('data-search-manual', ''); ed.appendChild(bh);
     var grid = el('div', 'grid-wrap'); ed.appendChild(grid);
+    S.mount(bh, { kind: 'table', target: grid, compact: true, label: t('Search the rows') });
     var bar = el('div', 'cluster'); var info = el('span', 'subtle'); ed.appendChild(bar);
     var prevB = btn(t('Preview changes'), preview, 'primary'), applyB = btn(t('Apply'), applyAll); applyB.disabled = true;
     bar.appendChild(prevB); bar.appendChild(applyB); bar.appendChild(btn(t('Discard'), function () { tb.dirty = {}; drawGrid(grid, tb.data, tb.cols, true, tb.dirty); count(); })); bar.appendChild(info);
@@ -953,7 +984,9 @@
     function preview() {
       var ch = changes(), dns = Object.keys(ch); prevBox.textContent = '';
       if (!dns.length) { prevBox.appendChild(el('p', 'muted', t('No changes yet'))); return; }
-      prevBox.appendChild(el('div', 'st-k', t('Preview'))); var ul = el('ul', 'small');
+      prevBox.appendChild(el('div', 'st-k', t('Preview'))); var ul = el('ul', 'small'); /* search: dir-bulk-preview */
+      var ph = el('div', 'ss-host tight'); ph.setAttribute('data-search-surface', 'dir-bulk-preview'); ph.setAttribute('data-search-manual', ''); prevBox.appendChild(ph);
+      S.mount(ph, { kind: 'list', target: ul, items: 'li', compact: true, label: t('Search the changes') });
       dns.forEach(function (d) { var c = ch[d]; Object.keys(c.set).forEach(function (a) { ul.appendChild(el('li', null, rdnName(d) + ': ' + a + ' → ' + c.set[a].join('; '))); }); c.clear.forEach(function (a) { ul.appendChild(el('li', null, rdnName(d) + ': ' + t('clear') + ' ' + a)); }); });
       prevBox.appendChild(ul); applyB.disabled = false; applyB.focus();
     }
@@ -985,6 +1018,7 @@
   function renderPanel() {
     var b = $('[data-st-pbody]'); b.textContent = '';
     $$('[data-ptab]').forEach(function (x) { x.setAttribute('aria-selected', x.getAttribute('data-ptab') === panelTab ? 'true' : 'false'); });
+    $$('[data-ptab-search]').forEach(function (x) { x.hidden = x.getAttribute('data-ptab-search') !== panelTab; });
     if (panelTab === 'problems') {
       if (problems === null) { b.appendChild(el('p', 'subtle', t('Checking the directory...'))); return; }
       if (!problems.length) { var ok = el('div', 'st-prob'); ok.appendChild(el('span', 'ok', '✓')); ok.appendChild(el('span', 'tx', t('No problems found: disabled admins, stale computers, expired guests and empty groups were checked.'))); b.appendChild(ok); return; }
@@ -1030,8 +1064,22 @@
 
   // ---------------------------------------------------------- top bar
   var find = $('[data-st-find]');
+  // With ".*" on, the find box asks for the objects of the directory (up to 1000) and keeps the ones
+  // whose name or distinguished name matches the regular expression; LDAP itself has no regex.
+  var findSearch = S.mount(find, { kind: 'custom', bare: true, compact: true, highlight: false, onChange: function () {} });
   find.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter') return; e.preventDefault();
+    if (findSearch && findSearch.state().regex) {
+      if (!findSearch.active()) return;
+      api('/api/dir/search?' + new URLSearchParams({ filter: '(objectClass=*)', attrs: 'name,objectClass', limit: '1000' })).then(function (r) {
+        var rows = r.rows.filter(function (x) { return findSearch.test(first((x.attributes || {}).name) + ' ' + x.dn); });
+        findSearch.count(rows.length, r.rows.length);
+        lastSearch = { filter: '/' + findSearch.state().pattern + '/', rows: rows }; panelTab = 'search'; $('[data-st-panel]').classList.remove('collapsed'); renderPanel();
+        if (rows.length === 1) { revealPath(rows[0].dn); openObject(rows[0].dn); }
+        if (phone.matches) setPane(rows.length === 1 ? 'editor' : 'problems');
+      }, fail);
+      return;
+    }
     var v = find.value.trim().replace(/[()\\*\x00]/g, ''); if (!v) return;
     var f = /^[A-Za-z][\w-]*=/.test(v) ? '(' + v + ')' : '(|(name=*' + v + '*)(sAMAccountName=*' + v + '*)(displayName=*' + v + '*)(description=*' + v + '*))';
     api('/api/dir/search?' + new URLSearchParams({ filter: f, attrs: 'name,objectClass', limit: '200' })).then(function (r) {

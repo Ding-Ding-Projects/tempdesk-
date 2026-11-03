@@ -5,13 +5,13 @@
 <div class="page-head"><h1>{{ t('Startup and logon scripts') }}</h1>
   <a class="btn filled" href="/scripts/startup/new">{{ t('New startup script') }}</a><a class="btn tonal" href="/scripts/logon/new">{{ t('New logon script') }}</a></div>
 <section class="card rise">{{ search_box(tv, regex_error, 'Search scripts') }}
-  {% if tv.rows %}<form method="post" action="/scripts/bulk" data-bulk-form>{{ csrf() }}<div class="table-wrap"><table><thead><tr>{{ sel_all() }}{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}</tr></thead><tbody>
+  {% if tv.rows %}<form method="post" action="/scripts/bulk" data-bulk-form>{{ csrf() }}<div class="table-wrap"><table data-searchable="table-{{ tv.id }}"><thead><tr>{{ sel_all() }}{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}</tr></thead><tbody>
   {% for s in tv.rows %}<tr data-ctx='[{"label":"{{ ta('Edit') }}","href":"/scripts/{{ s.kind }}/{{ s.name|urlencode }}"},{"label":"{{ ta('Download') }}","href":"/scripts/{{ s.kind }}/{{ s.name|urlencode }}/download"},{"label":"{{ ta('Version history') }}","href":"/history/script-{{ s.kind }}?name={{ s.name|urlencode }}"}]'>{{ sel(s.ref, s.name) }}<td><a class="mono" href="/scripts/{{ s.kind }}/{{ s.name|urlencode }}" data-tab-link>{{ s.name }}</a></td><td>{{ s.kind }}</td><td>{{ s.size }}</td><td>{{ local_time(s.modified) }}</td></tr>{% endfor %}
   </tbody></table></div>{{ bulk_bar([('delete','Delete selected')], bulk_token) }}</form>
   {% else %}{{ empty('No scripts yet', 'Create a startup script (runs as the PC starts) or a logon script (runs when a guest signs in).') }}{% endif %}</section>
 <section class="card"><h2>{{ t('Upload scripts') }}</h2>
   <form method="post" action="/scripts/upload" enctype="multipart/form-data" class="form-grid">{{ csrf() }}
-    <div class="field"><label for="uk">{{ t('Kind') }}</label><select id="uk" name="kind"><option value="startup">{{ t('Startup') }}</option><option value="logon">{{ t('Logon') }}</option></select></div>
+    <div class="field"><label for="uk">{{ t('Kind') }}</label><select id="uk" name="kind" data-search-exempt="two fixed kinds"><option value="startup">{{ t('Startup') }}</option><option value="logon">{{ t('Logon') }}</option></select></div>
     <div class="field"><label for="uf">{{ t('.ps1 or .cmd files') }}</label><input id="uf" type="file" name="file" accept=".ps1,.cmd" multiple required></div>
     <div class="field" style="justify-content:flex-end"><button class="btn tonal" type="submit">{{ t('Upload') }}</button></div></form></section>
 {% endblock %}

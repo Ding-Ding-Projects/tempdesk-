@@ -53,6 +53,23 @@
     if (was && was.href === here && list.length) location.href = list[Math.max(0, i - 1)].href;
   }
   window.TDTabs = { open: open };
+  // Search the open tabs, and close the tabs that contain (or do not contain) the text.
+  // There are no pinned tabs in this strip; the current page counts as unsaved while a form on it was edited.
+  var pageDirty = false;
+  doc.addEventListener('input', function (e) { if (e.target.closest && e.target.closest('main form') && !e.target.closest('[role="search"], .ss')) pageDirty = true; });
+  doc.addEventListener('submit', function () { pageDirty = false; });
+  if (window.TDSearch && bar) {
+    window.TDSearch.mount($('[data-search-surface="doc-tabs"]'), {
+      kind: 'tabs', target: bar, items: '.doc-tab',
+      tabs: {
+        list: function () { return loadTabs().map(function (x) { return { key: x.href, label: x.title + ' ' + x.href, pinned: false, dirty: x.href === here && pageDirty }; }); },
+        close: function (keys) {
+          var list = loadTabs().filter(function (x) { return keys.indexOf(x.href) < 0; }); saveTabs(list); renderTabs();
+          if (keys.indexOf(here) >= 0 && list.length) location.href = list[0].href;
+        }
+      }
+    });
+  }
   var main = $('main[data-tab-title]');
   if (main) open(here, main.getAttribute('data-tab-title'));
   else renderTabs();
@@ -67,7 +84,7 @@
     if (open) { btn.setAttribute('aria-expanded', 'false'); if (existing) existing.hidden = true; return; }
     btn.setAttribute('aria-expanded', 'true');
     if (existing) { existing.hidden = false; return; }
-    var ul = doc.createElement('ul'); var sk = doc.createElement('li'); sk.className = 'skeleton'; sk.style.height = '28px'; sk.setAttribute('aria-label', t('Loading')); ul.appendChild(sk); li.appendChild(ul);
+    var ul = doc.createElement('ul'); /* search: dir-classic-tree */ var sk = doc.createElement('li'); sk.className = 'skeleton'; sk.style.height = '28px'; sk.setAttribute('aria-label', t('Loading')); ul.appendChild(sk); li.appendChild(ul);
     fetch('/directory/children?dn=' + encodeURIComponent(btn.getAttribute('data-dn')), { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
       .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then(function (rows) {

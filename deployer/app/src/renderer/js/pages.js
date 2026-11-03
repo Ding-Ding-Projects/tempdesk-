@@ -1,6 +1,6 @@
 // Pages of the desktop app. Every page builds real UI from real data; empty states say what is
 // actually missing. Strings come from the i18n catalogs through t().
-import { h, t, state, btn, iconBtn, toast, dialog, confirmDialog, promptDialog, superConfirm, info, searchBox, field, select, contextMenu, showMenu, play, fmtBytes, fmtTime, pulseFocus, announce } from './ui.js';
+import { h, t, state, btn, iconBtn, toast, dialog, confirmDialog, promptDialog, superConfirm, info, searchBox, field, select, contextMenu, showMenu, play, fmtBytes, fmtTime, pulseFocus, announce, listFilter } from './ui.js';
 import { progressPanel } from './run.js';
 import { base64Page } from './base64.js';
 import { settingsPage } from './settings.js';
@@ -310,7 +310,7 @@ function studioPage(root, app) {
       btn(t('studio.usb'), writeUsb, 'btn-ghost btn-sm'),
       info('info.studio', t('studio.title')),
       h('span', { style: { flex: '1' } }),
-      h('label', { class: 'small muted', text: t('studio.branch') }), branchSel, status]),
+      h('label', { class: 'small muted', text: t('studio.branch') }), listFilter(branchSel, 'studio-branch-picker', t('studio.branch'), { items: (l) => [...l.options] }), status]),
     frame]));
 }
 
@@ -399,13 +399,13 @@ async function deploymentTab(root, app) {
   const rows = d.kind === 'server' ? [[t('f.computerName'), d.server.computerName], [t('f.ipAddress'), d.server.ipAddress], [t('f.domainName'), d.server.domainName], [t('f.netbiosName'), d.server.netbiosName], [t('f.portalsMode'), t('opt.portals.' + d.server.portalsMode)]]
     : [[t('ssh.host'), d.ssh.user + '@' + d.ssh.host + ':' + d.ssh.port], [t('lite.realm'), d.lite.realm], [t('lite.dcIp'), d.lite.dcIp], [t('lite.parent'), d.lite.parentInterface]];
   root.appendChild(h('div', { class: 'cols' }, [
-    h('div', { class: 'grow' }, [h('div', { class: 'card' }, [h('h2', { text: t('dep.summary') }), h('table', { class: 'table' }, [h('tbody', null, rows.map(([k, v]) => h('tr', null, [h('th', { text: k }), h('td', { class: 'mono', text: v || '' })])))]), healthBox]),
+    h('div', { class: 'grow' }, [h('div', { class: 'card' }, [h('h2', { text: t('dep.summary') }), listFilter(h('table', { class: 'table' }, [h('tbody', null, rows.map(([k, v]) => h('tr', null, [h('th', { text: k }), h('td', { class: 'mono', text: v || '' })])))]), 'deployment-summary', t('dep.summary'), { items: (l) => [...l.querySelectorAll('tr')] }), healthBox]),
       h('div', { class: 'card' }, [h('h2', { text: t('dep.actions') }), h('div', { class: 'row' }, [
         btn(t('dep.rerun'), () => { draft = JSON.parse(JSON.stringify(d)); delete draft.agent; app.go('deploy'); }, 'btn-ghost'),
         d.kind === 'server' ? btn(t('dep.updatePayload'), () => { draft = JSON.parse(JSON.stringify(d)); delete draft.agent; draft.server.advanced = true; app.go('deploy'); toast(t('dep.updateHelp')); }, 'btn-ghost') : null,
         d.kind === 'server' ? btn(t('dep.uninstall'), () => uninstallAgent(d), 'btn-danger') : null,
         btn(t('dep.inventory'), () => exportInventory(d, envs), 'btn-ghost')])])]),
-    h('div', { class: 'side' }, [h('div', { class: 'card' }, [h('h2', { text: t('dep.files') }), envs.length ? h('ul', null, envs.map((e) => h('li', { class: 'mono small', text: e }))) : h('p', { class: 'muted', text: t('dep.noEnv') }),
+    h('div', { class: 'side' }, [h('div', { class: 'card' }, [h('h2', { text: t('dep.files') }), envs.length ? listFilter(h('ul', null, envs.map((e) => h('li', { class: 'mono small', text: e }))), 'deployment-files', t('dep.files')) : h('p', { class: 'muted', text: t('dep.noEnv') }),
       h('p', { class: 'small muted', text: d.agent && d.agent.hasKeys ? t('dep.keysStored') : t('dep.noKeysYet') })])])]));
 }
 async function uninstallAgent(d) {

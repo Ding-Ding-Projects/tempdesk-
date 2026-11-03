@@ -13,7 +13,7 @@
   <button class="btn filled" type="submit">{{ t('Save') }}</button></form>
 <div class="side stack">
 <section class="card">{{ search_box(tv, regex_error, 'Search programs') }}
-  {% if tv.rows %}<form method="post" action="/allowlist" data-bulk-form>{{ csrf() }}<input type="hidden" name="op" value="remove"><div class="table-wrap"><table><thead><tr>{{ sel_all() }}{{ th_sort(tv, 'app', 'Program') }}</tr></thead><tbody>
+  {% if tv.rows %}<form method="post" action="/allowlist" data-bulk-form>{{ csrf() }}<input type="hidden" name="op" value="remove"><div class="table-wrap"><table data-searchable="table-{{ tv.id }}"><thead><tr>{{ sel_all() }}{{ th_sort(tv, 'app', 'Program') }}</tr></thead><tbody>
     {% for a in tv.rows %}<tr data-ctx>{{ sel(a.app, a.app) }}<td class="mono">{{ a.app }}</td></tr>{% endfor %}</tbody></table></div>
     <div class="bulkbar" data-bulkbar><strong><span data-bulk-count>0</span> {{ t('selected') }}</strong><button class="btn sm danger" type="submit">{{ t('Remove selected') }}</button></div></form>
   {% else %}{{ empty('The allowlist is empty', 'Add program file names such as msedge.exe on the left.') }}{% endif %}</section>

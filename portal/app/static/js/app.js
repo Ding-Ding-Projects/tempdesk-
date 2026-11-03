@@ -252,68 +252,7 @@
     requestAnimationFrame(step);
   });
 
-  // ---------------------------------------------------------- regex search boxes
-  function regexBox(form) {
-    var input = form.querySelector('[data-regex-input]'), flag = form.querySelector('[data-regex-flag]');
-    var toggle = form.querySelector('[data-regex-toggle]'), status = form.querySelector('[data-regex-status]');
-    var builder = form.querySelector('[data-regex-builder]');
-    var targetSel = form.getAttribute('data-local-filter');
-    if (!input || !toggle) return;
-    function rows() {
-      if (targetSel) return $$('[data-filter-text]', $(targetSel));
-      var card = form.closest('.card'); return card ? $$('tbody tr', card) : [];
-    }
-    function update() {
-      var on = toggle.getAttribute('aria-pressed') === 'true';
-      if (flag) flag.value = on ? '1' : '';
-      if (builder) builder.hidden = !on;
-      var q = input.value;
-      if (!on) {
-        if (targetSel) { var n = 0; rows().forEach(function (r) { var m = !q || r.getAttribute('data-filter-text').toLowerCase().indexOf(q.toLowerCase()) >= 0; r.hidden = !m; if (m) n++; }); if (status) status.textContent = q ? t('{count} matches', { count: n }) : ''; }
-        else if (status && !status.querySelector('.error-text')) status.textContent = '';
-        input.removeAttribute('aria-invalid');
-        return;
-      }
-      var re;
-      try { re = new RegExp(q, 'i'); } catch (e) {
-        input.setAttribute('aria-invalid', 'true');
-        if (status) { status.textContent = ''; var sp = doc.createElement('span'); sp.className = 'error-text'; sp.textContent = t('Invalid pattern') + ': ' + e.message; status.appendChild(sp); }
-        return;
-      }
-      input.removeAttribute('aria-invalid');
-      var count = 0;
-      rows().forEach(function (r) {
-        var text = targetSel ? r.getAttribute('data-filter-text') : r.textContent;
-        var m = !q || re.test(text); if (m) count++;
-        if (targetSel) r.hidden = !m;
-      });
-      if (status) status.textContent = q ? t('{count} matches', { count: count }) : '';
-    }
-    toggle.addEventListener('click', function () { toggle.setAttribute('aria-pressed', toggle.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); update(); input.focus(); });
-    input.addEventListener('input', update);
-    form.addEventListener('submit', function (e) { if (input.getAttribute('aria-invalid') === 'true') { e.preventDefault(); input.focus(); } if (targetSel && toggle.getAttribute('aria-pressed') === 'true') { e.preventDefault(); } });
-    if (builder) builder.addEventListener('click', function () { openBuilder(input, update); });
-    update();
-  }
-  $$('[data-regex-form], [data-local-filter]').forEach(regexBox);
-
-  var TOKENS = [['^', 'Starts with'], ['$', 'Ends with'], ['.*', 'Anything'], ['\\d+', 'Digits'], ['[a-z]+', 'Letters'], ['\\s', 'Space'], ['(a|b)', 'Either'], ['\\.', 'Literal dot'], ['?', 'Optional'], ['{2,4}', '2 to 4 times']];
-  function openBuilder(input, update) {
-    var d = doc.createElement('dialog'); d.setAttribute('aria-label', 'Regex builder');
-    var h = doc.createElement('h2'); h.textContent = 'Regex builder'; d.appendChild(h);
-    var grid = doc.createElement('div'); grid.className = 'cluster';
-    TOKENS.forEach(function (tk) {
-      var b = doc.createElement('button'); b.type = 'button'; b.className = 'btn sm tonal';
-      var code = doc.createElement('code'); code.textContent = tk[0]; b.appendChild(code); b.appendChild(doc.createTextNode(' ' + tk[1]));
-      b.addEventListener('click', function () { var s = input.selectionStart || input.value.length; input.setRangeText(tk[0], s, input.selectionEnd || s, 'end'); update(); });
-      grid.appendChild(b);
-    });
-    d.appendChild(grid);
-    var c = doc.createElement('button'); c.type = 'button'; c.className = 'btn filled'; c.style.marginTop = '16px'; c.textContent = t('Close');
-    c.addEventListener('click', function () { d.close(); }); d.appendChild(c);
-    d.addEventListener('close', function () { d.remove(); input.focus(); });
-    doc.body.appendChild(d); d.showModal();
-  }
+  // Search fields with the regex builder live in search-surfaces.js (TDSearch).
 
   // ---------------------------------------------------------- bulk selection
   $$('[data-bulk-form]').forEach(function (form) {
@@ -390,7 +329,7 @@
     if (raw) { try { items = JSON.parse(raw); } catch (e) { items = null; } }
     if (!items || !items.length) items = autoItems(target);
     closeMenu();
-    menu = doc.createElement('div'); menu.className = 'ctx-menu'; menu.setAttribute('role', 'menu');
+    menu = doc.createElement('div'); menu.className = 'ctx-menu'; menu.setAttribute('role', 'menu'); /* search-exempt: context menu of a few actions for one row, opened at the pointer */
     items.forEach(function (it) {
       var el = it.href ? doc.createElement('a') : doc.createElement('button');
       if (it.href) el.href = it.href; else el.type = 'button';
@@ -473,29 +412,7 @@
     if (cp && cp.setColor) cp.setColor(def); store.del('td.accent'); root.style.removeProperty('--primary'); root.style.removeProperty('--primary-hover');
   });
 
-  // Settings search
-  var ss = $('[data-settings-search]');
-  if (ss) {
-    var cnt = $('[data-settings-count]');
-    var run = function () {
-      var q = ss.value.trim().toLowerCase(), shown = 0;
-      $$('[data-setting]').forEach(function (f) {
-        if (f.matches('[data-setting-section]')) return;
-        var m = !q || (f.getAttribute('data-setting') + ' ' + f.textContent).toLowerCase().indexOf(q) >= 0;
-        f.hidden = !m; if (m) shown++;
-      });
-      $$('[data-setting-section]').forEach(function (sec) {
-        var own = (sec.getAttribute('data-setting') || '').toLowerCase().indexOf(q) >= 0;
-        var anyChild = $$('[data-setting]', sec).some(function (f) { return !f.hidden; });
-        var fields = $$('[data-setting]', sec);
-        if (own && q) fields.forEach(function (f) { f.hidden = false; });
-        sec.hidden = q && !own && !anyChild && (fields.length > 0 || !(sec.textContent.toLowerCase().indexOf(q) >= 0));
-      });
-      if (cnt) cnt.textContent = q ? t('{count} matches', { count: shown }) : '';
-    };
-    ss.addEventListener('input', run);
-    var hq = new URLSearchParams(window.location.search).get('find'); if (hq) { ss.value = hq; run(); }
-  }
+  // Settings search: a search surface (search-surfaces.js) on [data-settings-search].
 
   // School mode: a convenience lock kept in this browser, verified with a SHA-256 hash of the PIN.
   function sha(text) {

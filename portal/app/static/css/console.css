@@ -435,3 +435,28 @@ a.st-q { text-decoration: none; }
   .big-title { font-size: 2rem; }
   .mid-title { font-size: 2rem; }
 }
+
+/* ----------------------------------------------------------- search surfaces in the studio and the policy editor */
+.st-top .find .ss { width: min(560px, 100%); }
+.st-top .find { gap: 4px; align-items: center; }
+.st-top .find .rxb-tools { display: flex; gap: 4px; flex: none; }
+.st-top .find .rxb-btn { min-height: 32px; height: 32px; min-width: 32px; border-radius: 16px; font-size: .75rem; padding: 0 8px; border-color: var(--outline-strong); color: var(--text-muted); }
+.st-top .find .rxb-btn[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); border-color: transparent; }
+.st-top .find .ss-n { color: var(--primary); font-size: .75rem; font-weight: 700; }
+.st-explorer .flt .ss { width: 100%; }
+.st-explorer .flt .ss > input { height: 32px; min-height: 0; border-radius: 0; padding: 0; }
+.st-saved-search { margin: 4px 10px 6px; }
+.st-tabs-row { display: flex; align-items: stretch; border-bottom: 1px solid var(--st-line); background: var(--panel); min-width: 0; flex: none; }
+.st-tabs-row .st-tabs { flex: 1 1 auto; min-width: 0; border-bottom: 0; }
+.st-tabs-search { flex: 0 1 300px; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; padding: 2px 6px; min-width: 0; }
+.st-tabs-search .ss { min-height: 32px; }
+.st-tabs-search .ss > input { height: 28px; }
+.st-psearch { flex: none; padding: 6px 14px 0; }
+.st-map-search { position: absolute; left: 16px; top: 12px; width: min(340px, calc(100% - 32px)); }
+.st-map .mnode.dim { opacity: .28; }
+.st-map .mnode.hit rect { stroke: var(--primary); stroke-width: 2.5; }
+@media (max-width: 900px) {
+  .st-tabs-search { flex-basis: 100%; }
+  .st-tabs-row { flex-wrap: wrap; }
+  .studio[data-pane="problems"] .st-tabs-row { display: none; }
+}

@@ -102,6 +102,7 @@ export function fieldCard(o) {
     o.deprecated ? [h('span', { class: 'pass-chip', text: t('cat.deprecated', null, 'deprecated') })] : [], o.extraHead || []));
   const meaning = h('p', { class: 'wf-meaning', id: ids.meaning, 'aria-live': 'polite' });
   const err = h('div', { class: 'wf-err', id: ids.err, role: 'status', 'aria-live': 'polite' });
+  // search-exempt: validation messages for this one field (zero to three lines)
   const issuesBox = h('ul', { class: 'wf-issues', hidden: true });
   const describedBy = [ids.meaning, ids.desc, ids.err].join(' ');
   const widget = impl.create({ id, t, hint, setting: o.setting || {}, value: cur, describedBy, labelId: ids.label, label: o.label, lang: o.lang, A: o.A, announce: o.announce,
@@ -132,7 +133,8 @@ export function fieldCard(o) {
     row(t('w.widget', null, 'Control'), hint.widget);
     p.appendChild(dl);
     const vh = Object.entries(hint.valueHelp || {});
-    if (vh.length && !['cards'].includes(hint.widget)) p.appendChild(h('ul', { class: 'wf-values' }, vh.map(([k, v]) => h('li', null, [h('code', { text: k }), ' ', v]))));
+    // search-exempt: short legend of the allowed values inside the help text of one field
+  if (vh.length && !['cards'].includes(hint.widget)) p.appendChild(h('ul', { class: 'wf-values' }, vh.map(([k, v]) => h('li', null, [h('code', { text: k }), ' ', v]))));
     if (hint.risk && hint.risk.level && hint.risk.level !== 'none') p.appendChild(h('p', { class: 'wf-riskline ' + hint.risk.level }, [h('b', { text: t('w.risk.' + hint.risk.level, null, hint.risk.level) + ': ' }), (hint.risk.when !== undefined ? t('w.riskWhen', [hint.risk.when], 'when set to {0}. ') : '') + (hint.risk.reason || '')]));
     if (hint.related && hint.related.length) {
       p.appendChild(h('p', { class: 'wf-sub', text: t('studio.related', null, 'Related settings') }));

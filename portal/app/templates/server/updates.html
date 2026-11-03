@@ -14,11 +14,11 @@
   <form method="post" action="/server/updates/install" data-srv-table>
     <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
     <div class="srv-toolbar">
-      <input class="srv-search" data-srv-search placeholder="{{ ta('Search') }}">
+      <input class="srv-search" type="search" placeholder="{{ ta('Search') }}" data-search-surface="srv-updates" data-search-kind="table" data-search-target="#srv-updates-table" data-search-label="{{ ta('Search') }}">
       <button class="srv-btn primary" type="submit">{{ t("Install selected") }}</button>
     </div>
     <div class="srv-tablewrap">
-      <table class="srv-table">
+      <table class="srv-table" id="srv-updates-table" data-searchable="srv-updates">
         <thead><tr><th data-no-sort><input type="checkbox" data-srv-selectall></th><th data-col="title">{{ t("Available update") }}</th><th data-col="severity">{{ t("Severity") }}</th></tr></thead>
         <tbody>
         {% for u in (updates.available if updates else []) %}
@@ -30,7 +30,8 @@
   </form>
   <section class="srv-card">
     <h2>{{ t("Installed") }}</h2>
-    <ul>{% for u in (updates.installed if updates else []) %}<li>{{ u.title }}</li>{% endfor %}</ul>
+    <div class="ss-host" data-search-surface="srv-updates-installed" data-search-kind="list" data-search-target="#srv-updates-installed-list" data-search-items="li" data-search-compact data-search-label="{{ ta('Search installed updates') }}"></div>
+    <ul id="srv-updates-installed-list" data-searchable="srv-updates-installed">{% for u in (updates.installed if updates else []) %}<li>{{ u.title }}</li>{% endfor %}</ul>
   </section>
 </div>
 {% endblock %}

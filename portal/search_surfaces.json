@@ -1,0 +1,772 @@
+{
+ "about": "Hand-written catalogue of the portal search surfaces. Each entry is one independent search field wired to the shared regex builder (site/assets/regex-builder.js) by app/static/js/search-surfaces.js. tests/test_search_surfaces.py renders every entry with a page against the fake agent and fails on any list, table, tree, picker, menu or tab strip without a registered search or a written exemption.",
+ "surfaces": [
+  {
+   "id": "cmd-bar",
+   "template": "app/templates/layouts/admin.html",
+   "selector": "[data-search-surface=\"cmd-bar\"]",
+   "consumer": "Command bar suggestions (#cmd-list): regex mode filters commands, pages and live results (console.js)",
+   "page": "/",
+   "kind": "custom"
+  },
+  {
+   "id": "doc-tabs",
+   "template": "app/templates/layouts/admin.html",
+   "selector": "[data-search-surface=\"doc-tabs\"]",
+   "consumer": "Browser-style tab strip [data-doc-tabs] with Close tabs containing / not containing text (admin.js)",
+   "page": "/",
+   "kind": "tabs"
+  },
+  {
+   "id": "notifications",
+   "template": "app/templates/layouts/admin.html",
+   "selector": "[data-search-surface=\"notifications\"]",
+   "consumer": "Notification centre list [data-notif-list]",
+   "page": "/",
+   "kind": "list"
+  },
+  {
+   "id": "avatar-menu",
+   "template": "app/templates/layouts/admin.html",
+   "selector": "[data-search-surface=\"avatar-menu\"]",
+   "consumer": "Account menu items [data-me-menu] .row-btn",
+   "page": "/",
+   "kind": "menu"
+  },
+  {
+   "id": "lang-picker",
+   "template": "app/templates/layouts/admin.html",
+   "selector": "[data-search-surface=\"lang-picker\"]",
+   "consumer": "Language picker #top-lang options in the account menu",
+   "page": "/",
+   "kind": "select"
+  },
+  {
+   "id": "home-activity",
+   "template": "app/templates/admin/dashboard.html",
+   "selector": "[data-search-surface=\"home-activity\"]",
+   "consumer": "Home recent activity [data-activity] li",
+   "page": "/",
+   "kind": "list"
+  },
+  {
+   "id": "table-guests",
+   "template": "app/templates/admin/guests.html",
+   "selector": "[data-search-surface=\"table-guests\"]",
+   "consumer": "Guest cards [data-guest] (guests.js listens) and the server-side guest search",
+   "page": "/guests",
+   "kind": "custom"
+  },
+  {
+   "id": "dir-find",
+   "template": "app/templates/admin/directory.html",
+   "selector": "[data-search-surface=\"dir-find\"]",
+   "consumer": "Studio find box: plain text runs an LDAP search, regex filters up to 1000 objects into the Search panel",
+   "page": "/directory",
+   "kind": "custom"
+  },
+  {
+   "id": "dir-explorer",
+   "template": "app/templates/admin/directory.html",
+   "selector": "[data-search-surface=\"dir-explorer\"]",
+   "consumer": "Explorer tree [data-st-tree]: keeps matches and ancestors, opens branches, highlights (directory-studio.js)",
+   "page": "/directory",
+   "kind": "tree"
+  },
+  {
+   "id": "dir-saved",
+   "template": "app/templates/admin/directory.html",
+   "selector": "[data-search-surface=\"dir-saved\"]",
+   "consumer": "Saved queries [data-st-saved] and Views [data-st-views] .st-q",
+   "page": "/directory",
+   "kind": "list"
+  },
+  {
+   "id": "dir-tabs",
+   "template": "app/templates/admin/directory.html",
+   "selector": "[data-search-surface=\"dir-tabs\"]",
+   "consumer": "Open object tabs [data-st-tabs] .st-tab with Close tabs containing / not containing text",
+   "page": "/directory",
+   "kind": "tabs"
+  },
+  {
+   "id": "dir-panel-problems",
+   "template": "app/templates/admin/directory.html",
+   "selector": "[data-search-surface=\"dir-panel-problems\"]",
+   "consumer": "Problems panel rows [data-st-pbody] .st-prob",
+   "page": "/directory",
+   "kind": "list"
+  },
+  {
+   "id": "dir-panel-search",
+   "template": "app/templates/admin/directory.html",
+   "selector": "[data-search-surface=\"dir-panel-search\"]",
+   "consumer": "Search panel results [data-st-pbody] .st-q",
+   "page": "/directory",
+   "kind": "list"
+  },
+  {
+   "id": "dir-panel-history",
+   "template": "app/templates/admin/directory.html",
+   "selector": "[data-search-surface=\"dir-panel-history\"]",
+   "consumer": "History panel rows [data-st-pbody] .st-prob",
+   "page": "/directory",
+   "kind": "list"
+  },
+  {
+   "id": "dir-panel-ldap",
+   "template": "app/templates/admin/directory.html",
+   "selector": "[data-search-surface=\"dir-panel-ldap\"]",
+   "consumer": "LDAP request log [data-st-pbody] .st-log",
+   "page": "/directory",
+   "kind": "list"
+  },
+  {
+   "id": "dir-attributes",
+   "template": "app/static/js/directory-studio.js",
+   "selector": "[data-search-surface=\"dir-attributes\"]",
+   "consumer": "Object editor Attributes tab table (tbody tr, name and values)",
+   "rendered": "script",
+   "kind": "table",
+   "host_page": "/directory"
+  },
+  {
+   "id": "dir-add-attribute",
+   "template": "app/static/js/directory-studio.js",
+   "selector": "[data-search-surface=\"dir-add-attribute\"]",
+   "consumer": "Attributes tab Add an attribute picker (schema allowed attributes)",
+   "rendered": "script",
+   "kind": "select",
+   "host_page": "/directory"
+  },
+  {
+   "id": "dir-member-of",
+   "template": "app/static/js/directory-studio.js",
+   "selector": "[data-search-surface=\"dir-member-of\"]",
+   "consumer": "Object editor Member of list .item-row",
+   "rendered": "script",
+   "kind": "list",
+   "host_page": "/directory"
+  },
+  {
+   "id": "dir-members",
+   "template": "app/static/js/directory-studio.js",
+   "selector": "[data-search-surface=\"dir-members\"]",
+   "consumer": "Group editor Members list .item-row",
+   "rendered": "script",
+   "kind": "list",
+   "host_page": "/directory"
+  },
+  {
+   "id": "dir-map",
+   "template": "app/static/js/directory-studio.js",
+   "selector": "[data-search-surface=\"dir-map\"]",
+   "consumer": "Directory map nodes (dims the others, outlines matches)",
+   "rendered": "script",
+   "kind": "custom",
+   "host_page": "/directory"
+  },
+  {
+   "id": "dir-query-results",
+   "template": "app/static/js/directory-studio.js",
+   "selector": "[data-search-surface=\"dir-query-results\"]",
+   "consumer": "Query builder results grid",
+   "rendered": "script",
+   "kind": "table",
+   "host_page": "/directory"
+  },
+  {
+   "id": "dir-bulk-grid",
+   "template": "app/static/js/directory-studio.js",
+   "selector": "[data-search-surface=\"dir-bulk-grid\"]",
+   "consumer": "Bulk edit grid rows",
+   "rendered": "script",
+   "kind": "table",
+   "host_page": "/directory"
+  },
+  {
+   "id": "dir-bulk-preview",
+   "template": "app/static/js/directory-studio.js",
+   "selector": "[data-search-surface=\"dir-bulk-preview\"]",
+   "consumer": "Bulk edit change preview list",
+   "rendered": "script",
+   "kind": "list",
+   "host_page": "/directory"
+  },
+  {
+   "id": "dir-classic-tree",
+   "template": "app/templates/admin/directory_list.html",
+   "selector": "[data-search-surface=\"dir-classic-tree\"]",
+   "consumer": "Classic lazy directory tree [data-lazy-tree] (loaded nodes)",
+   "page": "/directory?view=list",
+   "kind": "tree"
+  },
+  {
+   "id": "table-children",
+   "template": "app/templates/admin/directory_list.html",
+   "selector": "[data-search-surface=\"table-children\"]",
+   "consumer": "Children table of the selected container",
+   "page": "/directory?view=list&dn={BASEDN}",
+   "kind": "table"
+  },
+  {
+   "id": "table-attrs",
+   "template": "app/templates/admin/object.html",
+   "selector": "[data-search-surface=\"table-attrs\"]",
+   "consumer": "Classic object attributes table",
+   "page": "/directory/object?dn={DN}",
+   "kind": "table"
+  },
+  {
+   "id": "table-search",
+   "template": "app/templates/admin/search.html",
+   "selector": "[data-search-surface=\"table-search\"]",
+   "consumer": "LDAP search results table",
+   "page": "/directory/search?filter=(objectClass=user)",
+   "kind": "table"
+  },
+  {
+   "id": "table-gpos",
+   "template": "app/templates/admin/gpo_list.html",
+   "selector": "[data-search-surface=\"table-gpos\"]",
+   "consumer": "Group Policy object cards .gpo-card",
+   "page": "/gpo",
+   "kind": "list"
+  },
+  {
+   "id": "gpo-tree-computer",
+   "template": "app/templates/admin/gpo_edit.html",
+   "selector": "[data-search-surface=\"gpo-tree-computer\"]",
+   "consumer": "Editor tree, Computer scope (gpo-editor.js keeps matches and ancestors)",
+   "page": "/gpo/{GID}/edit",
+   "kind": "tree"
+  },
+  {
+   "id": "gpo-tree-user",
+   "template": "app/templates/admin/gpo_edit.html",
+   "selector": "[data-search-surface=\"gpo-tree-user\"]",
+   "consumer": "Editor tree, User scope (its own text)",
+   "page": "/gpo/{GID}/edit",
+   "kind": "tree"
+  },
+  {
+   "id": "gpo-list",
+   "template": "app/templates/admin/gpo_edit.html",
+   "selector": "[data-search-surface=\"gpo-list\"]",
+   "consumer": "Policy and item list [data-ged-list] (ADMX policies, folders, registry and preference items)",
+   "page": "/gpo/{GID}/edit",
+   "kind": "custom"
+  },
+  {
+   "id": "gpo-supported",
+   "template": "app/templates/admin/gpo_edit.html",
+   "selector": "[data-search-surface=\"gpo-supported\"]",
+   "consumer": "Supported on picker [data-ged-supported]",
+   "page": "/gpo/{GID}/edit",
+   "kind": "select"
+  },
+  {
+   "id": "gpo-targeting",
+   "template": "app/static/js/gpo-editor.js",
+   "selector": "[data-search-surface=\"gpo-targeting\"]",
+   "consumer": "Item-level targeting conditions .ilt-row",
+   "rendered": "script",
+   "kind": "list",
+   "host_page": "/gpo/{GID}/edit"
+  },
+  {
+   "id": "gpo-list-values",
+   "template": "app/static/js/gpo-editor.js",
+   "selector": "[data-search-surface=\"gpo-list-values\"]",
+   "consumer": "List values of a policy element (one row per entry)",
+   "rendered": "script",
+   "kind": "list",
+   "host_page": "/gpo/{GID}/edit"
+  },
+  {
+   "id": "gpo-enum",
+   "template": "app/static/js/gpo-editor.js",
+   "selector": "[data-search-surface=\"gpo-enum\"]",
+   "consumer": "Long drop-down lists of ADMX policy elements (more than 8 choices)",
+   "rendered": "script",
+   "kind": "select",
+   "host_page": "/gpo/{GID}/edit"
+  },
+  {
+   "id": "gpo-field-enum",
+   "template": "app/static/js/gpo-editor.js",
+   "selector": "[data-search-surface=\"gpo-field-enum\"]",
+   "consumer": "Long drop-down lists of item fields (more than 8 choices)",
+   "rendered": "script",
+   "kind": "select",
+   "host_page": "/gpo/{GID}/edit"
+  },
+  {
+   "id": "table-links",
+   "template": "app/templates/admin/gpo_detail.html",
+   "selector": "[data-search-surface=\"table-links\"]",
+   "consumer": "Links table of a Group Policy object",
+   "page": "/gpo/{GID}?tab=links",
+   "kind": "table"
+  },
+  {
+   "id": "table-reg",
+   "template": "app/templates/admin/gpo_detail.html",
+   "selector": "[data-search-surface=\"table-reg\"]",
+   "consumer": "Registry values table",
+   "page": "/gpo/{GID}?tab=registry",
+   "kind": "table"
+  },
+  {
+   "id": "table-prefs",
+   "template": "app/templates/admin/gpo_detail.html",
+   "selector": "[data-search-surface=\"table-prefs\"]",
+   "consumer": "Registry preferences table",
+   "page": "/gpo/{GID}?tab=preferences",
+   "kind": "table"
+  },
+  {
+   "id": "table-perms",
+   "template": "app/templates/admin/gpo_detail.html",
+   "selector": "[data-search-surface=\"table-perms\"]",
+   "consumer": "Permissions table",
+   "page": "/gpo/{GID}?tab=permissions",
+   "kind": "table"
+  },
+  {
+   "id": "gpo-wmi-picker",
+   "template": "app/templates/admin/gpo_detail.html",
+   "selector": "[data-search-surface=\"gpo-wmi-picker\"]",
+   "consumer": "WMI filter picker #wf on the properties tab (backends with WMI filters)",
+   "kind": "select",
+   "condition": "backend has the wmifilters capability"
+  },
+  {
+   "id": "table-backups",
+   "template": "app/templates/admin/gpo_backups.html",
+   "selector": "[data-search-surface=\"table-backups\"]",
+   "consumer": "Group Policy backups table",
+   "page": "/gpo/backups",
+   "kind": "table"
+  },
+  {
+   "id": "table-wmi",
+   "template": "app/templates/admin/gpo_wmi.html",
+   "selector": "[data-search-surface=\"table-wmi\"]",
+   "consumer": "WMI filters table",
+   "page": "/gpo/wmi",
+   "kind": "table"
+  },
+  {
+   "id": "admx-categories",
+   "template": "app/templates/admin/admx.html",
+   "selector": "[data-search-surface=\"admx-categories\"]",
+   "consumer": "ADMX browser category tree (keeps matches and ancestors, opens branches)",
+   "page": "/gpo/{GID}/admx",
+   "kind": "tree"
+  },
+  {
+   "id": "admx-policies",
+   "template": "app/templates/admin/admx.html",
+   "selector": "[data-search-surface=\"admx-policies\"]",
+   "consumer": "ADMX browser policy list #policy-list .policy-row",
+   "page": "/gpo/{GID}/admx",
+   "kind": "list"
+  },
+  {
+   "id": "admx-enum",
+   "template": "app/templates/admin/admx_policy.html",
+   "selector": "[data-search-surface=\"admx-enum\"]",
+   "consumer": "Long drop-down lists of an ADMX policy (more than 8 choices)",
+   "kind": "select",
+   "condition": "policy element with more than 8 choices"
+  },
+  {
+   "id": "table-cmdlets",
+   "template": "app/templates/admin/cmdlets.html",
+   "selector": "[data-search-surface=\"table-cmdlets\"]",
+   "consumer": "Cmdlet catalogue table",
+   "page": "/cmdlets",
+   "kind": "table"
+  },
+  {
+   "id": "table-sambatool",
+   "template": "app/templates/admin/sambatool.html",
+   "selector": "[data-search-surface=\"table-sambatool\"]",
+   "consumer": "samba-tool command table (Samba backend)",
+   "kind": "table",
+   "condition": "Samba backend"
+  },
+  {
+   "id": "table-wifi",
+   "template": "app/templates/admin/wifi.html",
+   "selector": "[data-search-surface=\"table-wifi\"]",
+   "consumer": "Wi-Fi profiles table",
+   "page": "/wifi",
+   "kind": "table"
+  },
+  {
+   "id": "table-scripts",
+   "template": "app/templates/admin/scripts.html",
+   "selector": "[data-search-surface=\"table-scripts\"]",
+   "consumer": "Scripts table",
+   "page": "/scripts",
+   "kind": "table"
+  },
+  {
+   "id": "table-apps",
+   "template": "app/templates/admin/allowlist.html",
+   "selector": "[data-search-surface=\"table-apps\"]",
+   "consumer": "Apps catalogue and allowlist table",
+   "page": "/allowlist",
+   "kind": "table"
+  },
+  {
+   "id": "table-audit",
+   "template": "app/templates/admin/audit.html",
+   "selector": "[data-search-surface=\"table-audit\"]",
+   "consumer": "Audit log table",
+   "page": "/audit",
+   "kind": "table"
+  },
+  {
+   "id": "settings",
+   "template": "app/templates/admin/settings.html",
+   "selector": "[data-search-surface=\"settings\"]",
+   "consumer": "Every setting [data-setting] grouped by [data-setting-section]",
+   "page": "/settings",
+   "kind": "list"
+  },
+  {
+   "id": "undo-history",
+   "template": "app/templates/admin/history_log.html",
+   "selector": "[data-search-surface=\"undo-history\"]",
+   "consumer": "Undo history timeline #undo-rows li",
+   "page": "/history",
+   "kind": "list"
+  },
+  {
+   "id": "undo-user-picker",
+   "template": "app/templates/admin/history_log.html",
+   "selector": "[data-search-surface=\"undo-user-picker\"]",
+   "consumer": "User picker #hu of the undo history filter",
+   "page": "/history",
+   "kind": "select"
+  },
+  {
+   "id": "undo-action-picker",
+   "template": "app/templates/admin/history_log.html",
+   "selector": "[data-search-surface=\"undo-action-picker\"]",
+   "consumer": "Action picker #ha of the undo history filter",
+   "page": "/history",
+   "kind": "select"
+  },
+  {
+   "id": "history-versions",
+   "template": "app/templates/admin/history.html",
+   "selector": "[data-search-surface=\"history-versions\"]",
+   "consumer": "Saved versions timeline #versions li",
+   "page": "/history/settings",
+   "kind": "list",
+   "container": "id=\"versions\""
+  },
+  {
+   "id": "docs-list",
+   "template": "app/templates/admin/docs.html",
+   "selector": "[data-search-surface=\"docs-list\"]",
+   "consumer": "Documentation list #docs-list li",
+   "page": "/docs",
+   "kind": "list"
+  },
+  {
+   "id": "docs-article",
+   "template": "app/templates/admin/docs.html",
+   "selector": "[data-search-surface=\"docs-article\"]",
+   "consumer": "Paragraphs, list items, code and rows of the open document #doc-body",
+   "page": "/docs/API.md",
+   "kind": "list"
+  },
+  {
+   "id": "changelog",
+   "template": "app/templates/admin/changelog.html",
+   "selector": "[data-search-surface=\"changelog\"]",
+   "consumer": "Changelog entries #changelog-body li, p",
+   "kind": "list",
+   "condition": "a CHANGELOG.md is bundled"
+  },
+  {
+   "id": "more-sections",
+   "template": "app/templates/admin/more.html",
+   "selector": "[data-search-surface=\"more-sections\"]",
+   "consumer": "All sections page links, grouped by section",
+   "page": "/more",
+   "kind": "list"
+  },
+  {
+   "id": "find-results",
+   "template": "app/templates/admin/find.html",
+   "selector": "[data-search-surface=\"find-results\"]",
+   "consumer": "Search everything results .find-item grouped by .find-group",
+   "page": "/find?q=Zed",
+   "kind": "list"
+  },
+  {
+   "id": "import-csv-rows",
+   "template": "app/templates/admin/import_csv_preview.html",
+   "selector": "[data-search-surface=\"import-csv-rows\"]",
+   "consumer": "CSV import preview rows",
+   "kind": "table",
+   "condition": "after a CSV upload"
+  },
+  {
+   "id": "import-settings-changes",
+   "template": "app/templates/admin/import_preview.html",
+   "selector": "[data-search-surface=\"import-settings-changes\"]",
+   "consumer": "Settings import changes",
+   "kind": "table",
+   "condition": "after a settings file upload"
+  },
+  {
+   "id": "import-rows",
+   "template": "app/templates/admin/import_preview.html",
+   "selector": "[data-search-surface=\"import-rows\"]",
+   "consumer": "Import preview rows",
+   "kind": "table",
+   "condition": "after an import upload"
+  },
+  {
+   "id": "import-results",
+   "template": "app/templates/admin/import_results.html",
+   "selector": "[data-search-surface=\"import-results\"]",
+   "consumer": "Import results rows",
+   "kind": "table",
+   "condition": "after an import"
+  },
+  {
+   "id": "import-created",
+   "template": "app/templates/admin/import_results.html",
+   "selector": "[data-search-surface=\"import-created\"]",
+   "consumer": "Sign-ins created by an import",
+   "kind": "table",
+   "condition": "after an import that created sign-ins"
+  },
+  {
+   "id": "srv-processes",
+   "template": "app/templates/server/processes.html",
+   "selector": "[data-search-surface=\"srv-processes\"]",
+   "consumer": "Processes table",
+   "page": "/server/processes",
+   "kind": "table"
+  },
+  {
+   "id": "srv-services",
+   "template": "app/templates/server/services.html",
+   "selector": "[data-search-surface=\"srv-services\"]",
+   "consumer": "Services table",
+   "page": "/server/services",
+   "kind": "table"
+  },
+  {
+   "id": "srv-events",
+   "template": "app/templates/server/events.html",
+   "selector": "[data-search-surface=\"srv-events\"]",
+   "consumer": "Event log entries table",
+   "page": "/server/events",
+   "kind": "table"
+  },
+  {
+   "id": "srv-events-log",
+   "template": "app/templates/server/events.html",
+   "selector": "[data-search-surface=\"srv-events-log\"]",
+   "consumer": "Event log picker",
+   "page": "/server/events",
+   "kind": "select"
+  },
+  {
+   "id": "srv-tasks",
+   "template": "app/templates/server/tasks.html",
+   "selector": "[data-search-surface=\"srv-tasks\"]",
+   "consumer": "Scheduled tasks table",
+   "page": "/server/tasks",
+   "kind": "table"
+  },
+  {
+   "id": "srv-certificates",
+   "template": "app/templates/server/certificates.html",
+   "selector": "[data-search-surface=\"srv-certificates\"]",
+   "consumer": "Certificates table",
+   "page": "/server/certificates",
+   "kind": "table"
+  },
+  {
+   "id": "srv-dns-zones",
+   "template": "app/templates/server/dns.html",
+   "selector": "[data-search-surface=\"srv-dns-zones\"]",
+   "consumer": "DNS zone list",
+   "page": "/server/dns",
+   "kind": "list"
+  },
+  {
+   "id": "srv-dns",
+   "template": "app/templates/server/dns.html",
+   "selector": "[data-search-surface=\"srv-dns\"]",
+   "consumer": "DNS records table of the selected zone",
+   "kind": "table",
+   "condition": "a zone is selected"
+  },
+  {
+   "id": "srv-dhcp",
+   "template": "app/templates/server/dhcp.html",
+   "selector": "[data-search-surface=\"srv-dhcp\"]",
+   "consumer": "DHCP scopes table",
+   "page": "/server/dhcp",
+   "kind": "table"
+  },
+  {
+   "id": "srv-perfmon",
+   "template": "app/templates/server/perfmon.html",
+   "selector": "[data-search-surface=\"srv-perfmon\"]",
+   "consumer": "Performance counter sets table",
+   "page": "/server/perfmon",
+   "kind": "table"
+  },
+  {
+   "id": "srv-files",
+   "template": "app/templates/server/files.html",
+   "selector": "[data-search-surface=\"srv-files\"]",
+   "consumer": "File browser table",
+   "page": "/server/files",
+   "kind": "table"
+  },
+  {
+   "id": "srv-registry-keys",
+   "template": "app/templates/server/registry.html",
+   "selector": "[data-search-surface=\"srv-registry-keys\"]",
+   "consumer": "Registry subkey tree",
+   "page": "/server/registry",
+   "kind": "list"
+  },
+  {
+   "id": "srv-registry",
+   "template": "app/templates/server/registry.html",
+   "selector": "[data-search-surface=\"srv-registry\"]",
+   "consumer": "Registry values table",
+   "page": "/server/registry",
+   "kind": "table"
+  },
+  {
+   "id": "srv-storage",
+   "template": "app/templates/server/storage.html",
+   "selector": "[data-search-surface=\"srv-storage\"]",
+   "consumer": "Disks table",
+   "page": "/server/storage",
+   "kind": "table"
+  },
+  {
+   "id": "srv-storage-2",
+   "template": "app/templates/server/storage.html",
+   "selector": "[data-search-surface=\"srv-storage-2\"]",
+   "consumer": "Volumes table",
+   "page": "/server/storage",
+   "kind": "table"
+  },
+  {
+   "id": "srv-storage-3",
+   "template": "app/templates/server/storage.html",
+   "selector": "[data-search-surface=\"srv-storage-3\"]",
+   "consumer": "Shares table",
+   "page": "/server/storage",
+   "kind": "table"
+  },
+  {
+   "id": "srv-network",
+   "template": "app/templates/server/network.html",
+   "selector": "[data-search-surface=\"srv-network\"]",
+   "consumer": "Network adapters table",
+   "page": "/server/network",
+   "kind": "table"
+  },
+  {
+   "id": "srv-firewall",
+   "template": "app/templates/server/firewall.html",
+   "selector": "[data-search-surface=\"srv-firewall\"]",
+   "consumer": "Firewall rules table",
+   "page": "/server/firewall",
+   "kind": "table"
+  },
+  {
+   "id": "srv-features",
+   "template": "app/templates/server/features.html",
+   "selector": "[data-search-surface=\"srv-features\"]",
+   "consumer": "Roles and features table",
+   "page": "/server/features",
+   "kind": "table"
+  },
+  {
+   "id": "srv-devices",
+   "template": "app/templates/server/devices.html",
+   "selector": "[data-search-surface=\"srv-devices\"]",
+   "consumer": "Devices table",
+   "page": "/server/devices",
+   "kind": "table"
+  },
+  {
+   "id": "srv-updates",
+   "template": "app/templates/server/updates.html",
+   "selector": "[data-search-surface=\"srv-updates\"]",
+   "consumer": "Available updates table",
+   "page": "/server/updates",
+   "kind": "table"
+  },
+  {
+   "id": "srv-updates-installed",
+   "template": "app/templates/server/updates.html",
+   "selector": "[data-search-surface=\"srv-updates-installed\"]",
+   "consumer": "Installed updates list",
+   "page": "/server/updates",
+   "kind": "list"
+  },
+  {
+   "id": "srv-console-history",
+   "template": "app/templates/server/console.html",
+   "selector": "[data-search-surface=\"srv-console-history\"]",
+   "consumer": "Server console output and command history #srv-console-out",
+   "kind": "list",
+   "condition": "after the password confirmation"
+  },
+  {
+   "id": "b64-files",
+   "template": "app/templates/tools/base64.html",
+   "selector": "[data-search-surface=\"b64-files\"]",
+   "consumer": "Base64 tool file list",
+   "page": "/tools/base64",
+   "kind": "list"
+  },
+  {
+   "id": "b64-history",
+   "template": "app/templates/tools/base64.html",
+   "selector": "[data-search-surface=\"b64-history\"]",
+   "consumer": "Base64 tool history",
+   "page": "/tools/base64",
+   "kind": "list"
+  },
+  {
+   "id": "guest-lang-picker",
+   "template": "app/templates/layouts/guest.html",
+   "selector": "[data-search-surface=\"guest-lang-picker\"]",
+   "consumer": "Guest portal language picker #g-lang",
+   "page": "/",
+   "kind": "select",
+   "mode": "guest"
+  },
+  {
+   "id": "palette",
+   "template": "app/static/js/palette.js",
+   "selector": "[data-search-surface=\"palette\"]",
+   "consumer": "Guest Ctrl+Shift+F palette results #palette-list",
+   "rendered": "script",
+   "kind": "custom",
+   "host_page": "/"
+  }
+ ]
+}

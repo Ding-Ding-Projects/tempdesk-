@@ -12,7 +12,8 @@
       {{ csrf() }}<input type="hidden" name="next" value="{{ path if path != '/created' else '/' }}">
       {% if not school %}
       <label class="sr-only" for="g-lang">{{ t('Language') }}</label>
-      <select id="g-lang" name="lang" data-autosubmit style="width:auto;min-height:var(--touch)">
+      <span class="ss-host tight guest-lang-search" data-search-surface="guest-lang-picker" data-search-kind="select" data-search-target="#g-lang" data-search-compact data-search-label="{{ ta('Search languages') }}"></span>
+      <select id="g-lang" name="lang" data-autosubmit style="width:auto;min-height:var(--touch)" data-searchable="guest-lang-picker">
         {% for k, v in lang_modes.items() %}<option value="{{ k }}" {% if tr.mode == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
       </select>
       {% endif %}

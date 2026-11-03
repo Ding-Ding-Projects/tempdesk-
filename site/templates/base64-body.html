@@ -61,7 +61,7 @@
         <select id="b64-drop-dir" style="width:auto"><option value="encode" data-i18n="b64.dropEnc">Dropped files: encode</option><option value="decode" data-i18n="b64.dropDec">Dropped files: decode</option></select>
       </div>
     </div>
-    <div id="b64-jobs" class="list-ed" style="margin-top:12px" aria-live="polite"></div>
+    <div id="b64-jobs" class="list-ed" style="margin-top:12px" aria-live="polite" data-search-surface="b64-jobs" data-search-items="[data-job]" data-search-label="b64.filesTitle"></div>
   </section>
 
   <section class="b-sec" id="b64-history" style="margin-top:14px" aria-labelledby="b64-hist-h">
@@ -72,6 +72,7 @@
     <div class="cta"><button type="button" class="btn btn-ghost btn-sm" id="b64-hist-export" data-i18n="hist.export">Export history</button><button type="button" class="btn btn-coral btn-sm" id="b64-hist-clear" data-i18n="hist.clear">Clear history</button></div>
     <div class="searchrow" style="margin-top:12px"><input type="search" id="b64-hist-q" data-i18n-attr="placeholder:search.history;aria-label:search.history" placeholder="Search history" aria-label="Search history" aria-describedby="b64-hist-count" autocomplete="off"><button type="button" class="iconbtn regex-toggle" id="b64-hist-re" aria-pressed="false" data-i18n-attr="aria-label:search.regex;title:search.regex" aria-label="Regular expression" title="Regular expression">.*</button></div>
     <p class="meter-label" id="b64-hist-count" role="status" aria-live="polite"></p>
+    <!-- search-surface: b64-history (the search above, wired in assets/base64-page.js) -->
     <ul class="hist-list" id="b64-hist" style="margin-top:8px"></ul>
   </section>
 </div>

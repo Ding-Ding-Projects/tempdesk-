@@ -7,7 +7,7 @@
   <div class="form-grid">
     <div class="field"><label for="pd">{{ t('Parent container') }}</label><input id="pd" name="parentDn" value="{{ parent }}" required spellcheck="false"></div>
     <div class="field" data-advanced><label for="oc">{{ t('Object class') }} {{ info('The LDAP class of the new object, for example user, group or organizationalUnit.') }}</label><input id="oc" name="objectClass" list="classes" required spellcheck="false">
-      <datalist id="classes">{% for c in ['user','group','organizationalUnit','contact','computer','container','inetOrgPerson'] %}<option value="{{ c }}">{% endfor %}</datalist></div>
+      <datalist id="classes" data-search-exempt="native suggestions of the class field">{% for c in ['user','group','organizationalUnit','contact','computer','container','inetOrgPerson'] %}<option value="{{ c }}">{% endfor %}</datalist></div>
     <div class="field"><label for="rdn">{{ t('Name (RDN)') }} {{ info('The first part of the distinguished name, for example CN=Front desk or OU=Labs.') }}</label><input id="rdn" name="rdn" placeholder="CN=Example" required spellcheck="false"></div>
   </div>
   <div class="field" data-advanced><label for="attrs">{{ t('Attributes') }} {{ info('Extra attributes to set on creation. Required attributes for the class must be included.') }}</label><textarea id="attrs" name="attributes" class="mono" rows="6" placeholder="sAMAccountName=frontdesk&#10;description=Front desk PC"></textarea><span class="hint">{{ t('One name=value per line. Repeat a name for multiple values.') }}</span></div>

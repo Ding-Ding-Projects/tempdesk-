@@ -4,7 +4,7 @@
 {% block content %}
 <h1>{{ t('WMI filters') }}</h1>
 <section class="card rise">{{ search_box(tv, regex_error, 'Filter WMI filters') }}
-  {% if tv.rows %}<div class="table-wrap"><table><thead><tr>{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}</tr></thead><tbody>
+  {% if tv.rows %}<div class="table-wrap"><table data-searchable="table-{{ tv.id }}"><thead><tr>{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}</tr></thead><tbody>
   {% for w in tv.rows %}<tr data-ctx><td>{{ w.name }}</td><td>{{ w.description or '' }}</td><td class="mono small break">{{ w.query }}</td></tr>{% endfor %}</tbody></table></div>
   {% else %}{{ empty('No WMI filters', 'Create one below, then pick it on a policy overview.') }}{% endif %}</section>
 <section class="card"><h2>{{ t('Create a WMI filter') }}</h2>

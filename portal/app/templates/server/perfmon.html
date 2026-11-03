@@ -15,8 +15,8 @@
     </form>
   </section>
   <div data-srv-table>
-    <div class="srv-toolbar"><input class="srv-search" data-srv-search placeholder="{{ ta('Search counter sets') }}"></div>
-    <div class="srv-tablewrap"><table class="srv-table">
+    <div class="srv-toolbar"><input class="srv-search" type="search" placeholder="{{ ta('Search counter sets') }}" data-search-surface="srv-perfmon" data-search-kind="table" data-search-target="#srv-perfmon-table" data-search-label="{{ ta('Search counter sets') }}"></div>
+    <div class="srv-tablewrap"><table class="srv-table" id="srv-perfmon-table" data-searchable="srv-perfmon">
       <thead><tr><th data-col="counterSetName">{{ t("Counter set") }}</th><th data-col="description">{{ t("Description") }}</th></tr></thead>
       <tbody>{% for s in counter_sets %}<tr data-ctx><td>{{ s.counterSetName }}</td><td>{{ s.description }}</td></tr>{% endfor %}</tbody>
     </table></div>

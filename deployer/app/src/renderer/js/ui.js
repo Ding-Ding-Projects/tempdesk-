@@ -203,26 +203,31 @@ export function closeMenu() { if (openMenu) { openMenu.el.remove(); if (openMenu
 export function showMenu(x, y, items) {
   closeMenu();
   const prev = document.activeElement;
-  const m = h('div', { class: 'menu', role: 'menu' });
+  const m = h('div', { class: 'menu-in', role: 'menu' });
+  // search-surface: deployer-context-menu (each menu gets its own filter field)
+  const box = h('div', { class: 'menu menu-box' }, [m]);
+  if (RX) RX.attachListFilter(m, { id: 'deployer-context-menu', label: t('search.label'), t: rxT, items: (l) => l.querySelectorAll('[role=menuitem]') });
   items.forEach((it) => {
     if (it === 'sep') { m.appendChild(h('hr')); return; }
     if (!it) return;
     m.appendChild(h('button', { type: 'button', role: 'menuitem', class: it.danger ? 'danger' : '', disabled: it.disabled || undefined, onclick: () => { closeMenu(); it.run(); } }, [h('span', { text: it.label }), it.kbd ? h('span', { class: 'kbd', text: it.kbd }) : null]));
   });
-  document.body.appendChild(m);
-  m.style.left = Math.min(x, window.innerWidth - m.offsetWidth - 8) + 'px';
-  m.style.top = Math.min(y, window.innerHeight - m.offsetHeight - 8) + 'px';
-  openMenu = { el: m, prev };
-  const btns = [...m.querySelectorAll('button:not([disabled])')];
-  if (btns[0]) btns[0].focus();
-  m.addEventListener('keydown', (e) => {
+  document.body.appendChild(box);
+  box.style.left = Math.max(4, Math.min(x, window.innerWidth - box.offsetWidth - 8)) + 'px';
+  box.style.top = Math.max(4, Math.min(y, window.innerHeight - box.offsetHeight - 8)) + 'px';
+  openMenu = { el: box, prev };
+  const all = [...m.querySelectorAll('button[role=menuitem]:not([disabled])')];
+  if (all[0]) all[0].focus();
+  box.addEventListener('keydown', (e) => {
+    if (e.target.closest && e.target.closest('.rxb-filter')) { if (e.key === 'ArrowDown') { e.preventDefault(); const f = all.find((x) => !x.hidden); if (f) f.focus(); } else if (e.key === 'Escape' && !e.target.value) { e.preventDefault(); closeMenu(); } return; }
+    const btns = all.filter((x) => !x.hidden);
     const i = btns.indexOf(document.activeElement);
     if (e.key === 'ArrowDown') { e.preventDefault(); btns[(i + 1) % btns.length].focus(); }
-    if (e.key === 'ArrowUp') { e.preventDefault(); btns[(i - 1 + btns.length) % btns.length].focus(); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); const fin = box.querySelector('.rxb-filter input'); if (i <= 0 && fin) fin.focus(); else btns[(i - 1 + btns.length) % btns.length].focus(); }
     if (e.key === 'Escape' || e.key === 'Tab') { e.preventDefault(); closeMenu(); }
   });
 }
-document.addEventListener('mousedown', (e) => { if (openMenu && !openMenu.el.contains(e.target)) closeMenu(); });
+document.addEventListener('mousedown', (e) => { if (openMenu && !openMenu.el.contains(e.target) && !(e.target.closest && e.target.closest('.rxb-pop'))) closeMenu(); });
 // Registers a context menu (right click, Shift+F10 and the Menu key) on an element.
 export function contextMenu(el, itemsFn) {
   el.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); showMenu(e.clientX, e.clientY, itemsFn()); });
@@ -231,18 +236,34 @@ export function contextMenu(el, itemsFn) {
   });
 }
 
-// ---- search box with plain/regex toggle, token helper, live count, invalid message ---------
-// opts: { label, placeholder, onChange(matcher), count(matcher) -> {items, matches} }
+// ---- search box with the shared regex builder (vendor/regex-builder.js), live count, message ---
+// Builder strings come from the website catalogs (vendor/site-i18n) so both apps use one wording.
+const RX = window.TempDeskRegex;
+const siteCat = {};
+['en', 'zh-HK'].forEach((l) => { try { fetch('vendor/site-i18n/' + l + '.json').then((r) => (r.ok ? r.json() : {})).then((j) => { siteCat[l] = j; }).catch(() => {}); } catch (e) { /* no fetch */ } });
+export function rxT(k) { const c = siteCat[(document.documentElement.lang || 'en').startsWith('zh') ? 'zh-HK' : 'en'] || siteCat.en || {}; return c[k] || k; }
+// Matcher compatible with Core.testMatch / Core.countMatches: { ok, re, empty, matchesEmpty, message }.
+export function stateMatcher(st) {
+  const q = String((st.regex ? st.pattern : st.query) || '');
+  if (!q) return { ok: true, re: null, empty: true };
+  if (!RX) return Core.buildMatcher(q, { regex: !!st.regex, caseSensitive: !!st.caseSensitive });
+  const c = RX.compile(q, st);
+  if (!c.ok) return { ok: false, error: c.slow ? 'slow' : 'invalid', message: c.slow ? rxT('rx.slowWarn') : String(c.message || c.error || '').replace(/^Invalid regular expression: /, '') };
+  let re;
+  try { re = new RegExp(c.source, (c.flags || (st.caseSensitive ? '' : 'i') + 'u').replace(/g/g, '') + 'g'); } catch (e) { return { ok: false, error: 'invalid', message: e.message }; }
+  const m = { ok: true, re };
+  if (st.regex) { re.lastIndex = 0; if (re.test('')) m.matchesEmpty = true; re.lastIndex = 0; }
+  return m;
+}
+// opts: { label, placeholder, onChange(matcher), count(matcher) -> {items, matches}, sampleProvider }
 export function searchBox(opts) {
   const id = 'sb-' + Math.random().toString(36).slice(2, 7);
   const inp = h('input', { type: 'search', id, placeholder: opts.placeholder || t('search.placeholder'), 'aria-label': opts.label || t('search.label'), autocomplete: 'off', spellcheck: 'false', 'aria-describedby': id + '-c ' + id + '-e' });
-  const rx = h('button', { type: 'button', class: 'rx', 'aria-pressed': 'false', title: t('search.regexToggle'), 'aria-label': t('search.regexToggle'), text: '.*' });
-  const tokBtn = h('button', { type: 'button', class: 'rx', title: t('search.tokens'), 'aria-label': t('search.tokens'), 'aria-expanded': 'false', text: '{ }' });
   const count = h('span', { class: 'count', id: id + '-c', 'aria-live': 'polite' });
   const errEl = h('div', { class: 'rxerr', id: id + '-e', role: 'alert' });
-  const wrap = h('div', { class: 'search', role: 'search' }, [inp, rx, tokBtn, count, errEl]);
-  let regex = false, tokens = null;
-  function matcher() { return Core.buildMatcher(inp.value, { regex }); }
+  const wrap = h('div', { class: 'search', role: 'search' }, [inp, count, errEl]);
+  let st = RX ? RX.defaultState() : { query: '', regex: false };
+  function matcher() { st.query = inp.value; if (st.regex) st.pattern = inp.value; return stateMatcher(st); }
   function update() {
     const m = matcher();
     errEl.textContent = m.ok ? (m.matchesEmpty ? t('search.matchesEmpty') : '') : t('search.invalid', [m.message || '']);
@@ -250,23 +271,22 @@ export function searchBox(opts) {
     if (opts.onChange) opts.onChange(m);
     if (opts.count) { const c = opts.count(m); count.textContent = m.empty ? '' : t('search.count', [c.matches, c.items]); }
   }
-  inp.addEventListener('input', update);
-  inp.addEventListener('keydown', (e) => { if (e.key === 'Escape' && inp.value) { e.stopPropagation(); inp.value = ''; update(); } });
-  rx.addEventListener('click', () => { regex = !regex; rx.setAttribute('aria-pressed', String(regex)); tokBtn.hidden = !regex; update(); });
-  tokBtn.hidden = true;
-  tokBtn.addEventListener('click', () => {
-    if (tokens) { tokens.remove(); tokens = null; tokBtn.setAttribute('aria-expanded', 'false'); return; }
-    tokens = h('div', { class: 'tokens', role: 'listbox', 'aria-label': t('search.tokens') }, Core.REGEX_TOKENS.map(([tok, k]) => h('button', { type: 'button', role: 'option', onclick: () => {
-      const s = inp.selectionStart || inp.value.length;
-      inp.value = inp.value.slice(0, s) + tok + inp.value.slice(inp.selectionEnd || s);
-      inp.focus(); inp.setSelectionRange(s + tok.length, s + tok.length); update();
-    } }, [h('code', { text: tok }), h('span', { text: t('rx.' + k) })])));
-    wrap.appendChild(tokens); tokBtn.setAttribute('aria-expanded', 'true');
-    const first = tokens.querySelector('button'); if (first) first.focus();
-    tokens.addEventListener('keydown', (e) => { if (e.key === 'Escape') { tokens.remove(); tokens = null; tokBtn.setAttribute('aria-expanded', 'false'); tokBtn.focus(); } });
-  });
+  if (RX) {
+    const b = RX.attachRegexBuilder(inp, { label: opts.label || t('search.label'), t: rxT, sampleProvider: opts.sampleProvider, onChange: (s2) => { st = s2; update(); } });
+    wrap.builder = b;
+  } else {
+    inp.addEventListener('input', update);
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Escape' && inp.value) { e.stopPropagation(); inp.value = ''; update(); } });
+  }
   wrap.input = inp; wrap.matcher = matcher; wrap.refresh = update;
   return wrap;
+}
+// Search in front of any list, table or card grid that has no search of its own.
+// search-surface helper: every call site passes a catalogue id (deployer/app/search-surfaces.json).
+export function listFilter(list, id, label, opts) {
+  const box = h('div', { class: 'rxb-wrap', 'data-search-surface': id }, [list]);
+  if (RX) RX.attachListFilter(list, Object.assign({ id, label: t('search.label') + ': ' + label, t: rxT }, opts || {}));
+  return box;
 }
 
 // ---- field helper with info button and one-line explanation -------------------------------

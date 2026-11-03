@@ -2,5 +2,5 @@
 {% block title %}{{ ta('Changelog') }}{% endblock %}
 {% block content %}
 <h1>{{ t('Changelog') }}</h1>
-<article class="card prose">{% if html %}{{ html }}{% else %}<p class="muted">{{ t('No changelog is bundled in this image.') }}</p>{% endif %}</article>
+<article class="card prose">{% if html %}<div class="ss-host" data-search-surface="changelog" data-search-kind="list" data-search-target="#changelog-body" data-search-items="li, p" data-search-label="{{ ta('Search the changelog') }}"></div><div id="changelog-body" data-searchable="changelog">{{ html }}</div>{% else %}<p class="muted">{{ t('No changelog is bundled in this image.') }}</p>{% endif %}</article>
 {% endblock %}

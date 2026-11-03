@@ -26,9 +26,9 @@ COPY portal/app ./app
 # Offline docs browser and changelog viewer.
 # The wildcard keeps the build working before a CHANGELOG.md exists.
 COPY docs CHANGEL[O]G.m[d] ./bundled-docs/
-# Base64 codec and zip writer shared with the website: the image always takes the
-# site copies (the files in app/static/js are kept in step for local runs and tests).
-COPY site/assets/base64.js site/assets/zip.js ./app/static/js/
+# Base64 codec, zip writer and regex builder shared with the website: the image always takes
+# the site copies (the files in app/static/js are kept in step for local runs and tests).
+COPY site/assets/base64.js site/assets/zip.js site/assets/regex-builder.js ./app/static/js/
 
 RUN mkdir -p /data /state && chown tempdesk:tempdesk /data /state && chmod 700 /data /state
 USER tempdesk

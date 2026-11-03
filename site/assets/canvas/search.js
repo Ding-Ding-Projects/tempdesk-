@@ -3,18 +3,17 @@
 // with problems). Pure ES module; the page supplies label lookups and problem lists.
 import { countSet, isEmpty } from './catalog.js';
 import { hintAt, hintSearchText, firstSentence } from './widgets/index.js';
+import { compile, filterItems } from '../regex-builder.mjs';
 
-// Compile a query. Returns { ok, test(text) -> null | {index, length}, error }.
+// Compile a query. Delegates to the shared regex builder's compile (../regex-builder.js).
+// useRegex is a boolean or a builder state { regex, flags, wholeWord, caseSensitive }.
+// Returns { ok, empty, test(text) -> null | {index, length}, error, errorIndex, slow, compiled }.
 export function compileQuery(q, useRegex) {
-  q = String(q || '').trim();
-  if (!q) return { ok: true, empty: true, test: () => ({ index: 0, length: 0 }) };
-  if (useRegex) {
-    let re;
-    try { re = new RegExp(q, 'i'); } catch (e) { return { ok: false, error: e.message, test: () => null }; }
-    return { ok: true, test: (s) => { const m = re.exec(String(s)); return m ? { index: m.index, length: Math.max(1, m[0].length) } : null; } };
-  }
-  const words = q.toLowerCase().split(/\s+/).filter(Boolean);
-  return { ok: true, test: (s) => { const low = String(s).toLowerCase(); if (!words.every((w) => low.includes(w))) return null; return { index: low.indexOf(words[0]), length: words[0].length }; } };
+  const st = useRegex && typeof useRegex === 'object' ? useRegex : { regex: !!useRegex };
+  const c = compile(String(q || '').trim(), { regex: !!st.regex, flags: st.flags, wholeWord: !!st.wholeWord, caseSensitive: !!st.caseSensitive, allowSlow: !!st.allowSlow });
+  if (c.empty) return { ok: true, empty: true, compiled: c, test: () => ({ index: 0, length: 0 }) };
+  if (!c.ok) return { ok: false, error: c.error === 'tooLong' ? c.message : c.error, errorIndex: c.errorIndex, slow: c.slow, compiled: c, test: () => null };
+  return { ok: true, compiled: c, test: (s) => { const m = c.find(String(s)); return m ? { index: m.index, length: Math.max(1, m.length) } : null; } };
 }
 
 function valueText(v) {
@@ -96,11 +95,15 @@ export function problemKeys(issues) {
   return set;
 }
 
-// Generic list filter used by list editors, history, presets and pickers.
+// Generic list filter used by list editors, history, presets and pickers. Applies the shared
+// 50 ms per-keystroke budget; slow is true when the plain text fallback was used.
 export function filterList(items, q, toText, regex) {
   const m = compileQuery(q, regex);
   if (!m.ok) return { ok: false, error: m.error, items: [] };
-  if (m.empty) return { ok: true, items: items.map((it, i) => ({ it, i })) };
-  return { ok: true, items: items.map((it, i) => ({ it, i })).filter(({ it }) => m.test(toText(it))) };
+  const all = items.map((it, i) => ({ it, i }));
+  if (m.empty) return { ok: true, items: all };
+  const st = regex && typeof regex === 'object' ? regex : { regex: !!regex };
+  const r = filterItems(all, (x) => toText(x.it), Object.assign({}, st, { query: String(q || '').trim(), pattern: st.regex ? String(q || '').trim() : '' }));
+  return { ok: true, slow: r.slow, items: r.items };
 }
 export { countSet };

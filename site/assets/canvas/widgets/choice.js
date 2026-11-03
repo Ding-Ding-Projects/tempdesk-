@@ -3,6 +3,7 @@
 import { h, nextId, flash, radioKeys, markRadios } from './base.js';
 import { decodeFlags, encodeFlags } from './format.js';
 import { sourceOptions, zoneNow } from './data.js';
+import { attachRegexBuilder, compile } from '../../regex-builder.mjs';
 
 const isTrue = (v) => /^true$/i.test(String(v));
 /** Values of a choice widget: hint values, or true/false for booleans. */
@@ -119,6 +120,7 @@ export const comboboxSearch = {
     const multi = !!hint.sep;
     const input = h('input', { type: 'text', id: ctx.id, role: 'combobox', class: 'w-input mono', 'aria-autocomplete': 'list', 'aria-expanded': 'false', 'aria-controls': listId,
       autocomplete: 'off', spellcheck: 'false', autocapitalize: 'off', 'aria-describedby': ctx.describedBy || undefined, placeholder: t('w.typeToSearch', null, 'Type to search') });
+    // search-surface: widget-combobox (the listbox is filtered by the combobox field and its builder)
     const list = h('ul', { class: 'w-combo-list', id: listId, role: 'listbox', hidden: true, 'aria-label': ctx.label || '' });
     const toggleBtn = h('button', { type: 'button', class: 'w-tool w-combo-open', tabindex: '-1', 'aria-label': t('combo.open', null, 'Show options'), html: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>' });
     let cur = ctx.value === undefined ? '' : String(ctx.value);
@@ -126,9 +128,11 @@ export const comboboxSearch = {
     const lastPart = () => (multi ? input.value.split(hint.sep).pop().trim() : input.value.trim());
     function open(all) {
       if (hint.source === 'timezones') options = comboOptions(hint, ctx.setting, ctx.lang); // refresh the live clock
-      const q = all ? '' : lastPart().toLowerCase();
-      const words = q.split(/\s+/).filter(Boolean);
-      items = options.filter((o) => words.every((w) => (o.value + ' ' + o.label + ' ' + o.detail + ' ' + o.keywords).toLowerCase().includes(w))).slice(0, 250);
+      const q = all ? '' : lastPart();
+      // Plain words by default; the regex builder beside the field switches to a pattern.
+      const st = rx ? rx.state : { regex: false };
+      const c = compile(q, Object.assign({}, st, { regex: !!st.regex }));
+      items = c.ok ? options.filter((o) => c.test(o.value + ' ' + o.label + ' ' + o.detail + ' ' + o.keywords)).slice(0, 250) : [];
       list.replaceChildren(...items.map((o, i) => {
         const li = h('li', { role: 'option', id: listId + '-' + i, 'aria-selected': String(o.value === cur) }, [h('span', { class: 'w-opt-l', text: o.label }), o.detail ? h('span', { class: 'w-opt-d', text: o.detail }) : null]);
         li.addEventListener('pointerdown', (e) => { e.preventDefault(); pick(i); });
@@ -163,7 +167,10 @@ export const comboboxSearch = {
       else if (e.key === 'Escape' && !list.hidden) { e.preventDefault(); e.stopPropagation(); close(); input.value = cur; }
     });
     input.addEventListener('blur', () => setTimeout(() => {
+      const inTools = document.activeElement && document.activeElement.closest && document.activeElement.closest('.rxb-tools, .rxb-pop');
+      if (inTools) return;
       close();
+      if (rx && rx.state.regex) { input.value = cur; return; } // a pattern is a search, never a value
       const typed = input.value.trim();
       if (typed === cur) return;
       if (hint.allowCustom === false && typed && !options.some((o) => o.value === typed)) { input.value = cur; return; }
@@ -171,7 +178,15 @@ export const comboboxSearch = {
     }, 140));
     toggleBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); if (list.hidden) { input.focus(); open(true); } else close(); });
     input.value = cur;
-    const el = h('div', { class: 'w-combo' }, [h('div', { class: 'w-row' }, [input, toggleBtn]), list]);
+    const row = h('div', { class: 'w-row' }, [input, toggleBtn]);
+    const el = h('div', { class: 'w-combo' }, [row, list]);
+    // search-surface: widget-combobox (the combobox field is the search; the builder sits beside it)
+    const rx = attachRegexBuilder(input, { label: ctx.label || t('w.typeToSearch', null, 'Type to search'), t: (k, ...a) => t(k, a, '\u0000') === '\u0000' ? k : t(k, a), escapeClears: false, noHostClass: true,
+      sampleProvider: () => options.slice(0, 300).map((o) => o.value + ' ' + o.label).join('\n'), onChange: () => { if (document.activeElement === input || (rx && rx.state.regex)) open(false); } });
+    rx.el.hidden = true; // shown while the field has focus or a pattern is active, so idle forms stay compact
+    const showTools = () => { rx.el.hidden = false; };
+    input.addEventListener('focus', showTools);
+    row.addEventListener('focusout', () => setTimeout(() => { if (!row.contains(document.activeElement) && !(rx.state.regex) && !document.querySelector('.rxb-pop:not([hidden])')) rx.el.hidden = true; }, 200));
     return { el, input, set(v) { cur = v === undefined ? '' : String(v); input.value = cur; } };
   },
   describe(v, hint, t, ctx) {

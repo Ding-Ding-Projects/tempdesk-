@@ -7,6 +7,8 @@
     <input id="fq" type="search" name="q" value="{{ q }}" placeholder="{{ ta('Guests, directory, policies and pages') }}" style="flex:1 1 260px">
     <button class="btn filled" type="submit">{{ t('Search') }}</button></div>
 </form>
+{% if total %}<div class="ss-host" data-search-surface="find-results" data-search-kind="list" data-search-target="#find-results" data-search-items=".find-item" data-search-group=".find-group" data-search-label="{{ ta('Search within these results') }}"></div>{% endif %}
+<div id="find-results" role="list" data-searchable="find-results">
 {% if q and not total %}<div class="tile">{{ t('No matches') }}</div>{% endif %}
 {% for key, label in [('guests', 'Guests'), ('objects', 'Directory'), ('gpos', 'Group Policy'), ('pages', 'Pages')] if res[key] %}
 <section class="find-group rise" style="--i:{{ loop.index }}" aria-labelledby="fg-{{ key }}">
@@ -19,4 +21,5 @@
   {% endfor %}
 </section>
 {% endfor %}
+</div>
 {% endblock %}

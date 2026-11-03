@@ -8,7 +8,8 @@
   <a class="btn filled" href="/directory/create{% if dn %}?parent={{ dn|urlencode }}{% endif %}">{{ t('Create object') }}</a></div>
 <div class="panes">
   <nav class="card pane-nav" aria-label="{{ ta('Directory tree') }}">
-    <ul class="tree" data-lazy-tree data-current="{{ dn or '' }}">
+    <div class="ss-host" data-search-surface="dir-classic-tree" data-search-kind="tree" data-search-target="[data-lazy-tree]" data-search-compact data-search-label="{{ ta('Filter tree') }}"></div>
+    <ul class="tree" data-lazy-tree data-current="{{ dn or '' }}" data-searchable="dir-classic-tree">
       {% for n in root %}
       <li><div class="node">{% if n.hasChildren %}<button type="button" class="twisty" aria-expanded="false" data-dn="{{ n.dn }}" aria-label="{{ ta('Expand') }} {{ n.name }}">&#9656;</button>{% else %}<span style="width:32px"></span>{% endif %}
         <a href="/directory?view=list&dn={{ n.dn|urlencode }}" {% if n.dn == dn %}aria-current="page"{% endif %}>{{ n.name }}</a></div></li>
@@ -28,7 +29,7 @@
     {{ search_box(tv, regex_error, 'Filter objects') }}
     {% if tv.rows %}
     <form method="post" action="/directory/bulk" data-bulk-form>{{ csrf() }}<input type="hidden" name="back" value="{{ request.url.path }}?{{ request.url.query }}">
-      <div class="table-wrap"><table>
+      <div class="table-wrap"><table data-searchable="table-{{ tv.id }}">
         <thead><tr>{{ sel_all() }}{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}</tr></thead>
         <tbody class="stagger">
         {% for o in tv.rows %}

@@ -8,7 +8,8 @@
     <span class="dom" data-st-domain>{{ (health.domain if health else '') or '' }}</span>
     <div class="find">
       <label class="sr-only" for="st-find">{{ t('Find any object or attribute') }}</label>
-      <input id="st-find" type="search" placeholder="{{ ta('Find any object or attribute') }}" autocomplete="off" data-st-find aria-keyshortcuts="Control+K">
+      <input id="st-find" type="search" placeholder="{{ ta('Find any object or attribute') }}" autocomplete="off" data-st-find aria-keyshortcuts="Control+K"
+        data-search-surface="dir-find" data-search-kind="custom" data-search-manual data-search-compact data-search-label="{{ ta('Find any object or attribute') }}">
     </div>
     <button type="button" class="st-btn" data-st-undo aria-keyshortcuts="Control+Z" title="{{ ta('Undo') }} (Ctrl+Z)">&#8630; <span class="lbl-d">{{ t('Undo') }}</span></button>
     <div class="pill-wrap">
@@ -24,26 +25,33 @@
   </header>
   <div class="st-body">
     <aside class="st-explorer" aria-label="{{ ta('Explorer') }}">
-      <div class="flt"><label class="sr-only" for="st-flt">{{ t('Filter tree') }}</label><input id="st-flt" type="search" placeholder="{{ ta('Filter tree') }}" data-st-filter></div>
-      <div class="st-tree" role="tree" aria-label="{{ ta('Directory tree') }}" aria-multiselectable="true" data-st-tree></div>
+      <div class="flt"><label class="sr-only" for="st-flt">{{ t('Filter tree') }}</label><input id="st-flt" type="search" placeholder="{{ ta('Filter tree') }}" data-st-filter
+        data-search-surface="dir-explorer" data-search-kind="tree" data-search-manual data-search-compact data-search-label="{{ ta('Filter tree') }}"></div>
+      <div class="st-tree" role="tree" aria-label="{{ ta('Directory tree') }}" aria-multiselectable="true" data-st-tree data-searchable="dir-explorer"></div>
       <div class="st-extra">
         <div class="st-sec">{{ t('Saved queries') }}</div>
-        <div data-st-saved></div>
+        <div class="ss-host tight st-saved-search" data-search-surface="dir-saved" data-search-kind="list" data-search-target="[data-st-saved], [data-st-views]" data-search-items=".st-q" data-search-compact data-search-label="{{ ta('Search saved queries and views') }}"></div>
+        <div data-st-saved role="list" aria-label="{{ ta('Saved queries') }}" data-searchable="dir-saved"></div>
         <div class="st-sec">{{ t('Views') }}</div>
+        <div data-st-views role="list" aria-label="{{ ta('Views') }}" data-searchable="dir-saved">
         <button type="button" class="st-q" data-open-tab="map">{{ t('Map') }}</button>
         <button type="button" class="st-q" data-open-tab="query">{{ t('Query builder') }}</button>
         <a class="st-q" href="/directory?view=list{% if dn %}&dn={{ dn|urlencode }}{% endif %}">{{ t('Tree and table view') }}</a>
         <a class="st-q" href="/directory/search">{{ t('LDAP search') }}</a>
+        </div>
       </div>
     </aside>
     <div class="st-main">
-      <div class="st-tabs" role="tablist" aria-label="{{ ta('Open objects') }}" data-st-tabs></div>
+      <div class="st-tabs-row">
+        <div class="st-tabs" role="tablist" aria-label="{{ ta('Open objects') }}" data-st-tabs data-searchable="dir-tabs"></div>
+        <div class="ss-host tight st-tabs-search" data-search-surface="dir-tabs" data-search-kind="tabs" data-search-manual data-search-compact data-search-label="{{ ta('Search open objects') }}"></div>
+      </div>
       <div class="st-center">
         <section class="st-editor" role="tabpanel" data-st-editor aria-live="polite"></section>
         <aside class="st-inspector" aria-label="{{ ta('Inspector') }}" data-st-inspector></aside>
       </div>
       <section class="st-panel" aria-label="{{ ta('Panel') }}" data-st-panel>
-        <div class="st-ptabs" role="tablist" aria-label="{{ ta('Panel') }}">
+        <div class="st-ptabs" role="tablist" aria-label="{{ ta('Panel') }}" data-search-exempt="four fixed panel tabs; each panel has its own search below">
           <button type="button" role="tab" aria-selected="true" data-ptab="problems">{{ t('Problems') }} <span class="b" data-prob-count>0</span></button>
           <button type="button" role="tab" aria-selected="false" data-ptab="search">{{ t('Search') }}</button>
           <button type="button" role="tab" aria-selected="false" data-ptab="history">{{ t('History') }}</button>
@@ -51,7 +59,13 @@
           <span class="spacer"></span>
           <button type="button" data-ptoggle aria-expanded="true" aria-label="{{ ta('Collapse') }}">&#9662;</button>
         </div>
-        <div class="st-pbody" role="tabpanel" data-st-pbody></div>
+        <div class="st-psearch">
+          <div class="ss-host tight" data-ptab-search="problems" data-search-surface="dir-panel-problems" data-search-kind="list" data-search-target="[data-st-pbody]" data-search-items=".st-prob" data-search-compact data-search-label="{{ ta('Search problems') }}"></div>
+          <div class="ss-host tight" data-ptab-search="search" hidden data-search-surface="dir-panel-search" data-search-kind="list" data-search-target="[data-st-pbody]" data-search-items=".st-q, .st-log" data-search-compact data-search-label="{{ ta('Search the results') }}"></div>
+          <div class="ss-host tight" data-ptab-search="history" hidden data-search-surface="dir-panel-history" data-search-kind="list" data-search-target="[data-st-pbody]" data-search-items=".st-prob" data-search-compact data-search-label="{{ ta('Search the history') }}"></div>
+          <div class="ss-host tight" data-ptab-search="ldap" hidden data-search-surface="dir-panel-ldap" data-search-kind="list" data-search-target="[data-st-pbody]" data-search-items=".st-log" data-search-compact data-search-label="{{ ta('Search the LDAP log') }}"></div>
+        </div>
+        <div class="st-pbody" role="tabpanel" data-st-pbody data-searchable="dir-panel-problems dir-panel-search dir-panel-history dir-panel-ldap"></div>
       </section>
     </div>
   </div>
@@ -59,7 +73,7 @@
     <span data-sb="dc">{{ (health.dc if health else '') or '' }}</span><span data-sb="nc"></span><span data-sb="sel">0 {{ t('selected') }}</span>
     <span class="r" data-sb="objects"></span><span data-sb="undo"></span>
   </footer>
-  <nav class="st-phone-tabs" role="tablist" aria-label="{{ ta('Panes') }}">
+  <nav class="st-phone-tabs" role="tablist" aria-label="{{ ta('Panes') }}" data-search-exempt="four fixed phone pane switches">
     <button type="button" role="tab" aria-selected="true" data-pane-btn="explorer">{{ t('Explorer') }}</button>
     <button type="button" role="tab" aria-selected="false" data-pane-btn="editor">{{ t('Editor') }}</button>
     <button type="button" role="tab" aria-selected="false" data-pane-btn="inspector">{{ t('Inspector') }}</button>

@@ -13,7 +13,7 @@
       <div class="srv-field"><label>{{ t("Program to run") }}</label><input name="execute" placeholder="powershell.exe" required></div>
       <div class="srv-field"><label>{{ t("Arguments") }}</label><input name="arguments"></div>
       <div class="srv-field"><label>{{ t("Trigger") }}</label>
-        <select name="triggerType"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="atstartup">At startup</option><option value="atlogon">At logon</option><option value="once">Once</option></select>
+        <select name="triggerType" data-search-exempt="fixed trigger types"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="atstartup">At startup</option><option value="atlogon">At logon</option><option value="once">Once</option></select>
       </div>
       <div class="srv-field"><label>{{ t("At time (e.g. 03:00 or 2026-11-03T03:00)") }}</label><input name="at"></div>
       <div class="srv-field"><label>{{ t("Run as") }}</label><input name="userId" value="SYSTEM"></div>
@@ -22,11 +22,9 @@
   </section>
   <div data-srv-table>
     <div class="srv-toolbar">
-      <input class="srv-search" data-srv-search placeholder="{{ ta('Search') }}">
-      <label class="srv-toggle"><input type="checkbox" data-srv-regex> {{ t("Regex") }}</label>
-      <span data-srv-regex-error class="srv-err" role="alert" style="padding:4px 8px"></span>
+      <input class="srv-search" type="search" placeholder="{{ ta('Search') }}" data-search-surface="srv-tasks" data-search-kind="table" data-search-target="#srv-tasks-table" data-search-label="{{ ta('Search') }}">
     </div>
-    <div class="srv-tablewrap"><table class="srv-table">
+    <div class="srv-tablewrap"><table class="srv-table" id="srv-tasks-table" data-searchable="srv-tasks">
       <thead><tr><th data-col="name">{{ t("Name") }}</th><th data-col="path">{{ t("Path") }}</th><th data-col="state">{{ t("State") }}</th><th data-no-sort></th></tr></thead>
       <tbody>{% for tk in tasks %}
         {% set seg = (tk.path | replace('\\','') ) or 'root' %}

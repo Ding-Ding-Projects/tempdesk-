@@ -8,6 +8,7 @@ import { mountCommands } from './canvas/commands.js';
 import { mountDeploy } from './canvas/deploy.js';
 import { buildIndex, search as searchIndex, problemKeys, filterList, compileQuery } from './canvas/search.js';
 import { searchBox, combobox } from './canvas/search-ui.js';
+import { attachListFilter, attachTabCloser, attachRegexBuilder, compile as rxCompile } from './regex-builder.mjs';
 import * as DX from './canvas/direct.js';
 import { registerHints, hintAt, hintCount, fieldCard, quickField, meaningOf, hintSearchText, firstSentence } from './canvas/widgets/index.js';
 
@@ -16,6 +17,18 @@ const t = (k, args, fb) => S.t(k, args, fb);
 const LS = S.LS;
 const ROOT = S.ROOT;
 const isPhone = () => window.matchMedia('(max-width: 760px)').matches;
+
+// Search surfaces: every list, tree, table, gallery, menu and tab strip gets its own search field
+// with the shared regex builder (regex-builder.js). State is per surface and kept in memory only,
+// so a re-render keeps the query without anything being written to storage.
+// Catalogue: site/search-surfaces.json; guard: site/tests/search-surfaces.test.mjs.
+const rxT = (k, ...a) => { const v = S.t(k, a, '\u0000'); return v === '\u0000' ? k : v; };
+const filterMem = new Map();
+function withFilter(list, id, labelKey, opts) {
+  const box = h('div', { class: 'rxb-wrap', 'data-search-surface': id }, [list]);
+  attachListFilter(list, Object.assign({ id, label: t('rx.filterFor', [t(labelKey)]), t: rxT, state: filterMem.get(id), onState: (st) => filterMem.set(id, st) }, opts || {}));
+  return box;
+}
 
 // ------------------------------------------------------------------------------------------------
 // Field registry. Labels: f.<id>. Help: h.<id> (optional). Values: model[mode][id] or model.extras[x].
@@ -310,6 +323,34 @@ function moveTab(id, d) {
   const tb = document.getElementById('tab-' + cssId(id)); if (tb) tb.focus();
 }
 function cssId(id) { return id.replace(/[^A-Za-z0-9_-]/g, '_'); }
+// Tab strip search: open editor tabs get search plus "Close tabs containing text" and "Close tabs
+// not containing text" (preview count, empty query guard, pinned tabs excluded; the studio saves
+// every change to history, so no tab holds unsaved work). The panel tab strip gets a search.
+let tabCloser = null, panelTabFilter = null;
+const tabSearchOpen = { editor: false, panel: false };
+function tabSearchToggle(which) {
+  const b = h('button', { type: 'button', class: 'iconbtn st-tabsearch-b', 'aria-expanded': String(tabSearchOpen[which]), 'aria-controls': 'st-tabsearch-' + which,
+    'aria-label': t('tabs.search'), title: t('tabs.search'), html: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>' });
+  b.addEventListener('click', () => { tabSearchOpen[which] = !tabSearchOpen[which]; const box = document.getElementById('st-tabsearch-' + which); if (box) box.hidden = !tabSearchOpen[which]; b.setAttribute('aria-expanded', String(tabSearchOpen[which])); if (tabSearchOpen[which] && box) { const i = box.querySelector('input'); if (i) i.focus(); } });
+  return b;
+}
+function buildTabSearch() {
+  if (!tabCloser) {
+    const box = h('div', { class: 'st-tabsearch', id: 'st-tabsearch-editor', hidden: !tabSearchOpen.editor, 'data-search-surface': 'studio-editor-tabs' });
+    $('.st-tabbar').insertAdjacentElement('afterend', box);
+    const holder = h('div'); box.appendChild(holder);
+    tabCloser = attachTabCloser(holder, { id: 'studio-editor-tabs', label: t('tabs.search'), t: rxT, mount: holder, place: 'prepend',
+      tabs: () => tabs.map((id) => ({ id, text: tabTitle(id) + ' ' + id, el: document.getElementById('tab-' + cssId(id)), pinned: false, dirty: false })),
+      close: (ids) => { tabs = tabs.filter((x) => !ids.includes(x)); if (!tabs.length) tabs.push('new'); if (!tabs.includes(view)) view = tabs[0]; saveTabs(); renderView(); } });
+  }
+  if (!panelTabFilter) {
+    const strip = $('#st-panel-tabs');
+    const box = h('div', { class: 'st-tabsearch', id: 'st-tabsearch-panel', hidden: !tabSearchOpen.panel, 'data-search-surface': 'studio-panel-tabs' });
+    strip.parentNode.insertBefore(box, strip);
+    const holder = h('div'); box.appendChild(holder);
+    panelTabFilter = attachListFilter(strip, { id: 'studio-panel-tabs', label: t('rx.filterFor', [t('studio.panel')]), t: rxT, mount: holder, place: 'prepend', items: (l) => [...l.querySelectorAll('[role=tab]')] });
+  }
+}
 function renderTabs() {
   const strip = $('#st-tabs');
   strip.replaceChildren();
@@ -344,24 +385,30 @@ function renderTabs() {
     strip.appendChild(tb);
   });
   strip.appendChild(h('button', { type: 'button', class: 'st-tab-new', 'aria-label': t('studio.newTab'), title: t('studio.newTab'), text: '+', onclick: () => openTab('new') }));
+  strip.appendChild(tabSearchToggle('editor'));
+  if (tabCloser) tabCloser.preview();
   const splitB = $('#st-split');
   if (splitB) { splitB.setAttribute('aria-pressed', String(layout.split)); splitB.disabled = view === 'xml'; }
 }
 
 // Context menu (right-click quick actions)
 function contextMenu(e, items) {
-  document.querySelectorAll('.st-menu').forEach((m) => m.remove());
-  const menu = h('ul', { class: 'st-menu', role: 'menu', style: { left: Math.min(e.clientX, innerWidth - 220) + 'px', top: Math.min(e.clientY, innerHeight - items.length * 44 - 10) + 'px' } });
-  items.forEach(([k, fn]) => { const li = h('li', { role: 'menuitem', tabindex: '-1', text: t(k) }); li.addEventListener('click', () => { menu.remove(); fn(); }); li.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); li.click(); } }); menu.appendChild(li); });
+  document.querySelectorAll('.st-menu-box').forEach((m) => m.remove());
+  const menu = h('ul', { class: 'st-menu-list', role: 'menu', 'aria-label': t('studio.menu') });
+  const shell = h('div', { class: 'st-menu st-menu-box', style: { left: Math.max(4, Math.min(e.clientX, innerWidth - 300)) + 'px', top: Math.max(4, Math.min(e.clientY, innerHeight - items.length * 44 - 110)) + 'px' } }, [menu]);
+  // search-surface: studio-context-menu
+  attachListFilter(menu, { id: 'studio-context-menu', label: t('rx.filterFor', [t('studio.menu')]), t: rxT });
+  items.forEach(([k, fn]) => { const li = h('li', { role: 'menuitem', tabindex: '-1', text: t(k) }); li.addEventListener('click', () => { shell.remove(); fn(); }); li.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); li.click(); } }); menu.appendChild(li); });
   menu.addEventListener('keydown', (ev) => {
-    const lis = [...menu.children], i = lis.indexOf(document.activeElement);
+    const lis = [...menu.children].filter((x) => !x.hidden), i = lis.indexOf(document.activeElement);
     if (ev.key === 'ArrowDown') { ev.preventDefault(); (lis[i + 1] || lis[0]).focus(); }
     if (ev.key === 'ArrowUp') { ev.preventDefault(); (lis[i - 1] || lis[lis.length - 1]).focus(); }
-    if (ev.key === 'Escape') { menu.remove(); }
+    if (ev.key === 'Escape') { shell.remove(); }
   });
-  document.body.appendChild(menu);
+  shell.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !ev.defaultPrevented) shell.remove(); if (ev.key === 'ArrowDown' && ev.target.matches('input')) { ev.preventDefault(); const f = menu.querySelector('li:not([hidden])'); if (f) f.focus(); } });
+  document.body.appendChild(shell);
   menu.firstChild.focus();
-  setTimeout(() => document.addEventListener('pointerdown', function off(ev) { if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('pointerdown', off); } }), 0);
+  setTimeout(() => document.addEventListener('pointerdown', function off(ev) { if (!shell.contains(ev.target) && !(ev.target.closest && ev.target.closest('.rxb-pop'))) { shell.remove(); document.removeEventListener('pointerdown', off); } }), 0);
 }
 
 // Resizable panels (pointer and keyboard)
@@ -490,7 +537,7 @@ function renderExplorer(body) {
   ul.appendChild(treeItem(t('studio.kit'), { level: 1, children: files, open: openTree.has('kit'), onToggle: (o) => { if (o) openTree.add('kit'); else openTree.delete('kit'); saveTree(); } }));
   const tools = ['flow', 'disk', 'commands', 'map', 'all', 'simulate', 'compare', 'plan', 'snippets', 'secrets', 'history'].map((id) => treeItem(t('tab.' + id), { level: 2, active: view === id, onOpen: () => openTab(id) }));
   ul.appendChild(treeItem(t('studio.views'), { level: 1, children: tools, open: openTree.has('tools'), onToggle: (o) => { if (o) openTree.add('tools'); else openTree.delete('tools'); saveTree(); } }));
-  body.appendChild(ul);
+  body.appendChild(withFilter(ul, 'studio-explorer', 'side.explorer', { tree: true }));
   treeKeys(ul);
 }
 let manifest = null;
@@ -567,6 +614,9 @@ function renderPresetsSide(body) {
 }
 function renderToolsSide(body) {
   const items = [['snippets', 'studio.tool.snippets'], ['secrets', 'studio.tool.secrets'], ['compare', 'studio.tool.compare'], ['simulate', 'studio.tool.simulate'], ['plan', 'studio.tool.plan']];
+  const toolList = h('div', { class: 'st-tools-list', role: 'list', 'aria-label': t('side.tools') });
+  body.appendChild(withFilter(toolList, 'studio-tools', 'side.tools'));
+  body = toolList;
   items.forEach(([id, k]) => body.appendChild(h('button', { type: 'button', class: 'st-tool', onclick: () => openTab(id) }, [h('b', { text: t('tab.' + id) }), h('small', { text: t(k) })])));
   body.appendChild(h('a', { class: 'st-tool', href: ROOT + 'tools/base64.html', target: '_blank', rel: 'noopener' }, [h('b', { text: t('nav.base64') }), h('small', { text: t('home.b64') })]));
   body.appendChild(h('button', { type: 'button', class: 'st-tool', onclick: openShortcuts }, [h('b', { text: t('studio.shortcuts') }), h('small', { text: 'F1 / ?' })]));
@@ -631,7 +681,7 @@ function renderInspector() {
     const v = countSet(srcAll[selected.pass + '|' + comp.name] && srcAll[selected.pass + '|' + comp.name][s.name]);
     rel.appendChild(h('li', null, [h('button', { type: 'button', class: 'linkish', text: s.name, onclick: () => { selected = { comp: comp.name, pass: selected.pass, path: s.name }; renderInspector(); } }), v ? h('span', { class: 'setmark', text: t('cat.set') }) : null]));
   });
-  body.appendChild(rel);
+  body.appendChild(withFilter(rel, 'inspector-related', 'studio.related'));
   body.appendChild(h('div', { class: 'cta' }, [btn('ctx.open', () => openTab('comp:' + selected.pass + '|' + comp.name), 'btn-ghost btn-sm'), btn('ctx.revealXml', () => revealInXml(comp.name, selected.pass), 'btn-ghost btn-sm')]));
 }
 let inspDirty = false;
@@ -659,14 +709,44 @@ function problemCount() { return Object.keys(fieldErrors()).length + computeIssu
 function renderPanel() {
   const tabsBar = $('#st-panel-tabs');
   tabsBar.replaceChildren(...PANELS.map((id) => h('button', { type: 'button', role: 'tab', 'aria-selected': String(layout.panel === id), class: 'st-ptab', text: t('panel.' + id) + (id === 'problems' ? ' ' + problemCount() : ''), onclick: () => { layout.panel = id; layout.panelOpen = true; applyLayout(); renderPanel(); } })),
-    h('span', { class: 'grow' }), h('button', { type: 'button', class: 'iconbtn', 'aria-label': t('studio.togglePanel'), title: t('studio.togglePanel') + ' (Ctrl+J)', text: layout.panelOpen ? '▾' : '▴', onclick: () => { layout.panelOpen = !layout.panelOpen; applyLayout(); renderPanel(); } }));
+    h('span', { class: 'grow' }), tabSearchToggle('panel'), h('button', { type: 'button', class: 'iconbtn', 'aria-label': t('studio.togglePanel'), title: t('studio.togglePanel') + ' (Ctrl+J)', text: layout.panelOpen ? '▾' : '▴', onclick: () => { layout.panelOpen = !layout.panelOpen; applyLayout(); renderPanel(); } }));
   const box = $('#st-panel-body');
   box.replaceChildren();
   if (layout.panel === 'problems') renderProblems(box);
-  else if (layout.panel === 'xml') box.appendChild(h('pre', { class: 'st-code-ro', tabindex: '0', html: A.highlightXml(safeXml(model)) }));
+  else if (layout.panel === 'xml') box.appendChild(xmlFinder(safeXml(model)));
   else if (layout.panel === 'search') { const host = h('div'); box.appendChild(host); buildSearchUi(host, 'panel'); }
   else if (layout.panel === 'history') { const host = h('div'); box.appendChild(host); renderHistorySide(host); }
-  else if (layout.panel === 'output') box.appendChild(h('ul', { class: 'st-output' }, outputLog.slice().reverse().map((o) => h('li', null, [h('small', { text: new Date(o.t).toLocaleTimeString() }), ' ', o.text]))));
+  else if (layout.panel === 'output') box.appendChild(withFilter(h('ul', { class: 'st-output', 'aria-label': t('panel.output') }, outputLog.slice().reverse().map((o) => h('li', null, [h('small', { text: new Date(o.t).toLocaleTimeString() }), ' ', o.text]))), 'panel-output', 'panel.output'));
+}
+// Read-only XML panel with its own find field: matching lines are listed with the matches marked.
+function xmlFinder(xml) {
+  const pre = h('pre', { class: 'st-code-ro', tabindex: '0', html: A.highlightXml(xml) });
+  const input = h('input', { type: 'search', class: 'rxb-in', 'aria-label': t('rx.filterFor', [t('panel.xml')]), placeholder: t('rx.filterFor', [t('panel.xml')]), autocomplete: 'off', spellcheck: 'false' });
+  const status = h('span', { class: 'meter-label', role: 'status', 'aria-live': 'polite' });
+  const draw = (st) => {
+    const c = rxCompile(st.regex ? st.pattern : st.query, st);
+    if (!c.ok) { status.textContent = t('palette.badRegex'); return; }
+    if (c.empty) { pre.innerHTML = A.highlightXml(xml); status.textContent = ''; return; }
+    const lines = xml.split(/\r?\n/), frag = document.createDocumentFragment();
+    let n = 0, hits = 0;
+    lines.forEach((line, i) => {
+      const ms = c.matches(line, 200);
+      if (!ms.length) return;
+      n++; hits += ms.length;
+      frag.appendChild(h('span', { class: 'meter-label', text: String(i + 1).padStart(5) + '  ' }));
+      let pos = 0;
+      ms.forEach((m) => { frag.appendChild(document.createTextNode(line.slice(pos, m.index))); frag.appendChild(h('mark', { text: line.slice(m.index, m.index + m.length) })); pos = m.index + m.length; });
+      frag.appendChild(document.createTextNode(line.slice(pos) + '\n'));
+    });
+    pre.replaceChildren(frag);
+    status.textContent = t('search.listCount', [n, lines.length]) + ' · ' + hits;
+  };
+  const rx = attachRegexBuilder(input, { label: t('panel.xml'), t: rxT, state: filterMem.get('panel-xml'), sampleProvider: () => xml.slice(0, 20000), onChange: (st) => { filterMem.set('panel-xml', st); draw(st); } });
+  const row = h('div', { class: 'rxb-host' }, [input]);
+  row.appendChild(rx.el);
+  const box = h('div', { class: 'rxb-wrap', 'data-search-surface': 'panel-xml' }, [h('div', { class: 'rxb-filter' }, [row, status]), pre]);
+  if (filterMem.get('panel-xml')) draw(rx.state);
+  return box;
 }
 function renderProblems(box) {
   const ul = h('ul', { class: 'st-problems' });
@@ -679,7 +759,7 @@ function renderProblems(box) {
       fix ? h('button', { type: 'button', class: 'btn btn-primary btn-sm', title: fix.label, onclick: () => quickFix(i) }, [t('fix.quick') + ': ' + fix.label]) : null, btn('studio.reveal', () => revealIssue(i), 'btn-ghost btn-sm')]));
   });
   if (!ul.children.length) ul.appendChild(h('li', null, [rules ? t('checks.ok') : t('checks.unavailable')]));
-  box.appendChild(ul);
+  box.appendChild(withFilter(ul, 'panel-problems', 'panel.problems'));
 }
 function ruleFix(issue) { const r = rules && rules.RULES.find((x) => x.id === issue.id); return r && r.fix ? { label: r.fixLabel } : null; }
 // Quick fixes come from the rules engine (answerfile/rules.mjs): parse the XML into the engine's model,
@@ -758,7 +838,7 @@ function renderStatusBar() {
 function openShortcuts() {
   const rows = [['Ctrl+Shift+F', 'sc.search'], ['Ctrl+Z', 'tb.undo'], ['Ctrl+Y / Ctrl+Shift+Z', 'tb.redo'], ['Ctrl+S', 'tb.save'], ['Ctrl+B', 'sc.side'], ['Ctrl+J', 'sc.panel'], ['Ctrl+Alt+I', 'sc.insp'], ['Ctrl+\\', 'sc.split'],
     ['Alt+1 .. Alt+9', 'sc.tabN'], ['Alt+Shift+Left / Right', 'sc.moveTab'], ['Delete', 'sc.closeTab'], ['F1 / ?', 'studio.shortcuts'], ['Shift+F10', 'sc.context'], ['Arrow keys', 'sc.tree']];
-  sheet('studio.shortcuts', () => [h('div', { class: 'tablebox' }, [h('table', null, [h('tbody', null, rows.map(([k, d]) => h('tr', null, [h('td', null, [h('kbd', { text: k })]), h('td', { text: t(d) })])))])])]);
+  sheet('studio.shortcuts', () => [withFilter(h('div', { class: 'tablebox' }, [h('table', null, [h('tbody', null, rows.map(([k, d]) => h('tr', null, [h('td', null, [h('kbd', { text: k })]), h('td', { text: t(d) })])))])]), 'studio-shortcuts', 'studio.shortcuts', { items: (l) => [...l.querySelectorAll('tr')] })]);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1406,7 +1486,7 @@ function planContent(forPrint) {
   box.appendChild(h('h2', { id: 'plan-h', text: t('plan.title', ['@']).replace('@', t('tab.' + mode)) }));
   const ol = h('ol', { class: 'timeline' });
   for (let i = 1; i <= A.TIMELINE[mode]; i++) ol.appendChild(h('li', null, [h('b', { text: t(`tl.${mode}.${i}.t`) }), h('span', { text: t(`tl.${mode}.${i}.d`, [f.computerName || '*', f.domainName || '', f.ipAddress || '', f.dnsServer || '']) })]));
-  box.appendChild(ol);
+  box.appendChild(forPrint ? ol : withFilter(ol, 'plan-timeline', 'plan.timeline'));
   box.appendChild(h('h2', { id: 'check-h', text: t('plan.checklist') }));
   const ul = h('ul', { class: 'checklist' });
   for (let i = 1; i <= A.CHECKLIST[mode]; i++) {
@@ -1416,7 +1496,7 @@ function planContent(forPrint) {
     cb.addEventListener('change', () => LS.set(key, cb.checked ? '1' : '0'));
     ul.appendChild(h('li', null, [h('label', { class: 'check', for: id }, [forPrint ? h('span', { text: '[  ]' }) : cb, h('span', { text: t(`ck.${mode}.${i}`, [f.computerName || '', f.domainName || '']) })])]));
   }
-  box.appendChild(ul);
+  box.appendChild(forPrint ? ul : withFilter(ul, 'plan-checklist', 'plan.checklist'));
   const errs = Object.values(fieldErrors());
   box.appendChild(h('p', { class: 'notice' + (errs.length ? ' warn' : ' ok'), text: errs.length ? t('plan.problems', [errs.length]) : t('plan.noProblems') }));
   return box;
@@ -1781,7 +1861,7 @@ function setMode(next) {
 function explainNoGuided(reasons) {
   sheet('direct.noGuidedTitle', (close) => [
     h('p', { text: t('direct.noGuidedBody') }),
-    h('ul', { class: 'st-values' }, reasons.slice(0, 30).map((x) => h('li', { class: 'mono', text: /^raw:/.test(x) ? t('direct.reasonRaw', [x.slice(4)]) : x === 'servicing' ? t('direct.reasonServicing') : x }))),
+    withFilter(h('ul', { class: 'st-values' }, reasons.slice(0, 30).map((x) => h('li', { class: 'mono', text: /^raw:/.test(x) ? t('direct.reasonRaw', [x.slice(4)]) : x === 'servicing' ? t('direct.reasonServicing') : x }))), 'direct-no-guided', 'direct.noGuidedTitle'),
     reasons.length > 30 ? h('p', { class: 'meter-label', text: t('hist.more', [reasons.length - 30]) }) : null,
     btn('common.close', close, 'btn-primary')]);
 }
@@ -1817,7 +1897,7 @@ function directExplorer(body) {
   ul.appendChild(treeItem(t('direct.fileParts'), { level: 1, children: other, open: true }));
   const views = ['flow', 'disk', 'commands', 'all', 'simulate', 'compare', 'secrets', 'history'].map((id) => treeItem(t('tab.' + id), { level: 2, active: view === id, onOpen: () => openTab(id) }));
   ul.appendChild(treeItem(t('studio.views'), { level: 1, children: views, open: openTree.has('tools'), onToggle: (o) => { if (o) openTree.add('tools'); else openTree.delete('tools'); saveTree(); } }));
-  body.appendChild(ul);
+  body.appendChild(withFilter(ul, 'studio-direct-explorer', 'side.explorer', { tree: true }));
   treeKeys(ul);
 }
 function removeDirectComponent(key) {
@@ -1953,7 +2033,8 @@ function renderServicingTab() {
   const arch = h('select', { id: 'd-arch' }, ['amd64', 'x86', 'arm64'].map((a) => h('option', { value: a, text: a })));
   arch.value = model.direct.architecture;
   arch.addEventListener('change', () => { model.direct.architecture = arch.value; save({ key: 'hist.setField', args: ['processorArchitecture', arch.value] }); });
-  sec.append(h('div', { class: 'field', style: { maxWidth: '240px' } }, [h('label', { for: 'd-arch', text: t('direct.arch') }), arch]), list);
+  sec.append(h('div', { class: 'field', style: { maxWidth: '240px' } }, [h('label', { for: 'd-arch', text: t('direct.arch') }), arch]),
+    withFilter(list, 'servicing-list', 'direct.servicing', { items: (l) => [...l.querySelectorAll('.list-row')], text: (row) => [...row.querySelectorAll('input, textarea, select')].map((x) => x.value).join(' ') }));
 }
 function renderDirectNew() {
   const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'new-h', text: t('studio.newTitle') })]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('direct.newHelp') })]);
@@ -1963,7 +2044,7 @@ function renderDirectNew() {
   MODE_TABS.forEach((m) => grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => {
     const dm = A.defaultModel(); dm.mode = m; model = dm; commit({ key: 'hist.mode', args: ['@tab.' + m] }); LS.set('td.studio.mode', 'guided'); tabs = ['template', 'flow']; view = 'template'; saveTabs(); renderView();
   } }, [h('b', { text: t('tab.' + m) + ' (' + t('direct.guided') + ')' }), h('span', { text: t('mode.' + m + '.intro') })])));
-  sec.appendChild(grid);
+  sec.appendChild(withFilter(grid, 'new-gallery-direct', 'studio.newTitle'));
   mainEl.appendChild(sec);
 }
 let importIntoDirect = false;
@@ -2010,7 +2091,7 @@ function renderNew() {
   } }, [h('b', { text: t('tab.' + m) }), h('span', { text: t('mode.' + m + '.intro') }), model.mode === m ? h('small', { class: 'setmark', text: t('studio.current') }) : null])));
   grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => { if (window.confirm(t('studio.blankConfirm'))) { const keepMode = model.mode; model = A.defaultModel(); model.mode = keepMode; commit({ key: 'hist.blank', args: [] }); tabs = ['template']; view = 'template'; saveTabs(); renderView(); } } }, [h('b', { text: t('studio.blank') }), h('span', { text: t('studio.blankHelp') })]));
   grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => $('#b-import-file').click() }, [h('b', { text: t('tb.import') }), h('span', { text: t('studio.importHelp') })]));
-  sec.appendChild(grid);
+  sec.appendChild(withFilter(grid, 'new-gallery', 'studio.newTitle'));
   mainEl.appendChild(sec);
 }
 function renderComponentTab(key) {
@@ -2171,20 +2252,24 @@ function renderCompare() {
     let c;
     try { c = A.compareXml(other, safeXml(model)); } catch (e) { out.appendChild(h('p', { class: 'notice warn', text: t('imp.badXml', [e.message]) })); return; }
     out.appendChild(h('p', { class: 'meter-label', text: t('cmp.summary', [label, c.added.length, c.removed.length, c.changed.length, c.same]) }));
+    // search-surface: compare-table (wrapped below)
     const tb = h('table', null, [h('thead', null, [h('tr', null, [h('th', { text: t('cmp.change') }), h('th', { text: t('cmp.setting') }), h('th', { text: t('cmp.before') }), h('th', { text: t('cmp.after') })])])]);
     const body = h('tbody');
     c.changed.forEach((x) => body.appendChild(h('tr', { class: 'chg' }, [h('td', { text: t('cmp.changed') }), h('td', { class: 'mono', text: x.path }), h('td', { text: x.from }), h('td', { text: x.to })])));
     c.added.forEach((x) => body.appendChild(h('tr', { class: 'add' }, [h('td', { text: t('cmp.added') }), h('td', { class: 'mono', text: x.path }), h('td', { text: '' }), h('td', { text: x.value })])));
     c.removed.forEach((x) => body.appendChild(h('tr', { class: 'del' }, [h('td', { text: t('cmp.removed') }), h('td', { class: 'mono', text: x.path }), h('td', { text: x.value }), h('td', { text: '' })])));
     tb.appendChild(body);
-    out.appendChild(h('div', { class: 'tablebox', tabindex: '0' }, [tb]));
+    out.appendChild(withFilter(h('div', { class: 'tablebox', tabindex: '0' }, [tb]), 'compare-table', 'tab.compare', { items: (l) => [...l.querySelectorAll('tbody tr')] }));
     out.appendChild(h('details', null, [h('summary', { text: t('cmp.lines') }), diffView(other, safeXml(model))]));
   };
   sel.addEventListener('change', () => { compareWith.kind = sel.value; histSel.hidden = sel.value !== 'history'; fileIn.hidden = sel.value !== 'file'; run(); });
   histSel.addEventListener('change', run);
   fileIn.addEventListener('change', async () => { const f = fileIn.files[0]; if (!f) return; compareWith.text = await f.text(); compareWith.name = f.name; run(); });
   histSel.hidden = compareWith.kind !== 'history'; fileIn.hidden = compareWith.kind !== 'file';
-  sec.appendChild(h('div', { class: 'inline', style: { flexWrap: 'wrap', gap: '8px', marginBottom: '10px' } }, [sel, histSel, fileIn]));
+  const histPick = withFilter(histSel, 'compare-history-picker', 'cmp.history', { items: (l) => [...l.options] });
+  histPick.hidden = histSel.hidden;
+  sel.addEventListener('change', () => { histPick.hidden = sel.value !== 'history'; });
+  sec.appendChild(h('div', { class: 'inline', style: { flexWrap: 'wrap', gap: '8px', marginBottom: '10px' } }, [sel, histPick, fileIn]));
   sec.appendChild(out);
   run();
 }
@@ -2204,6 +2289,7 @@ function renderSimulate() {
     detail.replaceChildren(h('h3', { text: (simStep + 1) + '. ' + s.pass + ' · ' + t('sim.when.' + s.when) }));
     if (s.skipped) detail.appendChild(h('p', { class: 'notice', text: t(s.pass === 'generalize' ? 'sim.skipGeneralize' : 'sim.skipAudit') }));
     if (!s.applies.length && !s.skipped) detail.appendChild(h('p', { class: 'empty', text: t('sim.nothing') }));
+    // search-surface: simulate-detail (one filter over every list in the current pass)
     s.applies.forEach((a) => detail.appendChild(h('details', { open: s.applies.length <= 3 || undefined }, [h('summary', { class: 'mono', text: a.comp + ' (' + a.settings.length + ')' }), h('ul', { class: 'st-values' }, a.settings.slice(0, 80).map((x) => h('li', { class: 'mono', text: x })))])));
     if (s.commands.length) detail.appendChild(h('ol', { class: 'st-values' }, s.commands.map((c) => h('li', null, [c.text, c.reboot ? h('span', { class: 'reboot', text: ' ' + t('sim.reboot.' + c.reboot) }) : null]))));
     if (s.reboot) detail.appendChild(h('p', { class: 'reboot', text: t('sim.restart') }));
@@ -2216,7 +2302,8 @@ function renderSimulate() {
     const delay = document.documentElement.dataset.motion === 'off' ? 1500 : 1200;
     simTimer = setInterval(() => { if (simStep >= steps.length - 1 || view !== 'simulate') { clearInterval(simTimer); simTimer = null; play.textContent = t('sim.play'); return; } simStep++; show(); }, delay);
   });
-  sec.append(h('div', { class: 'cta' }, [btn('sim.prev', () => { simStep--; show(); }, 'btn-ghost btn-sm'), play, btn('sim.next', () => { simStep++; show(); }, 'btn-ghost btn-sm')]), h('div', { class: 'st-simgrid' }, [ol, detail]));
+  sec.append(h('div', { class: 'cta' }, [btn('sim.prev', () => { simStep--; show(); }, 'btn-ghost btn-sm'), play, btn('sim.next', () => { simStep++; show(); }, 'btn-ghost btn-sm')]),
+    h('div', { class: 'st-simgrid' }, [withFilter(ol, 'simulate-steps', 'tab.simulate'), withFilter(detail, 'simulate-detail', 'sim.current', { items: (l) => [...l.querySelectorAll('li')] })]));
   show();
 }
 function renderSnippets() {
@@ -2225,7 +2312,7 @@ function renderSnippets() {
   Object.keys(A.SNIPPETS).forEach((id) => grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => {
     model = A.applySnippet(model, id); commit({ key: 'hist.snippet', args: ['@snip.' + id] }); output(t('hist.snippet', [t('snip.' + id)])); S.toast(t('snip.inserted', [t('snip.' + id)])); refreshAround();
   } }, [h('b', { text: t('snip.' + id) }), h('span', { text: t('snip.' + id + '.d') })])));
-  sec.appendChild(grid);
+  sec.appendChild(withFilter(grid, 'snippets-gallery', 'tab.snippets'));
   mainEl.appendChild(sec);
 }
 function renderSecrets() {
@@ -2234,7 +2321,7 @@ function renderSecrets() {
     const rows = [];
     (function walk(v, p) { if (!v || typeof v !== 'object') return; Object.keys(v).forEach((k) => { if (k === '@password') rows.push([p.join(' / '), v[k], 'encoded']); else if (/^(Password|MachinePassword)$/.test(k) && typeof v[k] === 'string') rows.push([p.concat(k).join(' / '), v[k], 'plain']); else walk(v[k], p.concat(k)); }); })(model.direct.all, []);
     const tb = h('table', null, [h('thead', null, [h('tr', null, [h('th', { text: t('secrets.where') }), h('th', { text: t('secrets.value') }), h('th', { text: t('secrets.stored') })])]), h('tbody', null, rows.length ? rows.map(([w, v, how]) => h('tr', null, [h('td', { class: 'mono', text: w }), h('td', { class: 'mono', text: v ? '\u2022'.repeat(Math.min(16, v.length)) : t('secrets.empty') }), h('td', { text: t('secrets.' + how) })])) : [h('tr', null, [h('td', { colspan: '3', text: t('secrets.none') })])])]);
-    sec.append(h('div', { class: 'tablebox', tabindex: '0' }, [tb]), h('p', { class: 'notice warn', text: t('exp.pwWarn') }));
+    sec.append(withFilter(h('div', { class: 'tablebox', tabindex: '0' }, [tb]), 'secrets-direct', 'tab.secrets', { items: (l) => [...l.querySelectorAll('tbody tr')], text: (tr) => [...tr.children].filter((c, i) => i !== 1).map((c) => c.textContent).join(' ') }), h('p', { class: 'notice warn', text: t('exp.pwWarn') }));
     mainEl.appendChild(sec); return;
   }
   const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'sec-h2', text: t('tab.secrets') })]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('secrets.help') })]);
@@ -2243,6 +2330,7 @@ function renderSecrets() {
   if (model.mode === 'custom') model.custom.accounts.forEach((a, i) => rows.push([t('f.account') + ' ' + (i + 1) + ' (' + (a.name || '?') + ')', a.password, 'encoded', () => revealField('accounts')]));
   Object.keys(model.commands).forEach((k) => (model.commands[k] || []).forEach((it, i) => { if (it.credentials && (it.credentials.username || it.credentials.password)) rows.push([t('cmd.' + k) + ' #' + (i + 1), it.credentials.password, 'plain', () => openTab('commands')]); }));
   (function walk(v, p) { if (!v || typeof v !== 'object') return; Object.keys(v).forEach((k) => { if (k === '@password') rows.push([p.join(' / '), v[k], 'encoded', () => { const [ps, c] = p[0].split('|'); openTab('comp:' + ps + '|' + c); }]); else walk(v[k], p.concat(k)); }); })(model.all, []);
+  // search-surface: secrets (wrapped below; the value column is never searched)
   const tb = h('table', null, [h('thead', null, [h('tr', null, [h('th', { text: t('secrets.where') }), h('th', { text: t('secrets.value') }), h('th', { text: t('secrets.stored') }), h('th', { text: '' })])])]);
   const body = h('tbody');
   rows.forEach(([where, val, how, go]) => {
@@ -2254,7 +2342,7 @@ function renderSecrets() {
   tb.appendChild(body);
   const rememberCb = h('input', { type: 'checkbox', checked: remember() });
   rememberCb.addEventListener('change', () => { LS.set('td.rememberPw', rememberCb.checked ? '1' : '0'); S.toast(t(rememberCb.checked ? 'hist.rememberOn' : 'hist.rememberOff')); });
-  sec.append(h('div', { class: 'tablebox', tabindex: '0' }, [tb]), h('label', { class: 'check' }, [rememberCb, t('hist.remember')]), h('p', { class: 'notice warn', text: t('exp.pwWarn') }));
+  sec.append(withFilter(h('div', { class: 'tablebox', tabindex: '0' }, [tb]), 'secrets', 'tab.secrets', { items: (l) => [...l.querySelectorAll('tbody tr')], text: (tr) => [...tr.children].filter((c, i) => i !== 1 && i !== 3).map((c) => c.textContent).join(' ') }), h('label', { class: 'check' }, [rememberCb, t('hist.remember')]), h('p', { class: 'notice warn', text: t('exp.pwWarn') }));
   mainEl.appendChild(sec);
 }
 
@@ -2363,7 +2451,7 @@ async function init() {
     if (r.ok) model = r.model;
   } catch (e) { history = null; }
   if (isPhone()) layout.sideOpen = layout.pane === 'explorer';
-  buildActivity(); buildTopbar(); buildGlobalSearch();
+  buildActivity(); buildTopbar(); buildGlobalSearch(); buildTabSearch();
   makeSplitter($('#st-split-side'), 'sideW', 'x', 180, 520, false);
   makeSplitter($('#st-split-insp'), 'inspW', 'x', 220, 560, true);
   makeSplitter($('#st-split-panel'), 'panelH', 'y', 90, Math.round(innerHeight * 0.7), true);

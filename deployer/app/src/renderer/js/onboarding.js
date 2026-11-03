@@ -1,7 +1,7 @@
 // First-run onboarding: pick a path (Server Core or Lite), check real prerequisites (PowerShell,
 // OpenSSH client, Docker, network, Git), choose language and look, then open the workspace.
 // Back/Next, progress dots, skip for optional steps, and the step is saved so it resumes.
-import { h, t, btn, state, select, toast } from './ui.js';
+import { h, t, btn, state, select, toast, listFilter } from './ui.js';
 
 const td = window.td;
 
@@ -28,7 +28,7 @@ export function runOnboarding(app) {
     }
     if (id === 'prereqs') {
       const listEl = h('div', { 'aria-live': 'polite' });
-      body.append(h('p', { class: 'muted', text: t('onb.prereqLead') }), listEl, btn(t('onb.recheck'), () => check(listEl), 'btn-ghost btn-sm'));
+      body.append(h('p', { class: 'muted', text: t('onb.prereqLead') }), listFilter(listEl, 'onboarding-prereqs', t('onb.prereqLead'), { items: (l) => [...l.querySelectorAll('.prereq')] }), btn(t('onb.recheck'), () => check(listEl), 'btn-ghost btn-sm'));
       check(listEl);
     }
     if (id === 'look') {

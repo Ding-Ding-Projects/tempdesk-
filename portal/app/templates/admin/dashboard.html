@@ -53,7 +53,8 @@
     </section>
     <section class="tile narrow rise stack" style="--i:5;gap:14px" aria-labelledby="act-h">
       <h2 id="act-h">{{ t('Live activity') }}</h2>
-      <ul class="act" data-activity>
+      <div class="ss-host" data-search-surface="home-activity" data-search-kind="list" data-search-target="[data-activity]" data-search-items="li" data-search-compact data-search-label="{{ ta('Search recent activity') }}"></div>
+      <ul class="act" data-activity data-searchable="home-activity">
         {% for r in audit_rows[:5] %}<li><span class="badge-ic {{ loop.cycle('', 'coral', 'neutral') }}" aria-hidden="true">{{ loop.cycle('+', '✎', '×') }}</span><div style="min-width:0">
           <div class="t1">{{ r.message or r.action or r }}</div>
           <div class="t2">{{ r.user or '' }} {% if r.time %}· {{ local_time(r.time) }}{% endif %}</div></div></li>

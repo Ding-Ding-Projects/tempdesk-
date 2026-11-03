@@ -7,14 +7,14 @@
 {% if unknown %}<p class="alert warn">{{ t('Ignored unknown keys') }}: {{ unknown|join(', ') }}</p>{% endif %}
 {% if changes is defined and changes is not none %}
 <section class="card"><h2>{{ t('{count} changes', count=changes|length) }}</h2>
-  {% if changes %}<div class="table-wrap"><table><thead><tr><th>{{ t('Setting') }}</th><th>{{ t('Current') }}</th><th>{{ t('Imported') }}</th></tr></thead><tbody>
+  {% if changes %}<div class="ss-host" data-search-surface="import-settings-changes" data-search-kind="table" data-search-target="#import-settings-changes-table" data-search-label="{{ ta('Search the changes') }}"></div><div class="table-wrap"><table id="import-settings-changes-table" data-searchable="import-settings-changes"><thead><tr><th>{{ t('Setting') }}</th><th>{{ t('Current') }}</th><th>{{ t('Imported') }}</th></tr></thead><tbody>
   {% for k, a, b in changes %}<tr data-ctx><td class="mono">{{ k }}</td><td class="small break">{{ a|tojson }}</td><td class="small break">{{ b|tojson }}</td></tr>{% endfor %}</tbody></table></div>
   {% else %}<p class="muted">{{ t('The imported file matches the current settings.') }}</p>{% endif %}
   {% if diff %}<details><summary>{{ t('Full diff') }}</summary><div class="diff">{% for kind, line in diff %}<div class="{{ kind }}">{{ line }}</div>{% endfor %}</div></details>{% endif %}
 </section>
 {% endif %}
 {% if rows %}
-<section class="card"><div class="table-wrap"><table><thead><tr>{% for k, l in row_cols %}<th>{{ t(l) }}</th>{% endfor %}</tr></thead><tbody>
+<section class="card"><div class="ss-host" data-search-surface="import-rows" data-search-kind="table" data-search-target="#import-rows-table" data-search-label="{{ ta('Search the rows') }}"></div><div class="table-wrap"><table id="import-rows-table" data-searchable="import-rows"><thead><tr>{% for k, l in row_cols %}<th>{{ t(l) }}</th>{% endfor %}</tr></thead><tbody>
 {% for r in rows %}<tr data-ctx>{% for k, l in row_cols %}<td>{{ r[k] }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div></section>
 {% endif %}
 <div class="cluster">

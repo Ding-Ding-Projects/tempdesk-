@@ -34,12 +34,10 @@
 
   <div data-srv-table>
     <div class="srv-toolbar">
-      <input class="srv-search" data-srv-search placeholder="{{ ta('Search') }}">
-      <label class="srv-toggle"><input type="checkbox" data-srv-regex> {{ t("Regex") }}</label>
-      <span data-srv-regex-error class="srv-err" role="alert" style="padding:4px 8px"></span>
+      <input class="srv-search" type="search" placeholder="{{ ta('Search') }}" data-search-surface="srv-files" data-search-kind="table" data-search-target="#srv-files-table" data-search-label="{{ ta('Search') }}">
     </div>
     <div class="srv-tablewrap">
-      <table class="srv-table">
+      <table class="srv-table" id="srv-files-table" data-searchable="srv-files">
         <thead><tr>
           <th data-col="name">{{ t("Name") }}</th>
           <th data-col="size">{{ t("Size") }}</th>

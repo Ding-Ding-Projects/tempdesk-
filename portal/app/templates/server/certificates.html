@@ -17,10 +17,10 @@
   </section>
   <div data-srv-table>
     <div class="srv-toolbar">
-      <input class="srv-search" data-srv-search placeholder="{{ ta('Search') }}">
+      <input class="srv-search" type="search" placeholder="{{ ta('Search') }}" data-search-surface="srv-certificates" data-search-kind="table" data-search-target="#srv-certificates-table" data-search-label="{{ ta('Search') }}">
       <button type="button" class="srv-btn" data-srv-export="csv">CSV</button>
     </div>
-    <div class="srv-tablewrap"><table class="srv-table">
+    <div class="srv-tablewrap"><table class="srv-table" id="srv-certificates-table" data-searchable="srv-certificates">
       <thead><tr><th data-col="subject">{{ t("Subject") }}</th><th data-col="notAfter">{{ t("Expires") }}</th><th data-col="thumbprint">{{ t("Thumbprint") }}</th><th data-no-sort></th></tr></thead>
       <tbody>{% for c in certificates %}<tr data-ctx>
         <td>{{ c.subject }}</td><td>{{ c.notAfter }}</td><td><code>{{ c.thumbprint }}</code></td>

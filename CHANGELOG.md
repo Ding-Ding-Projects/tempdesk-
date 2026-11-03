@@ -13,6 +13,23 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
   key boxes with generic edition keys, command line editor, colour picker and more), a written
   description, the meaning of the current value, risk badges, related settings and an Unset button.
   Search also matches descriptions and value meanings.
+- Search with a regex builder everywhere on the website and in TempDesk Deployer. A shared,
+  dependency-free module (`site/assets/regex-builder.js`, also an ES module, a classic script and
+  its own evaluation worker) gives every search field plain text by default, a `.*` toggle and an
+  anchored Builder popover: guided tokens inserted at the cursor, a highlighted pattern editor
+  with the error underlined, flags and whole word options with plain explanations, a live sample
+  with matches, count and capture groups, a token by token explanation, copy, copy as JavaScript,
+  export as JSON and a gallery of common patterns (IPv4, email, GUID, date, Windows path, guest
+  user names, SID, MAC). Patterns are JavaScript RegExp, limited to 2,000 characters, evaluated in
+  a worker with a 250 ms timeout, refused when they nest repeats unless overridden, and never
+  saved. Lists that had no search now have their own: the studio Explorer, Tools, inspector,
+  Problems, Output and XML panels, menus, galleries, Compare, Simulate, Secrets, list editors,
+  the deployment map, docs navigation and tables, the settings panel, Base64 file jobs, and in the
+  Deployer the run steps and log, deployment details, help, settings and pickers. Open tabs in
+  the studio and the Deployer get "Close tabs containing text" and "Close tabs not containing
+  text" with a preview count, an empty search guard and protection for tabs with work in progress.
+  Catalogues (`site/search-surfaces.json`, `deployer/app/search-surfaces.json`) and tests check
+  that every list, tree, table, listbox, menu and tab strip has a registered search.
 
 ## [1.0.0] - 2026-11-02
 

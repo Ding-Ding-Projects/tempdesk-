@@ -3,6 +3,7 @@
 // join settings and model.deploy. Pure helpers are exported for tests.
 import { h, clone } from './dom.js';
 import { quickField } from './widgets/index.js';
+import { attachRegexBuilder, compile } from '../regex-builder.mjs';
 
 // Widget for each map field (the map edits the same values as the Guided fields).
 const MAP_HINTS = { 'map-prefix': { widget: 'number', min: 1, max: 32, unit: 'bits' }, 'map-gw': { widget: 'ipv4' }, 'map-dns': { widget: 'string-list', sep: ',' }, 'map-dc-ip': { widget: 'ipv4' },
@@ -65,6 +66,22 @@ export function mapWarnings(model) {
 // ctx: { t, getModel(), setModel(model, msg, coalesceKey) }
 export function mountDeploy(root, ctx) {
   const t = ctx.t;
+  // search-surface: map-find (dims map nodes that do not match; node text includes field values)
+  const findIn = h('input', { type: 'search', class: 'rxb-in', 'aria-label': t('map.find'), placeholder: t('map.find'), autocomplete: 'off', spellcheck: 'false' });
+  const findSt = h('span', { class: 'meter-label', role: 'status', 'aria-live': 'polite' });
+  const finder = h('div', { class: 'rxb-filter', role: 'search' }, [h('div', { class: 'rxb-host' }, [findIn]), findSt]);
+  let findState = null;
+  const nodeText = (n) => n.textContent + ' ' + [...n.querySelectorAll('input, select, textarea')].map((x) => x.value).join(' ');
+  function applyFind() {
+    const nodes = [...root.querySelectorAll('.map .node')];
+    const st = findState || { query: '' };
+    const c = compile(st.regex ? st.pattern : st.query, st);
+    if (!c.ok) { findSt.textContent = t('palette.badRegex'); return; }
+    let n = 0;
+    nodes.forEach((nd) => { const hit = c.empty || c.test(nodeText(nd)); nd.classList.toggle('rxb-tab-miss', !hit); nd.classList.toggle('found', !c.empty && hit); if (hit) n++; });
+    findSt.textContent = c.empty ? '' : t('search.listCount', [n, nodes.length]);
+  }
+  attachRegexBuilder(findIn, { label: t('map.find'), t: (k, ...a) => t(k, a), sampleProvider: () => [...root.querySelectorAll('.map .node')].map(nodeText).join('\n'), onChange: (st) => { findState = st; applyFind(); } });
   function field(id, label, value, onInput, opts) {
     opts = opts || {};
     const hint = opts.options ? { widget: 'segmented', values: opts.options.map((o) => ({ value: o[0], label: o[1] })), valueHelp: Object.fromEntries(opts.options.map((o) => [o[0], o[1] + '.'])) } : Object.assign({ widget: 'text' }, MAP_HINTS[id] || {});
@@ -110,7 +127,8 @@ export function mountDeploy(root, ctx) {
       h('p', { class: 'help', text: t('map.guestJoins', [g.domainName || s.domainName, g.ou || ('OU=Computers,OU=TempDesk,' + String(g.domainName || s.domainName).split('.').map((x) => 'DC=' + x).join(','))]) })]));
     const map = h('div', { class: 'map' }, nodes);
     const warn = mapWarnings(m).map((k) => h('p', { class: 'notice warn', role: 'alert', text: t(k) }));
-    root.replaceChildren(h('p', { class: 'meter-label', text: t('map.help') }), ...warn, map);
+    root.replaceChildren(h('p', { class: 'meter-label', text: t('map.help') }), finder, ...warn, map);
+    applyFind();
     requestAnimationFrame(() => links(map));
   }
   function links(map) {

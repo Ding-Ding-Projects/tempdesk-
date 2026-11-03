@@ -1,7 +1,7 @@
 // History timeline (Git or JSON lines backend): commit list with search, coloured per-file diff,
 // compare two versions, restore any version as a new commit, unlimited undo and redo.
 // Help: changelog viewer and offline docs browser with search.
-import { h, t, btn, toast, searchBox, contextMenu, fmtTime, dialog, superConfirm } from './ui.js';
+import { h, t, btn, toast, searchBox, contextMenu, fmtTime, dialog, superConfirm, listFilter } from './ui.js';
 
 const td = window.td;
 const Core = window.TempDeskCore;
@@ -25,6 +25,7 @@ export async function historyPage(root, app) {
     h('div', { class: 'row' }, [btn(t('hist.undo'), () => app.undo(), 'btn-ghost', { disabled: !info.canUndo || undefined, title: 'Ctrl+Z' }), btn(t('hist.redo'), () => app.redo(), 'btn-ghost', { disabled: !info.canRedo || undefined, title: 'Ctrl+Y' })])]));
   if (info.gitError) root.appendChild(h('div', { class: 'notice warn', text: t('hist.gitError', [info.gitError]) }));
   const detail = h('div', { class: 'card' }, [h('p', { class: 'muted', text: t('hist.pick') })]);
+  // search-surface: history-log (the History search below filters this list)
   const list = h('div', { class: 'list', role: 'list' });
   let matcher = null, kind = 'all', compareA = null;
   const kinds = ['all', 'change', 'undo', 'redo', 'restore'];
@@ -38,7 +39,7 @@ export async function historyPage(root, app) {
     fileSel.addEventListener('change', async () => view.replaceChildren(diffView(await td.invoke['ws:diff'](prev ? prev.id : null, e.id, fileSel.value || undefined))));
     detail.replaceChildren(h('div', { class: 'row between' }, [h('h2', { text: e.message, style: { margin: 0 } }), h('span', { class: 'chip', text: t('hist.kind.' + e.kind) })]),
       h('p', { class: 'small muted', text: fmtTime(e.t) + ' · ' + e.author + ' · ' + String(e.id).slice(0, 12) }),
-      h('div', { class: 'row' }, [fileSel, btn(t('hist.restore'), () => restore(e), 'btn-primary btn-sm', { disabled: idx === 0 || undefined }), btn(compareA ? t('hist.compareWith') : t('hist.compareStart'), () => compare(e), 'btn-ghost btn-sm')]), view);
+      h('div', { class: 'row' }, [listFilter(fileSel, 'history-file-picker', t('hist.file'), { items: (l) => [...l.options] }), btn(t('hist.restore'), () => restore(e), 'btn-primary btn-sm', { disabled: idx === 0 || undefined }), btn(compareA ? t('hist.compareWith') : t('hist.compareStart'), () => compare(e), 'btn-ghost btn-sm')]), view);
   }
   async function restore(e) {
     const r = await td.invoke['ws:restore'](e.id, fmtTime(e.t));
@@ -88,7 +89,7 @@ function renderMarkdown(md) {
     else if (b.type === 'pre') out.appendChild(h('pre', { text: b.text }));
     else if (b.type === 'ul' || b.type === 'ol') out.appendChild(h(b.type, null, b.items.map((i) => h('li', null, renderInline(i)))));
     else if (b.type === 'quote') out.appendChild(h('blockquote', { class: 'notice' }, renderInline(b.inline)));
-    else if (b.type === 'table') out.appendChild(h('table', null, [h('tbody', null, b.rows.map((r, ri) => h('tr', null, r.map((c) => h(ri === 0 ? 'th' : 'td', null, renderInline(c)))))) ]));
+    else if (b.type === 'table') out.appendChild(listFilter(h('table', null, [h('tbody', null, b.rows.map((r, ri) => h('tr', null, r.map((c) => h(ri === 0 ? 'th' : 'td', null, renderInline(c)))))) ]), 'help-doc-table', t('help.tab.docs'), { items: (l) => [...l.querySelectorAll('tr')].slice(1) }));
   });
   return out;
 }
@@ -110,10 +111,10 @@ function highlight(el, matcher) {
 export async function helpPage(root, app) {
   const tab = (app.params && app.params.tab) || 'docs';
   root.appendChild(h('div', { class: 'page-head' }, [h('div', null, [h('h1', { text: t('nav.help') }), h('p', { class: 'muted', text: t('help.lead') })]),
-    h('div', { class: 'row', role: 'tablist' }, ['docs', 'changelog', 'shortcuts'].map((k) => h('button', { type: 'button', role: 'tab', class: 'btn btn-sm ' + (tab === k ? 'btn-primary' : 'btn-ghost'), 'aria-selected': String(tab === k), onclick: () => app.go('help', { tab: k }) }, [t('help.tab.' + k)])))]));
+    listFilter(h('div', { class: 'row', role: 'tablist', 'aria-label': t('nav.help') }, ['docs', 'changelog', 'shortcuts'].map((k) => h('button', { type: 'button', role: 'tab', class: 'btn btn-sm ' + (tab === k ? 'btn-primary' : 'btn-ghost'), 'aria-selected': String(tab === k), onclick: () => app.go('help', { tab: k }) }, [t('help.tab.' + k)]))), 'help-tabs', t('nav.help'))]));
   if (tab === 'shortcuts') {
     const rows = [['Ctrl+Shift+F', 'key.palette'], ['Ctrl+1 … Ctrl+8', 'key.pages'], ['Ctrl+Z', 'key.undo'], ['Ctrl+Y, Ctrl+Shift+Z', 'key.redo'], ['Ctrl+Tab', 'key.tabs'], ['Ctrl+W', 'key.closeTab'], ['Ctrl+Shift+Left/Right', 'key.moveTab'], ['Shift+F10, Menu key', 'key.context'], ['Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+Shift+S', 'key.studioFiles'], ['F1', 'key.help'], ['Esc', 'key.close']];
-    root.appendChild(h('div', { class: 'card' }, [h('table', { class: 'table' }, [h('tbody', null, rows.map(([k, d]) => h('tr', null, [h('td', null, [h('span', { class: 'kbd', text: k })]), h('td', { text: t(d) })])))])]));
+    root.appendChild(h('div', { class: 'card' }, [listFilter(h('table', { class: 'table' }, [h('tbody', null, rows.map(([k, d]) => h('tr', null, [h('td', null, [h('span', { class: 'kbd', text: k })]), h('td', { text: t(d) })])))]), 'help-shortcuts', t('help.tab.shortcuts'), { items: (l) => [...l.querySelectorAll('tr')] })]));
     return;
   }
   if (tab === 'changelog') {

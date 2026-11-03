@@ -7,14 +7,12 @@
   {% if error %}<div class="srv-err">{{ error }}</div>{% endif %}
   <div data-srv-table>
     <div class="srv-toolbar">
-      <input class="srv-search" data-srv-search placeholder="{{ ta('Search') }}" aria-label="{{ ta('Search') }}">
-      <label class="srv-toggle"><input type="checkbox" data-srv-regex> {{ t("Regex") }}</label>
-      <span data-srv-regex-error class="srv-err" role="alert" style="padding:4px 8px"></span>
+      <input class="srv-search" type="search" placeholder="{{ ta('Search') }}" data-search-surface="srv-processes" data-search-kind="table" data-search-target="#srv-processes-table" data-search-label="{{ ta('Search') }}">
       <button type="button" class="srv-btn" data-srv-export="csv">CSV</button>
       <button type="button" class="srv-btn" data-srv-export="json">JSON</button>
     </div>
     <div class="srv-tablewrap">
-      <table class="srv-table">
+      <table class="srv-table" id="srv-processes-table" data-searchable="srv-processes">
         <thead><tr>
           <th data-col="pid">PID</th>
           <th data-col="name">{{ t("Name") }}</th>

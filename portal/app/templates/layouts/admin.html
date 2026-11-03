@@ -29,10 +29,11 @@
         <div class="cmdbar-box">
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           <input id="cmd-input" class="cmd-input" type="text" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="cmd-list" aria-autocomplete="list"
-                 aria-keyshortcuts="Control+Shift+F" placeholder="{{ ta('Type a command or search, for example: new guest 4h') }}" data-cmd-input>
+                 aria-keyshortcuts="Control+Shift+F" placeholder="{{ ta('Type a command or search, for example: new guest 4h') }}" data-cmd-input
+                 data-search-surface="cmd-bar" data-search-kind="custom" data-search-manual data-search-label="{{ ta('Command bar') }}">
           <kbd aria-hidden="true">Ctrl Shift F</kbd>
         </div>
-        <ul class="cmd-list" id="cmd-list" role="listbox" aria-label="{{ ta('Suggestions') }}" hidden data-cmd-list></ul>
+        <ul class="cmd-list" id="cmd-list" role="listbox" aria-label="{{ ta('Suggestions') }}" hidden data-cmd-list data-searchable="cmd-bar"></ul>
         <form method="post" action="/guests" hidden data-cmd-form>{{ csrf() }}</form>
       </div>
       <span class="spacer-m only-phone" aria-hidden="true"></span>
@@ -67,13 +68,15 @@
       <div class="pill-wrap">
         <button type="button" class="avatar-btn" aria-haspopup="true" aria-expanded="false" aria-controls="me-menu" data-me
                 aria-label="{{ ta('Signed in as {name}', name=user.displayName or user.sam) }}">{{ ((user.displayName or user.sam or '?')|trim)[:1]|upper }}</button>
-        <div class="menu-pop" id="me-menu" hidden data-me-menu>
+        <div class="menu-pop" id="me-menu" hidden data-me-menu data-searchable="avatar-menu">
           <div class="who"><strong>{{ user.displayName or user.sam }}</strong><div class="subtle">{{ user.sam }}</div></div>
+          <div class="ss-host tight" data-search-surface="avatar-menu" data-search-kind="menu" data-search-target="[data-me-menu]" data-search-items=".row-btn, [data-lang-form]" data-search-compact data-search-label="{{ ta('Search this menu') }}"></div>
           <form method="post" action="/prefs" class="no-print" data-lang-form>
             {{ csrf() }}<input type="hidden" name="next" value="{{ path }}">
             {% if not school %}
             <label class="sr-only" for="top-lang">{{ t('Language') }}</label>
-            <select id="top-lang" name="lang" data-autosubmit>
+            <div class="ss-host tight" data-search-surface="lang-picker" data-search-kind="select" data-search-target="#top-lang" data-search-compact data-search-label="{{ ta('Search languages') }}"></div>
+            <select id="top-lang" name="lang" data-autosubmit data-searchable="lang-picker">
               {% for k, v in lang_modes.items() %}<option value="{{ k }}" {% if tr.mode == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
             </select>
             {% endif %}
@@ -89,7 +92,10 @@
         </div>
       </div>
     </header>
-    <div class="doc-tabs" data-doc-tabs role="tablist" aria-label="{{ ta('Open tabs') }}"></div>
+    <div class="doc-tabs-row">
+      <div class="doc-tabs" data-doc-tabs role="tablist" aria-label="{{ ta('Open tabs') }}" data-searchable="doc-tabs"></div>
+      <div class="ss-host tight doc-tabs-search" data-search-surface="doc-tabs" data-search-kind="tabs" data-search-manual data-search-compact data-search-label="{{ ta('Search open tabs') }}"></div>
+    </div>
     {% endif %}
     <main id="main" class="content" tabindex="-1" {% if tab_title %}data-tab-title="{{ tab_title }}"{% endif %}>
       {{ flash_block(flash) }}
@@ -107,7 +113,8 @@
 <div class="notif-panel card raised" data-notif-panel hidden role="dialog" aria-label="{{ ta('Notifications') }}">
   <div class="cluster"><h2 style="margin:0">{{ t('Notifications') }}</h2><span class="spacer"></span>
   <button type="button" class="btn sm text" data-notif-read>{{ t('Mark all read') }}</button><button type="button" class="btn sm text" data-notif-clear>{{ t('Clear all') }}</button></div>
-  <ul data-notif-list></ul>
+  <div class="ss-host" data-search-surface="notifications" data-search-kind="list" data-search-target="[data-notif-list]" data-search-compact data-search-label="{{ ta('Search notifications') }}"></div>
+  <ul data-notif-list data-searchable="notifications"></ul>
 </div>
 <dialog data-elevate-dialog aria-labelledby="elev-title">
   <form method="post" action="/auth/elevate" class="stack" data-elevate-form>

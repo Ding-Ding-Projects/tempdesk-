@@ -8,7 +8,8 @@
     <button id="srv-console-clear" type="button" class="srv-btn">{{ t("Clear") }}</button>
   </div>
   <div class="srv-banner" role="alert">{{ t("Commands run as SYSTEM on the domain controller. Every command is recorded in the audit log.") }}</div>
-  <div id="srv-console-out" class="srv-console" aria-live="polite"></div>
+  <div class="ss-host" data-search-surface="srv-console-history" data-search-kind="list" data-search-target="#srv-console-out" data-search-compact data-search-label="{{ ta('Search the console history') }}"></div>
+  <div id="srv-console-out" class="srv-console" aria-live="polite" role="log" data-searchable="srv-console-history"></div>
   <input id="srv-console-input" class="srv-console-input" disabled
          placeholder="{{ ta('Type a command and press Enter. Up and Down arrows recall history.') }}"
          autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="{{ ta('PowerShell command') }}">

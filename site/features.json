@@ -312,6 +312,10 @@
         [
           "Privacy",
           "Runs in your browser, nothing is uploaded"
+        ],
+        [
+          "Search",
+          "Every list has its own search with plain text, regular expressions and a guided regex builder"
         ]
       ],
       "sections": [
@@ -326,6 +330,10 @@
         {
           "title": "Tools in both modes",
           "body": "The setup flow canvas, disk layout and command timeline work on the same file. Problems come from the rules engine, with a quick fix where a safe one exists. The code editor (CodeMirror) offers autocomplete from the catalog, lint markers, folding and search. Compare against a saved version, a history entry or another file, simulate the setup pass by pass, and undo anything, including a mode switch."
+        },
+        {
+          "title": "Search and regex builder everywhere",
+          "body": "Every list in the studio has its own search field: the Explorer and Catalog trees, History, Presets, Problems, the XML and Output panels, All settings, every list editor and field card list, the canvases, the inspector's related settings, the New and Snippets galleries, Secrets, Compare, Simulate, menus, the settings panel and the command palette. Each field searches plain text by default (every word, any order). Turn on **.\\*** for a regular expression, or open **Builder** for the guided regex builder beside the field.\n\nThe builder inserts tokens at the cursor (literal text with automatic escaping, any character, digit, letter, whitespace, word character, custom character classes with ranges and negation, start and end, word boundary, groups including named and non-capturing ones, A or B, every quantifier with a lazy option, and lookahead and lookbehind). The pattern editor highlights each token and underlines the first error. Flags, whole word and case sensitive options are explained in plain words, and a sample text shows the matches, the match count and the capture groups live. A plain explanation reads the pattern back token by token. Copy the pattern, copy it as a JavaScript literal, export it as JSON, or start from common patterns: IPv4, email, GUID, date, Windows path, guest user names, SIDs and MAC addresses.\n\nThe dialect is JavaScript RegExp (ECMAScript), with the `u` flag when Unicode is on. Patterns are limited to 2,000 characters, sample matching runs in a worker that is stopped after 250 ms, nested repeats such as `(a+)+` are refused unless you choose to use them anyway, and a list filter that takes longer than 50 ms falls back to plain text and says so. Patterns and samples are never saved. Open editor tabs also get **Close tabs containing text** and **Close tabs not containing text**, with a preview count; an empty search never closes anything."
         }
       ],
       "links": [

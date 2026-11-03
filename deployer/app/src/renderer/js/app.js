@@ -1,6 +1,7 @@
 // TempDesk Deployer renderer: shell (title bar, navigation rail, tabs), settings application,
 // language and wording, command palette, notifications, updates, onboarding and global shortcuts.
-import { h, t, state, btn, iconBtn, icon, toast, announce, onNotify, dialog, play, celebrate, pulseFocus, searchBox, contextMenu, fmtTime } from './ui.js';
+import { h, t, state, btn, iconBtn, icon, toast, announce, onNotify, dialog, play, celebrate, pulseFocus, searchBox, contextMenu, fmtTime, rxT } from './ui.js';
+import { busyNames } from './run.js';
 import { PAGES, registerActions, ACTIONS } from './pages.js';
 import { runOnboarding } from './onboarding.js';
 
@@ -212,6 +213,28 @@ function renderTabs() {
       { label: t('tabs.closeOthers'), run: () => { app.tabs.open = [name]; saveTabs(); renderTabs(); } }]);
     el.appendChild(tab);
   });
+  if (app.tabs.open.length) el.appendChild(tabSearchToggle());
+  if (tabCloser) tabCloser.preview();
+}
+// Open deployment tabs: search plus "Close tabs containing text" and "Close tabs not containing
+// text" (preview count, empty query guard). Tabs with a run in progress count as unsaved work and
+// are kept. search-surface: deployer-tabs
+let tabCloser = null, tabSearchOpen = false;
+function tabSearchToggle() {
+  const b = h('button', { type: 'button', class: 'iconbtn tabsearch-b', 'aria-expanded': String(tabSearchOpen), 'aria-controls': 'tabsearch', 'aria-label': rxT('tabs.search'), title: rxT('tabs.search') }, [icon('search')]);
+  b.addEventListener('click', () => { tabSearchOpen = !tabSearchOpen; buildTabSearch(); const box = document.getElementById('tabsearch'); box.hidden = !tabSearchOpen; b.setAttribute('aria-expanded', String(tabSearchOpen)); if (tabSearchOpen) box.querySelector('input').focus(); });
+  return b;
+}
+function buildTabSearch() {
+  if (tabCloser || !window.TempDeskRegex) return;
+  const strip = document.getElementById('tabs');
+  const box = h('div', { class: 'tabsearch', id: 'tabsearch', hidden: true, 'data-search-surface': 'deployer-tabs' });
+  strip.insertAdjacentElement('afterend', box);
+  const holder = h('div'); box.appendChild(holder);
+  tabCloser = window.TempDeskRegex.attachTabCloser(holder, { id: 'deployer-tabs', label: rxT('tabs.search'), t: rxT, mount: holder, place: 'prepend',
+    tabs: () => { const busy = busyNames(); return app.tabs.open.map((name) => ({ id: name, text: name, el: strip.querySelector('.tab[data-name="' + CSS.escape(name) + '"]'), pinned: false, dirty: busy.includes(name) })); },
+    confirmUnsaved: () => false,
+    close: (ids) => { ids.forEach((n) => { app.tabs.open = app.tabs.open.filter((x) => x !== n); }); if (!app.tabs.open.includes(app.tabs.active)) app.tabs.active = app.tabs.open[0] || null; saveTabs(); if (app.page === 'deployment') { if (app.tabs.active) go('deployment', { name: app.tabs.active }); else go('deployments'); } else renderTabs(); } });
 }
 function saveTabs() { td.invoke['tabs:set'](app.tabs); }
 function moveTab(name, d) { const l = app.tabs.open, i = l.indexOf(name), j = i + d; if (j < 0 || j >= l.length) return; l.splice(i, 1); l.splice(j, 0, name); saveTabs(); renderTabs(); const tb = document.querySelector('.tab[data-name="' + CSS.escape(name) + '"]'); if (tb) tb.focus(); }

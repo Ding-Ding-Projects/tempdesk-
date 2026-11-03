@@ -8,12 +8,14 @@
   <div class="srv-split">
     <section class="srv-card">
       <h2>{{ t("Zones") }}</h2>
-      <ul class="srv-tree">{% for z in zones %}<li><a href="/server/dns?zone={{ z.zoneName | urlencode }}">{{ z.zoneName }}</a></li>{% endfor %}</ul>
+      <div class="ss-host" data-search-surface="srv-dns-zones" data-search-kind="list" data-search-target="#srv-dns-zones-list" data-search-items="li" data-search-compact data-search-label="{{ ta('Search zones') }}"></div>
+      <ul class="srv-tree" id="srv-dns-zones-list" data-searchable="srv-dns-zones">{% for z in zones %}<li><a href="/server/dns?zone={{ z.zoneName | urlencode }}">{{ z.zoneName }}</a></li>{% endfor %}</ul>
     </section>
     <section class="srv-card">
       <h2>{{ zone or t("Records") }}</h2>
       {% if zone %}
-      <div class="srv-tablewrap"><table class="srv-table">
+      <div class="ss-host" data-search-surface="srv-dns" data-search-kind="table" data-search-target="#srv-dns-table" data-search-label="{{ ta('Search this table') }}"></div>
+      <div class="srv-tablewrap"><table class="srv-table" id="srv-dns-table" data-searchable="srv-dns">
         <thead><tr><th>{{ t("Host") }}</th><th>{{ t("Type") }}</th><th>{{ t("Data") }}</th><th data-no-sort></th></tr></thead>
         <tbody>{% for r in (records or []) %}<tr data-ctx>
           <td>{{ r.hostName }}</td><td>{{ r.recordType }}</td><td>{{ r.recordData }}</td>
@@ -31,7 +33,7 @@
         <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
         <input type="hidden" name="zone" value="{{ zone }}">
         <div class="srv-field"><label>{{ t("Host name") }}</label><input name="name" required></div>
-        <div class="srv-field"><label>{{ t("Type") }}</label><select name="recordType"><option>A</option><option>AAAA</option><option>CNAME</option><option>MX</option><option>TXT</option><option>PTR</option><option>SRV</option></select></div>
+        <div class="srv-field"><label>{{ t("Type") }}</label><select name="recordType" data-search-exempt="fixed record types"><option>A</option><option>AAAA</option><option>CNAME</option><option>MX</option><option>TXT</option><option>PTR</option><option>SRV</option></select></div>
         <div class="srv-field"><label>{{ t("Data") }}</label><input name="data" required></div>
         <button class="srv-btn primary" type="submit">{{ t("Add record") }}</button>
       </form>

@@ -11,7 +11,8 @@
   <div class="srv-split">
     <section class="srv-card">
       <h2>{{ t("Subkeys") }}</h2>
-      <ul class="srv-tree">
+      <div class="ss-host" data-search-surface="srv-registry-keys" data-search-kind="list" data-search-target="#srv-registry-keys-list" data-search-items="li" data-search-compact data-search-label="{{ ta('Search subkeys') }}"></div>
+      <ul class="srv-tree" id="srv-registry-keys-list" data-searchable="srv-registry-keys">
         {% for k in (registry["subkeys"] if registry else []) %}
         <li><a href="/server/registry?path={{ path | urlencode }}\{{ k.name | urlencode }}">{{ k.name }}</a></li>
         {% endfor %}
@@ -19,7 +20,8 @@
     </section>
     <section class="srv-card">
       <h2>{{ t("Values") }}</h2>
-      <div class="srv-tablewrap"><table class="srv-table">
+      <div class="ss-host" data-search-surface="srv-registry" data-search-kind="table" data-search-target="#srv-registry-table" data-search-label="{{ ta('Search this table') }}"></div>
+      <div class="srv-tablewrap"><table class="srv-table" id="srv-registry-table" data-searchable="srv-registry">
         <thead><tr><th>{{ t("Name") }}</th><th>{{ t("Value") }}</th></tr></thead>
         <tbody>{% for v in (registry["values"] if registry else []) %}<tr data-ctx><td>{{ v.name }}</td><td>{{ v.value }}</td></tr>{% endfor %}</tbody>
       </table></div>
@@ -27,7 +29,7 @@
         <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
         <input type="hidden" name="path" value="{{ path }}">
         <div class="srv-field"><label>{{ t("Value name") }}</label><input name="name"></div>
-        <div class="srv-field"><label>{{ t("Type") }}</label><select name="type"><option>String</option><option>ExpandString</option><option>DWord</option><option>QWord</option><option>MultiString</option><option>Binary</option></select></div>
+        <div class="srv-field"><label>{{ t("Type") }}</label><select name="type" data-search-exempt="six fixed value types"><option>String</option><option>ExpandString</option><option>DWord</option><option>QWord</option><option>MultiString</option><option>Binary</option></select></div>
         <div class="srv-field"><label>{{ t("Value") }}</label><input name="value"></div>
         <button class="srv-btn primary" type="submit">{{ t("Set value") }}</button>
       </form>

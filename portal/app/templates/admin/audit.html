@@ -5,7 +5,7 @@
 <h1>{{ t('Audit log') }}</h1>
 <p class="muted">{{ t('Recent entries from the TempDesk Agent event log on the server.') }}</p>
 <section class="card rise">{{ search_box(tv, regex_error, 'Search the audit log') }}
-  {% if tv.rows %}<div class="table-wrap"><table><thead><tr>{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}</tr></thead><tbody>
+  {% if tv.rows %}<div class="table-wrap"><table data-searchable="table-{{ tv.id }}"><thead><tr>{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}</tr></thead><tbody>
   {% for r in tv.rows %}<tr data-ctx>{% for k, l in tv.columns %}<td class="small break">{% if k in ('time','timeCreated') %}<time datetime="{{ r[k] }}" data-local-time>{{ r[k] }}</time>{% else %}{{ r[k] if r[k] is not none else '' }}{% endif %}</td>{% endfor %}</tr>{% endfor %}
   </tbody></table></div>{% else %}{{ empty('The audit log is empty', 'Entries appear when guests or administrators make changes through the agent.') }}{% endif %}</section>
 {% endblock %}

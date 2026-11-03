@@ -61,20 +61,37 @@
       s.appendChild(doc.createTextNode(t('Administrative Templates are read from the central store.')));
     } else s.appendChild(doc.createTextNode(t('Administrative Templates are not available on this backend.')));
   }
+  // Tree search: one surface per scope (Computer and User keep their own text). Matching folders
+  // and their ancestors stay, branches that hold a match open, the matched text is highlighted.
+  var S = window.TDSearch || { mount: function () { return null; } }, treeSearch = {};
+  ['Computer', 'User'].forEach(function (sc) {
+    treeSearch[sc] = S.mount($('[data-ged-tree-search="' + sc + '"]'), { kind: 'custom', compact: true, onChange: function () { if (scope === sc) renderTree(); } });
+  });
+  function ts() { var x = treeSearch[scope]; return x && x.active() ? x : null; }
+  function selfHit(n) { var x = ts(); return !!x && x.test(n.name); }
+  function keepNode(n) { return !ts() || selfHit(n) || n.children.some(keepNode); }
   function renderTree() {
     var host = $('[data-ged-tree]'); host.textContent = '';
-    var ul = el('ul'); ul.setAttribute('role', 'group');
-    tree.forEach(function (n) { ul.appendChild(treeLi(n)); });
+    $$('[data-ged-tree-search]').forEach(function (h) { h.hidden = h.getAttribute('data-ged-tree-search') !== scope; });
+    var ul = el('ul'); /* search: gpo-tree-computer, gpo-tree-user */ ul.setAttribute('role', 'group');
+    tree.forEach(function (n) { if (keepNode(n)) ul.appendChild(treeLi(n)); });
     host.appendChild(ul);
     if (!tree.length) host.appendChild(el('p', 'muted', t('This policy has no editable sections on this backend.')));
+    var x = treeSearch[scope];
+    if (x) {
+      var hits = $$('[data-ged-tree] .lbl').filter(function (b) { return b._node && selfHit(b._node); });
+      var total = 0; (function cnt(l) { l.forEach(function (c) { total++; cnt(c.children); }); })(tree);
+      x.count(hits.length, total); x.highlight(hits.map(function (b) { return b.querySelector('.t'); }));
+      if (ts() && !hits.length && tree.length) host.appendChild(el('p', 'muted small', t('No matches')));
+    }
   }
   function treeLi(n) {
     var li = el('li'); li.setAttribute('role', 'none');
     var row = el('div', 'ged-node' + (n.depth === 1 ? ' root' : ''));
-    var has = n.children.length > 0, open = !!openIds[n.id];
+    var has = n.children.length > 0, open = !!openIds[n.id] || (!!ts() && n.children.some(keepNode));
     var tw = el('button', 'tw' + (has ? '' : ' leaf'), '▸'); tw.type = 'button'; tw.tabIndex = -1; tw.setAttribute('aria-hidden', 'true'); tw.setAttribute('aria-expanded', open ? 'true' : 'false');
-    tw.addEventListener('click', function () { openIds[n.id] = !open; renderTree(); });
-    var lb = el('button', 'lbl'); lb.type = 'button'; lb.setAttribute('role', 'treeitem'); lb.setAttribute('aria-level', String(n.depth));
+    tw.addEventListener('click', function () { openIds[n.id] = !openIds[n.id]; renderTree(); });
+    var lb = el('button', 'lbl'); lb.type = 'button'; lb.setAttribute('role', 'treeitem'); lb.setAttribute('aria-level', String(n.depth)); lb._node = n;
     if (has) lb.setAttribute('aria-expanded', open ? 'true' : 'false');
     lb.setAttribute('aria-current', current && current.id === n.id ? 'true' : 'false');
     lb.tabIndex = (current ? current.id === n.id : n.depth === 1 && n === tree[0]) ? 0 : -1;
@@ -83,7 +100,7 @@
     lb.addEventListener('click', function () { if (has && !openIds[n.id]) openIds[n.id] = true; selectNode(n); });
     lb.addEventListener('keydown', function (e) { treeKey(e, n); });
     row.appendChild(tw); row.appendChild(lb); li.appendChild(row);
-    if (has && open) { var ul = el('ul'); ul.setAttribute('role', 'group'); n.children.forEach(function (c) { ul.appendChild(treeLi(c)); }); li.appendChild(ul); }
+    if (has && open) { var ul = el('ul'); /* search: gpo-tree-computer, gpo-tree-user */ ul.setAttribute('role', 'group'); n.children.forEach(function (c) { if (keepNode(c)) ul.appendChild(treeLi(c)); }); li.appendChild(ul); }
     return li;
   }
   function treeKey(e, n) {
@@ -116,7 +133,7 @@
     current = n; renderTree(); syncUrl();
     $('[data-ged-midtitle]').textContent = n.name;
     if (n.kind === 'link' && n.href) { location.href = n.href; return; }
-    if (n.kind === 'admx') { loadPolicies(n.all ? '' : n.category, $('[data-ged-q]').value.trim()); setView('list'); return; }
+    if (n.kind === 'admx') { loadPolicies(n.all ? '' : n.category, plainQuery() ? $('[data-ged-q]').value.trim() : ''); setView('list'); return; }
     if (n.kind === 'table') { loadItems(n); setView('list'); return; }
     // folder: list its children as rows
     listKind = 'folder'; listItems = n.children.map(function (c) { return { folder: c }; });
@@ -149,15 +166,14 @@
   function stateOf(x) { return x.policy ? (x.policy.state || 'NotConfigured') : null; }
   function renderList() {
     var list = $('[data-ged-list]'); list.textContent = '';
-    var q = $('[data-ged-q]').value.trim(), re = null, useRe = $('[data-ged-re]').getAttribute('aria-pressed') === 'true';
-    $('[data-ged-q]').removeAttribute('aria-invalid');
-    if (useRe && q) { try { re = new RegExp(q, 'i'); } catch (e) { $('[data-ged-q]').setAttribute('aria-invalid', 'true'); $('[data-ged-found]').textContent = t('Invalid pattern'); return; } }
+    var q = $('[data-ged-q]').value.trim(), on = listSearch ? listSearch.active() : !!q;
+    if (listSearch && !listSearch.compiled.ok) { $('[data-ged-found]').textContent = t('Invalid pattern'); }
     var shown = 0, conf = 0;
     if (listKind === 'table') list.appendChild(addRow());
     listItems.forEach(function (x, i) {
       var st = stateOf(x);
       if (st && st !== 'NotConfigured') conf++;
-      if (q && !(re ? re.test(textOf(x)) : textOf(x).toLowerCase().indexOf(q.toLowerCase()) >= 0)) return;
+      if (on && !(listSearch ? listSearch.test(textOf(x)) : textOf(x).toLowerCase().indexOf(q.toLowerCase()) >= 0)) return;
       if (filter === 'configured' && x.policy && st === 'NotConfigured') return;
       if (supported && x.policy && x.policy.supportedOn !== supported) return;
       shown++;
@@ -176,21 +192,27 @@
       list.appendChild(b);
     });
     var cc = $('[data-ged-ccount]'); if (cc) cc.textContent = listKind === 'admx' ? String(conf) : '';
-    $('[data-ged-found]').textContent = q ? t('{count} matches', { count: shown }) : (listKind === 'admx' ? t('{count} policies', { count: listItems.length }) : '');
-    if (!shown && listKind !== 'table') list.appendChild(emptyRow(q ? t('No matches') : t('Nothing here for this scope. Try the other scope or another folder.')));
+    if (!listSearch || listSearch.compiled.ok) $('[data-ged-found]').textContent = on ? t('{count} matches', { count: shown }) : (listKind === 'admx' ? t('{count} policies', { count: listItems.length }) : '');
+    if (listSearch && on) listSearch.highlight($$('[data-ged-list] .p-row .nm'));
+    else if (listSearch) listSearch.highlight([]);
+    if (!shown && listKind !== 'table') list.appendChild(emptyRow(on ? t('No matches') : t('Nothing here for this scope. Try the other scope or another folder.')));
     if (!shown && listKind === 'table' && !listItems.length) list.appendChild(emptyRow(t('No items yet. Add the first one.')));
     var cnt = $('[data-ged-count]'); if (cnt && listKind === 'admx' && current) cnt.textContent = t('{count} configured here', { count: conf });
   }
   var qTimer = null;
+  // The policy search is a search surface: plain text also asks the agent for matching policies,
+  // a regular expression only filters the policies already listed (the agent has no regex search).
+  var listSearch = S.mount($('[data-ged-q]'), { kind: 'custom', bare: true, highlight: true, onChange: function () { renderList(); } });
+  function plainQuery() { return !listSearch || !listSearch.state().regex; }
   $('[data-ged-q]').addEventListener('input', function () {
-    renderList(); clearTimeout(qTimer);
+    clearTimeout(qTimer);
+    if (!plainQuery()) return;
     var q = this.value.trim();
     if (listKind === 'admx' || !current || current.kind === 'folder') {
       qTimer = setTimeout(function () { if (q.length >= 3 && (!current || current.kind !== 'admx' || current.all || !listItems.length)) loadPolicies('', q); }, 450);
     }
   });
-  $('[data-ged-q]').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); var q = this.value.trim(); if (q) { $('[data-ged-midtitle]').textContent = t('Search: {text}', { text: q }); loadPolicies('', q); } } else if (e.key === 'ArrowDown') { var r = $('[data-ged-list] [data-idx]'); if (r) { e.preventDefault(); r.focus(); } } });
-  $('[data-ged-re]').addEventListener('click', function () { var b = this; b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); renderList(); $('[data-ged-q]').focus(); });
+  $('[data-ged-q]').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); var q = this.value.trim(); if (q && plainQuery()) { $('[data-ged-midtitle]').textContent = t('Search: {text}', { text: q }); loadPolicies('', q); } } else if (e.key === 'ArrowDown') { var r = $('[data-ged-list] [data-idx]'); if (r) { e.preventDefault(); r.focus(); } } });
   $$('[data-f]').forEach(function (b) { b.addEventListener('click', function () { filter = b.getAttribute('data-f'); $$('[data-f]').forEach(function (x) { x.setAttribute('aria-checked', x === b ? 'true' : 'false'); }); renderList(); }); });
   $('[data-ged-supported]').addEventListener('change', function () { supported = this.value; renderList(); });
   $$('[data-ged-back]').forEach(function (b) { b.addEventListener('click', function () { setView(b.getAttribute('data-ged-back')); }); });
@@ -291,20 +313,30 @@
     if (e2.type === 'decimal') { inp = el('input'); inp.type = 'number'; inp.inputMode = 'numeric'; if (e2.min != null) inp.min = e2.min; if (e2.max != null) inp.max = e2.max; inp.value = v != null ? v : (e2['default'] != null ? e2['default'] : ''); if (e2.min != null || e2.max != null) wrap.appendChild(el('span', 'hint', t('From {min} to {max}', { min: e2.min != null ? e2.min : '', max: e2.max != null ? e2.max : '' }))); }
     else if (e2.type === 'text') { inp = el('input'); inp.type = 'text'; inp.value = v || ''; if (e2.maxLength) inp.maxLength = e2.maxLength; }
     else if (e2.type === 'multiText') { inp = el('textarea'); inp.rows = 4; inp.value = Array.isArray(v) ? v.join('\n') : (v || ''); wrap.appendChild(el('span', 'hint', t('One line per entry.'))); }
-    else if (e2.type === 'enum') { inp = el('select'); (e2.items || []).forEach(function (it) { inp.appendChild(new Option(it.label, it.id, false, String(v) === String(it.id))); }); }
+    else if (e2.type === 'enum') { inp = el('select'); /* search: gpo-enum */ (e2.items || []).forEach(function (it) { inp.appendChild(new Option(it.label, it.id, false, String(v) === String(it.id))); }); }
     else if (e2.type === 'list') { return listEditor(e2, v, name, desc); }
     else { inp = el('input'); inp.type = 'text'; inp.value = v == null ? '' : String(v); }
     inp.id = id; inp.name = name; if (e2.required) inp.required = true;
     wrap.insertBefore(inp, wrap.children[desc ? 2 : 1] || null);
+    if (inp.tagName === 'SELECT' && inp.options.length > 8) selectSearch(inp, 'gpo-enum', e2.label);
     return wrap;
+  }
+  // A search field for a long drop-down list (enumerations from ADMX files, item fields).
+  function selectSearch(sel, id, label) {
+    var h = el('div', 'ss-host tight'); h.setAttribute('data-search-surface', id); h.setAttribute('data-search-manual', '');
+    sel.parentNode.insertBefore(h, sel);
+    S.mount(h, { kind: 'select', target: sel, compact: true, label: t('Search {name}', { name: label }) });
   }
   function listEditor(e2, v, name, desc) {
     var w = el('div', 'field'); w.setAttribute('data-list-editor', ''); w.setAttribute('data-name', name);
     w.appendChild(el('span', 'el-q', e2.label)); if (desc) w.appendChild(el('div', 'el-d', desc));
-    var rows = el('div', 'stack tight'); w.appendChild(rows);
+    var lh = el('div', 'ss-host tight'); lh.setAttribute('data-search-surface', 'gpo-list-values'); lh.setAttribute('data-search-manual', ''); w.appendChild(lh);
+    var rows = el('div', 'stack tight'); rows.setAttribute('role', 'list'); /* search: gpo-list-values */ w.appendChild(rows);
+    S.mount(lh, { kind: 'list', target: rows, compact: true, highlight: false, label: t('Search the entries of {name}', { name: e2.label }),
+      textFn: function (r) { return Array.prototype.map.call(r.querySelectorAll('input'), function (i) { return i.value; }).join(' '); } });
     var named = v && typeof v === 'object' && !Array.isArray(v);
     function addRow(k, val, isNamed) {
-      var r = el('div', 'cluster'); r.style.flexWrap = 'nowrap';
+      var r = el('div', 'cluster'); r.style.flexWrap = 'nowrap'; r.setAttribute('role', 'listitem');
       if (isNamed) { var n = el('input'); n.name = name + '_name'; n.value = k || ''; n.placeholder = t('Name'); n.setAttribute('aria-label', t('Name')); n.style.flex = '1 1 120px'; r.appendChild(n); }
       var i = el('input'); i.name = name; i.value = val || ''; i.placeholder = t('Value'); i.setAttribute('aria-label', t('Value')); i.style.flex = '1 1 160px'; r.appendChild(i);
       var x = el('button', 'btn icon text', '×'); x.type = 'button'; x.setAttribute('aria-label', t('Remove')); x.addEventListener('click', function () { r.remove(); }); r.appendChild(x);
@@ -441,7 +473,7 @@
     var l = el('label', null, t(f.label || f.id) + (f.required ? ' *' : '')); l.htmlFor = id; w.appendChild(l);
     var inp, opts = f.options || f['enum'] || f.items || f.choices;
     if (opts && (type === 'enum' || type === 'select' || type === 'choice' || !f.type)) {
-      inp = el('select'); opts.forEach(function (o) { var val = typeof o === 'object' ? (o.id != null ? o.id : o.value) : o, lab = typeof o === 'object' ? (o.label || o.name || val) : o; inp.appendChild(new Option(t(String(lab)), val, false, String(v) === String(val))); });
+      inp = el('select'); /* search: gpo-field-enum */ opts.forEach(function (o) { var val = typeof o === 'object' ? (o.id != null ? o.id : o.value) : o, lab = typeof o === 'object' ? (o.label || o.name || val) : o; inp.appendChild(new Option(t(String(lab)), val, false, String(v) === String(val))); });
     } else if (type === 'number' || type === 'integer' || type === 'decimal' || type === 'port') { inp = el('input'); inp.type = 'number'; if (f.min != null) inp.min = f.min; if (f.max != null) inp.max = f.max; inp.value = v == null ? '' : v; }
     else if (type === 'multiline' || type === 'multiText' || type === 'textarea' || type === 'list' || type === 'array') { inp = el('textarea'); inp.rows = 3; inp.value = Array.isArray(v) ? v.join('\n') : (v == null ? '' : String(v)); w.appendChild(el('span', 'hint', t('One line per entry.'))); w.style.gridColumn = '1 / -1'; }
     else if (type === 'password' || type === 'secret') { inp = el('input'); inp.type = 'password'; inp.autocomplete = 'new-password'; inp.placeholder = v ? t('Unchanged') : ''; }
@@ -450,6 +482,7 @@
     if (f.mono || /path|key|sid|ip|port|address|command|program/i.test(f.id)) inp.classList.add('mono');
     inp.id = id; inp.setAttribute('data-f', f.id); inp.setAttribute('data-type', type); if (f.required) inp.required = true; if (locked) inp.readOnly = true;
     w.appendChild(inp);
+    if (inp.tagName === 'SELECT' && inp.options.length > 8) selectSearch(inp, 'gpo-field-enum', f.label || f.id);
     if (f.help || f.description) w.appendChild(el('span', 'hint', f.help || f.description));
     return w;
   }
@@ -478,13 +511,16 @@
     var box = el('details', 'el-box'); box.open = !!(list && list.length);
     box.appendChild(el('summary', 'el-q', t('Item-level targeting') + (list && list.length ? ' (' + list.length + ')' : '')));
     box.appendChild(el('div', 'el-d', t('The item applies only when these conditions are true. Leave empty to apply everywhere the policy applies.')));
-    var rows = el('div', 'stack tight'); box.appendChild(rows);
+    var th = el('div', 'ss-host tight'); th.setAttribute('data-search-surface', 'gpo-targeting'); th.setAttribute('data-search-manual', ''); box.appendChild(th);
+    var rows = el('div', 'stack tight'); rows.setAttribute('role', 'list'); /* search: gpo-targeting */ box.appendChild(rows);
+    S.mount(th, { kind: 'list', target: rows, items: '.ilt-row', compact: true, highlight: false, label: t('Search the conditions'),
+      textFn: function (r) { return Array.prototype.map.call(r.querySelectorAll('select, input:not([type="checkbox"])'), function (i) { return i.tagName === 'SELECT' ? (i.options[i.selectedIndex] || {}).text : i.value; }).join(' '); } });
     function add(r) {
       r = r || {};
-      var row = el('div', 'ilt-row');
-      var join = el('select'); join.setAttribute('aria-label', t('Join')); [['AND', t('And')], ['OR', t('Or')]].forEach(function (x) { join.appendChild(new Option(x[1], x[0], false, (r.bool || r.join || 'AND').toUpperCase() === x[0])); });
+      var row = el('div', 'ilt-row'); row.setAttribute('role', 'listitem');
+      var join = el('select'); /* search-exempt: two fixed choices, And or Or */ join.setAttribute('aria-label', t('Join')); [['AND', t('And')], ['OR', t('Or')]].forEach(function (x) { join.appendChild(new Option(x[1], x[0], false, (r.bool || r.join || 'AND').toUpperCase() === x[0])); });
       if (!rows.children.length) join.style.visibility = 'hidden';
-      var ty = el('select'); ty.setAttribute('aria-label', t('Condition type')); types.forEach(function (x) { var v = typeof x === 'object' ? x.id : x, lab = typeof x === 'object' ? x.label : x; ty.appendChild(new Option(t(lab), v, false, (r.type || '') === v)); });
+      var ty = el('select'); /* search-exempt: fixed list of targeting condition types */ ty.setAttribute('aria-label', t('Condition type')); types.forEach(function (x) { var v = typeof x === 'object' ? x.id : x, lab = typeof x === 'object' ? x.label : x; ty.appendChild(new Option(t(lab), v, false, (r.type || '') === v)); });
       var val = el('input'); val.setAttribute('aria-label', t('Value')); val.value = r.value || r.name || ''; val.placeholder = t('Value, for example LIB-PC-*');
       var nt = el('label', 'check small'); var nc = el('input'); nc.type = 'checkbox'; nc.checked = !!r.not; nt.appendChild(nc); nt.appendChild(doc.createTextNode(' ' + t('Is not')));
       var x = el('button', 'btn icon text', '×'); x.type = 'button'; x.setAttribute('aria-label', t('Remove condition')); x.addEventListener('click', function () { row.remove(); var f = rows.firstElementChild; if (f) f.firstElementChild.style.visibility = 'hidden'; });

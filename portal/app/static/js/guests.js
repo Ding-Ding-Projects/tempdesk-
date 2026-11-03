@@ -56,16 +56,17 @@
       n.focus(); n.click();
     });
   });
-  // Live search over the cards (the server-side search box still works with Enter).
-  var q = $('[data-regex-input]');
-  if (q) q.addEventListener('input', function () {
-    var v = q.value.trim().toLowerCase(), re = null;
-    var rx = $('[data-regex-toggle]'); if (rx && rx.getAttribute('aria-pressed') === 'true') { try { re = new RegExp(q.value, 'i'); } catch (e) { re = null; } }
-    $$('[data-guest]').forEach(function (card) {
-      var text = (card.getAttribute('data-guest') + ' ' + card.getAttribute('data-name')).toLowerCase();
-      var m = !v || (re ? re.test(text) : text.indexOf(v) >= 0);
-      card.setAttribute('data-hide-search', m ? '0' : '1');
+  // Live search over the cards through the search surface of the guest search box (plain text or
+  // regex with the Builder); the server-side search box still works with Enter.
+  var gs = window.TDSearch && window.TDSearch.get('table-guests');
+  if (gs) gs.listen(function () {
+    var cards = $$('[data-guest]'), shown = 0;
+    cards.forEach(function (card) {
+      var m = gs.test(card.getAttribute('data-guest') + ' ' + card.getAttribute('data-name') + ' ' + card.textContent);
+      card.setAttribute('data-hide-search', m ? '0' : '1'); if (m) shown++;
     });
+    gs.count(shown, cards.length);
+    gs.highlight(gs.active() ? cards.filter(function (c) { return c.getAttribute('data-hide-search') !== '1'; }).map(function (c) { return c.querySelector('.nm') || c; }) : []);
     applyFilter();
   });
 

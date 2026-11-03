@@ -259,3 +259,5 @@ table.srv-table {
 .srv-err, .srv-banner { border-radius: 18px; border-color: var(--coral-line); background: var(--coral-tint); color: var(--coral); }
 .srv-console { border-radius: 22px; background: var(--ground); }
 .srv-toggle input { width: 20px; height: 20px; }
+/* Grid children may shrink below their content (wide tables scroll inside .srv-tablewrap). */
+.srv-split > * { min-width: 0; }

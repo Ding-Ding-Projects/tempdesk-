@@ -5,15 +5,15 @@
 <div class="page-head"><h1>{{ t('Undo history') }}</h1><a class="btn" href="?export=json" download>{{ t('JSON') }}</a></div>
 <p class="muted">{{ t('Every change made in the Admin console is recorded in a Git repository on the portal data volume. Size: {size} KB.', size=(repo_size // 1024)) }}{% if not git %} <span class="chip warn">{{ t('Git is not available: records are kept as files only.') }}</span>{% endif %}</p>
 <form method="get" class="card form-grid">
-  <div class="field" data-advanced><label for="hs">{{ t('Show') }} {{ info('Everyone shows all administrators\' actions. Only my actions shows yours.') }}</label><select id="hs" name="scope"><option value="all">{{ t('Everyone') }}</option><option value="mine" {% if scope == 'mine' %}selected{% endif %}>{{ t('Only my actions') }}</option></select></div>
-  <div class="field"><label for="hu">{{ t('User') }}</label><select id="hu" name="user"><option value="">{{ t('Any') }}</option>{% for u in users %}<option {% if f.get('user') == u %}selected{% endif %}>{{ u }}</option>{% endfor %}</select></div>
-  <div class="field"><label for="ha">{{ t('Action') }}</label><select id="ha" name="action"><option value="">{{ t('Any') }}</option>{% for a in actions %}<option {% if f.get('action') == a %}selected{% endif %}>{{ a }}</option>{% endfor %}</select></div>
+  <div class="field" data-advanced><label for="hs">{{ t('Show') }} {{ info('Everyone shows all administrators\' actions. Only my actions shows yours.') }}</label><select id="hs" name="scope" data-search-exempt="two fixed choices"><option value="all">{{ t('Everyone') }}</option><option value="mine" {% if scope == 'mine' %}selected{% endif %}>{{ t('Only my actions') }}</option></select></div>
+  <div class="field"><label for="hu">{{ t('User') }}</label><span class="ss-host tight" data-search-surface="undo-user-picker" data-search-kind="select" data-search-target="#hu" data-search-compact data-search-label="{{ ta('Search users') }}"></span><select id="hu" name="user" data-searchable="undo-user-picker"><option value="">{{ t('Any') }}</option>{% for u in users %}<option {% if f.get('user') == u %}selected{% endif %}>{{ u }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="ha">{{ t('Action') }}</label><span class="ss-host tight" data-search-surface="undo-action-picker" data-search-kind="select" data-search-target="#ha" data-search-compact data-search-label="{{ ta('Search actions') }}"></span><select id="ha" name="action" data-searchable="undo-action-picker"><option value="">{{ t('Any') }}</option>{% for a in actions %}<option {% if f.get('action') == a %}selected{% endif %}>{{ a }}</option>{% endfor %}</select></div>
   <div class="field"><label for="hq">{{ t('Search') }}</label><input id="hq" type="search" name="q" value="{{ f.get('q', '') }}"></div>
   <div class="field" style="justify-content:flex-end"><button class="btn tonal" type="submit">{{ t('Filter') }}</button></div></form>
 <div class="row">
 <section class="grow card" style="flex-basis:520px">
   <p class="subtle">{{ t('{shown} of {total}', shown=rows|length, total=total) }}</p>
-  {% if rows %}<ul class="timeline">{% for r in rows %}
+  {% if rows %}<div class="ss-host" data-search-surface="undo-history" data-search-kind="list" data-search-target="#undo-rows" data-search-items=":scope > li" data-search-label="{{ ta('Search these actions') }}"></div><ul class="timeline" id="undo-rows" data-searchable="undo-history">{% for r in rows %}
     <li><span class="dot {{ 'neutral' if r.status == 'undone' else ('coral' if not r.undoable else '') }}"></span><div class="grow" style="min-width:0">
       <a href="?id={{ r.id }}" class="break">{{ r.summary }}</a>
       <div class="subtle"><time data-epoch="{{ r.time }}">{{ r.id }}</time> · {{ r.user }} · <span class="mono">{{ r.action }}</span>

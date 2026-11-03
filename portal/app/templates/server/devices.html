@@ -7,12 +7,10 @@
   {% if error %}<div class="srv-err">{{ error }}</div>{% endif %}
   <div data-srv-table>
     <div class="srv-toolbar">
-      <input class="srv-search" data-srv-search placeholder="{{ ta('Search') }}">
-      <label class="srv-toggle"><input type="checkbox" data-srv-regex> {{ t("Regex") }}</label>
-      <span data-srv-regex-error class="srv-err" role="alert" style="padding:4px 8px"></span>
+      <input class="srv-search" type="search" placeholder="{{ ta('Search') }}" data-search-surface="srv-devices" data-search-kind="table" data-search-target="#srv-devices-table" data-search-label="{{ ta('Search') }}">
       <button type="button" class="srv-btn" data-srv-export="csv">CSV</button>
     </div>
-    <div class="srv-tablewrap"><table class="srv-table">
+    <div class="srv-tablewrap"><table class="srv-table" id="srv-devices-table" data-searchable="srv-devices">
       <thead><tr><th data-col="status">{{ t("Status") }}</th><th data-col="friendlyName">{{ t("Name") }}</th><th data-col="class">{{ t("Class") }}</th><th data-no-sort></th></tr></thead>
       <tbody>{% for d in devices %}<tr data-ctx>
         <td>{{ d.status }}</td><td>{{ d.friendlyName }}</td><td>{{ d.class }}</td>

@@ -1,0 +1,445 @@
+{
+ "about": "Hand-written catalogue of every search surface on the website. Each one has its own search field with the shared regex builder (assets/regex-builder.js). Checked by tests/search-surfaces.test.mjs: every entry must exist and be wired, and every list, tree, table, listbox, menu and tab strip in the page sources must be registered here or carry a search-exempt comment with a reason.",
+ "consumers": {
+  "searchBox": "assets/canvas/search-ui.js wraps attachRegexBuilder",
+  "attachListFilter": "regex-builder.js list filter (own field and builder)",
+  "attachTabCloser": "regex-builder.js tab strip search with bulk close",
+  "attachRegexBuilder": "regex-builder.js on an existing field"
+ },
+ "surfaces": [
+  {
+   "id": "studio-global-search",
+   "page": "answer-file.html",
+   "surface": "Top bar global search",
+   "file": "assets/builder.js",
+   "consumer": "searchBox",
+   "match": "buildSearchUi(document.getElementById('st-search'), 'top')"
+  },
+  {
+   "id": "studio-search-side",
+   "page": "answer-file.html",
+   "surface": "Search view (activity bar)",
+   "file": "assets/builder.js",
+   "consumer": "searchBox",
+   "match": "buildSearchUi(host, 'side')"
+  },
+  {
+   "id": "studio-search-panel",
+   "page": "answer-file.html",
+   "surface": "Search results panel",
+   "file": "assets/builder.js",
+   "consumer": "searchBox",
+   "match": "buildSearchUi(host, 'panel')"
+  },
+  {
+   "id": "studio-explorer",
+   "page": "answer-file.html",
+   "surface": "Explorer tree (activity bar)",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "studio-direct-explorer",
+   "page": "answer-file.html",
+   "surface": "Explorer tree in Direct mode",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "studio-catalog-side",
+   "page": "answer-file.html",
+   "surface": "Catalog view tree (activity bar)",
+   "file": "assets/builder.js",
+   "consumer": "searchBox",
+   "match": "searchBox({ label: t('cat.search'), placeholder: t('cat.search'), compact: true"
+  },
+  {
+   "id": "studio-history-side",
+   "page": "answer-file.html",
+   "surface": "History view (activity bar) and History panel",
+   "file": "assets/builder.js",
+   "consumer": "searchBox",
+   "match": "const sb = searchBox({ label: t('search.history')"
+  },
+  {
+   "id": "studio-presets-side",
+   "page": "answer-file.html",
+   "surface": "Presets view (activity bar)",
+   "file": "assets/builder.js",
+   "consumer": "searchBox",
+   "match": "const sb = searchBox({ label: t('search.presets')"
+  },
+  {
+   "id": "studio-tools",
+   "page": "answer-file.html",
+   "surface": "Tools view (activity bar)",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "inspector-related",
+   "page": "answer-file.html",
+   "surface": "Inspector related settings list",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "panel-problems",
+   "page": "answer-file.html",
+   "surface": "Problems panel",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "panel-output",
+   "page": "answer-file.html",
+   "surface": "Output panel",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "panel-xml",
+   "page": "answer-file.html",
+   "surface": "XML panel (find matching lines)",
+   "file": "assets/builder.js",
+   "consumer": "attachRegexBuilder"
+  },
+  {
+   "id": "studio-context-menu",
+   "page": "answer-file.html",
+   "surface": "Every context menu (tabs, explorer, catalog)",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "studio-shortcuts",
+   "page": "answer-file.html",
+   "surface": "Keyboard shortcuts sheet",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "studio-editor-tabs",
+   "page": "answer-file.html",
+   "surface": "Open editor tabs (search, close containing, close not containing)",
+   "file": "assets/builder.js",
+   "consumer": "attachTabCloser"
+  },
+  {
+   "id": "studio-panel-tabs",
+   "page": "answer-file.html",
+   "surface": "Panel tab strip",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "template-sections",
+   "page": "answer-file.html",
+   "surface": "Template section index",
+   "file": "assets/builder.js",
+   "consumer": "searchBox",
+   "match": "const secFilter = searchBox("
+  },
+  {
+   "id": "template-fields",
+   "page": "answer-file.html",
+   "surface": "Fields of each template section",
+   "file": "assets/builder.js",
+   "consumer": "searchBox",
+   "match": "const fieldFilter = searchBox("
+  },
+  {
+   "id": "accounts-list",
+   "page": "answer-file.html",
+   "surface": "Accounts list editor",
+   "file": "assets/builder.js",
+   "consumer": "searchBox",
+   "match": "const sb = searchBox({ label: t('search.list')"
+  },
+  {
+   "id": "all-settings",
+   "page": "answer-file.html",
+   "surface": "All settings",
+   "file": "assets/builder.js",
+   "consumer": "searchBox",
+   "match": "value: allState.q, regex: allState.regex"
+  },
+  {
+   "id": "history-view",
+   "page": "answer-file.html",
+   "surface": "History editor tab",
+   "file": "assets/builder.js",
+   "consumer": "searchBox",
+   "match": "const hsb = searchBox("
+  },
+  {
+   "id": "presets-sheet",
+   "page": "answer-file.html",
+   "surface": "Presets sheet",
+   "file": "assets/builder.js",
+   "consumer": "searchBox",
+   "match": "const psb = searchBox("
+  },
+  {
+   "id": "direct-add-component",
+   "page": "answer-file.html",
+   "surface": "Direct mode component picker",
+   "file": "assets/builder.js",
+   "consumer": "searchBox",
+   "match": "searchBox({ label: t('direct.searchComponents')"
+  },
+  {
+   "id": "component-fields",
+   "page": "answer-file.html",
+   "surface": "Component editor fields (Guided and Direct)",
+   "file": "assets/builder.js",
+   "consumer": "searchBox",
+   "match": "const ff = searchBox(",
+   "count": 2
+  },
+  {
+   "id": "direct-no-guided",
+   "page": "answer-file.html",
+   "surface": "Why Guided mode cannot open this file (reasons list)",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "plan-timeline",
+   "page": "answer-file.html",
+   "surface": "What will happen: timeline",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "plan-checklist",
+   "page": "answer-file.html",
+   "surface": "What will happen: checklist",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "compare-table",
+   "page": "answer-file.html",
+   "surface": "Compare: changes table",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "compare-history-picker",
+   "page": "answer-file.html",
+   "surface": "Compare: history entry picker",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "simulate-steps",
+   "page": "answer-file.html",
+   "surface": "Simulate: pass steps",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "simulate-detail",
+   "page": "answer-file.html",
+   "surface": "Simulate: settings and commands of the current pass",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "snippets-gallery",
+   "page": "answer-file.html",
+   "surface": "Snippets gallery",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "new-gallery",
+   "page": "answer-file.html",
+   "surface": "New gallery",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "new-gallery-direct",
+   "page": "answer-file.html",
+   "surface": "New gallery in Direct mode",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "secrets",
+   "page": "answer-file.html",
+   "surface": "Secrets table",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "secrets-direct",
+   "page": "answer-file.html",
+   "surface": "Secrets table in Direct mode",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "servicing-list",
+   "page": "answer-file.html",
+   "surface": "Servicing packages list editor",
+   "file": "assets/builder.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "studio-combobox",
+   "page": "answer-file.html",
+   "surface": "Every searchable combobox (time zone, locale, edition)",
+   "file": "assets/canvas/search-ui.js",
+   "consumer": "attachRegexBuilder"
+  },
+  {
+   "id": "flow-find",
+   "page": "answer-file.html",
+   "surface": "Setup flow canvas: find",
+   "file": "assets/canvas/flow.js",
+   "consumer": "searchBox",
+   "match": "const finder = searchBox({ label: t('flow.find')"
+  },
+  {
+   "id": "flow-list",
+   "page": "answer-file.html",
+   "surface": "Setup flow canvas: list view",
+   "file": "assets/canvas/flow.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "disk-find",
+   "page": "answer-file.html",
+   "surface": "Disk layout canvas: find",
+   "file": "assets/canvas/disk.js",
+   "consumer": "searchBox",
+   "match": "const finder = searchBox({ label: t('disk.find')"
+  },
+  {
+   "id": "commands-find",
+   "page": "answer-file.html",
+   "surface": "Commands canvas: find",
+   "file": "assets/canvas/commands.js",
+   "consumer": "searchBox",
+   "match": "const finder = searchBox({ label: t('cmd.find')"
+  },
+  {
+   "id": "map-find",
+   "page": "answer-file.html",
+   "surface": "Deployment map canvas: find",
+   "file": "assets/canvas/deploy.js",
+   "consumer": "attachRegexBuilder"
+  },
+  {
+   "id": "widget-combobox",
+   "page": "answer-file.html",
+   "surface": "Field card combobox widget",
+   "file": "assets/canvas/widgets/choice.js",
+   "consumer": "attachRegexBuilder"
+  },
+  {
+   "id": "widget-string-list",
+   "page": "answer-file.html",
+   "surface": "Field card list editor (shown from 4 entries)",
+   "file": "assets/canvas/widgets/text.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "widget-key-value",
+   "page": "answer-file.html",
+   "surface": "Field card key and value rows (shown from 4 rows)",
+   "file": "assets/canvas/widgets/text.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "site-palette",
+   "page": "every page",
+   "surface": "Command palette (Ctrl+Shift+F)",
+   "file": "assets/site.js",
+   "consumer": "attachRegexBuilder",
+   "match": "palRx = RX.attachRegexBuilder(palInput"
+  },
+  {
+   "id": "site-settings",
+   "page": "every page",
+   "surface": "Settings panel",
+   "file": "assets/site.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "home-features",
+   "page": "index.html",
+   "surface": "Landing page feature tiles",
+   "file": "index.html",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "docs-search",
+   "page": "docs/index.html",
+   "surface": "Docs search",
+   "file": "assets/docs-search.js",
+   "consumer": "attachRegexBuilder",
+   "match": "rx = RX.attachRegexBuilder(q"
+  },
+  {
+   "id": "docs-all",
+   "page": "docs/index.html",
+   "surface": "All documents list",
+   "file": "build.mjs",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "docs-nav",
+   "page": "docs/*.html",
+   "surface": "Docs navigation",
+   "file": "build.mjs",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "docs-toc",
+   "page": "docs/*.html",
+   "surface": "On this page",
+   "file": "build.mjs",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "docs-table",
+   "page": "docs/*.html, features/*.html",
+   "surface": "Every Markdown table",
+   "file": "build.mjs",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "feature-facts",
+   "page": "features/*.html",
+   "surface": "Feature facts",
+   "file": "build.mjs",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "feature-more",
+   "page": "features/*.html",
+   "surface": "More features list",
+   "file": "build.mjs",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "b64-history",
+   "page": "tools/base64.html",
+   "surface": "Base64 history",
+   "file": "assets/base64-page.js",
+   "consumer": "attachRegexBuilder",
+   "match": "histRx = window.TempDeskRegex.attachRegexBuilder"
+  },
+  {
+   "id": "b64-jobs",
+   "page": "tools/base64.html",
+   "surface": "Base64 file jobs",
+   "file": "templates/base64-body.html",
+   "consumer": "attachListFilter"
+  }
+ ]
+}

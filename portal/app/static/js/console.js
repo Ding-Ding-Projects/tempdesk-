@@ -188,9 +188,14 @@
     var words = s.split(/[^a-z0-9]+/);
     return q.split(/\s+/).every(function (w) { return words.some(function (x) { return x.indexOf(w) === 0; }); }) ? 20 : 0;
   }
+  // The command bar is also a search surface: with ".*" on, the text is a regular expression
+  // (built with the Builder) that filters the suggestions instead of running a command.
+  var cmdSearch = null;
+  function rxOn() { return cmdSearch && cmdSearch.state().regex; }
   function build() {
     var q = input.value, qs = q.trim();
     items = [];
+    if (rxOn()) { buildRegex(qs); return; }
     var cmds = qs ? parseCommand(qs) : [];
     cmds.forEach(function (c) { c.group = t('Command'); items.push(c); });
     if (!qs) {
@@ -207,6 +212,19 @@
       (lastFind.r.gpos || []).slice(0, 4).forEach(function (g) { items.push({ icon: 'P', label: g.name, group: t('Group Policy'), href: '/gpo/' + encodeURIComponent(g.id) + '/edit' }); });
     }
     if (qs && !cmds.length) items.push({ icon: '⌕', label: t('Find {text} everywhere', { text: qs }), group: t('Search'), href: '/find?q=' + encodeURIComponent(qs) });
+    render();
+  }
+  function buildRegex(qs) {
+    var S = cmdSearch, pool = [];
+    TEMPLATES.forEach(function (tp) { pool.push({ icon: '›', label: tp[0].trim(), desc: t(tp[1]), group: t('Try'), fill: tp[0] }); });
+    palette.forEach(function (p) { pool.push({ icon: '→', label: p.label, desc: p.keywords || '', group: p.group || t('Pages'), href: p.href, action: p.action }); });
+    if (lastFind) {
+      (lastFind.r.guests || []).forEach(function (g) { pool.push({ icon: 'G', label: g.username, desc: g.displayName || '', group: t('Guests'), href: '/guests?open=' + encodeURIComponent(g.username) }); });
+      (lastFind.r.objects || []).forEach(function (o) { pool.push({ icon: 'D', label: o.name, desc: o.dn, group: t('Directory'), href: '/directory?open=' + encodeURIComponent(o.dn) }); });
+      (lastFind.r.gpos || []).forEach(function (g) { pool.push({ icon: 'P', label: g.name, group: t('Group Policy'), href: '/gpo/' + encodeURIComponent(g.id) + '/edit' }); });
+    }
+    items = pool.filter(function (it) { return S.test(it.label + ' ' + (it.desc || '') + ' ' + (it.group || '')); }).slice(0, 40);
+    S.count(items.length, pool.length);
     render();
   }
   function render() {
@@ -243,6 +261,7 @@
   }
   function liveFind() {
     var q = input.value.trim();
+    if (rxOn()) return;
     clearTimeout(findTimer);
     if (q.length < 2 || parseCommand(q).length) return;
     var seq = ++findSeq;
@@ -252,6 +271,8 @@
   }
   if (input && list) {
     if (window.matchMedia('(max-width: 900px)').matches) input.placeholder = t('Command or search');
+    if (window.TDSearch) cmdSearch = window.TDSearch.mount(input, { kind: 'custom', bare: true, compact: true, highlight: false,
+      onChange: function () { if (doc.activeElement === input || !list.hidden) build(); } });
     input.addEventListener('input', function () { build(); liveFind(); });
     input.addEventListener('focus', function () { build(); });
     input.addEventListener('blur', function () { setTimeout(function () { open(false); }, 120); });

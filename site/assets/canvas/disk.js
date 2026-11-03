@@ -104,6 +104,7 @@ export function mountDisk(root, ctx) {
       box.appendChild(h('div', { class: 'disk-head' }, [h('div', { class: 'inline', style: { alignItems: 'center', justifyContent: 'space-between' } }, [h('b', { text: t('disk.disk', [disk.diskId]) }),
         iconButton('del', t('disk.removeDisk'), () => { const l = L(); l.disks.splice(di, 1); sel = { disk: 0, part: 0 }; commit(l, 'hist.removeDisk', [disk.diskId]); })]),
         h('div', { class: 'grid2' }, [idF.el, sizeF.el, wipeF.el])]));
+      // search-surface: disk-find (Find above the canvas highlights matching partitions)
       const bar = h('div', { class: 'disk-bar', role: 'listbox', 'aria-label': t('disk.disk', [disk.diskId]) });
       const total = Math.max(m.total, m.used, 1);
       disk.partitions.forEach((p, pi) => {

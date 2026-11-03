@@ -154,7 +154,7 @@
   }
   function buildSettings() {
     settingsSheet = h('div', { class: 'sheet', id: 'td-settings', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'td-settings-title', hidden: true });
-    var panel = h('div', { class: 'sheet-panel' });
+    var panel = h('div', { class: 'sheet-panel', 'data-search-surface': 'site-settings', 'data-search-items': '.set-group', 'data-search-mount': '.sheet-head', 'data-search-label': 'settings.title' });
     panel.appendChild(h('div', { class: 'sheet-head' }, [
       h('h2', { id: 'td-settings-title', 'data-i18n': 'settings.title' }, ['Settings']),
       h('button', { class: 'iconbtn', type: 'button', html: CLOSE, 'data-i18n-attr': 'aria-label:common.close', 'aria-label': 'Close', onclick: function () { closeSheet(settingsSheet); } })
@@ -211,6 +211,9 @@
   }
 
   // ---------- command palette ----------
+  var palRx = null;
+  // Translate function handed to the regex builder: missing keys fall back to its English.
+  function rxT(key) { var args = Array.prototype.slice.call(arguments, 1); var v = t(key, args, '\u0000'); return v === '\u0000' ? key : v; }
   var palette, palInput, palList, palRegex, palItems = [], palSel = 0, siteIndex = null, paletteSources = [];
   function loadIndex() {
     if (siteIndex) return Promise.resolve(siteIndex);
@@ -232,8 +235,9 @@
     });
     return out;
   }
-  function makeMatcher(q, useRegex) {
+  function makeMatcher(q, useRegex, st) {
     if (!q) return { ok: true, test: function () { return true; } };
+    if (window.TempDeskRegex) { var c = window.TempDeskRegex.compile(q, Object.assign({}, st || {}, { regex: !!useRegex })); return { ok: c.ok, test: c.test }; }
     if (useRegex) {
       try { var re = new RegExp(q, 'i'); return { ok: true, test: function (s) { return re.test(s); } }; }
       catch (e) { return { ok: false, test: function () { return false; } }; }
@@ -242,8 +246,8 @@
     return { ok: true, test: function (s) { s = s.toLowerCase(); return words.every(function (w) { return s.indexOf(w) >= 0; }); } };
   }
   function renderPalette() {
-    var q = palInput.value.trim(), useRe = palRegex.getAttribute('aria-pressed') === 'true';
-    var m = makeMatcher(q, useRe);
+    var q = palInput.value.trim(), st = palRx ? palRx.state : { regex: palRegex.getAttribute('aria-pressed') === 'true' }, useRe = !!st.regex;
+    var m = makeMatcher(q, useRe, st);
     palInput.setAttribute('aria-invalid', String(!m.ok));
     var all = localItems();
     paletteSources.forEach(function (src) { try { all = all.concat(src(q, useRe) || []); } catch (e) { /* ignore a broken source */ } });
@@ -309,8 +313,13 @@
     palList = h('ul', { class: 'palette-list', id: 'td-pal-list', role: 'listbox' });
     panel.appendChild(h('div', { class: 'sheet-head' }, [h('h2', { id: 'td-pal-title', 'data-i18n': 'palette.title' }, ['Go to']),
       h('button', { class: 'iconbtn', type: 'button', html: CLOSE, 'aria-label': 'Close', 'data-i18n-attr': 'aria-label:common.close', onclick: function () { closeSheet(palette); } })]));
-    panel.appendChild(h('div', { class: 'searchrow' }, [palInput, palRegex]));
+    var palRow = h('div', { class: 'searchrow' }, [palInput]);
+    panel.appendChild(palRow);
     panel.appendChild(palList);
+    // Shared regex builder (assets/regex-builder.js); the plain ".*" toggle stays as a fallback.
+    var RX = window.TempDeskRegex;
+    if (RX) palRx = RX.attachRegexBuilder(palInput, { t: rxT, sampleProvider: function () { return palItems.map(function (it) { return it.label + ' ' + (it.sub || ''); }).join('\n'); }, onChange: function () { renderPalette(); } });
+    else palRow.appendChild(palRegex);
     palette.appendChild(panel);
     trap(palette);
     palInput.addEventListener('input', renderPalette);
@@ -347,9 +356,23 @@
     setTimeout(function () { tEl.remove(); }, 2600);
   }
 
+  // Declarative search surfaces: any element with data-search-surface="<id>" gets its own search
+  // field with the regex builder (assets/regex-builder.js). data-search-items is an optional CSS
+  // selector for the items inside it (default: its children); data-search-label an i18n key.
+  function wireSearchSurfaces(rootEl) {
+    var RX = window.TempDeskRegex;
+    if (!RX) return;
+    (rootEl || document).querySelectorAll('[data-search-surface]').forEach(function (el) {
+      if (el.__rxbFilter) return;
+      var sel = el.getAttribute('data-search-items'), lk = el.getAttribute('data-search-label'), mt = el.getAttribute('data-search-mount');
+      var mount = mt ? el.querySelector(mt) : null;
+      RX.attachListFilter(el, { id: el.getAttribute('data-search-surface'), t: rxT, label: lk ? t('rx.filterFor', [t(lk)]) : undefined, mount: mount || undefined, place: mount ? 'after' : 'before',
+        items: sel ? function () { return Array.prototype.slice.call(el.querySelectorAll(sel)); } : undefined });
+    });
+  }
   window.TempDeskSite = {
     t: t, tz: tz, h: h, ROOT: ROOT, LS: LS, prefs: prefs, translateAll: translateAll, render: render, toast: toast, pulse: pulse,
-    openSheet: openSheet, closeSheet: closeSheet, trap: trap, makeMatcher: makeMatcher, focusTarget: focusTarget,
+    openSheet: openSheet, closeSheet: closeSheet, trap: trap, makeMatcher: makeMatcher, focusTarget: focusTarget, wireSearchSurfaces: wireSearchSurfaces, rxT: rxT,
     onLang: function (f) { ready.push(f); }, translate: function (s) { return translator(s); },
     addPaletteSource: function (fn) { paletteSources.push(fn); }
   };
@@ -359,7 +382,7 @@
     buildSettings();
     buildPalette();
     Promise.all([load('en'), prefs.lang === 'en' ? null : load('zh-HK')]).then(function () {
-      translateAll(); fire();
+      translateAll(); fire(); wireSearchSurfaces();
       var p = LS.get('td.pulse', '');
       if (p) { LS.del('td.pulse'); var el = document.getElementById(p); if (el) setTimeout(function () { focusTarget(el); }, 60); }
     });

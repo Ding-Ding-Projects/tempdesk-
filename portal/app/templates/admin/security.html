@@ -14,14 +14,14 @@
       {% if f.kind == 'bool' %}
       <div class="field"><label class="check"><input type="checkbox" name="{{ fname }}" {% if f.value|string in ('1', 'True', 'true') %}checked{% endif %}> {{ f.label or f.key }}</label>{% if f.help %}<span class="hint">{{ f.help }}</span>{% endif %}</div>
       {% elif f.kind == 'audit' %}
-      <div class="field"><label for="{{ fname }}">{{ f.label or f.key }}</label><select id="{{ fname }}" name="{{ fname }}"><option value="">{{ t('Not defined') }}</option>{% for v, l in audit_choices %}<option value="{{ v }}" {% if f.value|string == v %}selected{% endif %}>{{ t(l) }}</option>{% endfor %}</select>{% if f.help %}<span class="hint">{{ f.help }}</span>{% endif %}</div>
+      <div class="field"><label for="{{ fname }}">{{ f.label or f.key }}</label><select id="{{ fname }}" name="{{ fname }}" data-search-exempt="the few values of one security setting"><option value="">{{ t('Not defined') }}</option>{% for v, l in audit_choices %}<option value="{{ v }}" {% if f.value|string == v %}selected{% endif %}>{{ t(l) }}</option>{% endfor %}</select>{% if f.help %}<span class="hint">{{ f.help }}</span>{% endif %}</div>
       {% elif f.kind == 'principals' %}
       <div class="field" data-chips><label for="{{ fname }}">{{ f.label or f.key }}</label>
         <div class="cluster" data-chip-list>{% for c in f.chips %}<span class="chip">{{ c }}<button type="button" data-chip-remove aria-label="{{ ta('Remove') }} {{ c }}">&times;</button></span>{% endfor %}</div>
         <input id="{{ fname }}" name="{{ fname }}" value="{{ f.value or '' }}" class="mono" data-chip-value>
         <span class="hint">{{ f.help or ta('Comma separated accounts or SIDs, for example *S-1-5-32-544.') }}</span></div>
       {% elif f.kind == 'select' %}
-      <div class="field"><label for="{{ fname }}">{{ f.label or f.key }}</label><select id="{{ fname }}" name="{{ fname }}"><option value="">{{ t('Not defined') }}</option>{% for o in f.options %}<option value="{{ o.value if o is mapping else o }}" {% if f.value|string == (o.value if o is mapping else o)|string %}selected{% endif %}>{{ o.label if o is mapping else o }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="{{ fname }}">{{ f.label or f.key }}</label><select id="{{ fname }}" name="{{ fname }}" data-search-exempt="the few values of one security setting"><option value="">{{ t('Not defined') }}</option>{% for o in f.options %}<option value="{{ o.value if o is mapping else o }}" {% if f.value|string == (o.value if o is mapping else o)|string %}selected{% endif %}>{{ o.label if o is mapping else o }}</option>{% endfor %}</select></div>
       {% else %}
       <div class="field"><label for="{{ fname }}">{{ f.label or f.key }}{% if f.help %} {{ info(f.help) }}{% endif %}</label><input id="{{ fname }}" name="{{ fname }}" value="{{ f.value if f.value is not none else '' }}" {% if f.kind == 'number' %}type="number" {% if f.min is not none %}min="{{ f.min }}"{% endif %} {% if f.max is not none %}max="{{ f.max }}"{% endif %}{% endif %}><span class="hint">{{ t('Leave empty for not defined.') }}</span></div>
       {% endif %}

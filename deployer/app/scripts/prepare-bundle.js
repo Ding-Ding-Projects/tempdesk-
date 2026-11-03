@@ -44,7 +44,7 @@ function main() {
   const SITE = path.join(REPO, 'site', 'assets');
   for (const req of ['answer.js', 'base64.js', 'wording.js']) if (!fs.existsSync(path.join(SITE, req))) throw new Error('Missing shared module: site/assets/' + req);
   for (const e of fs.readdirSync(SITE, { withFileTypes: true })) {
-    if (e.isDirectory() || /\.(js|css|svg)$/.test(e.name)) copy(path.join(SITE, e.name), path.join(VENDOR, e.name), false);
+    if (e.isDirectory() || /\.(m?js|css|svg)$/.test(e.name)) copy(path.join(SITE, e.name), path.join(VENDOR, e.name), false);
   }
   copy(path.join(REPO, 'site', 'i18n'), path.join(VENDOR, 'site-i18n'), false);
   // The website's answer file builder page logic, hosted unchanged in the desktop app. One line is

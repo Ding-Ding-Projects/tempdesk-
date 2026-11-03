@@ -63,7 +63,8 @@ export function renderMarkdown(md, opts = {}) {
     if (rows.length < 2 || !/^\s*\|[\s:|-]+\|\s*$/.test(rows[1])) return null;
     const cells = (r) => r.trim().slice(1, -1).split(/(?<!\\)\|/).map((c) => c.trim().replace(/\\\|/g, '|'));
     const head = cells(rows[0]);
-    let html = '<div class="tablebox" tabindex="0"><table><thead><tr>' + head.map((c) => '<th>' + inline(c, opts.linkMap) + '</th>').join('') + '</tr></thead><tbody>';
+    // search-surface: docs-table (every rendered Markdown table gets its own row filter)
+    let html = '<div class="tablebox" tabindex="0" data-search-surface="docs-table" data-search-items="tbody tr"><table><thead><tr>' + head.map((c) => '<th>' + inline(c, opts.linkMap) + '</th>').join('') + '</tr></thead><tbody>';
     rows.slice(2).forEach((r) => { html += '<tr>' + cells(r).map((c) => '<td>' + inline(c, opts.linkMap) + '</td>').join('') + '</tr>'; });
     return { html: html + '</tbody></table></div>', next: j };
   }
@@ -87,6 +88,7 @@ export function renderMarkdown(md, opts = {}) {
       break;
     }
     const startNum = ordered ? parseInt(base[2], 10) : 1;
+    // search-exempt: prose bullet lists inside a document; the docs search and On this page cover them
     const html = (ordered ? `<ol${startNum !== 1 ? ` start="${startNum}"` : ''}>` : '<ul>') + items.map((it) => {
       const body = it.join('\n');
       const inner = renderMarkdown(body, Object.assign({}, opts, { nested: true, used })).html;
@@ -234,11 +236,11 @@ async function build() {
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../" data-i18n="nav.home">Home</a><span aria-hidden="true">/</span><a href="../#features" data-i18n="nav.features">Features</a><span aria-hidden="true">/</span><span>${escapeHtml(ft.title)}</span></nav>
 <h1>${escapeHtml(ft.title)}</h1>
 <p class="lede">${inline(ft.summary)}</p>
-<div class="facts">${facts}</div>
+<div class="facts" data-search-surface="feature-facts" data-search-label="nav.features">${facts}</div>
 ${secs.map((s) => s.html).join('\n')}
 ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
 <h2 id="more-features" data-i18n="feat.more">More features</h2>
-<div class="hits">${others}</div>
+<div class="hits" data-search-surface="feature-more" data-search-label="feat.more">${others}</div>
 </article>`;
     await mkdirp(path.join(OUT, 'features'));
     await fs.writeFile(path.join(OUT, 'features', ft.id + '.html'), page({ title: ft.title + ' | TempDesk', desc: ft.summary, root: '../', url: 'features/' + ft.id + '.html', body }));
@@ -278,13 +280,13 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
     d.title = d.title || (h1 ? h1.text : d.name);
     docPages.push({ d, r, md });
   }
-  const nav = (cur) => `<nav class="docs-nav" aria-label="Docs"><a href="index.html"${cur === 'index' ? ' aria-current="page"' : ''} data-i18n="docs.home">All docs</a>${docs.map((d) => `<a href="${d.name}.html"${cur === d.name ? ' aria-current="page"' : ''}>${escapeHtml(d.title)}</a>`).join('')}</nav>`;
+  const nav = (cur) => `<nav class="docs-nav" aria-label="Docs" data-search-surface="docs-nav" data-search-items="a" data-search-label="nav.docs"><a href="index.html"${cur === 'index' ? ' aria-current="page"' : ''} data-i18n="docs.home">All docs</a>${docs.map((d) => `<a href="${d.name}.html"${cur === d.name ? ' aria-current="page"' : ''}>${escapeHtml(d.title)}</a>`).join('')}</nav>`;
   await mkdirp(path.join(OUT, 'docs'));
   for (const { d, r, md } of docPages) {
     const toc = r.headings.filter((x) => x.level === 2).map((x) => `<a class="hit" href="#${x.id}">${escapeHtml(x.text)}</a>`).join('');
     const body = `<div class="docs-layout">${nav(d.name)}<div class="docs-main"><article class="content">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../" data-i18n="nav.home">Home</a><span aria-hidden="true">/</span><a href="index.html" data-i18n="nav.docs">Docs</a></nav>
-${toc ? `<details style="margin:12px 0"><summary style="min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700" data-i18n="docs.toc">On this page</summary><div class="hits">${toc}</div></details>` : ''}
+${toc ? `<details style="margin:12px 0"><summary style="min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700" data-i18n="docs.toc">On this page</summary><div class="hits" data-search-surface="docs-toc" data-search-label="docs.toc">${toc}</div></details>` : ''}
 ${r.html}
 <p class="meter-label" style="margin-top:40px">Source: <a href="https://github.com/Ding-Ding-Projects/tempdesk-/blob/main/${d.file}">${escapeHtml(d.file)}</a></p>
 </article></div></div>`;
@@ -302,7 +304,7 @@ ${r.html}
 <div class="hits" id="docs-hits"></div>
 </section>
 <h2 id="all-docs" data-i18n="docs.all">All documents</h2>
-<div class="hits">${docs.map((d) => `<a class="hit" href="${d.name}.html">${escapeHtml(d.title)}<small>${escapeHtml(d.file)}</small></a>`).join('')}</div>
+<div class="hits" data-search-surface="docs-all" data-search-label="docs.all">${docs.map((d) => `<a class="hit" href="${d.name}.html">${escapeHtml(d.title)}<small>${escapeHtml(d.file)}</small></a>`).join('')}</div>
 </div></div></div>`;
   await fs.writeFile(path.join(OUT, 'docs', 'index.html'), page({ title: 'Documentation | TempDesk', desc: 'Guides and reference for every TempDesk component.', root: '../', url: 'docs/', body: docsIndexBody, extraScripts: '<script src="../assets/docs-search.js"></script>\n', titleKey: 'docs.title' }));
   index.pages.push({ url: 'docs/index.html', title: 'Documentation', summary: 'All docs', kind: 'page', sections: [{ id: 'docs-search', title: 'Search the docs' }] });

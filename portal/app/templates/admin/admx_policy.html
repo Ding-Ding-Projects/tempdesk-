@@ -27,7 +27,7 @@
     {% elif el.type == 'multiText' %}
       <div class="field"><label for="{{ name }}">{{ el.label }}</label><textarea id="{{ name }}" name="{{ name }}" rows="4">{{ v|join('\n') if v is iterable and v is not string else (v or '') }}</textarea><span class="hint">{{ t('One line per entry.') }}</span></div>
     {% elif el.type == 'enum' %}
-      <div class="field"><label for="{{ name }}">{{ el.label }}</label><select id="{{ name }}" name="{{ name }}">{% for it in el['items'] or [] %}<option value="{{ it.id }}" {% if v|string == it.id|string %}selected{% endif %}>{{ it.label }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="{{ name }}">{{ el.label }}</label>{% if (el['items'] or [])|length > 8 %}<span class="ss-host tight" data-search-surface="admx-enum" data-search-kind="select" data-search-target="#{{ name }}" data-search-compact data-search-label="{{ ta('Search {name}', name=el.label) }}"></span>{% endif %}<select id="{{ name }}" name="{{ name }}" data-searchable="admx-enum">{% for it in el['items'] or [] %}<option value="{{ it.id }}" {% if v|string == it.id|string %}selected{% endif %}>{{ it.label }}</option>{% endfor %}</select></div>
     {% elif el.type == 'list' %}
       <div class="field" data-list-editor data-name="{{ name }}"><span style="font-weight:600">{{ el.label }}</span>
         <div class="stack tight" data-rows>

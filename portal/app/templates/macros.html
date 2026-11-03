@@ -48,15 +48,17 @@
 {% if flash %}<div class="alert {{ 'error' if flash.kind == 'error' else 'success' if flash.kind == 'success' else '' }}" role="{{ 'alert' if flash.kind == 'error' else 'status' }}" data-notify="{{ flash.kind }}">{{ flash.text }}</div>{% endif %}
 {%- endmacro %}
 
-{% macro search_box(tv, regex_error=None, label='Filter this list') -%}
+{% macro search_box(tv, regex_error=None, label='Filter this list', target='table', scope='section, .card, .tile, main', kind='table', items=None) -%}
+{# Server-side search (Enter or Filter) plus a live filter of the rows on the page, wired to the
+   shared regex builder by search-surfaces.js. The hidden re flag follows the ".*" toggle. #}
 <form class="table-tools" method="get" role="search" data-regex-form>
   {% for k, v in tv.hidden_params() if k != 're' %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
   <div class="search">
     <label class="sr-only" for="q-{{ tv.id }}">{{ t(label) }}</label>
-    <input id="q-{{ tv.id }}" type="search" name="q" value="{{ tv.q }}" placeholder="{{ ta(label) }}" data-regex-input autocomplete="off" {% if regex_error %}aria-invalid="true" aria-describedby="re-{{ tv.id }}"{% endif %}>
+    <input id="q-{{ tv.id }}" type="search" name="q" value="{{ tv.q }}" placeholder="{{ ta(label) }}" autocomplete="off"
+      data-search-surface="table-{{ tv.id }}" data-search-kind="{{ kind }}"{% if items %} data-search-items="{{ items }}"{% endif %} data-search-target="{{ target }}" data-search-scope="{{ scope }}" data-search-label="{{ ta(label) }}"
+      {% if regex_error %}aria-invalid="true" aria-describedby="re-{{ tv.id }}"{% endif %}>
     <input type="hidden" name="re" value="{{ '1' if tv.regex else '' }}" data-regex-flag>
-    <button type="button" class="regex-toggle" aria-pressed="{{ 'true' if tv.regex else 'false' }}" data-regex-toggle aria-label="{{ ta('Regular expression') }}" title="{{ ta('Regular expression') }}">.*</button>
-    <button type="button" class="btn sm text" data-regex-builder aria-haspopup="dialog" {% if not tv.regex %}hidden{% endif %}>{{ t('Builder') }}</button>
   </div>
   <button class="btn sm tonal" type="submit">{{ t('Filter') }}</button>
   <span class="spacer"></span>
@@ -113,7 +115,7 @@
 <div class="bulkbar" data-bulkbar role="region" aria-label="{{ ta('Bulk actions') }}">
   <strong><span data-bulk-count>0</span> {{ t('selected') }}</strong>
   <label class="sr-only" for="bulk-action">{{ t('Bulk action') }}</label>
-  <select id="bulk-action" name="bulk" style="width:auto;min-height:40px">
+  <select id="bulk-action" name="bulk" style="width:auto;min-height:40px" data-search-exempt="the few bulk actions of this page">
     <option value="">{{ t('Choose an action') }}</option>
     {% for v, l in actions %}<option value="{{ v }}">{{ t(l) }}</option>{% endfor %}
   </select>

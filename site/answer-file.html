@@ -44,6 +44,7 @@
   <div class="st-splitter st-split-side" id="st-split-side" aria-label="Resize the side bar" data-i18n-attr="aria-label:studio.resizeSide"></div>
   <section class="st-center" aria-label="Editor">
     <div class="st-tabbar">
+      <!-- search-surface: studio-editor-tabs (wired by buildTabSearch in assets/builder.js) -->
       <div class="st-tabs" id="st-tabs" role="tablist" aria-label="Open editors" data-i18n-attr="aria-label:studio.openEditors"></div>
       <button type="button" class="btn btn-ghost btn-sm st-split-b" id="st-split" aria-pressed="false" data-i18n="studio.splitXml">Split with XML</button>
       <button type="button" class="iconbtn" id="st-insp-toggle" aria-label="Toggle the inspector" data-i18n-attr="aria-label:studio.toggleInsp;title:studio.toggleInsp" title="Toggle the inspector">&#9707;</button>
@@ -54,6 +55,7 @@
   <aside class="st-insp" id="st-insp" aria-label="Inspector" data-i18n-attr="aria-label:studio.inspector"></aside>
   <div class="st-splitter st-split-panel" id="st-split-panel" aria-label="Resize the panel" data-i18n-attr="aria-label:studio.resizePanel"></div>
   <section class="st-panel" id="st-panel" aria-label="Panel">
+    <!-- search-surface: studio-panel-tabs (wired by buildTabSearch in assets/builder.js) -->
     <div class="st-panel-tabs" id="st-panel-tabs" role="tablist" aria-label="Panel"></div>
     <div class="st-panel-body" id="st-panel-body"></div>
   </section>
@@ -68,6 +70,7 @@
 <noscript><p class="notice warn" style="margin:16px">Answer File Studio needs JavaScript. It runs only in this browser and uploads nothing.</p></noscript>
 <p class="sr-only" data-i18n="b.local">Runs entirely in your browser. Nothing is uploaded.</p>
 <script src="assets/wording.js"></script>
+<script src="assets/regex-builder.js"></script>
 <script src="assets/site.js"></script>
 <script src="assets/answer.js"></script>
 <script src="assets/zip.js"></script>

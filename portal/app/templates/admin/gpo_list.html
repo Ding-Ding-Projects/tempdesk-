@@ -16,10 +16,10 @@
     <button class="btn filled lg" type="submit">{{ t('Create') }}</button>
   </form>
 </section>
-<div class="tile rise" style="--i:2;padding:14px 16px">{{ search_box(tv, regex_error, 'Search policies') }}</div>
+<div class="tile rise" style="--i:2;padding:14px 16px">{{ search_box(tv, regex_error, 'Search policies', target='.gpo-cards', scope='main', kind='list', items='.gpo-card') }}</div>
 {% if tv.rows %}
 <form method="post" action="/gpo/bulk" data-bulk-form>{{ csrf() }}
-  <div class="gpo-cards">
+  <div class="gpo-cards" role="list" aria-label="{{ ta('Group Policy objects') }}" data-searchable="table-gpos">
   {% for g in tv.rows %}
     <article class="gpo-card rise" style="--i:{{ [loop.index0 + 2, 9]|min }}"
       data-ctx='[{"label":"{{ ta('Open the editor') }}","href":"/gpo/{{ g.id|urlencode }}/edit","key":"Enter"},{"label":"{{ ta('Properties') }}","href":"/gpo/{{ g.id|urlencode }}"},{"label":"{{ ta('Security settings') }}","href":"/gpo/{{ g.id|urlencode }}/security"},{"label":"{{ ta('Report') }}","href":"/gpo/{{ g.id|urlencode }}/report"},{"label":"{{ ta('Open in a new tab') }}","href":"/gpo/{{ g.id|urlencode }}/edit","tab":true}]'>

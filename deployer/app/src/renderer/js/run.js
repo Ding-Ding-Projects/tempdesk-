@@ -1,7 +1,7 @@
 // Progress UI for every long engine step: step list (done checks, pulsing current step, pending
 // outlines), progress bar, live log, cancel, resume from the failed step, recovery hint, and a
 // success celebration. Mirrors design/project/Deployer.dc.html.
-import { h, t, btn, toast, play, announce, state, contextMenu } from './ui.js';
+import { h, t, btn, toast, play, announce, state, contextMenu, listFilter } from './ui.js';
 
 const td = window.td;
 const Core = window.TempDeskCore;
@@ -19,6 +19,8 @@ export const PHASE_STEPS = {
 };
 
 // opts: { kicker, title, phase, stepsKey, config, secrets(), noIso, onDone(result), logName }
+// Names of deployments with a run in progress (their tabs are protected from bulk close).
+export function busyNames() { return [...running.values()].map((r) => r.name).filter(Boolean); }
 export function progressPanel(opts) {
   const stepIds = (PHASE_STEPS[opts.stepsKey || opts.phase] || []).filter((id) => opts.filterStep ? opts.filterStep(id) : true);
   const steps = new Map();
@@ -99,7 +101,8 @@ export function progressPanel(opts) {
     const secrets = opts.secrets ? opts.secrets() : {};
     started = Date.now();
     runId = await td.invoke['engine:start']({ phase: opts.phase, config: opts.config(), secrets, reset: !!reset, noIso: !!(opts.noIso && opts.noIso()) });
-    running.set(runId, { onEvent });
+    let runName = ''; try { const c = opts.config(); runName = (c && c.name) || ''; } catch (e) { /* ignore */ }
+    running.set(runId, { onEvent, name: runName });
     startBtn.hidden = true; resumeBtn.hidden = true; restartBtn.hidden = true; cancelBtn.hidden = false;
     status.textContent = t('run.running');
     timer = setInterval(() => { status.textContent = t('run.elapsed', [dur(Date.now() - started)]); }, 1000);
@@ -152,9 +155,9 @@ export function progressPanel(opts) {
   const wrap = h('div', { class: 'progress-wrap' }, [
     h('div', { class: 'steps-col' }, [
       h('div', null, [opts.kicker ? h('div', { class: 'kicker', text: opts.kicker }) : null, h('h2', { style: { fontSize: '1.5rem', margin: '4px 0 0' }, text: opts.title })]),
-      list, hintBox, h('div', { style: { marginTop: 'auto' } }, [barWrap]), status,
+      listFilter(list, 'run-steps', t('run.steps')), hintBox, h('div', { style: { marginTop: 'auto' } }, [barWrap]), status,
       h('div', { class: 'row' }, [startBtn, resumeBtn, restartBtn, cancelBtn])]),
-    h('div', { class: 'log-col' }, [h('div', { class: 'row between' }, [h('h3', { style: { margin: 0 }, text: t('run.log') }), exportBtn]), log])
+    h('div', { class: 'log-col' }, [h('div', { class: 'row between' }, [h('h3', { style: { margin: 0 }, text: t('run.log') }), exportBtn]), listFilter(log, 'run-log', t('run.log'))])
   ]);
   wrap.start = start;
   return wrap;

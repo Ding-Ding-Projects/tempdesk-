@@ -5,7 +5,7 @@
 <div class="page-head"><h1>{{ t('Version history') }}: <span class="mono">{{ name }}</span></h1><a class="btn" href="{{ back }}">{{ t('Back') }}</a></div>
 <div class="row">
 <section class="side card"><h2>{{ t('Saved versions') }}</h2>
-  {% if versions %}<ul class="timeline">{% for v in versions %}<li><span class="dot {{ '' if loop.first else 'neutral' }}"></span><div><a href="?name={{ name|urlencode }}&v={{ v.id }}" {% if sel == v.id %}aria-current="page"{% endif %}><time data-epoch="{{ v.time }}">{{ v.id }}</time></a><div class="subtle">{{ v.user }} · {{ t('{count} characters', count=v.size) }}</div></div></li>{% endfor %}</ul>
+  {% if versions %}<div class="ss-host" data-search-surface="history-versions" data-search-kind="list" data-search-target="#versions" data-search-items="li" data-search-compact data-search-label="{{ ta('Search versions') }}"></div><ul class="timeline" id="versions" data-searchable="history-versions">{% for v in versions %}<li><span class="dot {{ '' if loop.first else 'neutral' }}"></span><div><a href="?name={{ name|urlencode }}&v={{ v.id }}" {% if sel == v.id %}aria-current="page"{% endif %}><time data-epoch="{{ v.time }}">{{ v.id }}</time></a><div class="subtle">{{ v.user }} · {{ t('{count} characters', count=v.size) }}</div></div></li>{% endfor %}</ul>
   {% else %}<p class="muted">{{ t('No versions saved yet. A version is kept every time you save.') }}</p>{% endif %}</section>
 <section class="grow card"><h2>{{ t('Difference from the current version') }}</h2>
   {% if diff is not none %}{% if diff %}<div class="diff">{% for kind, line in diff %}<div class="{{ kind }}">{{ line }}</div>{% endfor %}</div>{% else %}<p class="muted">{{ t('This version is the same as the current one.') }}</p>{% endif %}

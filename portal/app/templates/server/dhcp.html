@@ -5,7 +5,8 @@
 <div class="srv">
   <div class="srv-head"><h1>{{ t("DHCP server") }}</h1></div>
   {% if error %}<div class="srv-err">{{ error }}</div>{% endif %}
-  <div class="srv-tablewrap"><table class="srv-table">
+  <div class="ss-host" data-search-surface="srv-dhcp" data-search-kind="table" data-search-target="#srv-dhcp-table" data-search-label="{{ ta('Search this table') }}"></div>
+      <div class="srv-tablewrap"><table class="srv-table" id="srv-dhcp-table" data-searchable="srv-dhcp">
     <thead><tr><th>{{ t("Scope") }}</th><th>{{ t("Name") }}</th><th>{{ t("Range") }}</th><th>{{ t("State") }}</th></tr></thead>
     <tbody>{% for s in scopes %}<tr data-ctx><td>{{ s.scopeId }}</td><td>{{ s.name }}</td><td>{{ s.startRange }} - {{ s.endRange }}</td><td>{{ s.state }}</td></tr>{% endfor %}</tbody>
   </table></div>

@@ -6,8 +6,10 @@ import { h, iconButton, clone } from './dom.js';
 import { PASSES, countSet, settingAllowedPasses } from './catalog.js';
 import { startDrag } from './drag.js';
 import { searchBox } from './search-ui.js';
+import { attachListFilter } from '../regex-builder.mjs';
 
 const LANE_W = 230;
+let listFilterState = null; // in memory only
 
 function deepMerge(a, b) {
   if (Array.isArray(a) && Array.isArray(b)) return a.concat(b);
@@ -212,6 +214,8 @@ export function mountFlow(root, ctx) {
       }));
       if (!ul.children.length) ul.appendChild(h('li', null, [t('flow.empty')]));
       listBox.appendChild(ul);
+      // search-surface: flow-list (the accessible list view has its own filter, separate from Find)
+      attachListFilter(ul, { id: 'flow-list', label: t('rx.filterFor', [t('cv.listView')]), t: (k, ...a) => t(k, a), state: listFilterState, onState: (st) => { listFilterState = st; } });
       return;
     }
     const lanes = [];

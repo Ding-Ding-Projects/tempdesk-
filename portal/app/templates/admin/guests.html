@@ -17,7 +17,7 @@
         <div class="create-bar">
           <div class="field"><label for="g-dn">{{ t('Display name') }} <span class="optional">({{ t('optional') }})</span></label><input id="g-dn" name="displayName" maxlength="64" placeholder="{{ ta('Shown on the sign-in screen') }}"></div>
           <div class="field"><label for="g-exp">{{ t('Expiry') }}</label>
-            <select id="g-exp" name="expiryId" data-custom-toggle="#g-min-wrap">
+            <select data-search-exempt="the expiry choices configured in settings" id="g-exp" name="expiryId" data-custom-toggle="#g-min-wrap">
               {% for c in choices %}<option value="{{ c.id }}" {% if c.id == '4h' %}selected{% endif %}>{{ c.label }}</option>{% endfor %}
               <option value="custom">{{ t('Custom number of minutes') }}</option>
             </select></div>
@@ -28,7 +28,7 @@
     </section>
 
     <div class="tile rise" style="--i:2;padding:14px 16px">
-      {{ search_box(tv, regex_error, 'Search guests') }}
+      {{ search_box(tv, regex_error, 'Search guests', kind='custom') }}
       <div class="chip-row" role="radiogroup" aria-label="{{ ta('Show') }}" data-g-filters>
         <button type="button" class="c-chip sm" role="radio" aria-checked="true" data-g-filter="all">{{ t('All') }} <span class="count" data-g-count="all">{{ tv.rows|length }}</span></button>
         <button type="button" class="c-chip sm" role="radio" aria-checked="false" data-g-filter="soon">{{ t('Ending soon') }} <span class="count" data-g-count="soon"></span></button>
@@ -41,7 +41,7 @@
     {% if tv.rows %}
     <form method="post" action="/guests/bulk" data-bulk-form>
       {{ csrf() }}
-      <div class="g-grid" data-g-grid>
+      <div class="g-grid" data-g-grid role="list" aria-label="{{ ta('Guests') }}" data-searchable="table-guests">
       {% for g in tv.rows %}
         <article class="g-card rise" style="--i:{{ [loop.index0, 8]|min }}" tabindex="-1"
           data-guest="{{ g.username }}" data-name="{{ g.displayName or '' }}" data-created="{{ g.created or '' }}" data-expires="{{ g.expiresAt or '' }}"

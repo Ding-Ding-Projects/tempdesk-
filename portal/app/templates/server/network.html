@@ -31,7 +31,8 @@
   </section>
   <section class="srv-card">
     <h2>{{ t("Routes") }}</h2>
-    <div class="srv-tablewrap"><table class="srv-table">
+    <div class="ss-host" data-search-surface="srv-network" data-search-kind="table" data-search-target="#srv-network-table" data-search-label="{{ ta('Search this table') }}"></div>
+      <div class="srv-tablewrap"><table class="srv-table" id="srv-network-table" data-searchable="srv-network">
       <thead><tr><th>{{ t("Destination") }}</th><th>{{ t("Next hop") }}</th><th>{{ t("Metric") }}</th></tr></thead>
       <tbody>{% for r in routes %}<tr data-ctx><td>{{ r.destinationPrefix }}</td><td>{{ r.nextHop }}</td><td>{{ r.routeMetric }}</td></tr>{% endfor %}</tbody>
     </table></div>

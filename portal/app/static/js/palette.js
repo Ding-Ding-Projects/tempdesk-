@@ -6,7 +6,7 @@
   var items = [];
   try { items = JSON.parse((doc.getElementById('td-palette') || {}).textContent || '[]'); } catch (e) { items = []; }
   var t = (window.TD && window.TD.t) || function (k) { return k; };
-  var dlg = null, input = null, list = null, results = [], active = 0, lastFocus = null;
+  var pal = null, dlg = null, input = null, list = null, results = [], active = 0, lastFocus = null;
 
   function score(q, text) {
     // Subsequence match; consecutive and word-start hits score higher.
@@ -26,10 +26,13 @@
     input = doc.createElement('input'); input.type = 'text'; input.className = 'palette-input';
     input.setAttribute('role', 'combobox'); input.setAttribute('aria-expanded', 'true'); input.setAttribute('aria-controls', 'palette-list');
     input.setAttribute('aria-autocomplete', 'list'); input.placeholder = t('Search pages and actions'); input.setAttribute('aria-label', t('Search pages and actions'));
-    list = doc.createElement('ul'); list.id = 'palette-list'; list.setAttribute('role', 'listbox');
+    list = doc.createElement('ul'); list.id = 'palette-list'; list.setAttribute('role', 'listbox'); /* search: palette */
     var foot = doc.createElement('footer'); foot.textContent = '↑ ↓  Enter  Esc';
     dlg.appendChild(input); dlg.appendChild(list); dlg.appendChild(foot);
     doc.body.appendChild(dlg);
+    // With ".*" on (or a pattern from the Builder), the text is a regular expression over the labels.
+    input.setAttribute('data-search-surface', 'palette');
+    if (window.TDSearch) pal = window.TDSearch.mount(input, { kind: 'custom', highlight: false, label: t('Search pages and actions'), onChange: render });
     input.addEventListener('input', render);
     input.addEventListener('keydown', function (e) {
       if (e.key === 'ArrowDown') { e.preventDefault(); move(1); }
@@ -42,8 +45,14 @@
   function render() {
     var q = input.value.trim();
     results = [];
+    var rx = pal && pal.state().regex;
     items.forEach(function (it) {
       var hay = it.label + (it.keywords ? ' ' + it.keywords : '');
+      if (rx) {
+        if (!pal.test(hay + ' ' + (it.group || ''))) return;
+        var hh = []; pal.matches(it.label, 20).forEach(function (mm) { for (var k = 0; k < mm.length; k++) hh.push(mm.index + k); });
+        results.push({ it: it, score: 1, hits: hh }); return;
+      }
       var m = score(q, it.label) || score(q, hay) || (it.group ? score(q, it.group + ' ' + it.label) : null);
       if (m) results.push({ it: it, score: m.score, hits: it.label.toLowerCase().indexOf(q.toLowerCase()) >= 0 || m.hits.every(function (h) { return h < it.label.length; }) ? m.hits : [] });
     });

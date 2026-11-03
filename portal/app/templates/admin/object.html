@@ -13,7 +13,7 @@
   <h2>{{ t('Attributes') }}</h2>
   {{ search_box(tv, regex_error, 'Filter attributes') }}
   {% if tv.rows %}
-  <div class="table-wrap"><table>
+  <div class="table-wrap"><table data-searchable="table-{{ tv.id }}">
     <thead><tr>{{ th_sort(tv, 'name', 'Attribute') }}<th scope="col">{{ t('Values') }}</th><th><span class="sr-only">{{ t('Actions') }}</span></th></tr></thead>
     <tbody>
     {% for a in tv.rows %}
@@ -28,7 +28,7 @@
     <h2>{{ t('Edit an attribute') }} {{ info('Set replaces all values. Add and Remove change single values in a multi-valued attribute. Clear removes the attribute.') }}</h2>
     <form method="post" action="/directory/object/attr" class="stack">{{ csrf() }}<input type="hidden" name="dn" value="{{ dn }}">
       <div class="field"><label for="attr">{{ t('Attribute') }}</label><input id="attr" name="attr" list="schema-attrs" required autocomplete="off" spellcheck="false">
-        <datalist id="schema-attrs">{% for a in obj.schemaAllowed or [] %}<option value="{{ a }}">{% endfor %}</datalist></div>
+        <datalist id="schema-attrs" data-search-exempt="native suggestions of the attribute name field">{% for a in obj.schemaAllowed or [] %}<option value="{{ a }}">{% endfor %}</datalist></div>
       <div class="field"><label for="vals">{{ t('Values, one per line') }}</label><textarea id="vals" name="values" class="mono" rows="4"></textarea></div>
       <div class="segmented" role="radiogroup" aria-label="{{ ta('Operation') }}">
         {% for op, l in [('set','Set'),('add','Add'),('remove','Remove'),('clear','Clear')] %}<label><input type="radio" name="op" value="{{ op }}" {% if loop.first %}checked{% endif %}>{{ t(l) }}</label>{% endfor %}

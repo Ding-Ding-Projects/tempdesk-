@@ -4,6 +4,11 @@ import { h, textInput, toolButton, flash, presetChips, nextId, copyText } from '
 import { checkPath, FOLDER_VARS, expandVars, commandTokens, quoteArg, checkUrl, checkEmail, checkRegistryPath, expandHive, checkFormat, splitList, joinList, splitRows, joinRows, parseColor, formatColor, cssHex, hexToRgb, lightness, bmpSize } from './format.js';
 import { ACCOUNTS, COMMAND_SNIPPETS } from './data.js';
 import { comboboxSearch } from './choice.js';
+import { attachListFilter } from '../../regex-builder.mjs';
+
+// List editors get their own filter with the regex builder once they hold more than three entries.
+const LIST_FILTER_MIN = 4;
+const rxT = (t) => (k, ...a) => { const v = t(k, a, '\u0000'); return v === '\u0000' ? k : v; };
 
 const S = (v) => (v === undefined ? '' : String(v));
 function plainInput(ctx, extra) {
@@ -102,6 +107,7 @@ export const commandLine = {
     const ta = h('textarea', { id: ctx.id, class: 'w-cmd-in mono', rows: '2', spellcheck: 'false', autocapitalize: 'off', 'aria-describedby': (ctx.describedBy || '') + ' ' + ctx.id + '-pv', placeholder: ctx.hint.example || '' });
     ta.value = cur;
     const hl = h('pre', { class: 'w-cmd-hl mono', 'aria-hidden': 'true' });
+    // search-exempt: preview of the single command being edited (a few tokens, not a list of records)
     const pv = h('ol', { class: 'w-cmd-pv mono', id: ctx.id + '-pv', 'aria-label': t('w.cmdPreview', null, 'What runs') });
     const draw = () => {
       hl.innerHTML = highlightCommand(cur);
@@ -251,6 +257,7 @@ export const stringList = {
     const { t, hint } = ctx;
     const sep = hint.sep || ';';
     let items = splitList(ctx.value, sep);
+    let lf = null; // list filter, attached once the editor exists
     const list = h('ul', { class: 'w-list', 'aria-label': ctx.label || '' });
     const add = textInput({ id: ctx.id, mono: true, describedBy: ctx.describedBy, placeholder: t('w.addItemPh', null, 'Type and press Enter to add') });
     const options = hint.options ? h('div', { class: 'w-chips' }) : null;
@@ -262,6 +269,7 @@ export const stringList = {
         toolButton('\u2193', t('list.down', null, 'Move down'), () => { [items[i + 1], items[i]] = [items[i], items[i + 1]]; draw(); emit(); }, { disabled: i === items.length - 1 || undefined }),
         toolButton('\u00d7', t('w.removeItem', [it], 'Remove {0}'), () => { items.splice(i, 1); draw(); emit(); add.focus(); })])));
       list.hidden = !items.length;
+      if (lf) lf.el.hidden = items.length < LIST_FILTER_MIN;
       if (options) options.replaceChildren(...hint.options.filter((o) => !items.includes(o)).map((o) => h('button', { type: 'button', class: 'w-chip mono', onclick: () => { items.push(o); draw(); emit(); } }, ['+ ' + o])));
     };
     const push = () => { const parts = splitList(add.value, sep).concat(sep !== ';' ? [] : []); if (!parts.length) return; items.push(...parts); add.value = ''; draw(); flash(list); emit(); };
@@ -270,6 +278,9 @@ export const stringList = {
     const addBtn = toolButton('+', t('list.add', null, 'Add item'), push);
     draw();
     const el = h('div', { class: 'w-slist' }, [list, h('div', { class: 'w-row' }, [add, addBtn]), options, h('p', { class: 'w-note', text: t('w.listSep', [sep === ' ' ? t('w.sepSpace', null, 'spaces') : sep], 'Written as one value separated by {0}.') })]);
+    // search-surface: widget-string-list
+    lf = attachListFilter(list, { id: 'widget-string-list', label: t('rx.filterFor', [ctx.label || ''], 'Filter {0}'), t: rxT(t) });
+    lf.el.hidden = items.length < LIST_FILTER_MIN;
     return { el, input: add, set(v) { items = splitList(v, sep); draw(); } };
   },
   describe(v, hint, t) { const n = splitList(v, hint.sep || ';').length; return n ? t('w.listCount', [n], '{0} entries') : ''; }
@@ -292,7 +303,14 @@ export const keyValue = {
     };
     const addBtn = h('button', { type: 'button', class: 'btn btn-ghost btn-sm', id: ctx.id, 'aria-describedby': ctx.describedBy || undefined, text: t('list.add', null, 'Add item'), onclick: () => { rows.push(cols.map(() => '')); draw(); const last = table.lastChild && table.lastChild.querySelector('input'); if (last) last.focus(); } });
     draw();
-    return { el: h('div', { class: 'w-kvbox' }, [table, addBtn, h('p', { class: 'w-note mono', text: t('w.kvFormat', [cols.join(fs), sep], 'Written as {0} rows separated by {1}') })]), input: addBtn, set(v) { rows = splitRows(v, sep, fs); draw(); } };
+    const kvBox = h('div', { class: 'w-kvbox' }, [table]);
+    // search-surface: widget-key-value
+    const kf = attachListFilter(table, { id: 'widget-key-value', label: t('rx.filterFor', [ctx.label || ''], 'Filter {0}'), t: rxT(t), items: (l) => l.querySelectorAll('.w-kv-r:not(.w-kv-h)'),
+      text: (r) => [...r.querySelectorAll('input')].map((x) => x.value).join(' ') });
+    const syncKf = () => { kf.el.hidden = rows.length < LIST_FILTER_MIN; };
+    syncKf(); table.addEventListener('input', syncKf); table.addEventListener('click', () => setTimeout(syncKf, 0)); addBtn.addEventListener('click', syncKf);
+    kvBox.append(addBtn, h('p', { class: 'w-note mono', text: t('w.kvFormat', [cols.join(fs), sep], 'Written as {0} rows separated by {1}') }));
+    return { el: kvBox, input: addBtn, set(v) { rows = splitRows(v, sep, fs); draw(); syncKf(); } };
   },
   describe(v, hint, t) { const n = splitRows(v, hint.sep || ',', hint.fieldSep || ':').length; return n ? t('w.rowCount', [n], '{0} rows') : ''; }
 };

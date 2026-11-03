@@ -347,8 +347,11 @@
   function undo() { if (!hist) return; var e = hist.undo(); if (e) restoreState(e.state); updUndo(); }
   function redo() { if (!hist) return; var e = hist.redo(); if (e) restoreState(e.state); updUndo(); }
   function msgText(m) { return m ? t(m.key, (m.args || []).map(function (a) { return typeof a === 'number' && a > 1e12 ? new Date(a).toLocaleString() : a; })) : ''; }
+  var histRx = null; // shared regex builder on the history search (assets/regex-builder.js)
   function histMatcher() {
-    var q = ($('b64-hist-q') || { value: '' }).value.trim(), re = ($('b64-hist-re') || { getAttribute: function () { return 'false'; } }).getAttribute('aria-pressed') === 'true';
+    var q0 = ($('b64-hist-q') || { value: '' }).value.trim();
+    if (histRx && q0) { var c = window.TempDeskRegex.compile(q0, histRx.state); return { ok: c.ok, test: c.test }; }
+    var q = q0, re = ($('b64-hist-re') || { getAttribute: function () { return 'false'; } }).getAttribute('aria-pressed') === 'true';
     if (!q) return { ok: true, test: function () { return true; }, empty: true };
     if (re) { try { var rx = new RegExp(q, 'i'); return { ok: true, test: function (x) { return rx.test(x); } }; } catch (e) { return { ok: false, test: function () { return false; } }; } }
     var words = q.toLowerCase().split(/\s+/);
@@ -421,8 +424,12 @@
     document.querySelectorAll('[data-b64-redo]').forEach(function (b) { b.addEventListener('click', redo); });
     $('b64-hist-clear').addEventListener('click', clearHist);
     var htm;
-    $('b64-hist-q').addEventListener('input', function () { clearTimeout(htm); htm = setTimeout(drawHistory, 120); });
-    $('b64-hist-re').addEventListener('click', function () { this.setAttribute('aria-pressed', String(this.getAttribute('aria-pressed') !== 'true')); drawHistory(); });
+    if (window.TempDeskRegex) {
+      $('b64-hist-re').remove();
+      histRx = window.TempDeskRegex.attachRegexBuilder($('b64-hist-q'), { t: S.rxT, onChange: drawHistory,
+        sampleProvider: function () { return hist ? hist.entries.slice(-200).map(function (e) { return msgText(e.msg) + ' #' + e.id; }).join('\n') : ''; } });
+    } else $('b64-hist-q').addEventListener('input', function () { clearTimeout(htm); htm = setTimeout(drawHistory, 120); });
+    if ($('b64-hist-re')) $('b64-hist-re').addEventListener('click', function () { this.setAttribute('aria-pressed', String(this.getAttribute('aria-pressed') !== 'true')); drawHistory(); });
     $('b64-hist-export').addEventListener('click', function () { saveBlob('base64-history.json', new Blob([hist.exportJson({ app: 'base64-toolkit', payloadsStored: keepPayload() })], { type: 'application/json' })); });
     document.addEventListener('keydown', function (e) {
       if (!(e.ctrlKey || e.metaKey) || e.altKey) return;

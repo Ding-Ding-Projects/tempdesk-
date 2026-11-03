@@ -25,8 +25,8 @@
     <form method="post" action="/server/firewall/rules" class="srv-form" style="max-width:420px">
       <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
       <div class="srv-field"><label>{{ t("Display name") }}</label><input name="displayName" required></div>
-      <div class="srv-field"><label>{{ t("Direction") }}</label><select name="direction"><option>Inbound</option><option>Outbound</option></select></div>
-      <div class="srv-field"><label>{{ t("Action") }}</label><select name="action"><option>Allow</option><option>Block</option></select></div>
+      <div class="srv-field"><label>{{ t("Direction") }}</label><select name="direction" data-search-exempt="two fixed choices"><option>Inbound</option><option>Outbound</option></select></div>
+      <div class="srv-field"><label>{{ t("Action") }}</label><select name="action" data-search-exempt="two fixed choices"><option>Allow</option><option>Block</option></select></div>
       <div class="srv-field"><label>{{ t("Protocol") }}</label><input name="protocol" placeholder="TCP"></div>
       <div class="srv-field"><label>{{ t("Local port") }}</label><input name="localPort" placeholder="443"></div>
       <button class="srv-btn primary" type="submit">{{ t("Create rule") }}</button>
@@ -35,13 +35,11 @@
 
   <div data-srv-table>
     <div class="srv-toolbar">
-      <input class="srv-search" data-srv-search placeholder="{{ ta('Search') }}">
-      <label class="srv-toggle"><input type="checkbox" data-srv-regex> {{ t("Regex") }}</label>
-      <span data-srv-regex-error class="srv-err" role="alert" style="padding:4px 8px"></span>
+      <input class="srv-search" type="search" placeholder="{{ ta('Search') }}" data-search-surface="srv-firewall" data-search-kind="table" data-search-target="#srv-firewall-table" data-search-label="{{ ta('Search') }}">
       <button type="button" class="srv-btn" data-srv-export="csv">CSV</button>
     </div>
     <div class="srv-tablewrap">
-      <table class="srv-table">
+      <table class="srv-table" id="srv-firewall-table" data-searchable="srv-firewall">
         <thead><tr><th data-col="displayName">{{ t("Name") }}</th><th data-col="direction">{{ t("Direction") }}</th><th data-col="action">{{ t("Action") }}</th><th data-col="enabled">{{ t("Enabled") }}</th><th data-no-sort></th></tr></thead>
         <tbody>
         {% for r in rules %}

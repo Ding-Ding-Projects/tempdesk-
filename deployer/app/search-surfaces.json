@@ -1,0 +1,183 @@
+{
+ "about": "Hand-written catalogue of every search surface in the TempDesk Deployer. Each one has its own search field with the shared regex builder (vendor/regex-builder.js, copied from site/assets). Checked by test/search-surfaces.test.js.",
+ "consumers": {
+  "searchBox": "src/renderer/js/ui.js wraps attachRegexBuilder",
+  "listFilter": "src/renderer/js/ui.js wraps attachListFilter",
+  "attachListFilter": "regex-builder.js list filter",
+  "attachTabCloser": "regex-builder.js tab strip search with bulk close",
+  "attachRegexBuilder": "regex-builder.js on an existing field"
+ },
+ "surfaces": [
+  {
+   "id": "palette",
+   "page": "every page",
+   "surface": "Command palette (Ctrl+Shift+F)",
+   "file": "src/renderer/js/app.js",
+   "consumer": "searchBox",
+   "match": "searchBox({ label: t('palette.label')"
+  },
+  {
+   "id": "notifications",
+   "page": "every page",
+   "surface": "Notification centre",
+   "file": "src/renderer/js/app.js",
+   "consumer": "searchBox",
+   "match": "searchBox({ label: t('notif.search')"
+  },
+  {
+   "id": "deployer-tabs",
+   "page": "every page",
+   "surface": "Open deployment tabs (search, close containing, close not containing)",
+   "file": "src/renderer/js/app.js",
+   "consumer": "attachTabCloser"
+  },
+  {
+   "id": "deployer-context-menu",
+   "page": "every page",
+   "surface": "Every context menu",
+   "file": "src/renderer/js/ui.js",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "deployments-list",
+   "page": "Deployments",
+   "surface": "Deployments list",
+   "file": "src/renderer/js/pages.js",
+   "consumer": "searchBox",
+   "match": "searchBox({ label: t('deps.search')"
+  },
+  {
+   "id": "studio-recent",
+   "page": "Answer File Studio",
+   "surface": "Recent files",
+   "file": "src/renderer/js/pages.js",
+   "consumer": "searchBox",
+   "match": "searchBox({ label: t('studio.recentSearch')"
+  },
+  {
+   "id": "studio-branch-picker",
+   "page": "Answer File Studio",
+   "surface": "Branch picker",
+   "file": "src/renderer/js/pages.js",
+   "consumer": "listFilter"
+  },
+  {
+   "id": "studio-window",
+   "page": "Answer File Studio",
+   "surface": "Studio window (every surface of the website studio, see site/search-surfaces.json)",
+   "file": "src/renderer/studio.html",
+   "consumer": "attachRegexBuilder",
+   "match": "vendor/regex-builder.js"
+  },
+  {
+   "id": "deployment-summary",
+   "page": "Deployment tab",
+   "surface": "Summary table",
+   "file": "src/renderer/js/pages.js",
+   "consumer": "listFilter"
+  },
+  {
+   "id": "deployment-files",
+   "page": "Deployment tab",
+   "surface": "Environment files",
+   "file": "src/renderer/js/pages.js",
+   "consumer": "listFilter"
+  },
+  {
+   "id": "run-steps",
+   "page": "Deploy, Portals, Deployment tab",
+   "surface": "Run steps",
+   "file": "src/renderer/js/run.js",
+   "consumer": "listFilter"
+  },
+  {
+   "id": "run-log",
+   "page": "Deploy, Portals, Deployment tab",
+   "surface": "Run log",
+   "file": "src/renderer/js/run.js",
+   "consumer": "listFilter"
+  },
+  {
+   "id": "settings-search",
+   "page": "Settings",
+   "surface": "All settings",
+   "file": "src/renderer/js/settings.js",
+   "consumer": "searchBox",
+   "match": "searchBox({ label: t('set.search')"
+  },
+  {
+   "id": "settings-about",
+   "page": "Settings",
+   "surface": "About table",
+   "file": "src/renderer/js/settings.js",
+   "consumer": "listFilter"
+  },
+  {
+   "id": "history-log",
+   "page": "History",
+   "surface": "History log",
+   "file": "src/renderer/js/history.js",
+   "consumer": "searchBox",
+   "match": "searchBox({ label: t('hist.search')"
+  },
+  {
+   "id": "history-file-picker",
+   "page": "History",
+   "surface": "Changed file picker of a history entry",
+   "file": "src/renderer/js/history.js",
+   "consumer": "listFilter"
+  },
+  {
+   "id": "help-tabs",
+   "page": "Help",
+   "surface": "Help tab strip",
+   "file": "src/renderer/js/history.js",
+   "consumer": "listFilter"
+  },
+  {
+   "id": "help-docs",
+   "page": "Help",
+   "surface": "Documentation list",
+   "file": "src/renderer/js/history.js",
+   "consumer": "searchBox",
+   "match": "searchBox({ label: t('help.searchDocs')"
+  },
+  {
+   "id": "help-doc-table",
+   "page": "Help",
+   "surface": "Every table in a document",
+   "file": "src/renderer/js/history.js",
+   "consumer": "listFilter"
+  },
+  {
+   "id": "help-changelog",
+   "page": "Help",
+   "surface": "Changelog",
+   "file": "src/renderer/js/history.js",
+   "consumer": "searchBox",
+   "match": "searchBox({ label: t('help.searchChangelog')"
+  },
+  {
+   "id": "help-shortcuts",
+   "page": "Help",
+   "surface": "Keyboard shortcuts",
+   "file": "src/renderer/js/history.js",
+   "consumer": "listFilter"
+  },
+  {
+   "id": "base64-history",
+   "page": "Tools: Base64",
+   "surface": "Base64 history",
+   "file": "src/renderer/js/base64.js",
+   "consumer": "searchBox",
+   "match": "searchBox({ label: t('b64.histSearch')"
+  },
+  {
+   "id": "onboarding-prereqs",
+   "page": "First-run setup",
+   "surface": "Prerequisite checks",
+   "file": "src/renderer/js/onboarding.js",
+   "consumer": "listFilter"
+  }
+ ]
+}

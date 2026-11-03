@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="css/app.css">
 <script src="shared/core.js"></script>
 <script src="shared/qr.js"></script>
+<script src="vendor/regex-builder.js"></script>
 <script src="vendor/wording.js"></script>
 <script src="vendor/base64.js"></script>
 <script src="vendor/answer.js"></script>
@@ -31,6 +32,7 @@
   <div class="body">
     <nav class="rail" id="rail" aria-label="Pages"><span class="indicator" id="rail-ind" aria-hidden="true"></span></nav>
     <div class="main">
+      <!-- search-surface: deployer-tabs (wired by buildTabSearch in js/app.js) -->
       <div class="tabs" id="tabs" role="tablist" aria-label="Open deployments"></div>
       <main class="view" id="view" tabindex="-1"></main>
     </div>

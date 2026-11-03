@@ -2,7 +2,7 @@
 // rows (plain or regex). Includes the appearance editor (accent wheel, hex, contrast check,
 // radius, density, text scale, theme, logo), language, funny level, personal wording, school
 // mode, sounds, updates, Git remote, import/export and backup.
-import { h, t, state, btn, toast, dialog, superConfirm, promptDialog, info, searchBox, select, play } from './ui.js';
+import { h, t, state, btn, toast, dialog, superConfirm, promptDialog, info, searchBox, select, play, listFilter } from './ui.js';
 
 const td = window.td;
 const Core = window.TempDeskCore;
@@ -165,7 +165,7 @@ export async function settingsPage(root, app) {
 
   // About and provenance
   const b = app.info.build;
-  sec('about', [h('table', { class: 'table' }, [h('tbody', null, [[t('about.name'), s.appName], [t('about.version'), b.version], [t('about.commit'), b.commit], [t('about.built'), b.builtUtc], [t('about.runtime'), 'Electron ' + app.info.versions.electron + ', Node ' + app.info.versions.node], [t('about.data'), app.info.dataRoot], [t('about.signing'), t('about.unsigned')]].map(([k, v]) => h('tr', null, [h('th', { text: k }), h('td', { class: 'mono', text: v })])))])]);
+  sec('about', [listFilter(h('table', { class: 'table' }, [h('tbody', null, [[t('about.name'), s.appName], [t('about.version'), b.version], [t('about.commit'), b.commit], [t('about.built'), b.builtUtc], [t('about.runtime'), 'Electron ' + app.info.versions.electron + ', Node ' + app.info.versions.node], [t('about.data'), app.info.dataRoot], [t('about.signing'), t('about.unsigned')]].map(([k, v]) => h('tr', null, [h('th', { text: k }), h('td', { class: 'mono', text: v })])))]), 'settings-about', t('set.sec.about'), { items: (l) => [...l.querySelectorAll('tr')] })]);
 
   // Settings search across every row (labels, help and keywords).
   const container = h('div', { class: 'stack' }, sections);
