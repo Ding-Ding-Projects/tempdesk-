@@ -597,6 +597,13 @@ async def gpo_tree(gid: str, request: Request, sess: Session = Depends(require_a
     tree = data.get("tree") if isinstance(data, dict) and "tree" in data else data
     if isinstance(data, dict) and isinstance(data.get("stats"), dict):
         stats = data["stats"]
+    # The agent returns the full editor as {"nodes": [Computer node, User node]},
+    # each node carrying "class" and its children. Pick the node for this scope
+    # and show its children (Policies, Preferences) at the top.
+    if isinstance(data, dict) and isinstance(data.get("nodes"), list):
+        want = "Machine" if scope == "Computer" else "User"
+        picked = next((n for n in data["nodes"] if isinstance(n, dict) and n.get("class") == want), None)
+        tree = (picked or {}).get("children") or []
     if isinstance(tree, dict):
         tree = tree.get(scope) or tree.get(scope.lower()) or tree.get("children") or []
     return JSONResponse({"ok": True, "scope": scope, "tree": tree or [], "source": source, "stats": stats}, headers=NO_STORE)

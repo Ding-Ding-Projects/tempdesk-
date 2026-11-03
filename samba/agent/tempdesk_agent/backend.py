@@ -26,7 +26,14 @@ RESTRICT_RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer
 RESTRICT_RUN_LIST = RESTRICT_RUN_KEY + r"\RestrictRun"
 
 ALL_CAPABILITIES = ["guest", "directory", "gpo", "gpo-registry", "gpo-permissions", "gpo-backup",
-                    "admx", "security", "samba-tool", "wifi", "scripts", "allowlist", "audit"]
+                    "admx", "security", "samba-tool", "wifi", "scripts", "allowlist", "audit",
+                    # Full Group Policy editor: the file-backed nodes the Samba
+                    # backend serves. AD-object nodes (wireless/wired, deployed
+                    # printers, software installation, IP security) are listed
+                    # in the tree with an unavailable reason rather than here.
+                    "gpo-editor", "gpo-security-full", "gpo-advanced-audit", "gpo-firewall",
+                    "gpo-scripts-full", "gpo-folder-redirection", "gpo-nrpt", "gpo-qos",
+                    "gpo-srp", "gpo-applocker", "gpo-preferences-full"]
 
 
 def norm_guid(gpo_id: str) -> str:
@@ -317,6 +324,13 @@ class SysvolMixin:
 
     def admx_policies(self, category, q, klass):
         return self._admx_store().list_policies(category, q, klass)
+
+    def admx_stats(self):
+        st = self._admx_store()
+        st.ensure_loaded()
+        return {"files": st.files_parsed, "categories": len(st.categories),
+                "policies": len(st.policies), "languages": st.languages(),
+                "parseWarnings": st.warnings, "store": st.root}
 
     def _admx_side(self, p: dict, klass: str | None) -> str:
         pc = p["class"]

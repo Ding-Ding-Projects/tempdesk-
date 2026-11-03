@@ -275,6 +275,21 @@ function Invoke-Install {
     Start-Service -Name $ServiceName
     Write-Host "  Started service $ServiceName"
 
+    # 10b. Administrative Templates central store so the ADMX service has the
+    # full set of policies to serve. Seed from this machine's local image and,
+    # when the DC can reach the Internet, merge the latest signed Microsoft MSI.
+    $admxScript = Join-Path (Split-Path -Parent $PSScriptRoot) 'server\Install-AdmxCentralStore.ps1'
+    if (Test-Path $admxScript) {
+        Write-Host '  Setting up the Administrative Templates central store...'
+        try {
+            $download = $false
+            try { $download = (Test-Connection -ComputerName 'download.microsoft.com' -Count 1 -Quiet -ErrorAction SilentlyContinue) } catch { }
+            & $admxScript -Download:$download -Quiet
+        } catch {
+            Write-Warning "  ADMX central store setup skipped: $($_.Exception.Message)"
+        }
+    }
+
     # 11. Summary.
     Write-Host ''
     Write-Host 'TempDesk Agent installed.' -ForegroundColor Green

@@ -185,6 +185,21 @@ try {
     $taskSettings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 30) -StartWhenAvailable
     Register-ScheduledTask -TaskName 'TempDesk Guest Reaper' -TaskPath '\TempDesk\' -Action $action -Trigger $trigger -Principal $principal -Settings $taskSettings -Force | Out-Null
 
+    # --- Administrative Templates central store --------------------------------------------
+    Write-Step 'Administrative Templates central store (PolicyDefinitions)'
+    $admxScript = Join-Path $PSScriptRoot 'Install-AdmxCentralStore.ps1'
+    if (Test-Path $admxScript) {
+        try {
+            # Seed from the local image; download the latest official MSI when
+            # the server has Internet access.
+            $download = $false
+            try { $download = (Test-Connection -ComputerName 'download.microsoft.com' -Count 1 -Quiet -ErrorAction SilentlyContinue) } catch { }
+            & $admxScript -DomainDnsName $env:USERDNSDOMAIN -Download:$download
+        } catch {
+            Write-Warning "ADMX central store setup skipped: $($_.Exception.Message)"
+        }
+    }
+
     Write-Host ''
     Write-Host 'TempDesk domain setup complete.' -ForegroundColor Green
     Write-Host "  Guest OU:      $guestOuDn"

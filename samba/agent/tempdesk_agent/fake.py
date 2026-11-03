@@ -10,12 +10,13 @@ import uuid
 
 from . import gpt
 from .backend import Backend, SysvolMixin, norm_guid, public_id
+from .gpoeditor import GpoEditorMixin
 from .errors import bad, conflict, not_found
 from .sambatool import build_argv
 from .util import iso
 
 
-class FakeBackend(SysvolMixin, Backend):
+class FakeBackend(GpoEditorMixin, SysvolMixin, Backend):
     name = "fake"
 
     def __init__(self, sysvol_root: str, domain="lab.example.org", netbios="LAB", admins=None):
