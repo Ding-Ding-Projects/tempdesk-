@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Console server</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#070B0B}
+@keyframes draw{from{stroke-dashoffset:700}to{stroke-dashoffset:0}}
+.s-l{stroke-dasharray:700;animation:draw 1.4s cubic-bezier(.2,.9,.25,1) both}
+@media (prefers-reduced-motion: reduce){.s-l{animation:none;stroke-dasharray:none}}
+.s-tool{border-radius:22px;background:#0E1615;border:1px solid #1C2927;padding:16px;display:flex;flex-direction:column;gap:8px;min-height:112px}
+.s-k{font-size:12px;font-weight:700;letter-spacing:.06em;color:#8EA29E;text-transform:uppercase}
+</style>
+</helmet>
+<div style="font-family: 'Segoe UI Variable Display','Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background: #070B0B; color: #E8F1EF; min-height: 100vh; padding: 20px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+  <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end">
+    <div style="flex: 1 1 auto">
+      <div style="color: #8EA29E; font-weight: 600">Windows Server 2025 Standard · Server Core · up 6 days</div>
+      <h1 style="margin: 2px 0 0; font-size: 46px; letter-spacing: -0.04em; font-weight: 800">DC01</h1>
+    </div>
+    <span style="height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid #22322F; display: inline-flex; align-items: center; gap: 8px">PowerShell</span>
+    <span style="height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid #22322F; display: inline-flex; align-items: center">Restart</span>
+    <span style="height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid #4A2E26; color: #FFB8A3; display: inline-flex; align-items: center">Shut down</span>
+  </div>
+
+  <section aria-label="Live performance" style="border-radius: 28px; background: #0E1615; border: 1px solid #1C2927; padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px">
+    <div><div class="s-k">CPU</div><div style="font-size: 44px; font-weight: 800; letter-spacing: -0.03em">7%</div><svg width="100%" height="70" viewBox="0 0 300 70" preserveAspectRatio="none" aria-hidden="true"><path class="s-l" d="M0 62 L20 58 L40 60 L60 52 L80 56 L100 40 L120 48 L140 54 L160 46 L180 52 L200 30 L220 50 L240 56 L260 52 L280 58 L300 54" fill="none" stroke="#7CF3E6" stroke-width="2.5"></path></svg></div>
+    <div><div class="s-k">Memory</div><div style="font-size: 44px; font-weight: 800; letter-spacing: -0.03em">3.1<span style="font-size: 20px; color: #8EA29E"> / 8 GB</span></div><svg width="100%" height="70" viewBox="0 0 300 70" preserveAspectRatio="none" aria-hidden="true"><path class="s-l" d="M0 36 L30 35 L60 37 L90 34 L120 34 L150 32 L180 33 L210 31 L240 32 L270 30 L300 31" fill="none" stroke="#FFB8A3" stroke-width="2.5"></path></svg></div>
+    <div><div class="s-k">Network</div><div style="font-size: 44px; font-weight: 800; letter-spacing: -0.03em">1.2<span style="font-size: 20px; color: #8EA29E"> Mb/s</span></div><svg width="100%" height="70" viewBox="0 0 300 70" preserveAspectRatio="none" aria-hidden="true"><path class="s-l" d="M0 64 L25 50 L50 62 L75 40 L100 58 L125 20 L150 54 L175 46 L200 60 L225 38 L250 56 L275 50 L300 62" fill="none" stroke="#B9C9C6" stroke-width="2.5"></path></svg></div>
+    <div><div class="s-k">Disk C:</div><div style="font-size: 44px; font-weight: 800; letter-spacing: -0.03em">41%</div><div style="height: 12px; border-radius: 6px; background: #1C2927; margin-top: 26px"><div style="width: 41%; height: 12px; border-radius: 6px; background: #7CF3E6"></div></div><div style="color: #8EA29E; font-size: 13px; margin-top: 8px">52 GB free of 89 GB</div></div>
+  </section>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px">
+    <div class="s-tool"><div class="s-k">Services</div><div style="font-size: 22px; font-weight: 800">142 running</div><div style="color: #7CF3E6; font-size: 13px">All key services healthy</div></div>
+    <div class="s-tool"><div class="s-k">Updates</div><div style="font-size: 22px; font-weight: 800; color: #FFB8A3">3 ready</div><div style="color: #8EA29E; font-size: 13px">1 needs a restart</div></div>
+    <div class="s-tool"><div class="s-k">Events</div><div style="font-size: 22px; font-weight: 800">2 warnings</div><div style="color: #8EA29E; font-size: 13px">Last 24 hours, no errors</div></div>
+    <div class="s-tool"><div class="s-k">Firewall</div><div style="font-size: 22px; font-weight: 800">On</div><div style="color: #8EA29E; font-size: 13px">Domain, Private, Public</div></div>
+    <div class="s-tool"><div class="s-k">DNS</div><div style="font-size: 22px; font-weight: 800">4 zones</div><div style="color: #8EA29E; font-size: 13px">Forwarder 1.1.1.1</div></div>
+    <div class="s-tool"><div class="s-k">Storage</div><div style="font-size: 22px; font-weight: 800">2 disks</div><div style="color: #8EA29E; font-size: 13px">3 volumes, 1 share</div></div>
+    <div class="s-tool"><div class="s-k">Files</div><div style="font-size: 22px; font-weight: 800">Browse</div><div style="color: #8EA29E; font-size: 13px">Upload and download</div></div>
+    <div class="s-tool"><div class="s-k">Registry</div><div style="font-size: 22px; font-weight: 800">Edit</div><div style="color: #8EA29E; font-size: 13px">With undo</div></div>
+    <div class="s-tool"><div class="s-k">Scheduled tasks</div><div style="font-size: 22px; font-weight: 800">38</div><div style="color: #8EA29E; font-size: 13px">TempDesk reaper ran 2 min ago</div></div>
+    <div class="s-tool"><div class="s-k">Certificates</div><div style="font-size: 22px; font-weight: 800">5</div><div style="color: #8EA29E; font-size: 13px">None expiring soon</div></div>
+    <div class="s-tool"><div class="s-k">Roles</div><div style="font-size: 22px; font-weight: 800">AD DS, DNS</div><div style="color: #8EA29E; font-size: 13px">Add or remove</div></div>
+    <div class="s-tool"><div class="s-k">Devices</div><div style="font-size: 22px; font-weight: 800">All OK</div><div style="color: #8EA29E; font-size: 13px">48 devices</div></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

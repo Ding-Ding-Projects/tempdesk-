@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Console guests</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#070B0B}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes drawer{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+.g-r{animation:rise .6s cubic-bezier(.2,.9,.25,1) both}.g-1{animation-delay:.05s}.g-2{animation-delay:.1s}.g-3{animation-delay:.15s}.g-4{animation-delay:.2s}.g-5{animation-delay:.25s}
+.g-dr{animation:drawer .6s cubic-bezier(.2,.9,.25,1) .2s both}
+@media (prefers-reduced-motion: reduce){.g-r,.g-dr{animation:none}}
+.g-card{border-radius:24px;background:#0E1615;border:1px solid #1C2927;padding:18px;display:flex;flex-direction:column;gap:12px}
+.g-chip{height:38px;padding:0 14px;border-radius:19px;border:1px solid #22322F;color:#B9C9C6;display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.g-mono{font-family:'Cascadia Mono',Consolas,monospace;font-weight:700}
+</style>
+</helmet>
+<div style="font-family: 'Segoe UI Variable Display','Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background-color: #070B0B; background-image: radial-gradient(#132220 1px, transparent 1px); background-size: 28px 28px; color: #E8F1EF; min-height: 100vh; padding: 22px 26px; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start">
+  <div style="flex: 3 1 620px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px">
+      <h1 style="margin: 0; font-size: 46px; letter-spacing: -0.04em; font-weight: 800; flex: 1 1 auto">Guests</h1>
+      <span class="g-chip" style="background: #7CF3E6; color: #04201D; border: 0">+ New sign-in</span>
+      <span class="g-chip">Import CSV</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+      <span style="flex: 1 1 260px; height: 46px; border-radius: 23px; background: #0E1615; border: 1px solid #22322F; display: flex; align-items: center; gap: 10px; padding: 0 16px; color: #8EA29E"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>Search guests<span style="margin-left: auto; font-family: Consolas, monospace; font-weight: 700">.*</span></span>
+      <span class="g-chip" style="background: #1F3A36; color: #7CF3E6; border-color: #2E5C55">All 24</span>
+      <span class="g-chip">Ending soon 3</span>
+      <span class="g-chip">Signed in 19</span>
+      <span class="g-chip">Permanent 2</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px">
+      <article class="g-card g-r" style="border: 2px solid #7CF3E6; background: #0F1F1D">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <svg width="52" height="52" viewBox="0 0 52 52" aria-label="12 minutes left"><circle cx="26" cy="26" r="22" fill="none" stroke="#3A2620" stroke-width="5"></circle><circle cx="26" cy="26" r="22" fill="none" stroke="#FFB8A3" stroke-width="5" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="125" transform="rotate(-90 26 26)"></circle><text x="26" y="31" text-anchor="middle" font-size="13" font-weight="800" fill="#FFB8A3" font-family="Segoe UI, sans-serif">12m</text></svg>
+          <div style="min-width: 0"><div class="g-mono">guest-k7m2qp</div><div style="color: #8EA29E; font-size: 13px">Alex · LIB-PC-04</div></div>
+        </div>
+        <div style="display: flex; gap: 6px"><span class="g-chip" style="height: 34px">+1 h</span><span class="g-chip" style="height: 34px">+1 day</span><span class="g-chip" style="height: 34px; margin-left: auto" aria-label="More actions">...</span></div>
+      </article>
+      <article class="g-card g-r g-1">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <svg width="52" height="52" viewBox="0 0 52 52" aria-label="48 minutes left"><circle cx="26" cy="26" r="22" fill="none" stroke="#3A2620" stroke-width="5"></circle><circle cx="26" cy="26" r="22" fill="none" stroke="#FFB8A3" stroke-width="5" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="100" transform="rotate(-90 26 26)"></circle><text x="26" y="31" text-anchor="middle" font-size="13" font-weight="800" fill="#FFB8A3" font-family="Segoe UI, sans-serif">48m</text></svg>
+          <div style="min-width: 0"><div class="g-mono">guest-3fbh9r</div><div style="color: #8EA29E; font-size: 13px">No name · LIB-PC-11</div></div>
+        </div>
+        <div style="display: flex; gap: 6px"><span class="g-chip" style="height: 34px">+1 h</span><span class="g-chip" style="height: 34px">+1 day</span></div>
+      </article>
+      <article class="g-card g-r g-2">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <svg width="52" height="52" viewBox="0 0 52 52" aria-label="2 hours left"><circle cx="26" cy="26" r="22" fill="none" stroke="#13302C" stroke-width="5"></circle><circle cx="26" cy="26" r="22" fill="none" stroke="#7CF3E6" stroke-width="5" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="70" transform="rotate(-90 26 26)"></circle><text x="26" y="31" text-anchor="middle" font-size="13" font-weight="800" fill="#7CF3E6" font-family="Segoe UI, sans-serif">2h</text></svg>
+          <div style="min-width: 0"><div class="g-mono">guest-wq2m8c</div><div style="color: #8EA29E; font-size: 13px">Priya · LIB-PC-02</div></div>
+        </div>
+        <div style="display: flex; gap: 6px"><span class="g-chip" style="height: 34px">+1 h</span><span class="g-chip" style="height: 34px">+1 day</span></div>
+      </article>
+      <article class="g-card g-r g-3">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <svg width="52" height="52" viewBox="0 0 52 52" aria-label="Permanent"><circle cx="26" cy="26" r="22" fill="none" stroke="#2E4642" stroke-width="5"></circle><text x="26" y="32" text-anchor="middle" font-size="18" font-weight="800" fill="#B9C9C6" font-family="Segoe UI, sans-serif">&#8734;</text></svg>
+          <div style="min-width: 0"><div class="g-mono">guest-lab-tutor</div><div style="color: #8EA29E; font-size: 13px">Permanent · offline</div></div>
+        </div>
+        <div style="display: flex; gap: 6px"><span class="g-chip" style="height: 34px">Set expiry</span></div>
+      </article>
+      <article class="g-card g-r g-4">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <svg width="52" height="52" viewBox="0 0 52 52" aria-label="3 days left"><circle cx="26" cy="26" r="22" fill="none" stroke="#13302C" stroke-width="5"></circle><circle cx="26" cy="26" r="22" fill="none" stroke="#7CF3E6" stroke-width="5" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="30" transform="rotate(-90 26 26)"></circle><text x="26" y="31" text-anchor="middle" font-size="13" font-weight="800" fill="#7CF3E6" font-family="Segoe UI, sans-serif">3d</text></svg>
+          <div style="min-width: 0"><div class="g-mono">guest-hp7zt4</div><div style="color: #8EA29E; font-size: 13px">Jordan · not signed in</div></div>
+        </div>
+        <div style="display: flex; gap: 6px"><span class="g-chip" style="height: 34px">+1 h</span><span class="g-chip" style="height: 34px">+1 day</span></div>
+      </article>
+      <article class="g-card g-r g-5" style="border-style: dashed; align-items: center; justify-content: center; color: #8EA29E; min-height: 120px">19 more, scroll to load</article>
+    </div>
+  </div>
+
+  <aside class="g-dr" aria-label="guest-k7m2qp" style="flex: 1 1 340px; min-width: 0; max-width: 420px; border-radius: 28px; background: #0E1615; border: 1px solid #2A3E3B; padding: 22px; display: flex; flex-direction: column; gap: 16px; position: sticky; top: 22px">
+    <div style="display: flex; align-items: center; gap: 10px"><span class="g-mono" style="font-size: 20px; flex: 1">guest-k7m2qp</span><span style="padding: 5px 10px; border-radius: 999px; background: #3A2620; color: #FFB8A3; font-size: 12px; font-weight: 800">ENDS 2:43 PM</span></div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px">
+      <div style="padding: 12px; border-radius: 16px; background: #121C1B"><div style="color: #8EA29E; font-size: 12px">Created</div>1:43 PM, guest portal</div>
+      <div style="padding: 12px; border-radius: 16px; background: #121C1B"><div style="color: #8EA29E; font-size: 12px">Signed in on</div>LIB-PC-04</div>
+      <div style="padding: 12px; border-radius: 16px; background: #121C1B"><div style="color: #8EA29E; font-size: 12px">Apps used</div>Chrome, VS Code</div>
+      <div style="padding: 12px; border-radius: 16px; background: #121C1B"><div style="color: #8EA29E; font-size: 12px">Profile size</div>412 MB</div>
+    </div>
+    <div style="font-size: 13px; font-weight: 700; letter-spacing: .06em; color: #8EA29E">EXTEND</div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap"><span class="g-chip">+30 min</span><span class="g-chip" style="background: #7CF3E6; color: #04201D; border: 0">+1 hour</span><span class="g-chip">+1 day</span><span class="g-chip">Permanent</span></div>
+    <div style="font-size: 13px; font-weight: 700; letter-spacing: .06em; color: #8EA29E">ACTIONS</div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span class="g-chip" style="height: 46px">Send a message to the PC</span>
+      <span class="g-chip" style="height: 46px">Sign out now</span>
+      <span class="g-chip" style="height: 46px">Reset password, show once</span>
+      <span class="g-chip" style="height: 46px; color: #FFB8A3; border-color: #4A2E26">Delete account and files</span>
+    </div>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

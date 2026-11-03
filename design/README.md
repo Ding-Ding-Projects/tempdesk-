@@ -33,3 +33,16 @@ The approved visual design for TempDesk, as a design canvas export. Each `.dc.ht
 | Shape | 14 to 28 px radii, pill buttons, 44 px minimum touch targets |
 
 Motion: entrance rise and pop with `cubic-bezier(.2,.9,.25,1)`, everything off under `prefers-reduced-motion`.
+
+## Admin console (control room redesign, 2026-11-03)
+
+| Artboard | Surface |
+| --- | --- |
+| `Console-Home.dc.html` | Control room home: command bar, live tiles, today's session timeline, activity with undo |
+| `Console-Guests.dc.html` | Guest cards with countdown rings, quick extend, detail drawer |
+| `Console-Directory.dc.html` | Directory as a visual map with object inspector |
+| `Console-Policy.dc.html` | Group Policy editor: full editor tree, policy list, rich state editor |
+| `Console-Server.dc.html` | Server: live performance and tool tiles |
+| `Console-Phone.dc.html` | The console on a phone: command bar on top, bottom bar navigation |
+
+Ground `#070B0B` with a 28 px dot grid, tiles `#0E1615` with `#1C2927` borders, 22 to 28 px radii, floating dock navigation. The plain HTTP warning is a status pill, not a banner. The older `Admin-*.dc.html` artboards are superseded.

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Console Group Policy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#070B0B}
+@keyframes sheet{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+.p-sh{animation:sheet .55s cubic-bezier(.2,.9,.25,1) .15s both}
+@media (prefers-reduced-motion: reduce){.p-sh{animation:none}}
+.p-t{display:flex;align-items:center;gap:8px;min-height:34px;padding:0 10px;border-radius:10px;font-size:14px;color:#B9C9C6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-c{font-size:12px;padding:1px 8px;border-radius:9px;background:#13302C;color:#7CF3E6;font-weight:700;margin-left:auto}
+.p-row{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-radius:14px}
+.p-st{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px}
+.p-opt{flex:1;min-height:64px;padding:10px 14px;border-radius:16px;border:1px solid #22322F;display:flex;flex-direction:column;justify-content:center;gap:2px}
+</style>
+</helmet>
+<div style="font-family: 'Segoe UI Variable Display','Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background: #070B0B; color: #E8F1EF; min-height: 100vh; padding: 20px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+  <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+    <div style="flex: 1 1 auto">
+      <div style="color: #8EA29E; font-size: 13px; font-weight: 600">Group Policy › Guest User Policy</div>
+      <h1 style="margin: 2px 0 0; font-size: 34px; letter-spacing: -0.03em; font-weight: 800">Guest User Policy</h1>
+    </div>
+    <span style="height: 40px; padding: 0 14px; border-radius: 20px; background: #121C1B; border: 1px solid #22322F; display: inline-flex; align-items: center; gap: 8px; font-size: 14px">Linked to <b>Guests</b> · enforced</span>
+    <span style="height: 40px; padding: 0 14px; border-radius: 20px; background: #121C1B; border: 1px solid #22322F; display: inline-flex; align-items: center; font-size: 14px">41 settings</span>
+    <span style="height: 40px; padding: 0 14px; border-radius: 20px; background: #121C1B; border: 1px solid #22322F; display: inline-flex; align-items: center; font-size: 14px">Report</span>
+  </div>
+
+  <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 12px; align-items: stretch; min-height: 0">
+    <nav aria-label="Policy tree" style="flex: 1 1 300px; max-width: 340px; min-width: 0; border-radius: 24px; background: #0E1615; border: 1px solid #1C2927; padding: 12px; display: flex; flex-direction: column; gap: 2px">
+      <div role="tablist" aria-label="Scope" style="display: flex; padding: 4px; border-radius: 14px; background: #070B0B; margin-bottom: 8px">
+        <button type="button" role="tab" aria-selected="false" style="flex: 1; height: 38px; border-radius: 10px; border: 0; background: transparent; color: #8EA29E; font-weight: 600">Computer</button>
+        <button type="button" role="tab" aria-selected="true" style="flex: 1; height: 38px; border-radius: 10px; border: 0; background: #7CF3E6; color: #04201D; font-weight: 800">User</button>
+      </div>
+      <span class="p-t" style="color: #E8F1EF; font-weight: 700">&#9662; Policies</span>
+      <span class="p-t" style="padding-left: 22px">&#9656; Software Settings</span>
+      <span class="p-t" style="padding-left: 22px">&#9656; Windows Settings <span class="p-c">6</span></span>
+      <span class="p-t" style="padding-left: 22px; color: #E8F1EF">&#9662; Administrative Templates <span class="p-c">29</span></span>
+      <span class="p-t" style="padding-left: 40px">Control Panel</span>
+      <span class="p-t" style="padding-left: 40px">Desktop</span>
+      <span class="p-t" style="padding-left: 40px">Start Menu and Taskbar <span class="p-c">4</span></span>
+      <span class="p-t" style="padding-left: 40px; background: #1F3A36; color: #E8F1EF; font-weight: 700">System <span class="p-c">7</span></span>
+      <span class="p-t" style="padding-left: 40px">Windows Components <span class="p-c">18</span></span>
+      <span class="p-t" style="padding-left: 40px">All Settings</span>
+      <span class="p-t" style="color: #E8F1EF; font-weight: 700; margin-top: 6px">&#9662; Preferences</span>
+      <span class="p-t" style="padding-left: 22px">&#9656; Windows Settings <span class="p-c">3</span></span>
+      <span class="p-t" style="padding-left: 40px">Drive Maps</span>
+      <span class="p-t" style="padding-left: 40px">Shortcuts <span class="p-c">3</span></span>
+      <span class="p-t" style="padding-left: 22px">&#9656; Control Panel Settings</span>
+      <div style="margin-top: auto; padding: 10px; border-radius: 14px; background: #121C1B; font-size: 12px; color: #8EA29E; line-height: 1.5">Administrative Templates: <b style="color: #E8F1EF">4,812 policies</b> from the central store, 214 ADMX files, en-US</div>
+    </nav>
+
+    <section aria-label="Policies in System" style="flex: 2 1 420px; min-width: 0; border-radius: 24px; background: #0E1615; border: 1px solid #1C2927; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; gap: 8px; align-items: center">
+        <span style="flex: 1; height: 46px; border-radius: 23px; background: #070B0B; border: 1px solid #22322F; display: flex; align-items: center; gap: 10px; padding: 0 16px; color: #E8F1EF"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#8EA29E" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>command prompt<span style="margin-left: auto; color: #7CF3E6; font-size: 13px; font-weight: 700">3 in all policies</span></span>
+        <button type="button" aria-label="Regular expression" style="width: 46px; height: 46px; border-radius: 23px; border: 1px solid #22322F; background: transparent; color: #8EA29E; font-family: Consolas, monospace; font-weight: 700">.*</button>
+      </div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap">
+        <span style="height: 34px; padding: 0 12px; border-radius: 17px; background: #1F3A36; color: #7CF3E6; display: inline-flex; align-items: center; font-size: 13px; font-weight: 700">All</span>
+        <span style="height: 34px; padding: 0 12px; border-radius: 17px; border: 1px solid #22322F; color: #B9C9C6; display: inline-flex; align-items: center; font-size: 13px">Configured 7</span>
+        <span style="height: 34px; padding: 0 12px; border-radius: 17px; border: 1px solid #22322F; color: #B9C9C6; display: inline-flex; align-items: center; font-size: 13px">Supported on Windows 11</span>
+      </div>
+      <div class="p-row" style="background: #13201E; outline: 2px solid #7CF3E6"><span style="flex: 1; font-weight: 700">Prevent access to the command prompt</span><span class="p-st" style="background: #7CF3E6; color: #04201D">ENABLED</span></div>
+      <div class="p-row"><span style="flex: 1">Prevent access to registry editing tools</span><span class="p-st" style="background: #13302C; color: #7CF3E6">ENABLED</span></div>
+      <div class="p-row"><span style="flex: 1">Run only specified Windows applications</span><span class="p-st" style="background: #13302C; color: #7CF3E6">ENABLED</span></div>
+      <div class="p-row"><span style="flex: 1">Don't run specified Windows applications</span><span class="p-st" style="color: #8EA29E">NOT SET</span></div>
+      <div class="p-row"><span style="flex: 1">Turn off Windows Update device driver search prompt</span><span class="p-st" style="background: #3A2620; color: #FFB8A3">DISABLED</span></div>
+      <div class="p-row"><span style="flex: 1">Download missing COM components</span><span class="p-st" style="color: #8EA29E">NOT SET</span></div>
+      <div class="p-row"><span style="flex: 1">Century interpretation for Year 2000</span><span class="p-st" style="color: #8EA29E">NOT SET</span></div>
+    </section>
+
+    <section class="p-sh" aria-label="Policy editor" style="flex: 2 1 420px; min-width: 0; border-radius: 24px; background: #101C1A; border: 1px solid #2A3E3B; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <div><div style="color: #8EA29E; font-size: 13px">User › Administrative Templates › System</div><h2 style="margin: 4px 0 0; font-size: 22px; line-height: 1.25">Prevent access to the command prompt</h2></div>
+      <div role="radiogroup" aria-label="State" style="display: flex; gap: 8px">
+        <label class="p-opt"><span style="font-weight: 700">Not set</span><span style="font-size: 12px; color: #8EA29E">Inherit</span></label>
+        <label class="p-opt" style="background: #7CF3E6; color: #04201D; border-color: #7CF3E6"><span style="font-weight: 800">Enabled</span><span style="font-size: 12px">Command prompt blocked</span></label>
+        <label class="p-opt"><span style="font-weight: 700">Disabled</span><span style="font-size: 12px; color: #8EA29E">Always allowed</span></label>
+      </div>
+      <div style="padding: 14px; border-radius: 16px; background: #0B1312; display: flex; flex-direction: column; gap: 10px">
+        <div style="font-weight: 700">Also block batch files?</div>
+        <div role="radiogroup" style="display: flex; gap: 8px">
+          <label class="p-opt" style="min-height: 52px; background: #1F3A36; border-color: #2E5C55"><span style="font-weight: 700; color: #7CF3E6">No</span><span style="font-size: 12px; color: #B9C9C6">Logon scripts still run</span></label>
+          <label class="p-opt" style="min-height: 52px"><span style="font-weight: 700">Yes</span><span style="font-size: 12px; color: #8EA29E">Scripts stop too</span></label>
+        </div>
+      </div>
+      <p style="margin: 0; color: #B9C9C6; line-height: 1.55; font-size: 14px">Stops people from opening the command prompt. Leave batch files allowed so TempDesk logon scripts keep working.</p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px"><span style="padding: 5px 10px; border-radius: 10px; background: #121C1B; color: #8EA29E">Windows 2000 and later</span><span style="padding: 5px 10px; border-radius: 10px; background: #121C1B; color: #8EA29E">HKCU\...\System\DisableCMD</span></div>
+      <div style="display: flex; gap: 10px; margin-top: auto">
+        <button type="button" style="height: 48px; padding: 0 22px; border-radius: 24px; border: 0; background: #7CF3E6; color: #04201D; font-weight: 800">Apply</button>
+        <button type="button" style="height: 48px; padding: 0 18px; border-radius: 24px; border: 1px solid #2A3E3B; background: transparent; color: #E8F1EF">Previous</button>
+        <button type="button" style="height: 48px; padding: 0 18px; border-radius: 24px; border: 1px solid #2A3E3B; background: transparent; color: #E8F1EF">Next</button>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

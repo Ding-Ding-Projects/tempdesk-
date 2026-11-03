@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Console directory</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#070B0B}
+@keyframes pop{0%{opacity:0;transform:scale(.85)}100%{opacity:1;transform:none}}
+.d-n{animation:pop .5s cubic-bezier(.2,.9,.25,1.3) both}.d-1{animation-delay:.05s}.d-2{animation-delay:.1s}.d-3{animation-delay:.15s}.d-4{animation-delay:.2s}
+@media (prefers-reduced-motion: reduce){.d-n{animation:none}}
+.d-node{position:absolute;padding:10px 14px;border-radius:16px;background:#0E1615;border:1px solid #2A3E3B;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.d-sm{font-weight:400;color:#8EA29E;font-size:12px}
+.d-row{display:grid;grid-template-columns:140px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid #18221F;font-size:14px}
+</style>
+</helmet>
+<div style="font-family: 'Segoe UI Variable Display','Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background: #070B0B; color: #E8F1EF; min-height: 100vh; padding: 20px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+  <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+    <h1 style="margin: 0; font-size: 40px; letter-spacing: -0.04em; font-weight: 800; flex: 1 1 auto">Directory</h1>
+    <div role="tablist" aria-label="View" style="display: flex; padding: 4px; border-radius: 999px; background: #0E1615; border: 1px solid #1C2927">
+      <button type="button" role="tab" aria-selected="true" style="height: 38px; padding: 0 16px; border-radius: 19px; border: 0; background: #7CF3E6; color: #04201D; font-weight: 800">Map</button>
+      <button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 16px; border-radius: 19px; border: 0; background: transparent; color: #8EA29E">Tree</button>
+      <button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 16px; border-radius: 19px; border: 0; background: transparent; color: #8EA29E">LDAP query</button>
+    </div>
+    <span style="height: 44px; padding: 0 16px; border-radius: 22px; background: #0E1615; border: 1px solid #22322F; display: flex; align-items: center; gap: 8px; color: #8EA29E; min-width: 260px">Find users, groups, computers…</span>
+  </div>
+  <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 12px; align-items: stretch">
+    <section aria-label="Directory map" style="flex: 3 1 600px; min-width: 0; min-height: 640px; position: relative; border-radius: 28px; background-color: #0B1110; background-image: radial-gradient(#15211F 1px, transparent 1px); background-size: 24px 24px; border: 1px solid #1C2927; overflow: hidden">
+      <svg aria-hidden="true" width="100%" height="100%" viewBox="0 0 900 640" preserveAspectRatio="none" style="position: absolute; inset: 0">
+        <path d="M450 90 C450 160 200 150 200 230" fill="none" stroke="#2A3E3B" stroke-width="2"></path>
+        <path d="M450 90 C450 160 450 170 450 230" fill="none" stroke="#2A3E3B" stroke-width="2"></path>
+        <path d="M450 90 C450 160 700 150 700 230" fill="none" stroke="#2A3E3B" stroke-width="2"></path>
+        <path d="M450 270 C450 340 320 330 320 400" fill="none" stroke="#7CF3E6" stroke-width="2.5"></path>
+        <path d="M450 270 C450 340 580 330 580 400" fill="none" stroke="#2A3E3B" stroke-width="2"></path>
+        <path d="M320 440 C320 500 240 490 240 540" fill="none" stroke="#7CF3E6" stroke-width="2"></path>
+        <path d="M320 440 C320 500 400 490 400 540" fill="none" stroke="#7CF3E6" stroke-width="2"></path>
+      </svg>
+      <span class="d-node d-n" style="left: 50%; top: 50px; transform: translateX(-50%); background: #7CF3E6; color: #04201D; border: 0">lab.example.org</span>
+      <span class="d-node d-n d-1" style="left: 22%; top: 210px; transform: translateX(-50%)">Users <span class="d-sm">18</span></span>
+      <span class="d-node d-n d-1" style="left: 50%; top: 210px; transform: translateX(-50%); border-color: #7CF3E6">TempDesk <span class="d-sm">OU</span></span>
+      <span class="d-node d-n d-1" style="left: 78%; top: 210px; transform: translateX(-50%)">Domain Controllers <span class="d-sm">1</span></span>
+      <span class="d-node d-n d-2" style="left: 35.5%; top: 380px; transform: translateX(-50%); border-color: #7CF3E6; background: #13201E">Guests <span class="d-sm" style="color: #7CF3E6">24 users</span><span style="padding: 2px 8px; border-radius: 8px; background: #3A2620; color: #FFB8A3; font-size: 11px">GPO</span></span>
+      <span class="d-node d-n d-2" style="left: 64.5%; top: 380px; transform: translateX(-50%)">Computers <span class="d-sm">18 PCs</span><span style="padding: 2px 8px; border-radius: 8px; background: #3A2620; color: #FFB8A3; font-size: 11px">GPO</span></span>
+      <span class="d-node d-n d-3" style="left: 26.5%; top: 520px; transform: translateX(-50%); font-family: 'Cascadia Mono',Consolas,monospace; font-size: 13px">guest-k7m2qp</span>
+      <span class="d-node d-n d-4" style="left: 44.5%; top: 520px; transform: translateX(-50%); font-family: 'Cascadia Mono',Consolas,monospace; font-size: 13px">+23 more</span>
+      <div style="position: absolute; left: 16px; bottom: 16px; display: flex; gap: 6px">
+        <button type="button" aria-label="Zoom out" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #22322F; background: #0E1615; color: #E8F1EF">-</button>
+        <button type="button" aria-label="Zoom in" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #22322F; background: #0E1615; color: #E8F1EF">+</button>
+        <button type="button" style="height: 44px; padding: 0 14px; border-radius: 22px; border: 1px solid #22322F; background: #0E1615; color: #E8F1EF">Fit</button>
+      </div>
+    </section>
+    <aside aria-label="Selected object" style="flex: 1 1 320px; min-width: 0; max-width: 420px; border-radius: 28px; background: #0E1615; border: 1px solid #2A3E3B; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="color: #8EA29E; font-size: 13px">OU=Guests,OU=TempDesk,DC=lab,DC=example,DC=org</div>
+      <h2 style="margin: 0; font-size: 26px; letter-spacing: -0.02em">Guests</h2>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <span style="height: 38px; padding: 0 14px; border-radius: 19px; background: #7CF3E6; color: #04201D; display: inline-flex; align-items: center; font-weight: 800; font-size: 14px">+ New object</span>
+        <span style="height: 38px; padding: 0 14px; border-radius: 19px; border: 1px solid #22322F; display: inline-flex; align-items: center; font-size: 14px">Move</span>
+        <span style="height: 38px; padding: 0 14px; border-radius: 19px; border: 1px solid #22322F; display: inline-flex; align-items: center; font-size: 14px">Delegate</span>
+      </div>
+      <div>
+        <div class="d-row"><span style="color: #8EA29E">Linked policies</span><span>Guest User Policy <span style="color: #8EA29E">(enforced)</span></span></div>
+        <div class="d-row"><span style="color: #8EA29E">Protected</span><span>Yes, from accidental deletion</span></div>
+        <div class="d-row"><span style="color: #8EA29E">Objects</span><span>24 users</span></div>
+        <div class="d-row"><span style="color: #8EA29E">Created</span><span>2 Nov 2026, 2:03 PM</span></div>
+      </div>
+      <div style="font-size: 13px; font-weight: 700; letter-spacing: .06em; color: #8EA29E; margin-top: 6px">ALL ATTRIBUTES</div>
+      <span style="height: 44px; border-radius: 14px; background: #070B0B; border: 1px solid #22322F; display: flex; align-items: center; padding: 0 14px; color: #8EA29E">Filter 37 attributes</span>
+      <div class="d-row" style="font-family: 'Cascadia Mono',Consolas,monospace; font-size: 13px"><span style="color: #8EA29E">description</span><span>Temporary guest accounts</span></div>
+      <div class="d-row" style="font-family: 'Cascadia Mono',Consolas,monospace; font-size: 13px"><span style="color: #8EA29E">gPLink</span><span style="word-break: break-all">[LDAP://cn={7A3...}...;2]</span></div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
