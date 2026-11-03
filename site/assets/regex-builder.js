@@ -416,7 +416,7 @@
   var CSS = [
     '.rxb-pop :focus-visible{outline:3px solid var(--primary,#3b6bd6);outline-offset:2px}',
     '.rxb-host{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;min-width:0}',
-    '.rxb-field{display:flex;align-items:center;flex:1 1 auto;min-width:0;width:100%;box-sizing:border-box;min-height:40px;padding:0 2px 0 10px;gap:2px;border:1px solid var(--outline2,var(--outline,#8a8a8a));border-radius:var(--radius,10px);background:var(--s1,var(--ground,Field));color:var(--text,FieldText);container-type:inline-size}',
+    '.rxb-field{display:flex;align-items:center;flex:1 1 auto;min-width:0;width:100%;box-sizing:border-box;min-height:40px;padding:0 2px 0 10px;gap:2px;border:1px solid var(--outline2,var(--outline,#8a8a8a));border-radius:var(--radius,10px);background:var(--s1,var(--ground,Field));color:var(--text,FieldText)}',
     '.rxb-field:focus-within{border-color:var(--primary,#3b6bd6);box-shadow:0 0 0 2px var(--primary-soft,rgba(80,120,255,.3))}',
     '.rxb-field .rxb-icon{display:inline-flex;flex:0 0 auto;color:var(--muted,GrayText);margin-right:4px}',
     '.rxb-field input.rxb-input,.rxb-field .rxb-input{flex:1 1 auto!important;min-width:0!important;width:auto!important;max-width:none!important;margin:0!important;padding:8px 2px!important;border:0!important;outline:none!important;box-shadow:none!important;background:transparent!important;color:inherit!important;font:inherit;min-height:0!important;height:auto!important;border-radius:0!important}',
@@ -428,7 +428,7 @@
     '.rxb-ib:focus-visible{outline:2px solid var(--primary,#3b6bd6);outline-offset:0}',
     '.rxb-ib[aria-pressed="true"],.rxb-ib[aria-expanded="true"]{background:var(--primary-soft,rgba(80,120,255,.2));color:var(--primary,#3b6bd6)}',
     '.rxb-field[data-regex="true"] .rxb-open{color:var(--primary,#3b6bd6)}',
-    '@container (max-width:219px){.rxb-tog{display:none!important}.rxb-icon{display:none!important}}',
+    '.rxb-field.rxb-narrow .rxb-tog,.rxb-field.rxb-narrow .rxb-icon{display:none!important}',
     '.rxb-tools[hidden]{display:none!important}',
     '.rxb-host>input{flex:1 1 auto;min-width:0}',
     '.rxb-pop{position:fixed;z-index:2147483000;box-sizing:border-box;width:min(640px,calc(100vw - 16px));max-height:min(78vh,720px);overflow:auto;padding:14px 16px 12px;border:1px solid var(--outline2,var(--outline,#8a8a8a));border-radius:14px;background:var(--surface,var(--ground,Canvas));color:var(--text,CanvasText);box-shadow:var(--shadow,0 12px 40px rgba(0,0,0,.28));font:inherit;font-size:14px;line-height:1.4;overscroll-behavior:contain}',
@@ -537,6 +537,8 @@
       if (input.parentNode) input.parentNode.insertBefore(field, input);
       field.appendChild(icon); field.appendChild(input); field.appendChild(tools);
       input.classList.add('rxb-input');
+      // Narrow fields (under 220 px) keep only the builder button, which also holds the switch.
+      if (typeof ResizeObserver === 'function') new ResizeObserver(function (en) { var w = en[0] && en[0].contentRect ? en[0].contentRect.width : 999; field.classList.toggle('rxb-narrow', w > 0 && w < 220); }).observe(field);
       field.addEventListener('mousedown', function (e) { if (e.target === field || e.target === icon || icon.contains(e.target)) { e.preventDefault(); input.focus(); } });
     }
 

@@ -414,13 +414,22 @@
   // DOM: attachRegexBuilder
   // ------------------------------------------------------------------------------------------
   var CSS = [
-    '.rxb-btn{min-width:44px;min-height:44px;padding:0 10px;border:1px solid var(--outline2,var(--outline,#8a8a8a));border-radius:var(--radius,10px);background:transparent;color:inherit;font:inherit;font-size:.9em;cursor:pointer;flex:0 0 auto}',
-    '.rxb-btn[aria-pressed="true"],.rxb-btn[aria-expanded="true"]{background:var(--primary-soft,rgba(80,120,255,.18));border-color:var(--primary,#3b6bd6)}',
-    '.rxb-btn:focus-visible,.rxb-pop :focus-visible{outline:3px solid var(--primary,#3b6bd6);outline-offset:2px}',
-    '.rxb-tog{font-family:var(--mono,ui-monospace,Consolas,monospace)}',
+    '.rxb-pop :focus-visible{outline:3px solid var(--primary,#3b6bd6);outline-offset:2px}',
     '.rxb-host{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;min-width:0}',
-    '.rxb-tools{display:inline-flex;flex:0 0 auto;flex-wrap:nowrap;gap:4px;align-items:center}',
-    '.rxb-tools .rxb-btn{min-height:44px;padding:0 8px}',
+    '.rxb-field{display:flex;align-items:center;flex:1 1 auto;min-width:0;width:100%;box-sizing:border-box;min-height:40px;padding:0 2px 0 10px;gap:2px;border:1px solid var(--outline2,var(--outline,#8a8a8a));border-radius:var(--radius,10px);background:var(--s1,var(--ground,Field));color:var(--text,FieldText)}',
+    '.rxb-field:focus-within{border-color:var(--primary,#3b6bd6);box-shadow:0 0 0 2px var(--primary-soft,rgba(80,120,255,.3))}',
+    '.rxb-field .rxb-icon{display:inline-flex;flex:0 0 auto;color:var(--muted,GrayText);margin-right:4px}',
+    '.rxb-field input.rxb-input,.rxb-field .rxb-input{flex:1 1 auto!important;min-width:0!important;width:auto!important;max-width:none!important;margin:0!important;padding:8px 2px!important;border:0!important;outline:none!important;box-shadow:none!important;background:transparent!important;color:inherit!important;font:inherit;min-height:0!important;height:auto!important;border-radius:0!important}',
+    '.rxb-field .rxb-input::-webkit-search-cancel-button{margin-right:2px}',
+    '.rxb-tools{display:inline-flex;flex:0 0 auto;flex-wrap:nowrap;gap:0;align-items:center}',
+    '.rxb-ib{position:relative;flex:0 0 auto;width:32px;height:32px;padding:0;margin:0 2px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:8px;background:transparent;color:var(--muted,inherit);font:600 13px/1 var(--mono,ui-monospace,Consolas,monospace);cursor:pointer}',
+    '.rxb-ib::before{content:"";position:absolute;inset:-6px -2px}',
+    '.rxb-ib:hover{background:var(--primary-soft,rgba(80,120,255,.12));color:var(--text,inherit)}',
+    '.rxb-ib:focus-visible{outline:2px solid var(--primary,#3b6bd6);outline-offset:0}',
+    '.rxb-ib[aria-pressed="true"],.rxb-ib[aria-expanded="true"]{background:var(--primary-soft,rgba(80,120,255,.2));color:var(--primary,#3b6bd6)}',
+    '.rxb-field[data-regex="true"] .rxb-open{color:var(--primary,#3b6bd6)}',
+    '.rxb-field.rxb-narrow .rxb-tog,.rxb-field.rxb-narrow .rxb-icon{display:none!important}',
+    '.rxb-tools[hidden]{display:none!important}',
     '.rxb-host>input{flex:1 1 auto;min-width:0}',
     '.rxb-pop{position:fixed;z-index:2147483000;box-sizing:border-box;width:min(640px,calc(100vw - 16px));max-height:min(78vh,720px);overflow:auto;padding:14px 16px 12px;border:1px solid var(--outline2,var(--outline,#8a8a8a));border-radius:14px;background:var(--surface,var(--ground,Canvas));color:var(--text,CanvasText);box-shadow:var(--shadow,0 12px 40px rgba(0,0,0,.28));font:inherit;font-size:14px;line-height:1.4;overscroll-behavior:contain}',
     '.rxb-pop[hidden]{display:none}',
@@ -431,7 +440,7 @@
     '.rxb-x{min-width:44px;min-height:44px;border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer;border-radius:10px}',
     '.rxb-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}',
     '.rxb-chip{min-height:44px;padding:0 12px;border:1px solid var(--outline2,var(--outline,#8a8a8a));border-radius:22px;background:transparent;color:inherit;font:inherit;cursor:pointer}',
-    '.rxb-chip:hover,.rxb-btn:hover{background:var(--primary-soft,rgba(80,120,255,.12))}',
+    '.rxb-chip:hover{background:var(--primary-soft,rgba(80,120,255,.12))}',
     '.rxb-in{min-height:44px;padding:6px 10px;border:1px solid var(--outline2,var(--outline,#8a8a8a));border-radius:10px;background:transparent;color:inherit;font:inherit;min-width:0}',
     '.rxb-num{width:5.5em}',
     '.rxb-ed{position:relative;font-family:var(--mono,ui-monospace,Consolas,monospace);font-size:14px}',
@@ -504,9 +513,15 @@
     input.setAttribute('data-rxb', id);
     input.setAttribute('autocomplete', 'off'); input.setAttribute('spellcheck', 'false');
 
-    var toggle = el(doc, 'button', { type: 'button', class: 'rxb-btn rxb-tog', 'aria-pressed': String(!!state.regex), 'aria-label': T('rx.toggle') + ': ' + label, title: T('rx.toggle'), text: '.*' });
-    var bbtn = el(doc, 'button', { type: 'button', class: 'rxb-btn rxb-open', 'aria-expanded': 'false', 'aria-haspopup': 'dialog', 'aria-controls': id + '-pop', 'aria-label': T('rx.builderFor', label), title: T('rx.builderFor', label), text: T('rx.builder') });
+    // The controls live inside the field as a compact trailing segment: search icon, the input,
+    // then a ".*" toggle and a builder icon button (32 px visual, 44 px hit area). Under 220 px
+    // the toggle collapses and the builder (which has the same switch) remains.
+    var toggle = el(doc, 'button', { type: 'button', class: 'rxb-ib rxb-tog', 'aria-pressed': String(!!state.regex), 'aria-label': T('rx.toggle') + ': ' + label, title: T('rx.toggle'), text: '.*' });
+    var bbtn = el(doc, 'button', { type: 'button', class: 'rxb-ib rxb-open', 'aria-expanded': 'false', 'aria-haspopup': 'dialog', 'aria-controls': id + '-pop', 'aria-label': T('rx.builderFor', label), title: T('rx.builderFor', label) });
+    bbtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 4H6a2 2 0 0 0-2 2v4l-2 2 2 2v4a2 2 0 0 0 2 2h2M16 4h2a2 2 0 0 1 2 2v4l2 2-2 2v4a2 2 0 0 1-2 2h-2"/><path d="M9.5 12h5M12 9.5v5"/></svg>';
     var tools = el(doc, 'span', { class: 'rxb-tools', 'data-rxb-for': id }, [toggle, bbtn]);
+    var field = null;
+    function setPressed(on) { toggle.setAttribute('aria-pressed', String(!!on)); if (field) field.setAttribute('data-regex', String(!!on)); }
     function relabel() {
       label = labelNow();
       toggle.setAttribute('aria-label', T('rx.toggle') + ': ' + label);
@@ -515,8 +530,17 @@
     }
     var labelObs = null;
     if (!o.label && typeof MutationObserver === 'function') { labelObs = new MutationObserver(relabel); labelObs.observe(input, { attributes: true, attributeFilter: ['aria-label'] }); }
-    if (o.container) o.container.appendChild(tools); else insertAfter(input, tools);
-    var host = input.parentElement; if (host && !o.container && !o.noHostClass) host.classList.add('rxb-host');
+    if (o.container) o.container.appendChild(tools);
+    else {
+      field = el(doc, 'span', { class: 'rxb-field', 'data-regex': String(!!state.regex) });
+      var icon = el(doc, 'span', { class: 'rxb-icon', 'aria-hidden': 'true' }); icon.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+      if (input.parentNode) input.parentNode.insertBefore(field, input);
+      field.appendChild(icon); field.appendChild(input); field.appendChild(tools);
+      input.classList.add('rxb-input');
+      // Narrow fields (under 220 px) keep only the builder button, which also holds the switch.
+      if (typeof ResizeObserver === 'function') new ResizeObserver(function (en) { var w = en[0] && en[0].contentRect ? en[0].contentRect.width : 999; field.classList.toggle('rxb-narrow', w > 0 && w < 220); }).observe(field);
+      field.addEventListener('mousedown', function (e) { if (e.target === field || e.target === icon || icon.contains(e.target)) { e.preventDefault(); input.focus(); } });
+    }
 
     // ---- popover ----
     var pop = null, parts = {}, lastFocus = null, allowSlow = false, evalSeq = 0, sampleTouched = false;
@@ -543,7 +567,7 @@
 
     function setRegex(on) {
       state.regex = !!on;
-      toggle.setAttribute('aria-pressed', String(state.regex));
+      setPressed(state.regex);
       if (state.regex) { state.pattern = state.query; }
       if (pop && !pop.hidden) syncPopover(true);
       emit();
@@ -565,7 +589,7 @@
       var pre = el(doc, 'pre', { 'aria-hidden': 'true' });
       var ta = el(doc, 'textarea', { id: id + '-pat', rows: '2', spellcheck: 'false', autocomplete: 'off', 'aria-label': T('rx.pattern'), maxlength: String(LIMITS.pattern), 'aria-describedby': id + '-msg ' + id + '-ex' });
       ta.addEventListener('input', function () {
-        state.pattern = ta.value; if (!state.regex) { state.regex = true; toggle.setAttribute('aria-pressed', 'true'); }
+        state.pattern = ta.value; if (!state.regex) { state.regex = true; setPressed(true); }
         state.query = ta.value; input.value = ta.value; allowSlow = false; syncPopover(false); emit();
       });
       ta.addEventListener('scroll', function () { pre.scrollTop = ta.scrollTop; });
@@ -668,7 +692,7 @@
       });
       function useGallery(i) {
         var g = GALLERY[i]; gi = i; markG();
-        state.regex = true; state.pattern = g.pattern; state.query = g.pattern; input.value = g.pattern; toggle.setAttribute('aria-pressed', 'true');
+        state.regex = true; state.pattern = g.pattern; state.query = g.pattern; input.value = g.pattern; setPressed(true);
         if (!sampleTouched && !parts.sample.value) parts.sample.value = g.sample;
         syncPopover(true); emit();
       }
@@ -688,7 +712,7 @@
     function syncFlagsFromCase() { var fl = normFlags(state.flags).replace('i', ''); if (!state.caseSensitive) fl += 'i'; state.flags = normFlags(fl); }
     function insert(text, after) {
       var ta = parts.ta, s = ta.selectionStart == null ? ta.value.length : ta.selectionStart, e = ta.selectionEnd == null ? s : ta.selectionEnd;
-      if (!state.regex) { state.regex = true; toggle.setAttribute('aria-pressed', 'true'); if (!state.pattern) { state.pattern = state.query ? escapeRegex(state.query) : ''; ta.value = state.pattern; s = e = ta.value.length; } }
+      if (!state.regex) { state.regex = true; setPressed(true); if (!state.pattern) { state.pattern = state.query ? escapeRegex(state.query) : ''; ta.value = state.pattern; s = e = ta.value.length; } }
       var v = ta.value.slice(0, s) + text + (after || '') + ta.value.slice(e);
       if (v.length > LIMITS.pattern) { parts.msg.textContent = T('rx.tooLong', LIMITS.pattern); parts.msg.classList.add('bad'); return; }
       ta.value = v; state.pattern = v; state.query = v; input.value = v;
@@ -785,7 +809,7 @@
       if (!pop || pop.hidden) return;
       var vw = win.innerWidth || 1024, vh = win.innerHeight || 768;
       if (vw < 600) { pop.style.left = '0px'; pop.style.top = 'auto'; return; }
-      var r = input.getBoundingClientRect(), pw = Math.min(640, vw - 16), ph = pop.offsetHeight || 400;
+      var r = (field || input).getBoundingClientRect(), pw = Math.min(640, vw - 16), ph = pop.offsetHeight || 400;
       var left = Math.max(8, Math.min(r.left, vw - pw - 8));
       var below = vh - r.bottom - 8, above = r.top - 8, top;
       if (below >= ph || below >= above) top = Math.min(r.bottom + 6, Math.max(8, vh - ph - 8));
@@ -801,7 +825,7 @@
       if (e.shiftKey && doc.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && doc.activeElement === last) { e.preventDefault(); first.focus(); }
     }
-    function outside(e) { if (!pop || pop.hidden) return; if (pop.contains(e.target) || tools.contains(e.target) || e.target === input) return; close(true); }
+    function outside(e) { if (!pop || pop.hidden) return; if (pop.contains(e.target) || tools.contains(e.target) || e.target === input || (field && field.contains(e.target))) return; close(true); }
     function open() {
       if (active && active !== api) active.close();
       if (!pop) build();
@@ -829,15 +853,16 @@
       close(true); clearTimeout(tm); if (labelObs) labelObs.disconnect();
       input.removeEventListener('input', onInput); input.removeEventListener('keydown', onKey);
       tools.remove(); if (pop) pop.remove(); pop = null; input.removeAttribute('data-rxb');
+      if (field && field.parentNode) { field.parentNode.insertBefore(input, field); field.remove(); input.classList.remove('rxb-input'); }
     }
     var api = {
-      open: open, close: close, destroy: destroy, el: tools, toggle: toggle, builderButton: bbtn, input: input,
+      open: open, close: close, destroy: destroy, el: tools, field: field, toggle: toggle, builderButton: bbtn, input: input,
       get state() { return publicState(); },
       set: function (s) {
         state = Object.assign(state, s || {}); state.flags = normFlags(state.flags);
         if (state.regex && s && s.pattern === undefined) state.pattern = state.query;
         if (state.regex && s && s.query === undefined) state.query = state.pattern;
-        input.value = state.query; toggle.setAttribute('aria-pressed', String(!!state.regex));
+        input.value = state.query; setPressed(state.regex);
         if (pop && !pop.hidden) syncPopover(true);
         emit();
       },

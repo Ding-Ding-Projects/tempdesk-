@@ -1380,7 +1380,7 @@ function buildSearchUi(host, kind) {
   if (!host) { renderGlobalResults(); gsUis.forEach((u) => { u.box.input.value = gs.q; }); return; }
   const results = h('ul', { class: 'gs-results', id: kind + '-gs-results', role: 'listbox', 'aria-label': t('search.global.results'), hidden: kind === 'top' });
   const n = catalog ? catalog.components.reduce((a, c) => { let k = 0; (function w(l) { l.forEach((x) => { k++; w(x.children || []); }); })(c.settings); return a + k; }, 0) : 0;
-  const box = searchBox({ label: t('search.global'), placeholder: kind === 'top' ? t('studio.searchPh', [n || '']) : t('search.global.ph'), value: gs.q, regex: gs.regex, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
+  const box = searchBox({ label: t('search.global'), placeholder: isPhone() ? (kind === 'top' ? t('studio.searchPhShort', [n || '']) : t('search.global.phShort')) : kind === 'top' ? t('studio.searchPh', [n || '']) : t('search.global.ph'), value: gs.q, regex: gs.regex, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
     onChange: (q, regex) => { gs.q = q; gs.regex = regex; gsUis.forEach((u) => { if (u.box !== box) u.box.input.value = q; }); if (kind === 'top' && (q.trim() || gs.filter !== 'all')) openTop(); renderGlobalResults(); },
     onKey: (e) => {
       const items = [...results.querySelectorAll('.gs-item')];
@@ -2180,7 +2180,34 @@ function codeEditor(text, opts) {
     lint: opts.lang === 'xml' ? (opts.fragment ? lintFragment : lintXml) : undefined,
     onChange: (v) => { clearTimeout(tm); if (opts.onEdit) tm = setTimeout(() => opts.onEdit(v, status), 500); }
   });
+  watchCmSearch(host);
   return { el: h('div', { class: 'st-editorbox' }, [host, status]), cm, status, set(v) { if (!cm.hasFocus()) cm.set(v); cm.relint(); } };
+}
+// search-surface: xml-editor-search (CodeMirror's search panel (Ctrl+F in the XML editor) gets the
+// regex builder on its search field). The builder drives CodeMirror's regexp, case and whole word
+// switches (hidden, kept in step) so its own query and match navigation stay in charge.
+function watchCmSearch(host) {
+  const wire = () => {
+    const panel = host.querySelector('.cm-search');
+    if (!panel || panel.__rxb) return;
+    const field = panel.querySelector('input[name=search]');
+    if (!field) return;
+    panel.__rxb = true;
+    const box = (name) => panel.querySelector('input[name=' + name + ']');
+    ['re', 'case', 'word'].forEach((n) => { const b = box(n); const l = b && b.closest('label'); if (l) l.hidden = true; });
+    const fire = (el, type) => el.dispatchEvent(new Event(type, { bubbles: true }));
+    const set = (n, v) => { const b = box(n); if (b && b.checked !== v) { b.checked = v; fire(b, 'change'); } };
+    const st0 = { query: field.value, regex: !!(box('re') && box('re').checked), pattern: field.value, caseSensitive: !!(box('case') && box('case').checked), wholeWord: !!(box('word') && box('word').checked) };
+    attachRegexBuilder(field, { label: t('rx.filterFor', [t('panel.xml')]), t: rxT, state: st0, escapeClears: false,
+      sampleProvider: () => (host.querySelector('.cm-content') || { textContent: '' }).textContent.slice(0, 20000),
+      onChange: (st) => {
+        set('re', !!st.regex); set('case', !!st.caseSensitive); set('word', !!st.wholeWord);
+        const v = st.regex ? st.pattern : st.query;
+        if (field.value !== v) field.value = v;
+        fire(field, 'change'); fire(field, 'keyup');
+      } });
+  };
+  new MutationObserver(wire).observe(host, { childList: true, subtree: true });
 }
 let xmlEditor = null;
 function xmlEdited(text, status) {

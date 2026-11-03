@@ -448,3 +448,4 @@ button.pass-chip { cursor: pointer; font: inherit; font-size: .72rem; }
 .rxb-wrap { min-width: 0; }
 .st-side-b .rxb-filter, .st-insp .rxb-filter { margin: 0 0 6px; }
 .st-tools-list { display: flex; flex-direction: column; gap: 8px; }
+.cm-search .rxb-field { width: calc(100% - 36px); margin: 4px 0; }

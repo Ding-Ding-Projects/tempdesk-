@@ -105,6 +105,13 @@
    "consumer": "attachRegexBuilder"
   },
   {
+   "id": "xml-editor-search",
+   "page": "answer-file.html",
+   "surface": "XML editor tab and split view search panel (CodeMirror, Ctrl+F)",
+   "file": "assets/builder.js",
+   "consumer": "attachRegexBuilder"
+  },
+  {
    "id": "studio-context-menu",
    "page": "answer-file.html",
    "surface": "Every context menu (tabs, explorer, catalog)",

@@ -23,7 +23,7 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
   user names, SID, MAC). Patterns are JavaScript RegExp, limited to 2,000 characters, evaluated in
   a worker with a 250 ms timeout, refused when they nest repeats unless overridden, and never
   saved. Lists that had no search now have their own: the studio Explorer, Tools, inspector,
-  Problems, Output and XML panels, menus, galleries, Compare, Simulate, Secrets, list editors,
+  Problems, Output and XML panels, the XML editor search (Ctrl+F), menus, galleries, Compare, Simulate, Secrets, list editors,
   the deployment map, docs navigation and tables, the settings panel, Base64 file jobs, and in the
   Deployer the run steps and log, deployment details, help, settings and pickers. Open tabs in
   the studio and the Deployer get "Close tabs containing text" and "Close tabs not containing
