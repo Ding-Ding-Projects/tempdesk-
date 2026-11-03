@@ -36,19 +36,32 @@ jobs:
           # Squirrel needs three numeric parts: major.minor.<run number>.
           $version = '{0}.{1}.{2}' -f $parts[0], $parts[1], $env:GITHUB_RUN_NUMBER
           "version=$version" >> $env:GITHUB_OUTPUT
-          "tag=v$base.$env:GITHUB_RUN_NUMBER" >> $env:GITHUB_OUTPUT
+          "tag=v$version" >> $env:GITHUB_OUTPUT
 
-      - name: Use the previous release for delta packages
+      - name: Seed the previous full package for delta generation
         id: prev
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # SyncReleases downloads the previous RELEASES feed so Squirrel can make a delta package.
-          # On the very first release there is nothing to diff against, so it is skipped.
+          # Squirrel makes a delta against the newest previous full package. Syncing the whole
+          # GitHub feed downloads every old package in parallel and fails on file locks, so only
+          # the newest full package and a one-line RELEASES are served to it from a local folder.
           $prev = gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>$null
-          if ($prev) { "remote=https://github.com/${{ github.repository }}" >> $env:GITHUB_OUTPUT; Write-Host "Previous release: $prev" }
-          else { Write-Host 'No previous release: full package only.' }
+          if (-not $prev) { Write-Host 'No previous release: full package only.'; exit 0 }
+          $seed = Join-Path $env:RUNNER_TEMP 'squirrel-seed'
+          New-Item -ItemType Directory -Force -Path $seed | Out-Null
+          gh release download $prev --pattern RELEASES --dir $seed --clobber
+          $lines = Get-Content (Join-Path $seed 'RELEASES') | Where-Object { $_ -match '-full\.nupkg' }
+          if (-not $lines) { Write-Host 'Previous release has no full package: full package only.'; exit 0 }
+          $newest = $lines | Sort-Object { [version](($_ -split ' ')[1] -replace '^.*-(\d+\.\d+\.\d+)-full\.nupkg$', '$1') } | Select-Object -Last 1
+          $name = ($newest -split ' ')[1]
+          gh release download $prev --pattern $name --dir $seed --clobber
+          [IO.File]::WriteAllText((Join-Path $seed 'RELEASES'), $newest.TrimStart([char]0xFEFF))
+          Start-Process -FilePath python -ArgumentList '-m', 'http.server', '8765', '--bind', '127.0.0.1', '--directory', $seed -WindowStyle Hidden
+          Start-Sleep -Seconds 2
+          "remote=http://127.0.0.1:8765" >> $env:GITHUB_OUTPUT
+          Write-Host "Delta base: $name from $prev"
 
       - name: Build and package the installer (unsigned)
         shell: cmd
@@ -98,7 +111,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $o = 'deployer/output/squirrel-windows'
-          $assets = @("$o/Setup.exe", "$o/RELEASES") + (Get-ChildItem $o -Filter *.nupkg | ForEach-Object FullName)
+          $v = '${{ steps.ver.outputs.version }}'
+          # Publish only this version's packages, and a RELEASES feed that lists only them.
+          $mine = Get-ChildItem $o -Filter "*-$v-*.nupkg"
+          if (-not ($mine | Where-Object Name -like '*-full.nupkg')) { throw "No full package for $v" }
+          $feed = Get-Content "$o/RELEASES" | Where-Object { $_ -match [regex]::Escape("-$v-") }
+          [IO.File]::WriteAllText("$o/RELEASES", ($feed -join "`r`n"))
+          Write-Host "RELEASES:"; Get-Content "$o/RELEASES" | Write-Host
+          $assets = @("$o/Setup.exe", "$o/RELEASES") + ($mine | ForEach-Object FullName)
           $portable = Get-ChildItem deployer/bin -Filter '*portable*.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($portable) { $assets += $portable.FullName }
           gh release create '${{ steps.ver.outputs.tag }}' @assets --title 'TempDesk Deployer ${{ steps.ver.outputs.tag }}' --notes-file release-notes.md --target '${{ github.sha }}'

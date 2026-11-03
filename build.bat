@@ -33,7 +33,9 @@ set "CMD=cmd /c node scripts\check-syntax.js"
 call :step "Checking JavaScript syntax" || (popd & goto :fail)
 set "CMD=cmd /c node --test test/*.test.js"
 call :step "Running unit tests" || (popd & goto :fail)
-set "CMD=cmd /c npx electron-builder --win dir portable --x64 --publish never -c.directories.output=..\bin"
+set "VEROPT="
+if defined TEMPDESK_VERSION set "VEROPT= -c.extraMetadata.version=%TEMPDESK_VERSION%"
+set "CMD=cmd /c npx electron-builder --win dir portable --x64 --publish never -c.directories.output=..\bin%VEROPT%"
 call :step "Packaging (unpacked + portable)" || (popd & goto :fail)
 popd
 if not defined QUIET echo Build finished: %ROOT%deployer\bin
