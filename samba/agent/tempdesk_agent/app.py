@@ -509,9 +509,47 @@ class App:
                 raise bad("class must be Machine, User or Both")
             return be.admx_policies(req.query.get("category"), req.query.get("q"), k)
 
+        @r("GET", "/admx/stats")
+        def admx_stats(req, p, b, u):
+            return be.admx_stats()
+
         @r("GET", "/gpo/{id}/admx/{policyId}")
         def admx_get(req, p, b, u):
             return be.gpo_admx_get(p["id"], p["policyId"], req.query.get("class"))
+
+        # -- full Group Policy editor -------------------------------------
+        @r("GET", "/gpo/nodes/schema")
+        def gpo_node_schema(req, p, b, u):
+            return be.gpo_node_schemas()
+
+        @r("GET", "/gpo/{id}/tree")
+        def gpo_tree(req, p, b, u):
+            return be.gpo_tree(p["id"])
+
+        @r("GET", "/gpo/{id}/node/{nodeId}")
+        def gpo_node_get(req, p, b, u):
+            return be.gpo_node_get(p["id"], p["nodeId"])
+
+        @r("PUT", "/gpo/{id}/node/{nodeId}")
+        def gpo_node_put(req, p, b, u):
+            return be.gpo_node_put(p["id"], p["nodeId"], b.get("values"))
+
+        @r("GET", "/gpo/{id}/node/{nodeId}/items")
+        def gpo_node_items(req, p, b, u):
+            return be.gpo_node_items(p["id"], p["nodeId"])
+
+        @r("POST", "/gpo/{id}/node/{nodeId}/items")
+        def gpo_node_item_create(req, p, b, u):
+            return Response(201, be.gpo_node_item_create(p["id"], p["nodeId"], b))
+
+        @r("PATCH", "/gpo/{id}/node/{nodeId}/items/{itemId}")
+        def gpo_node_item_patch(req, p, b, u):
+            return be.gpo_node_item_update(p["id"], p["nodeId"], p["itemId"], b)
+
+        @r("DELETE", "/gpo/{id}/node/{nodeId}/items/{itemId}")
+        def gpo_node_item_delete(req, p, b, u):
+            be.gpo_node_item_delete(p["id"], p["nodeId"], p["itemId"])
+            return Response(204)
 
         @r("PUT", "/gpo/{id}/admx/{policyId}")
         def admx_put(req, p, b, u):

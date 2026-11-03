@@ -30,6 +30,7 @@ namespace TempDesk.Agent
         public void Register(Router router)
         {
             router.Map("GET", "admx/categories", true, false, Categories);
+            router.Map("GET", "admx/stats", true, false, Stats);
             router.Map("GET", "admx/policies", true, false, Policies);
             router.Map("GET", "gpo/{id}/admx/{policyId}", true, false, GetPolicyState);
             router.Map("PUT", "gpo/{id}/admx/{policyId}", true, false, PutPolicyState);
@@ -93,6 +94,19 @@ namespace TempDesk.Agent
                 row["explain"] = cat.Explain;
                 result.Add(row);
             }
+            return result;
+        }
+
+        private object Stats(RequestContext ctx)
+        {
+            AdmxCatalog cat = Catalog();
+            Dictionary<string, object> result = new Dictionary<string, object>(StringComparer.Ordinal);
+            result["files"] = cat.FilesParsed;
+            result["categories"] = cat.Categories.Count;
+            result["policies"] = cat.Policies.Count;
+            result["languages"] = cat.Languages;
+            result["parseWarnings"] = cat.Warnings;
+            result["store"] = cat.StoreUsed;
             return result;
         }
 
@@ -517,6 +531,12 @@ namespace TempDesk.Agent
         public Dictionary<string, AdmxPolicy> Policies =
             new Dictionary<string, AdmxPolicy>(StringComparer.OrdinalIgnoreCase);
 
+        // Stats reported by GET /admx/stats.
+        public int FilesParsed;
+        public int Languages;
+        public string StoreUsed;
+        public List<string> Warnings = new List<string>();
+
         public static AdmxCatalog Load(string centralStore, string localStore)
         {
             string store = null;
@@ -530,26 +550,101 @@ namespace TempDesk.Agent
             }
 
             AdmxCatalog catalog = new AdmxCatalog();
+            catalog.StoreUsed = store;
             if (store == null)
             {
                 return catalog;
             }
 
-            foreach (string admxPath in Directory.GetFiles(store, "*.admx"))
+            catalog.Languages = CountLanguages(store);
+            string[] files = Directory.GetFiles(store, "*.admx");
+
+            // First pass: map each file's target namespace URI to its file stem
+            // so a policy/category that references another namespace resolves to
+            // the right file's ids.
+            Dictionary<string, string> nsToFile = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string admxPath in files)
             {
                 try
                 {
-                    catalog.ParseAdmx(admxPath, store);
+                    string ns = TargetNamespace(admxPath);
+                    if (ns != null) { nsToFile[ns] = Path.GetFileNameWithoutExtension(admxPath); }
                 }
-                catch (Exception)
+                catch (Exception) { }
+            }
+
+            // Second pass: parse policies and categories.
+            foreach (string admxPath in files)
+            {
+                try
                 {
-                    // Skip a single bad file.
+                    catalog.ParseAdmx(admxPath, store, nsToFile);
+                    catalog.FilesParsed++;
+                }
+                catch (Exception ex)
+                {
+                    // Skip a single bad file, but record why for /admx/stats.
+                    catalog.Warnings.Add(Path.GetFileName(admxPath) + ": " + ex.Message);
                 }
             }
             return catalog;
         }
 
-        private void ParseAdmx(string admxPath, string store)
+        private static string TargetNamespace(string admxPath)
+        {
+            XmlDocument doc = new XmlDocument();
+            doc.Load(admxPath);
+            XmlNamespaceManager ns = new XmlNamespaceManager(doc.NameTable);
+            ns.AddNamespace("a", "http://schemas.microsoft.com/GroupPolicy/2006/07/PolicyDefinitions");
+            XmlNode target = doc.SelectSingleNode("//a:policyNamespaces/a:target", ns);
+            return target != null ? Attr(target, "namespace") : null;
+        }
+
+        private Dictionary<string, string> BuildPrefixMap(XmlDocument doc, XmlNamespaceManager ns, string admxName,
+            Dictionary<string, string> nsToFile)
+        {
+            Dictionary<string, string> map = new Dictionary<string, string>(StringComparer.Ordinal);
+            // The file's own target prefix maps to itself.
+            XmlNode target = doc.SelectSingleNode("//a:policyNamespaces/a:target", ns);
+            if (target != null)
+            {
+                string prefix = Attr(target, "prefix");
+                if (!string.IsNullOrEmpty(prefix)) { map[prefix] = admxName; }
+            }
+            XmlNodeList usings = doc.SelectNodes("//a:policyNamespaces/a:using", ns);
+            if (usings != null)
+            {
+                foreach (XmlNode u in usings)
+                {
+                    string prefix = Attr(u, "prefix");
+                    string nsUri = Attr(u, "namespace");
+                    string file;
+                    if (!string.IsNullOrEmpty(prefix) && nsUri != null && nsToFile.TryGetValue(nsUri, out file))
+                    {
+                        map[prefix] = file;
+                    }
+                }
+            }
+            return map;
+        }
+
+        private static int CountLanguages(string store)
+        {
+            int n = 0;
+            try
+            {
+                foreach (string dir in Directory.GetDirectories(store))
+                {
+                    // ADML language folders look like "en-US", "fr-FR".
+                    string name = Path.GetFileName(dir);
+                    if (name.Length >= 4 && name.IndexOf('-') == 2) { n++; }
+                }
+            }
+            catch (Exception) { }
+            return n;
+        }
+
+        private void ParseAdmx(string admxPath, string store, Dictionary<string, string> nsToFile)
         {
             string admxName = Path.GetFileNameWithoutExtension(admxPath);
             Dictionary<string, string> strings = LoadAdml(store, admxName);
@@ -558,6 +653,11 @@ namespace TempDesk.Agent
             doc.Load(admxPath);
             XmlNamespaceManager ns = new XmlNamespaceManager(doc.NameTable);
             ns.AddNamespace("a", "http://schemas.microsoft.com/GroupPolicy/2006/07/PolicyDefinitions");
+
+            // Build the using-prefix -> admx-file-stem map so categories and
+            // policies that reference another namespace (for example
+            // windows:System) resolve to the right file's ids.
+            Dictionary<string, string> prefixToFile = BuildPrefixMap(doc, ns, admxName, nsToFile);
 
             // Categories.
             XmlNodeList categories = doc.SelectNodes("//a:categories/a:category", ns);
@@ -573,7 +673,7 @@ namespace TempDesk.Agent
                     XmlNode parent = node.SelectSingleNode("a:parentCategory", ns);
                     if (parent != null)
                     {
-                        cat.ParentId = QualifyRef(Attr(parent, "ref"), admxName);
+                        cat.ParentId = QualifyRef(Attr(parent, "ref"), admxName, prefixToFile);
                     }
                     Categories[cat.Id] = cat;
                 }
@@ -585,7 +685,7 @@ namespace TempDesk.Agent
             {
                 foreach (XmlNode node in policies)
                 {
-                    AdmxPolicy policy = ParsePolicy(node, ns, admxName, strings);
+                    AdmxPolicy policy = ParsePolicy(node, ns, admxName, strings, prefixToFile);
                     if (policy != null)
                     {
                         Policies[policy.Id] = policy;
@@ -594,7 +694,8 @@ namespace TempDesk.Agent
             }
         }
 
-        private AdmxPolicy ParsePolicy(XmlNode node, XmlNamespaceManager ns, string admxName, Dictionary<string, string> strings)
+        private AdmxPolicy ParsePolicy(XmlNode node, XmlNamespaceManager ns, string admxName, Dictionary<string, string> strings,
+            Dictionary<string, string> prefixToFile)
         {
             AdmxPolicy policy = new AdmxPolicy();
             policy.Name = Attr(node, "name");
@@ -616,7 +717,7 @@ namespace TempDesk.Agent
             XmlNode parent = node.SelectSingleNode("a:parentCategory", ns);
             if (parent != null)
             {
-                policy.CategoryId = QualifyRef(Attr(parent, "ref"), admxName);
+                policy.CategoryId = QualifyRef(Attr(parent, "ref"), admxName, prefixToFile);
             }
 
             // enabledValue / disabledValue decimal sentinels.
@@ -792,15 +893,25 @@ namespace TempDesk.Agent
             return reference;
         }
 
-        private static string QualifyRef(string reference, string admxName)
+        private static string QualifyRef(string reference, string admxName, Dictionary<string, string> prefixToFile)
         {
             if (string.IsNullOrEmpty(reference))
             {
                 return null;
             }
-            // A ref may be "name" (same file) or "file:name".
-            if (reference.IndexOf(':') >= 0)
+            // A ref may be "name" (same file) or "prefix:name" referencing
+            // another namespace. Resolve the prefix to that namespace's file
+            // stem so the id matches the other file's "<file>:<name>" ids.
+            int colon = reference.IndexOf(':');
+            if (colon >= 0)
             {
+                string prefix = reference.Substring(0, colon);
+                string name = reference.Substring(colon + 1);
+                string file;
+                if (prefixToFile != null && prefixToFile.TryGetValue(prefix, out file))
+                {
+                    return file + ":" + name;
+                }
                 return reference;
             }
             return admxName + ":" + reference;

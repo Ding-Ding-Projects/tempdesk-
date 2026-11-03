@@ -42,6 +42,8 @@ class AdmxStore:
         self.lang = lang
         self.categories: dict[str, dict] = {}
         self.policies: dict[str, dict] = {}
+        self.files_parsed = 0
+        self.warnings: list[str] = []
         self._loaded_sig = None
         self._lock = threading.Lock()
 
@@ -66,14 +68,28 @@ class AdmxStore:
             if sig == self._loaded_sig:
                 return
             self.categories, self.policies = {}, {}
+            self.files_parsed = 0
+            self.warnings = []
             self._loaded_sig = sig
             if not sig:
                 return
             for name, _ in sig:
                 try:
                     self._load_file(os.path.join(self.root, name))
-                except (ET.ParseError, OSError, ValueError):
-                    continue  # skip broken files rather than failing the whole store
+                    self.files_parsed += 1
+                except (ET.ParseError, OSError, ValueError) as e:
+                    # skip broken files rather than failing the whole store
+                    self.warnings.append(f"{name}: {e}")
+
+    def languages(self) -> int:
+        n = 0
+        try:
+            for entry in os.listdir(self.root):
+                if len(entry) >= 4 and entry[2:3] == "-" and os.path.isdir(os.path.join(self.root, entry)):
+                    n += 1
+        except OSError:
+            pass
+        return n
 
     def _find_adml(self, admx_path: str) -> str | None:
         base = os.path.splitext(os.path.basename(admx_path))[0]

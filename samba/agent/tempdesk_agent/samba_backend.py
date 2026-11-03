@@ -26,6 +26,7 @@ from samba.samdb import SamDB
 
 from . import gpt, sambatool, sddl as sddlmod
 from .backend import ALL_CAPABILITIES, Backend, SysvolMixin, ci_path, norm_guid, public_id
+from .gpoeditor import GpoEditorMixin
 from .errors import ApiError, bad, conflict, forbidden, not_found
 from .util import (BACKUP_ID_RE, NEVER_EXPIRES, UF_ACCOUNTDISABLE, UF_DONT_EXPIRE_PASSWD,
                    UF_NORMAL_ACCOUNT, dn_is_under, from_filetime, iso, parse_generalized_time,
@@ -112,7 +113,7 @@ def _as_list(v):
     return v if isinstance(v, list) else [v]
 
 
-class SambaBackend(SysvolMixin, Backend):
+class SambaBackend(GpoEditorMixin, SysvolMixin, Backend):
     name = "samba"
 
     def __init__(self, smb_conf: str | None = None, data_dir: str = "/var/lib/tempdesk",
