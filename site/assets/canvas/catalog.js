@@ -56,18 +56,18 @@ function normSetting(s, parentPath) {
     name, path, type, children: type === 'password' ? [] : kids, values, suggestions: (s.suggestions || []).map((v) => (v && typeof v === 'object' ? String(v.value ?? v.name) : String(v))),
     min: s.min ?? s.minimum, max: s.max ?? s.maximum, maxLength: s.maxLength,
     help: s.help || s.description || '', passes: passesOf(s), sensitive: !!(s.sensitive || type === 'password' || /password/i.test(name) && type !== 'container'),
-    keyed: !!(keyValueStyle || s.keyValue || s['wcm:keyValue']), deprecated: !!s.deprecated, default: s.default
+    keyed: !!(keyValueStyle || s.keyValue || s['wcm:keyValue']), deprecated: !!s.deprecated, default: s.default, doc: s.doc || ''
   };
 }
 export function normalizeCatalog(src, origin) {
   const comps = arr(src && (src.components || src.Components || src)).map((c) => {
     const name = c.name || c.id;
     if (!name || !/^[A-Za-z0-9.-]+$/.test(name)) return null;
-    return { name, passes: passesOf(c), platforms: platformsOf(c), help: c.summary || c.help || c.description || '', settings: arr(c.settings || c.children || c.properties).map((s) => normSetting(s, '')).filter(Boolean), deprecated: !!c.deprecated, popular: !!c.popular };
+    return { name, passes: passesOf(c), platforms: platformsOf(c), help: c.summary || c.help || c.description || '', settings: arr(c.settings || c.children || c.properties).map((s) => normSetting(s, '')).filter(Boolean), deprecated: !!c.deprecated, popular: !!c.popular, doc: c.doc || '', reference: c.reference || 'current' };
   }).filter((c) => c && c.passes.length);
   comps.sort((a, b) => (b.popular - a.popular) || (a.deprecated - b.deprecated) || a.name.localeCompare(b.name));
   const byName = new Map(comps.map((c) => [c.name, c]));
-  return { origin: origin || 'core', version: (src && (src.version || src.schemaVersion)) || '', components: comps, byName };
+  return { origin: origin || 'core', version: (src && (src.version || src.schemaVersion)) || '', components: comps, byName, sourceUrls: (src && src.sourceUrls) || {} };
 }
 
 // ---- built-in core subset ---------------------------------------------------------------------
@@ -301,6 +301,18 @@ export function renderSettings(comp, value, onChange, ctx) {
       control = null;
     }
     if (control) wrap.appendChild(control);
+    if (ctx.unsetButtons && setting.type !== 'list' && setting.type !== 'stringList') {
+      const def = setting.default !== undefined && setting.default !== '' ? String(setting.default) : t('cat.noDefault', null, 'Windows default');
+      const ub = h('button', { type: 'button', class: 'btn btn-ghost btn-sm cat-unset', hidden: isEmpty(getAt(holder(), setting.name)) || undefined, text: t('cat.unset', [def], 'Unset (default: {0})') });
+      ub.addEventListener('click', () => {
+        setAt(holder(), setting.name, undefined); refresh(); ub.hidden = true;
+        wrap.querySelectorAll('input, select').forEach((x) => { if (x.type === 'checkbox') x.checked = false; else x.value = ''; });
+        commit('hist.unset', [msgPath]);
+      });
+      wrap.addEventListener('input', () => { ub.hidden = isEmpty(getAt(holder(), setting.name)); });
+      wrap.addEventListener('change', () => { ub.hidden = isEmpty(getAt(holder(), setting.name)); });
+      wrap.appendChild(ub);
+    }
     if (setting.help) wrap.appendChild(h('div', { class: 'help', text: setting.help }));
     if (setting.passes.length && setting.passes.length < comp.passes.length) wrap.appendChild(h('div', { class: 'pass-chips' }, setting.passes.map((p) => h('span', { class: 'pass-chip', text: p }))));
     return wrap;

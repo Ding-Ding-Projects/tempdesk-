@@ -1441,7 +1441,8 @@
       extras: extraDefaults(),
       disks: null,
       deploy: { appHost: { name: '', ip: '' }, portalsHost: { name: '', ip: '', guestPort: '8081', adminPort: '8082' }, network: { cidr: '192.168.10.0/24' } },
-      all: {}, raw: ''
+      all: {}, raw: '',
+      direct: { architecture: 'amd64', all: {}, servicing: [], rawBlocks: [] }
     };
   }
   function clone(x) { return JSON.parse(JSON.stringify(x)); }
@@ -1460,6 +1461,12 @@
         else scrub(v[k]);
       });
     })(m.all);
+    if (m.direct) {
+      (function scrub(v) { if (!v || typeof v !== 'object') return; Object.keys(v).forEach(function (k) { if (k === '@password') v[k] = ''; else scrub(v[k]); }); })(m.direct.all);
+      // plain-text secrets the catalog marks sensitive (join and command credentials, product keys)
+      (function scrubPlain(v) { if (!v || typeof v !== 'object') return; Object.keys(v).forEach(function (k) { if (/^(Password|MachinePassword|AccountData)$/.test(k) && typeof v[k] === 'string') v[k] = ''; else scrubPlain(v[k]); }); })(m.direct.all);
+      (m.direct.rawBlocks || []).forEach(function (b) { b.xml = String(b.xml).replace(/(<(?:Password|Value|MachinePassword)>)[^<]*(<\/)/g, '$1$2'); });
+    }
     return m;
   }
   // Checks the shape of a model before anything is applied. Returns { ok, model, error }.
@@ -1476,9 +1483,22 @@
     if (input.schema !== 'tempdesk-answer-model') return { ok: false, error: 'model.schema' };
     if (input.version !== 1) return { ok: false, error: 'model.version' };
     if (!checkPlain(input, 0)) return { ok: false, error: 'model.shape' };
-    if (MODES.indexOf(input.mode) < 0) return { ok: false, error: 'model.mode' };
+    if (MODES.indexOf(input.mode) < 0 && input.mode !== 'direct') return { ok: false, error: 'model.mode' };
     var d = defaultModel(), out = clone(d);
     out.mode = input.mode;
+    if (input.direct !== undefined) {
+      var dm = input.direct;
+      if (!dm || typeof dm !== 'object' || Array.isArray(dm) || (dm.all && (typeof dm.all !== 'object' || Array.isArray(dm.all)))) return { ok: false, error: 'model.direct' };
+      for (var dk in (dm.all || {})) {
+        var dp = dk.split('|');
+        if (dp.length !== 2 || PASS_ORDER.indexOf(dp[0]) < 0 || !/^[A-Za-z0-9.-]+$/.test(dp[1]) || !dm.all[dk] || typeof dm.all[dk] !== 'object') return { ok: false, error: 'model.direct' };
+      }
+      if (dm.servicing !== undefined && !Array.isArray(dm.servicing)) return { ok: false, error: 'model.direct' };
+      if (dm.rawBlocks !== undefined && (!Array.isArray(dm.rawBlocks) || !dm.rawBlocks.every(function (b) { return b && typeof b.xml === 'string' && ['top', 'servicing', 'pass', 'inside'].indexOf(b.scope) >= 0 && isWellFormed(b.xml); }))) return { ok: false, error: 'model.direct' };
+      out.direct = { architecture: typeof dm.architecture === 'string' ? dm.architecture : 'amd64', all: clone(dm.all || {}), servicing: clone(dm.servicing || []), rawBlocks: clone(dm.rawBlocks || []) };
+      if (dm.offlineImage && typeof dm.offlineImage === 'object') out.direct.offlineImage = clone(dm.offlineImage);
+      if (dm.architectureOverrides && typeof dm.architectureOverrides === 'object') out.direct.architectureOverrides = clone(dm.architectureOverrides);
+    }
     for (var i = 0; i < MODES.length; i++) {
       var m = MODES[i], src = input[m];
       if (src === undefined) continue;

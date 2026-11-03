@@ -8,6 +8,7 @@ import { mountCommands } from './canvas/commands.js';
 import { mountDeploy } from './canvas/deploy.js';
 import { buildIndex, search as searchIndex, problemKeys, filterList, compileQuery } from './canvas/search.js';
 import { searchBox, combobox } from './canvas/search-ui.js';
+import * as DX from './canvas/direct.js';
 
 const A = window.TempDeskAnswer, Z = window.TempDeskZip, HI = window.TempDeskHistory, S = window.TempDeskSite;
 const t = (k, args, fb) => S.t(k, args, fb);
@@ -118,20 +119,30 @@ let catalog = null;
 let history = null;
 const adv = new Set();
 let lastXml = '';
+const isDirect = (m) => (m || model).mode === 'direct';
+// The XML of a model in either mode. Direct mode writes only through answerfile/generate.mjs.
+function fileXml(m) {
+  m = m || model;
+  if (m.mode !== 'direct') return A.buildXml(m);
+  if (!rules || !catalog || !catalog.raw) throw new Error(t('direct.needCatalog'));
+  return DX.buildDirectXml(m.direct, catalog.raw, rules.gen);
+}
+function safeXml(m) { try { return fileXml(m); } catch (e) { return '<!-- ' + String(e.message).replace(/--/g, '- -') + ' -->\n'; } }
 let rules = null; // { parseXml, validateModel, raw catalog } from answerfile/ when the build ships them
 let ruleIssues = [];
 async function loadRules() {
   if (!catalog || catalog.origin !== 'full' || !catalog.raw) return;
   try {
     const g = await import(new URL(ROOT + 'answerfile/generate.mjs', document.baseURI).href);
-    rules = { parseXml: g.parseXml, buildXml: g.buildXml, validateModel: g.validateModel, applyFix: g.applyFix, RULES: g.RULES };
+    rules = { gen: g, parseXml: g.parseXml, buildXml: g.buildXml, validateModel: g.validateModel, applyFix: g.applyFix, RULES: g.RULES };
   } catch (e) { rules = null; }
 }
 function computeIssues() {
   ruleIssues = [];
   if (!rules) return ruleIssues;
   try {
-    const parsed = rules.parseXml(A.buildXml(model), catalog.raw);
+    if (isDirect()) { ruleIssues = DX.directIssues(model.direct, catalog.raw, rules.gen).filter((x) => x.level !== 'info'); return ruleIssues; }
+    const parsed = rules.parseXml(fileXml(model), catalog.raw);
     ruleIssues = rules.validateModel(parsed.model, catalog.raw).filter((i) => i.level !== 'info');
   } catch (e) { ruleIssues = [{ id: 'xml', level: 'error', where: '', message: e.message }]; }
   return ruleIssues;
@@ -152,6 +163,10 @@ function mergeSecrets(target, from) {
     if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return;
     Object.keys(a).forEach((k) => { if (k === '@password' && !a[k] && b[k]) a[k] = b[k]; else walk(a[k], b[k]); });
   })(out.all, from.all);
+  if (out.direct && from.direct) (function walk(a, b) {
+    if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return;
+    Object.keys(a).forEach((k) => { if ((k === '@password' || /^(Password|MachinePassword)$/.test(k)) && a[k] === '' && typeof b[k] === 'string' && b[k]) a[k] = b[k]; else walk(a[k], b[k]); });
+  })(out.direct.all, from.direct.all);
   return out;
 }
 function redact(state) { return remember() ? state : A.stripSecrets(state); }
@@ -212,10 +227,12 @@ let step = 0;
 let selected = null; // { comp, pass, path } for the inspector
 function saveTabs() { LS.set('td.studio.tabs', JSON.stringify(tabs)); LS.set('td.studio.active', view); }
 function tabTitle(id) {
-  if (id === 'template') return t('tab.' + model.mode);
+  if (id === 'template') return isDirect() ? t('direct.direct') : t('tab.' + model.mode);
   if (id.startsWith('comp:')) return id.split('|')[1].replace(/^Microsoft-Windows-/, '') + ' (' + id.slice(5).split('|')[0] + ')';
   if (id.startsWith('file:')) return id.slice(5).split('/').pop();
   if (id === 'xml') return 'autounattend.xml';
+  if (id.startsWith('raw:')) return t('direct.rawBlock') + ' ' + id.slice(4);
+  if (id === 'servicing') return t('direct.servicing');
   if (id === 'firstboot') return 'firstboot.json';
   return t('tab.' + id);
 }
@@ -339,9 +356,9 @@ function buildTopbar() {
   const fileMenu = h('button', { type: 'button', class: 'btn btn-ghost btn-sm', 'aria-haspopup': 'menu', text: t('studio.file'), onclick: (e) => contextMenu({ clientX: e.currentTarget.getBoundingClientRect().left, clientY: e.currentTarget.getBoundingClientRect().bottom + 4 }, [
     ['studio.newFromTemplate', () => openTab('new')], ['tb.import', () => fileIn.click()], ['tb.export', openExport], ['tb.downloadXml', downloadXml], ['tb.downloadZip', downloadZip], ['tb.copy', copyXml], ['tb.save', saveVersion], ['tb.presets', () => sidebar('presets')], ['studio.shortcuts', openShortcuts]]) });
   $('#st-file').replaceChildren(fileMenu, fileIn, h('span', { class: 'st-fname', id: 'st-fname' }, [h('span', { class: 'mono', text: 'autounattend.xml' }), h('span', { class: 'st-dirty', id: 'st-dirty', title: t('studio.unsaved'), 'aria-label': t('studio.unsaved'), hidden: true })]), undoBtn, redoBtn);
-  $('#st-actions').replaceChildren(
+  $('#st-actions').replaceChildren(modeSwitch(),
     h('button', { type: 'button', class: 'btn btn-ghost btn-sm', id: 'st-validate', text: t('studio.validate'), onclick: () => { computeIssues(); layout.panelOpen = true; layout.panel = 'problems'; if (isPhone()) layout.pane = 'problems'; applyLayout(); renderPanel(); announce(t('studio.validated', [problemCount()])); } }),
-    h('button', { type: 'button', class: 'btn btn-primary btn-sm', id: 'b-dl-zip', text: t('studio.buildKit'), onclick: downloadZip }));
+    h('button', { type: 'button', class: 'btn btn-primary btn-sm', id: 'b-dl-zip', text: t(isDirect() ? 'tb.downloadXml' : 'studio.buildKit'), onclick: downloadZip }));
   updateUndo();
 }
 function updateUndo() {
@@ -405,6 +422,7 @@ const openTree = new Set(JSON.parse(LS.get('td.studio.tree', '["passes","kit","t
 function saveTree() { LS.set('td.studio.tree', JSON.stringify([...openTree])); }
 function issuesFor(prefix) { return computeIssuesCached().filter((i) => (i.where + '/').startsWith(prefix + '/')).length; }
 function renderExplorer(body) {
+  if (isDirect()) { directExplorer(body); return; }
   const ul = h('ul', { class: 'st-tree', role: 'tree', 'aria-labelledby': 'st-side-title' });
   const tree = A.buildModelTree(model);
   const formErr = Object.keys(fieldErrors()).length;
@@ -526,6 +544,7 @@ function renderInspector() {
   body.appendChild(h('h3', { class: 'mono', style: { overflowWrap: 'anywhere', margin: '0 0 6px', fontSize: '.95rem' }, text: selected.comp }));
   if (!comp) { body.appendChild(h('p', { class: 'help', text: t('studio.notInCatalog') })); return; }
   if (comp.help) body.appendChild(h('p', { class: 'help', text: comp.help }));
+  body.appendChild(h('a', { class: 'linkish', href: docUrl(comp), target: '_blank', rel: 'noopener', text: t('direct.docs') }));
   body.appendChild(h('div', { class: 'pass-chips' }, comp.passes.map((p) => h('button', { type: 'button', class: 'pass-chip' + (p === selected.pass ? ' on' : ''), text: p, onclick: () => openTab('comp:' + p + '|' + comp.name) }))));
   if (comp.deprecated) body.appendChild(h('p', { class: 'notice warn', text: t('cat.deprecated') }));
   let setting = null;
@@ -533,6 +552,7 @@ function renderInspector() {
   if (setting) {
     body.appendChild(h('h4', { class: 'mono', text: selected.path }));
     body.appendChild(h('p', { class: 'help', text: setting.help || '' }));
+    if (setting.doc) body.appendChild(h('a', { class: 'linkish', href: docUrl(comp, setting), target: '_blank', rel: 'noopener', text: t('direct.docsSetting') }));
     body.appendChild(h('dl', { class: 'st-dl' }, [h('dt', { text: t('studio.type') }), h('dd', { text: setting.type }), h('dt', { text: t('cat.pass') }), h('dd', { text: (setting.passes.length ? setting.passes : comp.passes).join(', ') }),
       setting.default !== undefined ? h('dt', { text: t('studio.default') }) : null, setting.default !== undefined ? h('dd', { text: String(setting.default) }) : null,
       setting.min !== undefined ? h('dt', { text: t('studio.range') }) : null, setting.min !== undefined ? h('dd', { text: setting.min + ' .. ' + (setting.max ?? '') }) : null]));
@@ -541,7 +561,8 @@ function renderInspector() {
   body.appendChild(h('h4', { text: t('studio.related') }));
   const rel = h('ul', { class: 'st-values' });
   comp.settings.slice(0, 40).forEach((s) => {
-    const v = countSet(model.all[selected.pass + '|' + comp.name] && model.all[selected.pass + '|' + comp.name][s.name]);
+    const srcAll = isDirect() ? model.direct.all : model.all;
+    const v = countSet(srcAll[selected.pass + '|' + comp.name] && srcAll[selected.pass + '|' + comp.name][s.name]);
     rel.appendChild(h('li', null, [h('button', { type: 'button', class: 'linkish', text: s.name, onclick: () => { selected = { comp: comp.name, pass: selected.pass, path: s.name }; renderInspector(); } }), v ? h('span', { class: 'setmark', text: t('cat.set') }) : null]));
   });
   body.appendChild(rel);
@@ -568,7 +589,7 @@ function renderPanel() {
   const box = $('#st-panel-body');
   box.replaceChildren();
   if (layout.panel === 'problems') renderProblems(box);
-  else if (layout.panel === 'xml') box.appendChild(h('pre', { class: 'st-code-ro', tabindex: '0', html: A.highlightXml(A.buildXml(model)) }));
+  else if (layout.panel === 'xml') box.appendChild(h('pre', { class: 'st-code-ro', tabindex: '0', html: A.highlightXml(safeXml(model)) }));
   else if (layout.panel === 'search') { const host = h('div'); box.appendChild(host); buildSearchUi(host, 'panel'); }
   else if (layout.panel === 'history') { const host = h('div'); box.appendChild(host); renderHistorySide(host); }
   else if (layout.panel === 'output') box.appendChild(h('ul', { class: 'st-output' }, outputLog.slice().reverse().map((o) => h('li', null, [h('small', { text: new Date(o.t).toLocaleTimeString() }), ' ', o.text]))));
@@ -591,10 +612,15 @@ function ruleFix(issue) { const r = rules && rules.RULES.find((x) => x.id === is
 // apply the rule's pure fix, write the XML back and sync it into the studio model.
 function quickFix(issue) {
   try {
-    const parsed = rules.parseXml(A.buildXml(model), catalog.raw);
+    if (isDirect()) {
+      const d = DX.directFix(model.direct, catalog.raw, rules.gen, issue.id);
+      if (!d) { S.toast(t('fix.notApplied')); return; }
+      model.direct = d; commit({ key: 'hist.quickFix', args: [issue.id] }); output(t('hist.quickFix', [issue.id])); renderView(); return;
+    }
+    const parsed = rules.parseXml(fileXml(model), catalog.raw);
     const fixed = rules.applyFix(parsed.model, catalog.raw, issue.id);
     if (!fixed) { S.toast(t('fix.notApplied')); return; }
-    const xml = A.alignXml(rules.buildXml(fixed, catalog.raw), A.buildXml(model));
+    const xml = A.alignXml(rules.buildXml(fixed, catalog.raw), fileXml(model));
     const r = A.syncFromXml(model, xml, { knownComponent });
     model = r.model;
     commit({ key: 'hist.quickFix', args: [issue.id] });
@@ -637,10 +663,11 @@ function renderStatusBar() {
   const sb = $('#st-status');
   if (!sb) return;
   let comps = 0, sets = 0;
-  try { const tree = A.buildModelTree(model); tree.c.forEach((s) => s.c.forEach((c) => { comps++; sets += countSet(A.elementToValue(c)); })); } catch (e) { /* ignore */ }
+  if (isDirect()) { Object.keys(model.direct.all).forEach((k) => { comps++; sets += countSet(model.direct.all[k]); }); }
+  else try { const tree = A.buildModelTree(model); tree.c.forEach((s) => s.c.forEach((c) => { comps++; sets += countSet(A.elementToValue(c)); })); } catch (e) { /* ignore */ }
   const hd = history && history.head();
   const undoDepth = history ? (function () { let n = 0, e = history.head(); while (e && e.back !== null && e.back !== undefined && n < 9999) { n++; e = history.byId(e.back); } return n; })() : 0;
-  const target = model.mode === 'server' ? 'Windows Server 2025' : model.mode === 'guest' ? 'Windows 11' : (model.custom.target === 'server' ? 'Windows Server' : 'Windows');
+  const target = isDirect() ? t('direct.status') : model.mode === 'server' ? 'Windows Server 2025' : model.mode === 'guest' ? 'Windows 11' : (model.custom.target === 'server' ? 'Windows Server' : 'Windows');
   const pc = problemCount();
   sb.replaceChildren(
     h('button', { type: 'button', class: 'st-sb', title: t('studio.branchHelp'), onclick: () => sidebar('presets') }, ['⎇ ', branch || 'main']),
@@ -649,7 +676,7 @@ function renderStatusBar() {
     h('button', { type: 'button', class: 'st-sb' + (pc ? ' bad' : ''), onclick: () => { layout.panel = 'problems'; layout.panelOpen = true; if (isPhone()) layout.pane = 'problems'; applyLayout(); renderPanel(); } }, [(pc ? '✖ ' : '✔ ') + t('studio.problemCount', [pc])]),
     h('span', { class: 'grow' }),
     h('span', { class: 'st-sb', text: t('studio.counts', [sets, comps]) }),
-    h('span', { class: 'st-sb', text: target + ' · ' + (model.mode === 'server' ? 'amd64' : (model[model.mode].arch || 'amd64')) }),
+    h('span', { class: 'st-sb' + (isDirect() ? ' st-direct' : ''), text: target + ' · ' + (isDirect() ? model.direct.architecture : model.mode === 'server' ? 'amd64' : (model[model.mode].arch || 'amd64')) }),
     h('span', { class: 'st-sb', text: 'UTF-8 · CRLF' }));
 }
 
@@ -664,6 +691,7 @@ function openShortcuts() {
 // Friendly mode forms
 // ------------------------------------------------------------------------------------------------
 function fieldErrors() {
+  if (isDirect()) return {};
   const e = A.validateModel(model);
   const out = {};
   Object.keys(e).forEach((k) => { out[k] = t('err.' + e[k], null, A.MESSAGES[e[k]]); });
@@ -845,9 +873,12 @@ function renderAdvanced(sec, box) {
   if (!any) box.appendChild(h('p', { class: 'empty', text: t('adv.none') }));
   box.appendChild(h('p', { class: 'help', text: t('adv.note') }));
 }
+function catAll() { return isDirect() ? model.direct.all : model.all; }
 function allChange(key, v, msg, co, det) {
-  if (isEmpty(v)) delete model.all[key]; else model.all[key] = v;
-  if (det) { const c = det.querySelector('.cnt'); if (c) c.textContent = t('cat.countSet', [countSet(model.all[key])]); }
+  const store = catAll();
+  if (isEmpty(v) && !isDirect()) delete store[key]; else store[key] = v || {};
+  if (det) { const c = det.querySelector('.cnt'); if (c) c.textContent = t('cat.countSet', [countSet(store[key])]); }
+  if (isDirect()) refreshDirectTree();
   commit(msg, co ? 'all:' + key + ':' + co : null);
 }
 function renderMode(mode) {
@@ -948,7 +979,7 @@ function renderAll() {
     catalog.components.forEach((comp) => {
       if (allState.pass !== 'all' && !comp.passes.includes(allState.pass)) return;
       if (allState.platform !== 'all' && !comp.platforms.includes(allState.platform)) return;
-      const setCount = comp.passes.reduce((s, p) => s + countSet(model.all[p + '|' + comp.name]), 0);
+      const setCount = comp.passes.reduce((s, p) => s + countSet(catAll()[p + '|' + comp.name]), 0);
       if (allState.onlySet && !setCount) return;
       if (!mt.test(searchText(comp))) return;
       n++;
@@ -960,14 +991,14 @@ function renderAll() {
         if (body.childNodes.length) return;
         if (comp.help) body.appendChild(h('p', { class: 'help', text: comp.help }));
         const passes = allState.pass === 'all' ? comp.passes : [allState.pass];
-        let pass = (allState.focusPass && passes.includes(allState.focusPass) ? allState.focusPass : null) || passes.find((p) => countSet(model.all[p + '|' + comp.name])) || passes[0];
+        let pass = (allState.focusPass && passes.includes(allState.focusPass) ? allState.focusPass : null) || passes.find((p) => countSet(catAll()[p + '|' + comp.name])) || passes[0];
         const holder = h('div');
         const drawPass = () => {
           const key = pass + '|' + comp.name;
-          holder.replaceChildren(renderSettings(comp, model.all[key], (v, msg, co) => allChange(key, v, msg, co, det), { t, pass, expandPath: allState.focusPath, idPrefix: 'all-' + comp.name.replace(/[^A-Za-z0-9]/g, '') + '-' + pass }));
+          holder.replaceChildren(renderSettings(comp, catAll()[key], (v, msg, co) => allChange(key, v, msg, co, det), { t, pass, expandPath: allState.focusPath, idPrefix: 'all-' + comp.name.replace(/[^A-Za-z0-9]/g, '') + '-' + pass }));
         };
         if (passes.length > 1) {
-          const ps = h('select', { 'aria-label': t('cat.pass') }, passes.map((p) => h('option', { value: p, text: p + (countSet(model.all[p + '|' + comp.name]) ? ' (' + t('cat.countSet', [countSet(model.all[p + '|' + comp.name])]) + ')' : '') })));
+          const ps = h('select', { 'aria-label': t('cat.pass') }, passes.map((p) => h('option', { value: p, text: p + (countSet(catAll()[p + '|' + comp.name]) ? ' (' + t('cat.countSet', [countSet(catAll()[p + '|' + comp.name])]) + ')' : '') })));
           ps.value = pass; ps.addEventListener('change', () => { pass = ps.value; drawPass(); });
           body.appendChild(h('div', { class: 'field' }, [h('label', { text: t('cat.pass') }), ps]));
         }
@@ -1028,7 +1059,7 @@ function friendlyEntries() {
 }
 function runGlobalSearch() {
   const problems = problemKeys(computeIssues());
-  const idx = buildIndex({ model, catalog, friendly: friendlyEntries(), problems });
+  const idx = buildIndex({ model: isDirect() ? { all: model.direct.all } : model, catalog, friendly: isDirect() ? [] : friendlyEntries(), problems });
   return searchIndex(idx, gs.q, { regex: gs.regex, filter: gs.filter });
 }
 function jumpTo(e) {
@@ -1042,6 +1073,11 @@ function jumpTo(e) {
     if (sec && isPhone()) { step = Number(sec.dataset.sectionIndex); secs.forEach((x) => x.classList.toggle('active', x === sec)); }
     const el = mainEl.querySelector(`[data-field="${CSS.escape(e.id)}"]`) || sec;
     if (el) S.focusTarget(el);
+  } else if (isDirect()) {
+    selected = { comp: e.comp, pass: e.pass, path: e.path };
+    if (model.direct.all[e.pass + '|' + e.comp]) { openTab('comp:' + e.pass + '|' + e.comp, { noFocus: true }); const tg = mainEl.querySelector(`[data-setting-path="${CSS.escape(e.comp + '/' + e.path)}"]`); if (tg) S.focusTarget(tg); }
+    else { allState.pass = 'all'; allState.q = ''; allState.open = e.comp; allState.focusPath = e.path; allState.focusPass = e.pass; openTab('all', { noFocus: true }); }
+    renderInspector();
   } else {
     allState.pass = 'all'; allState.platform = 'all'; allState.q = ''; allState.onlySet = false;
     allState.open = e.comp; allState.focusPath = e.path; allState.focusPass = e.pass;
@@ -1183,7 +1219,12 @@ function renderCanvas(kind) {
   mainEl.appendChild(box);
   if (kind === 'flow') {
     if (!catalog) { root.appendChild(h('p', { text: t('cat.loading') })); return; }
-    mountFlow(root, { t, catalog, getModel: () => model, generated: generatedComponents, onAll: (all, msg) => { model.all = all; commit(msg); renderView(); }, openEditor, announce });
+    if (isDirect()) mountFlow(root, { t, catalog, getModel: () => ({ all: model.direct.all }), generated: () => [], onAll: (all, msg) => { model.direct.all = all; commit(msg); renderView(); }, openEditor: (p, c) => openTab('comp:' + p + '|' + c), announce });
+    else mountFlow(root, { t, catalog, getModel: () => model, generated: generatedComponents, onAll: (all, msg) => { model.all = all; commit(msg); renderView(); }, openEditor, announce });
+  } else if (kind === 'disk' && isDirect()) {
+    mountDisk(root, { t, get: () => DX.directDisks(model.direct, A), set: (l, msg, co) => { model.direct = DX.setDirectDisks(model.direct, l, A); commit(msg, co ? 'disk:' + co : null); } });
+  } else if (kind === 'commands' && isDirect()) {
+    mountCommands(root, { t, get: () => DX.directCommands(model.direct), set: (c, msg, co) => { model.direct = DX.setDirectCommands(model.direct, c); commit(msg, co ? 'cmd:' + co : null); }, generated: () => [] });
   } else if (kind === 'disk') {
     mountDisk(root, { t, get: () => model.disks, set: (l, msg, co) => { model.disks = l; commit(msg, co ? 'disk:' + co : null); } });
   } else if (kind === 'commands') {
@@ -1242,7 +1283,7 @@ function msgText(msg) {
   });
   return t(msg.key, args);
 }
-function xmlOf(state) { try { const r = A.normalizeModel(state); return r.ok ? A.buildXml(r.model) : ''; } catch (e) { return ''; } }
+function xmlOf(state) { try { const r = A.normalizeModel(state); return r.ok ? safeXml(r.model) : ''; } catch (e) { return ''; } }
 function diffView(a, b) {
   const lines = A.lineDiff(a, b);
   const pre = h('pre', { class: 'diff', tabindex: '0' });
@@ -1311,7 +1352,7 @@ function gitFolder() {
     const lab = String(e.label || e.kind).replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 40) || e.kind;
     files.push({ name: `tempdesk-answer-files/versions/${String(i + 1).padStart(4, '0')}-${stamp}-${lab}.xml`, data: xmlOf(e.state) });
   });
-  files.push({ name: 'tempdesk-answer-files/autounattend.xml', data: A.buildXml(model) });
+  files.push({ name: 'tempdesk-answer-files/autounattend.xml', data: safeXml(model) });
   files.push({ name: 'tempdesk-answer-files/README.md', data: t('git.readme', [new Date().toISOString(), versions.length]).replace(/\\n/g, '\n') + '\n' });
   files.push({ name: 'tempdesk-answer-files/.gitignore', data: '# Answer files with real passwords should not be committed.\n*.local.xml\nsecrets/\n' });
   downloadBlob('tempdesk-answer-files.zip', Z.makeZip(files));
@@ -1343,7 +1384,7 @@ function saveVersion() {
 // Preview refresh (the studio shows XML in the split view, the XML tab and the XML panel)
 // ------------------------------------------------------------------------------------------------
 let pvTimer = null;
-function schedulePreview() { clearTimeout(pvTimer); pvTimer = setTimeout(() => { lastXml = A.buildXml(model); refreshAround(); }, 150); }
+function schedulePreview() { clearTimeout(pvTimer); pvTimer = setTimeout(() => { lastXml = safeXml(model); refreshAround(); }, 150); }
 // ------------------------------------------------------------------------------------------------
 // Downloads, copy, export
 // ------------------------------------------------------------------------------------------------
@@ -1358,12 +1399,13 @@ function confirmProblems() {
   return !n || window.confirm(t('dl.confirmProblems', [n]));
 }
 function copyXml() {
-  const text = A.buildXml(model);
+  const text = safeXml(model);
   (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(() => S.toast(t('tb.copied')), () => S.toast(t('tb.copyFailed')));
 }
 function downloadXml() {
   if (!confirmProblems()) return;
-  download('autounattend.xml', A.buildXml(model), 'application/xml');
+  if (isDirect()) { try { fileXml(); } catch (e) { S.toast(t('studio.xmlNotApplied', [e.message])); return; } }
+  download('autounattend.xml', safeXml(model), 'application/xml');
   history && history.mark('download', 'autounattend.xml');
   updateUndo();
 }
@@ -1372,9 +1414,10 @@ async function sha256Hex(bytes) {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 async function downloadZip() {
+  if (isDirect()) { downloadXml(); return; }
   if (!confirmProblems()) return;
   const btnEl = document.getElementById('b-dl-zip');
-  const files = [{ name: 'autounattend.xml', data: A.buildXml(model) }];
+  const files = [{ name: 'autounattend.xml', data: safeXml(model) }];
   try {
     if (btnEl) btnEl.disabled = true;
     if (model.mode === 'server') {
@@ -1438,7 +1481,8 @@ async function importFile(file) {
   if (file.size > 5 * 1024 * 1024) { report([t('imp.tooBig')], false); return; }
   const text = await file.text();
   const trimmed = text.replace(/^﻿/, '').trim();
-  if (trimmed.startsWith('<')) return importXmlText(text);
+  if (trimmed.startsWith('<')) { const d = importIntoDirect || isDirect(); importIntoDirect = false; return d ? importXmlDirect(text, file.name) : importXmlText(text); }
+  importIntoDirect = false;
   let json;
   try { json = JSON.parse(trimmed); } catch (e) { report([t('imp.badJson')], false); return; }
   if (json && json.schema === 'tempdesk-answer-model') {
@@ -1531,11 +1575,272 @@ function openPresets() {
 }
 
 // ------------------------------------------------------------------------------------------------
+// Direct mode: no templates. The file is the catalog model; every element is a GUI control.
+// ------------------------------------------------------------------------------------------------
+const DIRECT_TABS = ['flow', 'disk', 'commands', 'xml', 'all', 'simulate', 'compare', 'history', 'secrets', 'new'];
+function docUrl(comp, setting) {
+  const base = (catalog && catalog.sourceUrls && catalog.sourceUrls[comp.reference || 'current']) || 'https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/';
+  const slug = (setting && setting.doc) || comp.doc;
+  return slug ? base + slug : base;
+}
+function directReady() {
+  if (rules && catalog && catalog.raw) return true;
+  mainEl.appendChild(h('p', { class: 'notice warn', role: 'status', text: catalog ? t('direct.needCatalog') : t('cat.loading') }));
+  return false;
+}
+function setMode(next) {
+  if (next === 'direct' && !isDirect()) {
+    if (!rules || !catalog || !catalog.raw) { S.toast(t('direct.needCatalog')); return; }
+    let r;
+    try { r = DX.guidedToDirect(model, A, catalog.raw, rules.gen); } catch (e) { S.toast(t('studio.xmlNotApplied', [e.message])); return; }
+    model.guidedMode = model.mode;
+    model.direct = r.direct;
+    model.mode = 'direct';
+    commit({ key: 'hist.toDirect', args: [] });
+    LS.set('td.studio.mode', 'direct');
+    tabs = tabs.filter((x) => x !== 'template' && x !== 'firstboot' && x !== 'map' && x !== 'plan' && x !== 'snippets' && !x.startsWith('file:'));
+    if (!tabs.length) tabs = ['flow'];
+    view = tabs.includes(view) ? view : tabs[0];
+    saveTabs(); renderView();
+    output(t('direct.converted', [r.unknown.length]));
+  } else if (next === 'guided' && isDirect()) {
+    const r = DX.directToGuided(model.direct, A, catalog.raw, rules.gen);
+    if (!r.ok) { explainNoGuided(r.reasons); return; }
+    const keepDirect = model.direct;
+    model = mergeSecrets(r.model, model);
+    model.direct = keepDirect;
+    commit({ key: 'hist.toGuided', args: ['@tab.' + model.mode] });
+    LS.set('td.studio.mode', 'guided');
+    tabs = ['template'].concat(tabs.filter((x) => x !== 'template' && !x.startsWith('comp:')));
+    view = 'template'; saveTabs(); renderView();
+  }
+}
+function explainNoGuided(reasons) {
+  sheet('direct.noGuidedTitle', (close) => [
+    h('p', { text: t('direct.noGuidedBody') }),
+    h('ul', { class: 'st-values' }, reasons.slice(0, 30).map((x) => h('li', { class: 'mono', text: /^raw:/.test(x) ? t('direct.reasonRaw', [x.slice(4)]) : x === 'servicing' ? t('direct.reasonServicing') : x }))),
+    reasons.length > 30 ? h('p', { class: 'meter-label', text: t('hist.more', [reasons.length - 30]) }) : null,
+    btn('common.close', close, 'btn-primary')]);
+}
+function modeSwitch() {
+  const seg = h('div', { class: 'seg st-mode', role: 'group', 'aria-label': t('direct.mode') });
+  [['guided', 'direct.guided'], ['direct', 'direct.direct']].forEach(([v, k]) => seg.appendChild(h('button', { type: 'button', 'aria-pressed': String((v === 'direct') === isDirect()), 'data-mode': v, text: t(k), title: t(k + '.help'), onclick: () => setMode(v) })));
+  return seg;
+}
+function directExplorer(body) {
+  const ul = h('ul', { class: 'st-tree', role: 'tree', 'aria-labelledby': 'st-side-title' });
+  const d = model.direct;
+  const issues = computeIssuesCached();
+  PASSES.forEach((pass) => {
+    const keys = Object.keys(d.all).filter((k) => k.startsWith(pass + '|'));
+    const kids = keys.map((key) => {
+      const name = key.split('|')[1];
+      const raws = d.rawBlocks.filter((b) => b.pass === pass && b.component === name).length;
+      return treeItem(name.replace(/^Microsoft-Windows-/, ''), { level: 2, count: countSet(d.all[key]), problem: issues.filter((i) => (i.where + '/').startsWith(pass + '/' + name + '/')).length + raws, active: view === 'comp:' + key,
+        onOpen: () => openTab('comp:' + key),
+        menu: [['ctx.open', () => openTab('comp:' + key)], ['direct.duplicate', () => pickPass(key, false)], ['direct.move', () => pickPass(key, true)], ['ctx.revealXml', () => revealInXml(name, pass)],
+          ['ctx.inspect', () => { selected = { comp: name, pass }; layout.inspOpen = true; applyLayout(); renderInspector(); }], ['direct.remove', () => removeDirectComponent(key)]] });
+    });
+    d.rawBlocks.filter((b) => b.scope === 'pass' && b.pass === pass).forEach((b) => kids.push(treeItem(t('direct.rawBlock') + ' ' + (b.xml.match(/name="([^"]+)"/) || ['', b.id])[1], { level: 2, problem: 1, active: view === 'raw:' + b.id, onOpen: () => openTab('raw:' + b.id), menu: [['ctx.open', () => openTab('raw:' + b.id)], ['direct.remove', () => removeRaw(b.id)]] })));
+    const add = h('li', { role: 'treeitem', 'aria-level': '2', tabindex: '-1', class: 'st-ti st-add' }, [h('span', { class: 'st-ti-row', style: { paddingLeft: '22px' } }, [h('span', { class: 'st-caret', 'aria-hidden': 'true', text: '+' }), h('span', { class: 'st-ti-l', text: t('direct.addComponent') })])]);
+    add.addEventListener('click', (e) => { e.stopPropagation(); addComponentPicker(pass); });
+    kids.push(add);
+    ul.appendChild(treeItem(pass, { level: 1, children: kids, count: keys.length, problem: issues.filter((i) => (i.where + '/').startsWith(pass + '/')).length, open: openTree.has('d:' + pass) || keys.length > 0, onToggle: (o) => { if (o) openTree.add('d:' + pass); else openTree.delete('d:' + pass); saveTree(); } }));
+  });
+  const other = [];
+  if (d.servicing.length || true) other.push(treeItem(t('direct.servicing') + ' (' + d.servicing.length + ')', { level: 2, active: view === 'servicing', onOpen: () => openTab('servicing') }));
+  d.rawBlocks.filter((b) => b.scope === 'top' || b.scope === 'servicing').forEach((b) => other.push(treeItem(t('direct.rawBlock') + ' ' + b.id, { level: 2, problem: 1, active: view === 'raw:' + b.id, onOpen: () => openTab('raw:' + b.id), menu: [['direct.remove', () => removeRaw(b.id)]] })));
+  other.push(treeItem('autounattend.xml', { level: 2, active: view === 'xml', onOpen: () => openTab('xml') }));
+  ul.appendChild(treeItem(t('direct.fileParts'), { level: 1, children: other, open: true }));
+  const views = ['flow', 'disk', 'commands', 'all', 'simulate', 'compare', 'secrets', 'history'].map((id) => treeItem(t('tab.' + id), { level: 2, active: view === id, onOpen: () => openTab(id) }));
+  ul.appendChild(treeItem(t('studio.views'), { level: 1, children: views, open: openTree.has('tools'), onToggle: (o) => { if (o) openTree.add('tools'); else openTree.delete('tools'); saveTree(); } }));
+  body.appendChild(ul);
+  treeKeys(ul);
+}
+function removeDirectComponent(key) {
+  model.direct = DX.removeComponent(model.direct, key);
+  tabs = tabs.filter((x) => x !== 'comp:' + key);
+  if (view === 'comp:' + key) view = tabs[0] || 'flow';
+  commit({ key: 'hist.removeComp', args: [key.split('|')[1], key.split('|')[0]] }); saveTabs(); renderView();
+}
+function removeRaw(id) {
+  model.direct.rawBlocks = model.direct.rawBlocks.filter((b) => b.id !== id);
+  tabs = tabs.filter((x) => x !== 'raw:' + id);
+  if (view === 'raw:' + id) view = tabs[0] || 'flow';
+  commit({ key: 'hist.removeRaw', args: [id] }); saveTabs(); renderView();
+}
+function pickPass(key, move) {
+  const [from, name] = key.split('|');
+  const comp = catalog.byName.get(name);
+  sheet(move ? 'direct.move' : 'direct.duplicate', (close) => [
+    h('p', { class: 'help', text: t('direct.pickPass', [name]) }),
+    h('div', { class: 'st-gallery' }, (comp ? comp.passes : PASSES).filter((p) => p !== from).map((p) => h('button', { type: 'button', class: 'st-card', onclick: () => {
+      const r = DX.copyComponent(model.direct, key, p, catalog.raw, move);
+      model.direct = r.direct;
+      commit({ key: move ? 'hist.moveComp' : 'hist.dupComp', args: [name, p] });
+      if (r.dropped.length) S.toast(t('direct.dropped', [r.dropped.join(', '), p]));
+      close(); openTab('comp:' + p + '|' + name);
+    } }, [h('b', { text: p }), model.direct.all[p + '|' + name] ? h('span', { text: t('direct.mergeInto') }) : null]))),
+    btn('common.cancel', close, 'btn-ghost')]);
+}
+function addComponentPicker(pass) {
+  sheet('direct.addComponent', (close) => {
+    const list = h('ul', { class: 'st-picklist', role: 'listbox', 'aria-label': t('direct.addComponent') });
+    const draw = (q, re) => {
+      list.replaceChildren();
+      const m = compileQuery(q, re);
+      if (!m.ok) { list.appendChild(h('li', { text: t('palette.badRegex') })); return; }
+      const comps = catalog.components.filter((c) => c.passes.includes(pass) && (m.empty || m.test(c.name + ' ' + c.help)));
+      comps.forEach((c, i) => {
+        const present = !!model.direct.all[pass + '|' + c.name];
+        const li = h('li', { role: 'option', tabindex: '-1', id: 'pick-' + i, 'aria-disabled': present ? 'true' : null, class: present ? 'present' : null }, [
+          h('b', { class: 'mono', text: c.name }), c.deprecated ? h('span', { class: 'pass-chip', text: t('cat.deprecated') }) : null, c.popular ? h('span', { class: 'setmark', text: t('direct.popular') }) : null,
+          h('small', { text: (c.help || '') + (present ? ' · ' + t('direct.alreadyAdded') : '') })]);
+        li.addEventListener('click', () => {
+          if (!present) { model.direct = DX.addComponent(model.direct, pass, c.name); commit({ key: 'hist.addComp', args: [c.name, pass] }); }
+          close(); openTab('comp:' + pass + '|' + c.name);
+        });
+        li.addEventListener('keydown', (e) => {
+          const items = [...list.querySelectorAll('li[role=option]')]; const k = items.indexOf(li);
+          if (e.key === 'ArrowDown') { e.preventDefault(); (items[k + 1] || li).focus(); } else if (e.key === 'ArrowUp') { e.preventDefault(); (k > 0 ? items[k - 1] : sb.input).focus(); } else if (e.key === 'Enter') { e.preventDefault(); li.click(); }
+        });
+        list.appendChild(li);
+      });
+      sb.setStatus(t('direct.pickCount', [comps.length, pass]), !comps.length);
+    };
+    const sb = searchBox({ label: t('direct.searchComponents'), placeholder: t('direct.searchComponents'), regexLabel: t('search.regex'), badRegex: t('palette.badRegex'), onChange: draw,
+      onKey: (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); const f = list.querySelector('li[role=option]'); if (f) f.focus(); } if (e.key === 'Enter') { e.preventDefault(); const f = list.querySelector('li[role=option]:not([aria-disabled])'); if (f) f.click(); } } });
+    setTimeout(() => { draw('', false); sb.focus(); }, 0);
+    return [h('p', { class: 'help', text: t('direct.addHelp', [pass]) }), sb.el, list];
+  });
+}
+function renderDirectComponent(key) {
+  const [pass, name] = key.split('|');
+  const comp = catalog && catalog.byName.get(name);
+  const head = h('header', null, [h('h2', { id: 'comp-h', class: 'mono', style: { overflowWrap: 'anywhere' }, text: name }), h('span', { class: 'pass-chip', text: pass })]);
+  const sec = h('div', { class: 'b-sec' }, [head]);
+  mainEl.appendChild(sec);
+  if (!comp) { sec.appendChild(h('p', { class: 'notice warn', text: t('studio.notInCatalog') })); return; }
+  if (!model.direct.all[key]) { sec.appendChild(h('p', { class: 'notice', text: t('direct.notInFile') })); sec.appendChild(btn('direct.addComponent', () => { model.direct = DX.addComponent(model.direct, pass, name); commit({ key: 'hist.addComp', args: [name, pass] }); renderView(); }, 'btn-primary')); return; }
+  head.appendChild(h('div', { class: 'sec-tools' }, [
+    h('a', { class: 'btn btn-ghost btn-sm', href: docUrl(comp), target: '_blank', rel: 'noopener', text: t('direct.docs') }),
+    btn('direct.duplicate', () => pickPass(key, false), 'btn-ghost btn-sm'), btn('direct.move', () => pickPass(key, true), 'btn-ghost btn-sm'),
+    btn('direct.remove', () => { if (window.confirm(t('direct.removeConfirm', [name, pass]))) removeDirectComponent(key); }, 'btn-ghost btn-sm')]));
+  if (comp.help) sec.appendChild(h('p', { class: 'help', style: { color: 'var(--muted)' }, text: comp.help }));
+  const raws = model.direct.rawBlocks.filter((b) => b.scope === 'inside' && b.pass === pass && b.component === name);
+  raws.forEach((b) => sec.appendChild(rawBlockEditor(b)));
+  const ff = searchBox({ label: t('search.fields'), placeholder: t('search.fields'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
+    onChange: (q, re, m) => { let n = 0, total = 0; holder.querySelectorAll('.cat-set').forEach((f) => { total++; const ok = m.ok && (m.empty || !!m.test(f.textContent)); f.hidden = !ok; if (ok) n++; if (ok && !m.empty) { let p = f.parentElement; while (p && p !== holder) { if (p.tagName === 'DETAILS') p.open = true; p = p.parentElement; } } }); if (m.ok) ff.setStatus(m.empty ? '' : t('search.fieldCount', [n, total]), !n); } });
+  sec.appendChild(ff.el);
+  const holder = h('div');
+  holder.appendChild(renderSettings(comp, model.direct.all[key], (v, msg, co) => { model.direct.all[key] = v || {}; commit(msg, co ? 'd:' + key + ':' + co : null); refreshDirectTree(); }, { t, pass, unsetButtons: true, expandPath: selected && selected.comp === name ? selected.path : null, idPrefix: 'dc-' + name.replace(/[^A-Za-z0-9]/g, '') + '-' + pass }));
+  sec.appendChild(holder);
+}
+let treeTimer = null;
+function refreshDirectTree() { clearTimeout(treeTimer); treeTimer = setTimeout(() => { issuesCache = null; if (layout.sideOpen && layout.side === 'explorer') renderSide(); renderStatusBar(); if (layout.panelOpen) renderPanel(); }, 500); }
+function rawBlockEditor(b) {
+  const box = h('div', { class: 'notice warn st-raw' }, [h('b', { text: t('direct.rawTitle') }), h('p', { text: t('direct.rawHelp') })]);
+  const ed = codeEditor(b.xml, { lang: 'xml', fragment: true, label: t('direct.rawBlock') + ' ' + b.id, onEdit: (text, status) => {
+    if (!A.isWellFormed(text)) { status.className = 'pv-status bad'; status.textContent = t('direct.rawInvalid'); return; }
+    const blk = model.direct.rawBlocks.find((x) => x.id === b.id); if (!blk) return;
+    blk.xml = text; status.className = 'pv-status'; status.textContent = t('studio.synced');
+    commit({ key: 'hist.rawEdit', args: [b.id] }, 'raw:' + b.id); refreshAround();
+  } });
+  ed.el.style.minHeight = '140px';
+  box.append(ed.el, h('div', { class: 'cta' }, [btn('direct.remove', () => removeRaw(b.id), 'btn-ghost btn-sm')]));
+  return box;
+}
+function renderRawTab(id) {
+  const b = model.direct.rawBlocks.find((x) => x.id === id);
+  const sec = h('div', { class: 'b-sec st-fill' }, [h('header', null, [h('h2', { text: t('direct.rawBlock') + ' ' + id })])]);
+  mainEl.appendChild(sec);
+  if (!b) { sec.appendChild(h('p', { class: 'empty', text: t('direct.rawGone') })); return; }
+  sec.appendChild(h('p', { class: 'meter-label', text: b.scope === 'pass' ? t('direct.rawWherePass', [b.pass]) : b.scope === 'inside' ? t('direct.rawWhereIn', [b.pass, b.component]) : t('direct.rawWhereTop') }));
+  sec.appendChild(rawBlockEditor(b));
+}
+function renderServicingTab() {
+  const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'svc-h', text: t('direct.servicing') })]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('direct.servicingHelp') })]);
+  mainEl.appendChild(sec);
+  const list = h('div', { class: 'list-ed' });
+  const save = (msg, co) => { commit(msg, co); refreshAround(); };
+  const field = (lab, val, onIn, id) => { const inp = h('input', { type: 'text', id, value: val || '', spellcheck: 'false' }); inp.addEventListener('input', () => onIn(inp.value)); return h('div', { class: 'field' }, [h('label', { for: id, text: lab }), inp]); };
+  const draw = () => {
+    list.replaceChildren();
+    model.direct.servicing.forEach((p, i) => {
+      p.identity = p.identity || {};
+      const row = h('div', { class: 'list-row' });
+      const act = h('select', { id: 'svc-act-' + i }, ['install', 'configure', 'remove', 'stage'].map((a) => h('option', { value: a, text: a })));
+      act.value = p.action || 'configure';
+      act.addEventListener('change', () => { p.action = act.value; save({ key: 'hist.svcEdit', args: [i + 1] }); });
+      row.append(h('div', { class: 'field' }, [h('label', { for: 'svc-act-' + i, text: t('direct.svcAction') }), act]));
+      ['name', 'version', 'processorArchitecture', 'publicKeyToken', 'language'].forEach((k) => row.append(field(k, p.identity[k], (v) => { p.identity[k] = v; save({ key: 'hist.svcEdit', args: [i + 1] }, 'svc' + i + k); }, `svc-${i}-${k}`)));
+      const sel = h('textarea', { id: 'svc-sel-' + i, rows: '3', spellcheck: 'false' });
+      sel.value = (p.selections || []).map((x) => x.name + '=' + (x.state === true || /^true$/i.test(String(x.state)) ? 'true' : 'false')).join('\n');
+      sel.addEventListener('input', () => { p.selections = sel.value.split(/\n/).map((l) => l.trim()).filter(Boolean).map((l) => { const [n, st] = l.split('='); return { name: n.trim(), state: !/^false$/i.test(String(st || 'true').trim()) }; }); save({ key: 'hist.svcEdit', args: [i + 1] }, 'svcsel' + i); });
+      const src = h('textarea', { id: 'svc-src-' + i, rows: '2', spellcheck: 'false' });
+      src.value = (p.sources || []).map((x) => x.location).join('\n');
+      src.addEventListener('input', () => { const locs = src.value.split(/\n/).map((l) => l.trim()).filter(Boolean); if (locs.length) p.sources = locs.map((l) => ({ location: l })); else delete p.sources; save({ key: 'hist.svcEdit', args: [i + 1] }, 'svcsrc' + i); });
+      row.append(h('div', { class: 'field' }, [h('label', { for: 'svc-sel-' + i, text: t('direct.svcSelections') }), sel]), h('div', { class: 'field' }, [h('label', { for: 'svc-src-' + i, text: t('direct.svcSources') }), src]),
+        h('div', { class: 'row-tools' }, [iconButton('del', t('list.remove'), () => { model.direct.servicing.splice(i, 1); save({ key: 'hist.svcRemove', args: [i + 1] }); draw(); })]));
+      list.appendChild(row);
+    });
+    list.appendChild(btn('direct.addPackage', () => { model.direct.servicing.push({ action: 'configure', identity: { name: 'Microsoft-Windows-Foundation-Package', version: '10.0.26100.1', processorArchitecture: model.direct.architecture, publicKeyToken: '31bf3856ad364e35', language: '' }, selections: [] }); save({ key: 'hist.svcAdd', args: [] }); draw(); }, 'btn-ghost btn-sm'));
+  };
+  draw();
+  const arch = h('select', { id: 'd-arch' }, ['amd64', 'x86', 'arm64'].map((a) => h('option', { value: a, text: a })));
+  arch.value = model.direct.architecture;
+  arch.addEventListener('change', () => { model.direct.architecture = arch.value; save({ key: 'hist.setField', args: ['processorArchitecture', arch.value] }); });
+  sec.append(h('div', { class: 'field', style: { maxWidth: '240px' } }, [h('label', { for: 'd-arch', text: t('direct.arch') }), arch]), list);
+}
+function renderDirectNew() {
+  const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'new-h', text: t('studio.newTitle') })]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('direct.newHelp') })]);
+  const grid = h('div', { class: 'st-gallery' });
+  grid.appendChild(h('button', { type: 'button', class: 'st-card on', onclick: newBlankDirect }, [h('b', { text: t('direct.blank') }), h('span', { text: t('direct.blankHelp') })]));
+  grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => { importIntoDirect = true; $('#b-import-file').click(); } }, [h('b', { text: t('direct.openExisting') }), h('span', { text: t('direct.openExistingHelp') })]));
+  MODE_TABS.forEach((m) => grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => {
+    const dm = A.defaultModel(); dm.mode = m; model = dm; commit({ key: 'hist.mode', args: ['@tab.' + m] }); LS.set('td.studio.mode', 'guided'); tabs = ['template', 'flow']; view = 'template'; saveTabs(); renderView();
+  } }, [h('b', { text: t('tab.' + m) + ' (' + t('direct.guided') + ')' }), h('span', { text: t('mode.' + m + '.intro') })])));
+  sec.appendChild(grid);
+  mainEl.appendChild(sec);
+}
+let importIntoDirect = false;
+function newBlankDirect() {
+  if (!rules || !catalog || !catalog.raw) { S.toast(t('direct.needCatalog')); return; }
+  const keep = model;
+  model = A.defaultModel(); model.mode = 'direct'; model.direct = DX.blankDirect();
+  model = mergeSecrets(model, keep);
+  commit({ key: 'hist.blankDirect', args: [] });
+  LS.set('td.studio.mode', 'direct');
+  tabs = ['flow', 'xml']; view = 'flow'; saveTabs();
+  layout.side = 'explorer'; layout.sideOpen = true; applyLayout();
+  renderView();
+}
+function importXmlDirect(text, name) {
+  if (!rules || !catalog || !catalog.raw) { report([t('direct.needCatalog')], false); return; }
+  let r;
+  try { r = DX.importDirect(text, catalog.raw, rules.gen); } catch (e) { report([t('imp.badXml', [e.message])], false); return; }
+  const next = A.defaultModel(); next.mode = 'direct'; next.direct = r.direct;
+  const check = A.normalizeModel(next);
+  if (!check.ok) { report([t('imp.badModel', [check.error])], false); return; }
+  model = check.model;
+  commit({ key: 'hist.importDirect', args: [name || 'autounattend.xml'] });
+  LS.set('td.studio.mode', 'direct');
+  const first = Object.keys(model.direct.all)[0];
+  tabs = (first ? ['comp:' + first] : []).concat(['flow', 'xml']); view = tabs[0]; saveTabs(); renderView();
+  const lines = [t('direct.imported', [Object.keys(model.direct.all).length, r.direct.servicing.length])];
+  if (r.unknown.length) { lines.push(t('direct.rawKept', [r.unknown.length])); r.unknown.slice(0, 30).forEach((u) => lines.push('  ' + u)); } else lines.push(t('imp.allUnderstood'));
+  r.warnings.forEach((w) => lines.push(w));
+  report(lines, !r.unknown.length);
+}
+
+// ------------------------------------------------------------------------------------------------
 // Editors
 // ------------------------------------------------------------------------------------------------
 function renderNew() {
   const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'new-h', text: t('studio.newTitle') })]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('studio.newHelp') })]);
   const grid = h('div', { class: 'st-gallery' });
+  grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: newBlankDirect }, [h('b', { text: t('direct.blank') }), h('span', { text: t('direct.blankHelp') })]));
+  grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => { importIntoDirect = true; $('#b-import-file').click(); } }, [h('b', { text: t('direct.openExisting') }), h('span', { text: t('direct.openExistingHelp') })]));
   MODE_TABS.forEach((m) => grid.appendChild(h('button', { type: 'button', class: 'st-card' + (model.mode === m ? ' on' : ''), onclick: () => {
     if (model.mode !== m) { model.mode = m; commit({ key: 'hist.mode', args: ['@tab.' + m] }); }
     tabs = tabs.filter((x) => x !== 'new'); openTab('template');
@@ -1618,6 +1923,9 @@ function lintXml(text) {
   });
   return out;
 }
+function lintFragment(text) {
+  try { A.parseXml(text); return []; } catch (e) { return [{ from: 0, to: Math.min(text.length, Math.max(1, text.indexOf('\n') < 0 ? text.length : text.indexOf('\n'))), severity: 'error', message: e.message }]; }
+}
 function codeEditor(text, opts) {
   const host = h('div', { class: 'st-cm' });
   const status = h('div', { class: 'pv-status', role: 'status', 'aria-live': 'polite' });
@@ -1625,18 +1933,29 @@ function codeEditor(text, opts) {
   const cm = window.TempDeskCM.createCodeEditor(host, {
     doc: text, lang: opts.lang, readOnly: !!opts.readonly, label: opts.label,
     schema: opts.lang === 'xml' ? xmlSchema() : undefined,
-    lint: opts.lang === 'xml' ? lintXml : undefined,
+    lint: opts.lang === 'xml' ? (opts.fragment ? lintFragment : lintXml) : undefined,
     onChange: (v) => { clearTimeout(tm); if (opts.onEdit) tm = setTimeout(() => opts.onEdit(v, status), 500); }
   });
   return { el: h('div', { class: 'st-editorbox' }, [host, status]), cm, status, set(v) { if (!cm.hasFocus()) cm.set(v); cm.relint(); } };
 }
 let xmlEditor = null;
 function xmlEdited(text, status) {
+  if (isDirect()) {
+    try {
+      const before = safeXml(model);
+      const r = DX.importDirect(text, catalog.raw, rules.gen);
+      model.direct = r.direct;
+      status.className = 'pv-status' + (r.unknown.length ? ' bad' : '');
+      status.textContent = r.unknown.length ? t('direct.rawKept', [r.unknown.length]) : t('studio.synced');
+      if (safeXml(model) !== before) { commit({ key: 'hist.xmlEdit', args: [] }, 'xml-edit'); refreshAround(); }
+    } catch (e) { status.className = 'pv-status bad'; status.textContent = t('studio.xmlNotApplied', [e.message]); }
+    return;
+  }
   try {
     const r = A.syncFromXml(model, text, { knownComponent });
-    const before = A.buildXml(model);
+    const before = safeXml(model);
     model = r.model;
-    const after = A.buildXml(model);
+    const after = safeXml(model);
     status.className = 'pv-status';
     status.textContent = r.unknown.length ? t('studio.syncUnknown', [r.unknown.length]) : t('studio.synced');
     if (after !== before) { commit({ key: 'hist.xmlEdit', args: [] }, 'xml-edit'); refreshAround(); }
@@ -1646,7 +1965,7 @@ function xmlEdited(text, status) {
   }
 }
 function renderXmlTab() {
-  const ed = codeEditor(A.buildXml(model), { lang: 'xml', label: 'autounattend.xml', onEdit: xmlEdited });
+  const ed = codeEditor(safeXml(model), { lang: 'xml', label: 'autounattend.xml', onEdit: xmlEdited });
   xmlEditor = ed;
   mainEl.appendChild(h('div', { class: 'b-sec st-fill' }, [h('header', null, [h('h2', { id: 'xml-h', class: 'mono', text: 'autounattend.xml' }), h('span', { class: 'meter-label', text: t('studio.twoWay') })]), ed.el]));
 }
@@ -1687,7 +2006,7 @@ function renderCompare() {
     out.replaceChildren();
     if (!other) { out.appendChild(h('p', { class: 'empty', text: t('cmp.nothing') })); return; }
     let c;
-    try { c = A.compareXml(other, A.buildXml(model)); } catch (e) { out.appendChild(h('p', { class: 'notice warn', text: t('imp.badXml', [e.message]) })); return; }
+    try { c = A.compareXml(other, safeXml(model)); } catch (e) { out.appendChild(h('p', { class: 'notice warn', text: t('imp.badXml', [e.message]) })); return; }
     out.appendChild(h('p', { class: 'meter-label', text: t('cmp.summary', [label, c.added.length, c.removed.length, c.changed.length, c.same]) }));
     const tb = h('table', null, [h('thead', null, [h('tr', null, [h('th', { text: t('cmp.change') }), h('th', { text: t('cmp.setting') }), h('th', { text: t('cmp.before') }), h('th', { text: t('cmp.after') })])])]);
     const body = h('tbody');
@@ -1696,7 +2015,7 @@ function renderCompare() {
     c.removed.forEach((x) => body.appendChild(h('tr', { class: 'del' }, [h('td', { text: t('cmp.removed') }), h('td', { class: 'mono', text: x.path }), h('td', { text: x.value }), h('td', { text: '' })])));
     tb.appendChild(body);
     out.appendChild(h('div', { class: 'tablebox', tabindex: '0' }, [tb]));
-    out.appendChild(h('details', null, [h('summary', { text: t('cmp.lines') }), diffView(other, A.buildXml(model))]));
+    out.appendChild(h('details', null, [h('summary', { text: t('cmp.lines') }), diffView(other, safeXml(model))]));
   };
   sel.addEventListener('change', () => { compareWith.kind = sel.value; histSel.hidden = sel.value !== 'history'; fileIn.hidden = sel.value !== 'file'; run(); });
   histSel.addEventListener('change', run);
@@ -1710,7 +2029,7 @@ function renderCompare() {
 let simStep = 0, simTimer = null;
 function renderSimulate() {
   let steps;
-  try { steps = A.simulate(A.buildXml(model)); } catch (e) { mainEl.appendChild(h('p', { class: 'notice warn', text: e.message })); return; }
+  try { steps = A.simulate(safeXml(model)); } catch (e) { mainEl.appendChild(h('p', { class: 'notice warn', text: e.message })); return; }
   const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'sim-h', text: t('tab.simulate') })]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('sim.help') })]);
   mainEl.appendChild(sec);
   const ol = h('ol', { class: 'st-sim' });
@@ -1747,6 +2066,14 @@ function renderSnippets() {
   mainEl.appendChild(sec);
 }
 function renderSecrets() {
+  if (isDirect()) {
+    const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { text: t('tab.secrets') })]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('secrets.help') })]);
+    const rows = [];
+    (function walk(v, p) { if (!v || typeof v !== 'object') return; Object.keys(v).forEach((k) => { if (k === '@password') rows.push([p.join(' / '), v[k], 'encoded']); else if (/^(Password|MachinePassword)$/.test(k) && typeof v[k] === 'string') rows.push([p.concat(k).join(' / '), v[k], 'plain']); else walk(v[k], p.concat(k)); }); })(model.direct.all, []);
+    const tb = h('table', null, [h('thead', null, [h('tr', null, [h('th', { text: t('secrets.where') }), h('th', { text: t('secrets.value') }), h('th', { text: t('secrets.stored') })])]), h('tbody', null, rows.length ? rows.map(([w, v, how]) => h('tr', null, [h('td', { class: 'mono', text: w }), h('td', { class: 'mono', text: v ? '\u2022'.repeat(Math.min(16, v.length)) : t('secrets.empty') }), h('td', { text: t('secrets.' + how) })])) : [h('tr', null, [h('td', { colspan: '3', text: t('secrets.none') })])])]);
+    sec.append(h('div', { class: 'tablebox', tabindex: '0' }, [tb]), h('p', { class: 'notice warn', text: t('exp.pwWarn') }));
+    mainEl.appendChild(sec); return;
+  }
   const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'sec-h2', text: t('tab.secrets') })]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('secrets.help') })]);
   const rows = [];
   Object.keys(A.SECRET_FIELDS).forEach((mode) => A.SECRET_FIELDS[mode].forEach((k) => { if (mode === model.mode) rows.push([t('tab.' + mode) + ' / ' + label(k), model[mode][k], k === 'joinPassword' ? 'plain' : 'encoded', () => revealField(k)]); }));
@@ -1773,12 +2100,14 @@ function refreshAround() {
   issuesCache = null;
   if (layout.sideOpen && layout.side === 'explorer') renderSide();
   if (layout.panelOpen) renderPanel();
-  if (layout.split && view !== 'xml' && splitEditor) splitEditor.set(A.buildXml(model));
-  if (xmlEditor && view === 'xml') xmlEditor.set(A.buildXml(model));
+  if (layout.split && view !== 'xml' && splitEditor) splitEditor.set(safeXml(model));
+  if (xmlEditor && view === 'xml') xmlEditor.set(safeXml(model));
   renderStatusBar();
 }
 let splitEditor = null;
+function syncModeSwitch() { const k = $('#b-dl-zip'); if (k) k.textContent = t(isDirect() ? 'tb.downloadXml' : 'studio.buildKit'); document.querySelectorAll('.st-mode [data-mode]').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.mode === 'direct') === isDirect()))); }
 function renderView() {
+  syncModeSwitch();
   const focusId = document.activeElement && document.activeElement.id;
   const sel = focusId && document.activeElement.selectionStart !== undefined ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
   issuesCache = null;
@@ -1793,7 +2122,7 @@ function renderView() {
   const parts = [content];
   splitEditor = null;
   if (layout.split && view !== 'xml' && view !== 'firstboot' && !view.startsWith('file:') && !isPhone()) {
-    splitEditor = codeEditor(A.buildXml(model), { lang: 'xml', label: 'autounattend.xml', onEdit: (text, status) => { xmlEdited(text, status); renderEditorOnly(); } });
+    splitEditor = codeEditor(safeXml(model), { lang: 'xml', label: 'autounattend.xml', onEdit: (text, status) => { xmlEdited(text, status); renderEditorOnly(); } });
     parts.push(h('div', { class: 'st-splitxml' }, [h('div', { class: 'st-splitxml-h mono', text: 'autounattend.xml' }), splitEditor.el]));
   }
   ed.replaceChildren(...parts);
@@ -1811,6 +2140,14 @@ function renderEditorOnly() {
   mainEl.scrollTop = scroll;
 }
 function renderEditorContent() {
+  if (isDirect()) {
+    if (view === 'new') return renderDirectNew();
+    if (!directReady()) return;
+    if (view.startsWith('comp:')) return renderDirectComponent(view.slice(5));
+    if (view.startsWith('raw:')) return renderRawTab(view.slice(4));
+    if (view === 'servicing') return renderServicingTab();
+    if (view === 'template' || view === 'firstboot' || view === 'map' || view === 'plan' || view === 'snippets' || view.startsWith('file:')) { mainEl.appendChild(h('p', { class: 'notice', text: t('direct.notHere') })); return; }
+  }
   if (view === 'template') renderMode(model.mode);
   else if (view === 'new') renderNew();
   else if (view === 'all') renderAll();
@@ -1870,11 +2207,17 @@ async function init() {
   $('#st-split').addEventListener('click', () => { layout.split = !layout.split; applyLayout(); renderView(); });
   $('#st-insp-toggle').addEventListener('click', () => { layout.inspOpen = !layout.inspOpen; applyLayout(); renderInspector(); });
   document.querySelectorAll('.st-phonebar [data-pane]').forEach((b) => b.addEventListener('click', () => { layout.pane = b.dataset.pane; if (layout.pane === 'explorer') layout.sideOpen = true; if (layout.pane === 'inspector') layout.inspOpen = true; if (layout.pane === 'problems') { layout.panelOpen = true; layout.panel = 'problems'; } applyLayout(); renderSide(); renderInspector(); renderPanel(); }));
+  const want = new URLSearchParams(location.search).get('mode');
   applyLayout();
+  if (isDirect()) { tabs = tabs.filter((x) => x !== 'template'); if (!tabs.length) tabs = ['flow']; if (!tabs.includes(view)) view = tabs[0]; }
   renderView();
   output(t('studio.ready'));
   catalog = await loadCatalog(ROOT);
   await loadRules();
+  // ?mode=direct opens straight into Direct; otherwise the last mode is restored.
+  const wantDirect = want === 'direct' || (want !== 'guided' && LS.get('td.studio.mode', 'guided') === 'direct');
+  if (wantDirect && !isDirect()) { if (want === 'direct' && !Object.keys(model.all).length && history && history.entries.length <= 1) newBlankDirect(); else setMode('direct'); }
+  else if (want === 'guided' && isDirect()) setMode('guided');
   xmlSchemaCache = null;
   output(catalog.origin === 'full' ? t('cat.full', [catalog.components.length, catalog.version]) : t('cat.notBuilt', [catalog.components.length]));
   if (rules) output(t('checks.loaded'));

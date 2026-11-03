@@ -245,3 +245,15 @@ button.pass-chip { cursor: pointer; font: inherit; font-size: .72rem; }
   .studio .st-logo { min-height: var(--tap); min-width: var(--tap); justify-content: center; }
   .studio .st-top .btn, .studio #b-dl-zip { min-height: var(--tap); }
 }
+.st-mode button { min-height: 32px; padding: 0 12px; font-size: .8rem; }
+.st-direct { font-weight: 800; color: var(--primary); }
+.st-add .st-ti-l { color: var(--primary); font-weight: 700; }
+.st-picklist { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.st-picklist li { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; padding: 10px 12px; border-radius: 10px; cursor: pointer; min-height: 44px; }
+.st-picklist li small { flex: 1 1 100%; color: var(--muted); }
+.st-picklist li:hover, .st-picklist li:focus { background: var(--primary-soft); outline: none; }
+.st-picklist li.present { opacity: .6; }
+.cat-unset { align-self: flex-start; }
+.st-raw { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+@media (max-width: 900px) { .st-mode button { min-height: var(--tap); } .st-actions .st-mode { order: -1; } }
+@media (max-width: 520px) { .st-actions .btn-primary { display: none; } }
