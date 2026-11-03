@@ -1,71 +1,82 @@
 {% extends "layouts/admin.html" %}
+{% from "macros.html" import icon with context %}
 {% block title %}{{ ta("Server overview") }}{% endblock %}
 {% block content %}
 <link rel="stylesheet" href="/static/css/server.css">
-<div class="srv">
-  <div class="srv-head">
-    <div style="flex:1 1 auto">
-      <h1>{{ (overview.computerName if overview else "Server") or "Server" }}</h1>
-      {% if overview %}
-      <div class="srv-sub">{{ overview.os }} {{ overview.edition }}{% if overview.domain %}, {{ overview.domain }}{% endif %}</div>
-      {% endif %}
-    </div>
-    <form method="post" action="/server/power" class="srv-inline">
-      <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
-      <input type="hidden" name="action" value="restart">
-      <input type="hidden" name="confirm_name" value="restart">
-      <button type="submit" class="srv-btn">{{ t("Restart") }}</button>
-    </form>
-    <form method="post" action="/server/power" class="srv-inline">
-      <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
-      <input type="hidden" name="action" value="shutdown">
-      <input type="hidden" name="confirm_name" value="shutdown">
-      <button type="submit" class="srv-btn danger">{{ t("Shut down") }}</button>
-    </form>
+<div class="page-head rise">
+  <div style="flex:1 1 360px;min-width:0">
+    {% if overview %}<div class="kicker">{{ overview.os }} {{ overview.edition }}{% if overview.uptimeSeconds %} · {{ t('up {hours} h', hours=(overview.uptimeSeconds // 3600)) }}{% endif %}{% if overview.domain %} · {{ overview.domain }}{% endif %}</div>{% endif %}
+    <h1 class="mid-title">{{ (overview.computerName if overview else (health.dc if health else "Server")) or "Server" }}</h1>
   </div>
-
-  {% if overview_error %}<div class="srv-err">{{ overview_error }}</div>{% endif %}
-
-  <div id="srv-metrics" data-metrics-url="/server/metrics" class="srv-grid">
-    <div class="srv-card">
-      <div class="srv-metric-top"><span class="label">CPU</span><span class="value" id="val-cpu">--</span></div>
-      <canvas class="srv-chart" id="chart-cpu" width="300" height="90" aria-label="CPU usage over time"></canvas>
-    </div>
-    <div class="srv-card">
-      <div class="srv-metric-top"><span class="label">{{ t("Memory") }}</span><span class="value" id="val-mem">--</span></div>
-      <canvas class="srv-chart" id="chart-mem" width="300" height="90" aria-label="Memory in use over time"></canvas>
-    </div>
-    <div class="srv-card">
-      <div class="srv-metric-top"><span class="label">{{ t("Disk") }}</span><span class="value" id="val-disk">--</span></div>
-      <canvas class="srv-chart" id="chart-disk" width="300" height="90" aria-label="Disk throughput over time"></canvas>
-    </div>
-    <div class="srv-card">
-      <div class="srv-metric-top"><span class="label">{{ t("Network") }}</span><span class="value" id="val-net">--</span></div>
-      <canvas class="srv-chart" id="chart-net" width="300" height="90" aria-label="Network throughput over time"></canvas>
-    </div>
-  </div>
-
-  {% if overview %}
-  <section class="srv-card">
-    <h2>{{ t("System") }}</h2>
-    <div class="srv-grid">
-      <div><div class="srv-note">{{ t("Uptime") }}</div>{{ (overview.uptimeSeconds // 3600) }}h</div>
-      <div><div class="srv-note">{{ t("Domain role") }}</div>{{ overview.domainRole }}</div>
-      <div><div class="srv-note">{{ t("Edition") }}</div>{{ overview.edition }}</div>
-      <div><div class="srv-note">{{ t("Version") }}</div>{{ overview.version }}</div>
-    </div>
-    <form method="post" action="/server/identity" class="srv-form" style="margin-top:14px;max-width:360px">
-      <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
-      <div class="srv-field">
-        <label for="cn">{{ t("Computer name") }}</label>
-        <input id="cn" name="computerName" value="{{ overview.computerName }}" maxlength="15">
-      </div>
-      <button type="submit" class="srv-btn">{{ t("Rename (restart needed)") }}</button>
-    </form>
-  </section>
-  {% endif %}
+  {% if has_cap('console') %}<a class="c-chip" href="/server/console">{{ icon('terminal', 18) }} PowerShell</a>{% endif %}
+  <form method="post" action="/server/power" class="srv-inline">
+    <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+    <input type="hidden" name="action" value="restart">
+    <input type="hidden" name="confirm_name" value="restart">
+    <button type="submit" class="c-chip">{{ t("Restart") }}</button>
+  </form>
+  <form method="post" action="/server/power" class="srv-inline">
+    <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+    <input type="hidden" name="action" value="shutdown">
+    <input type="hidden" name="confirm_name" value="shutdown">
+    <button type="submit" class="c-chip coral">{{ t("Shut down") }}</button>
+  </form>
 </div>
-{% endblock %}
-{% block scripts %}
-<script src="/static/js/server-charts.js"></script>
+
+{% if overview_error %}<p class="alert rise" role="status"><span class="grow"><strong>{{ t('Server details are not available') }}</strong>{{ t('The agent did not return the server overview on this backend.') }} <span class="subtle">({{ overview_error }})</span></span></p>{% endif %}
+
+<section class="perf rise" style="--i:1" aria-label="{{ ta('Live performance') }}" data-perf>
+  <div><div class="k">CPU</div><div class="v" data-pv="cpu">--</div><div class="cpu" data-ps="cpu"></div></div>
+  <div><div class="k">{{ t("Memory") }}</div><div class="v"><span data-pv="mem">--</span><small data-pv="mem-total"></small></div><div class="mem" data-ps="mem"></div></div>
+  <div><div class="k">{{ t("Network") }}</div><div class="v"><span data-pv="net">--</span><small> Mb/s</small></div><div class="net" data-ps="net"></div></div>
+  <div><div class="k">{{ t("Disk") }}</div><div class="v" data-pv="disk">--</div><div class="meter primary" style="height:12px;border-radius:6px;margin-top:26px"><span data-pv="disk-bar" style="width:0%"></span></div>
+    <div class="subtle" style="margin-top:8px" data-pv="status" aria-live="polite"></div></div>
+</section>
+
+{% set tiles = [
+  ('services', 'Services', '/server/services', 'Start, stop and set startup type'),
+  ('updates', 'Updates', '/server/updates', 'Scan and install'),
+  ('events', 'Event logs', '/server/events', 'Errors and warnings'),
+  ('firewall', 'Firewall', '/server/firewall', 'Profiles and rules'),
+  ('dns', 'DNS server', '/server/dns', 'Zones and records'),
+  ('storage', 'Storage', '/server/storage', 'Disks, volumes and shares'),
+  ('files', 'Files', '/server/files', 'Upload and download'),
+  ('registry', 'Registry', '/server/registry', 'Edit with undo'),
+  ('tasks', 'Scheduled tasks', '/server/tasks', 'Run, enable and history'),
+  ('certificates', 'Certificates', '/server/certificates', 'Import, export, self-signed'),
+  ('features', 'Roles and features', '/server/features', 'Add or remove'),
+  ('devices', 'Devices', '/server/devices', 'Status and drivers'),
+  ('processes', 'Processes', '/server/processes', 'CPU, memory and end task'),
+  ('network', 'Networks', '/server/network', 'Adapters, routes and tests'),
+  ('dhcp', 'DHCP server', '/server/dhcp', 'Scopes and leases'),
+  ('perfmon', 'Performance', '/server/perfmon', 'Counters'),
+  ('console', 'PowerShell', '/server/console', 'Full control, password needed'),
+] %}
+<div class="tools">
+  {% for cap, label, href, sub in tiles if has_cap(cap) %}
+  <a class="tool rise" style="--i:{{ [loop.index0 + 2, 10]|min }}" href="{{ href }}"><span class="k">{{ t(label) }}</span><span class="big">{{ t(sub) }}</span><span class="s">{{ t('Open') }} ›</span></a>
+  {% else %}
+  <div class="tile" style="grid-column:1/-1">{{ t('The agent reports no server tools on this backend. Server management needs the Windows agent.') }}</div>
+  {% endfor %}
+</div>
+
+{% if overview %}
+<section class="tile rise">
+  <h2>{{ t("System") }}</h2>
+  <div class="srv-grid">
+    <div><div class="srv-note">{{ t("Uptime") }}</div>{{ (overview.uptimeSeconds // 3600) }}h</div>
+    <div><div class="srv-note">{{ t("Domain role") }}</div>{{ overview.domainRole }}</div>
+    <div><div class="srv-note">{{ t("Edition") }}</div>{{ overview.edition }}</div>
+    <div><div class="srv-note">{{ t("Version") }}</div>{{ overview.version }}</div>
+  </div>
+  <form method="post" action="/server/identity" class="srv-form" style="margin-top:14px;max-width:360px">
+    <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+    <div class="field">
+      <label for="cn">{{ t("Computer name") }}</label>
+      <input id="cn" type="text" name="computerName" value="{{ overview.computerName }}" maxlength="15">
+    </div>
+    <button type="submit" class="btn">{{ t("Rename (restart needed)") }}</button>
+  </form>
+</section>
+{% endif %}
 {% endblock %}

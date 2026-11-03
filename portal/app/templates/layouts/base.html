@@ -9,6 +9,7 @@
 <link rel="icon" href="/static/img/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/css/tokens.css">
 <link rel="stylesheet" href="/static/css/app.css">
+{% if mode == "admin" %}<link rel="stylesheet" href="/static/css/console.css">{% endif %}
 {% block head %}{% endblock %}
 <script src="/static/js/prefs.js"></script>
 </head>
@@ -20,6 +21,8 @@
 <script type="application/json" id="td-strings">{{ js_strings }}</script>
 <script src="/static/js/app.js" defer></script>
 <script src="/static/js/palette.js" defer></script>
+{% if mode == "admin" and session %}<script src="/static/js/admin.js" defer></script>
+<script src="/static/js/console.js" defer></script>{% endif %}
 {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -73,12 +73,22 @@ def back(request: Request, default: str) -> str:
     return safe_next(request.query_params.get("back") or request.headers.get("x-back"), default)
 
 
-def ok(request: Request, url: str, key: str, **args) -> RedirectResponse:
-    return redirect(request, url, ("success", flash_text(request, key, **args)))
+def is_fetch(request: Request) -> bool:
+    """Console scripts post forms with X-Requested-With: fetch and read a JSON reply."""
+    return request.headers.get("x-requested-with") == "fetch"
 
 
-def fail(request: Request, url: str, exc: AgentError | str) -> RedirectResponse:
+def ok(request: Request, url: str, key: str, **args):
+    text = flash_text(request, key, **args)
+    if is_fetch(request):
+        return JSONResponse({"ok": True, "message": text, "url": url})
+    return redirect(request, url, ("success", text))
+
+
+def fail(request: Request, url: str, exc: AgentError | str):
     text = agent_message(request, exc) if isinstance(exc, AgentError) else flash_text(request, exc)
+    if is_fetch(request):
+        return JSONResponse({"ok": False, "message": text, "url": url}, status_code=400)
     return redirect(request, url, ("error", text))
 
 
@@ -283,11 +293,23 @@ async def dashboard(request: Request, sess: Session = Depends(require_admin)):
             audit_rows = (await call(request, sess, "GET", "/audit", params={"limit": 8})) or []
         except AgentError:
             audit_rows = []
-    active = [g for g in guests or [] if g.get("enabled")]
+    now_ts = time.time()
+
+    def _exp(g):
+        v = g.get("expiresAt")
+        try:
+            return datetime.fromisoformat(str(v).replace("Z", "+00:00")).timestamp() if v else None
+        except ValueError:
+            return None
+    active = [g for g in guests or [] if g.get("enabled") and (_exp(g) is None or _exp(g) > now_ts)]
+    soon = [g for g in active if _exp(g) is not None and _exp(g) - now_ts <= 3600]
+    slim = [{k: g.get(k) for k in ("username", "displayName", "created", "expiresAt", "enabled", "lastLogon")} for g in guests or []]
     onboarding = read_json_file(data_dir(request) / "onboarding.json", {})
     return await render(request, "admin/dashboard.html", {
         "health": health, "guest_total": len(guests or []) if guests is not None else None,
-        "guest_active": len(active), "guest_error": guest_error,
+        "guest_active": len(active), "guest_error": guest_error, "guest_soon": len(soon),
+        "guest_signed": len([g for g in active if g.get("lastLogon")]),
+        "guests_json": Markup(json.dumps(slim, ensure_ascii=False).replace("<", "\\u003c")),
         "audit_rows": audit_rows[:8] if isinstance(audit_rows, list) else [],
         "audit_cols": audit_columns(audit_rows if isinstance(audit_rows, list) else []),
         "onboarding_done": bool(onboarding.get("done")),
@@ -500,9 +522,17 @@ async def directory(request: Request, sess: Session = Depends(require_admin)):
     if isinstance(tv, Response):
         return tv
     root = await call(request, sess, "GET", "/ad/tree") or [] if dn else children
-    return await render(request, "admin/directory.html", {
+    studio = request.query_params.get("view") != "list"
+    health = await agent(request).health()
+    return await render(request, "admin/directory.html" if studio else "admin/directory_list.html", {
         "dn": dn, "tv": tv, "regex_error": err, "root": root,
         "bulk_token": confirm_token(request, "bulk-delete-objects", "delete"),
+        "studio_cfg": Markup(json.dumps({
+            "root": root, "dn": dn or "", "open": request.query_params.get("open") or "", "find": request.query_params.get("find") or "",
+            "do": request.query_params.get("do") or "", "dc": (health or {}).get("dc") or "", "domain": (health or {}).get("domain") or "",
+            "caps": sorted((health or {}).get("capabilities") or []), "backend": (health or {}).get("backend") or "windows",
+            "deleteNote": delete_undo_note(health)[1],
+        }, ensure_ascii=False).replace("<", "\\u003c")),
     })
 
 
@@ -1251,6 +1281,8 @@ async def gpo_admx_save(gid: str, pid: str, request: Request, sess: Session = De
             raise HTTPException(404)
         values, err = admx_values(pol, form)
         if err:
+            if is_fetch(request):
+                return JSONResponse({"ok": False, "message": err, "url": url}, status_code=400)
             return redirect(request, url, ("error", err))
     snap = await gpo_snapshot(request, sess, gid)
     try:

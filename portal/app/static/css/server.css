@@ -90,7 +90,7 @@
 .srv-btn:focus-visible { outline: 2px solid var(--srv-primary); outline-offset: 2px; }
 
 /* ---- tables ---- */
-.srv-tablewrap { overflow-x: auto; border-radius: 18px; border: 1px solid var(--srv-outline); }
+.srv-tablewrap { position: relative; overflow-x: auto; border-radius: 18px; border: 1px solid var(--srv-outline); }
 table.srv-table {
   width: 100%;
   border-collapse: collapse;
@@ -244,3 +244,18 @@ table.srv-table {
   .srv-split { grid-template-columns: 1fr; }
   .srv-head h1 { font-size: 24px; }
 }
+
+/* ---- control room alignment (design/project/Console-Server.dc.html) ---- */
+.srv-head h1 { font-size: clamp(1.9rem, 3.5vw, 2.9rem); letter-spacing: -0.04em; font-weight: 800; }
+.srv-card { border-radius: var(--r-xl, 28px); background: var(--surface-2); border-color: var(--outline); }
+.srv-btn { min-height: 44px; height: auto; border-radius: 22px; background: var(--surface-3); border-color: var(--outline-strong); font-weight: 600; }
+.srv-btn:hover { background: var(--surface-4); }
+.srv-btn.danger { color: var(--coral); border-color: var(--coral-line); background: transparent; }
+.srv-search, .srv-field input, .srv-field select, .srv-field textarea, .srv-console-input { min-height: 44px; border-radius: 22px; background: var(--ground); border-color: var(--outline-strong); }
+.srv-field textarea { border-radius: 14px; }
+.srv-tablewrap { border-radius: 22px; background: var(--surface-2); border-color: var(--outline); }
+.srv-table th { background: var(--surface-3); color: var(--text-subtle); font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; }
+.srv-table th, .srv-table td { border-bottom-color: var(--divider); }
+.srv-err, .srv-banner { border-radius: 18px; border-color: var(--coral-line); background: var(--coral-tint); color: var(--coral); }
+.srv-console { border-radius: 22px; background: var(--ground); }
+.srv-toggle input { width: 20px; height: 20px; }

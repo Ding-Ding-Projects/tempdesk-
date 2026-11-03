@@ -1,59 +1,94 @@
-{# Admin console layout. Blocks for page templates (also used by templates/server/*):
-   title, content, scripts, head, page_actions. #}
+{# Admin console layout (control room, design/project/Console-*.dc.html). Blocks for page
+   templates (also used by templates/server/*): title, content, scripts, head, page_actions. #}
 {% extends "layouts/base.html" %}
 {% from "macros.html" import icon, logo, csrf, flash_block with context %}
 {% block body %}
-<div class="shell">
+{% set dock_ids = ['dashboard', 'guests', 'directory', 'gpo', 'server-overview'] %}
+{% set phone_ids = ['dashboard', 'guests', 'directory', 'gpo', 'server-overview'] %}
+{% set short = {'dashboard': 'Home', 'guests': 'Guests', 'directory': 'Directory', 'gpo': 'Policy', 'server-overview': 'Server'} %}
+{% macro is_cur(item) -%}{{ 'true' if (item.href == '/' and path == '/') or (item.href != '/' and (path == item.href or path.startswith(item.href ~ '/'))) else '' }}{%- endmacro %}
+<div class="shell{% if not session %} bare{% endif %}">
   {% if session %}
-  <nav class="rail" aria-label="{{ ta('Sections') }}">
-    <a class="logo" href="/" aria-label="{{ ta('Dashboard') }}" style="width:auto;min-height:0">{{ logo(32) }}</a>
-    {% for item in nav_items if item.get('primary') %}
-    <a href="{{ item.href }}" {% if (item.href == '/' and path == '/') or (item.href != '/' and path.startswith(item.href)) %}aria-current="page"{% endif %}>
-      <span class="ind">{{ icon(item.icon) }}</span><span>{{ t(item.label) }}</span>
-    </a>
+  <nav class="dock" aria-label="{{ ta('Sections') }}">
+    <a class="logo" href="/" aria-label="{{ ta('Dashboard') }}">{{ logo(34, 'var(--surface-2)') }}</a>
+    {% for id in dock_ids %}{% for item in nav_items if item.id == id %}
+    <a href="{{ item.href }}" {% if is_cur(item) %}aria-current="page"{% endif %} aria-label="{{ ta(item.label) }}">{{ icon(item.icon, 22) }}<span class="lbl" aria-hidden="true">{{ ta(item.label) }}</span></a>
+    {% endfor %}{% endfor %}
+    <a class="more" href="/more" {% if path == '/more' %}aria-current="page"{% endif %} aria-label="{{ ta('More') }}">{{ icon('apps', 22) }}<span class="lbl" aria-hidden="true">{{ ta('More') }}</span></a>
+    {% for item in nav_items if item.id == 'settings' %}
+    <a href="{{ item.href }}" {% if is_cur(item) %}aria-current="page"{% endif %} aria-label="{{ ta(item.label) }}">{{ icon('settings', 22) }}<span class="lbl" aria-hidden="true">{{ ta(item.label) }}</span></a>
     {% endfor %}
-    <a class="more" href="/more" {% if path == '/more' %}aria-current="page"{% endif %}><span class="ind">{{ icon('more') }}</span><span>{{ t('More') }}</span></a>
   </nav>
   {% endif %}
   <div class="main">
     {% if session %}
     <header class="topbar">
-      <p class="title">{% if has_logo %}<img src="/logo" alt="">{% endif %}{{ t('Admin console') }}</p>
-      <button type="button" class="search-pill" data-open-palette aria-keyshortcuts="Control+Shift+F">
-        {{ icon('search', 18) }}<span>{{ t('Search everything') }}</span><kbd>Ctrl Shift F</kbd>
-      </button>
-      <form method="post" action="/undo" class="no-print" style="display:contents" data-undo-form>
-        {{ csrf() }}<input type="hidden" name="back" value="{{ path }}">
-        <button type="submit" class="btn icon" aria-label="{{ ta('Undo') }} (Ctrl+Z)" title="{{ ta('Undo') }} (Ctrl+Z)" aria-keyshortcuts="Control+Z" data-undo>{{ icon('undo') }}</button>
-      </form>
-      <form method="post" action="/redo" class="no-print" style="display:contents" data-redo-form>
-        {{ csrf() }}<input type="hidden" name="back" value="{{ path }}">
-        <button type="submit" class="btn icon" aria-label="{{ ta('Redo') }} (Ctrl+Y)" title="{{ ta('Redo') }} (Ctrl+Y)" aria-keyshortcuts="Control+Y" data-redo>{{ icon('redo') }}</button>
-      </form>
+      <p class="title">{{ t('Admin console') }}</p>
+      <div class="cmdbar" data-cmdbar>
+        <label for="cmd-input" class="sr-only">{{ t('Command bar') }}</label>
+        <div class="cmdbar-box">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <input id="cmd-input" class="cmd-input" type="text" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="cmd-list" aria-autocomplete="list"
+                 aria-keyshortcuts="Control+Shift+F" placeholder="{{ ta('Type a command or search, for example: new guest 4h') }}" data-cmd-input>
+          <kbd aria-hidden="true">Ctrl Shift F</kbd>
+        </div>
+        <ul class="cmd-list" id="cmd-list" role="listbox" aria-label="{{ ta('Suggestions') }}" hidden data-cmd-list></ul>
+        <form method="post" action="/guests" hidden data-cmd-form>{{ csrf() }}</form>
+      </div>
+      <span class="spacer-m only-phone" aria-hidden="true"></span>
+      {% if health %}
+      <a class="status-pill" href="/server" title="{{ ta('Agent {version}', version=health.version or '') }} · {{ health.domain or '' }}"><span class="live-dot{% if health.status != 'ok' %} off{% endif %}" aria-hidden="true"></span>{{ health.dc or 'DC' }} <span class="hide-phone">{{ t('healthy') if health.status == 'ok' else health.status }}</span></a>
+      {% else %}
+      <span class="status-pill bad"><span class="live-dot off" aria-hidden="true"></span>{{ t('Not reachable') }}</span>
+      {% endif %}
+      {% if plain_http_agent or plain_http_console %}
+      <span class="pill-wrap" data-dismiss-key="td_http_banner">
+        <button type="button" class="status-pill coral" aria-expanded="false" aria-controls="http-pop" data-http-pill>
+          <span class="hide-phone">{{ t('HTTP, not encrypted') }}</span><span class="only-phone">HTTP</span></button>
+        <div class="http-pop" id="http-pop" role="dialog" aria-labelledby="http-pop-t" hidden data-http-pop>
+          <strong id="http-pop-t">{{ t('Unencrypted connection') }}</strong>
+          <p>{% if plain_http_console %}{{ t('This console is served over plain HTTP.') }} {% endif %}{% if plain_http_agent %}{{ t('The connection to the TempDesk Agent uses plain HTTP.') }} {% endif %}
+          {{ t('Sign-ins, guest passwords and Wi-Fi keys cross the network unencrypted. Keep the server and portals on a trusted network segment, or turn on TLS.') }}</p>
+          <div class="cluster"><button type="button" class="btn sm tonal" data-dismiss>{{ t('Hide for this session') }}</button><a class="btn sm text" href="/docs/SECURITY">{{ t('Read more') }}</a></div>
+        </div>
+      </span>
+      {% endif %}
+      <div class="tools hide-phone">
+        <form method="post" action="/undo" class="no-print" style="display:contents" data-undo-form>
+          {{ csrf() }}<input type="hidden" name="back" value="{{ path }}">
+          <button type="submit" class="btn icon" aria-label="{{ ta('Undo') }} (Ctrl+Z)" title="{{ ta('Undo') }} (Ctrl+Z)" aria-keyshortcuts="Control+Z" data-undo>{{ icon('undo') }}</button>
+        </form>
+        <form method="post" action="/redo" class="no-print" style="display:contents" data-redo-form>
+          {{ csrf() }}<input type="hidden" name="back" value="{{ path }}">
+          <button type="submit" class="btn icon" aria-label="{{ ta('Redo') }} (Ctrl+Y)" title="{{ ta('Redo') }} (Ctrl+Y)" aria-keyshortcuts="Control+Y" data-redo>{{ icon('redo') }}</button>
+        </form>
+      </div>
       <button type="button" class="btn icon bell" data-bell aria-label="{{ ta('Notifications') }}" aria-expanded="false">{{ icon('bell') }}<span class="badge" data-bell-count hidden>0</span></button>
-      <form method="post" action="/prefs" class="no-print" data-lang-form style="display:contents">
-        {{ csrf() }}<input type="hidden" name="next" value="{{ path }}">
-        {% if not school %}
-        <label class="sr-only" for="top-lang">{{ t('Language') }}</label>
-        <select id="top-lang" name="lang" data-autosubmit style="width:auto;min-height:var(--touch)">
-          {% for k, v in lang_modes.items() %}<option value="{{ k }}" {% if tr.mode == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
-        </select>
-        {% endif %}
-      </form>
-      <button type="button" class="btn icon" data-theme-toggle aria-label="{{ ta('Switch light or dark theme') }}">{{ icon('theme') }}</button>
-      <form method="post" action="/logout" style="display:contents" data-logout-form>
-        {{ csrf() }}
-        <button class="btn icon" type="submit" aria-label="{{ ta('Sign out') }} ({{ user.displayName or user.sam }})" title="{{ ta('Sign out') }}">{{ icon('logout') }}</button>
-      </form>
+      <div class="pill-wrap">
+        <button type="button" class="avatar-btn" aria-haspopup="true" aria-expanded="false" aria-controls="me-menu" data-me
+                aria-label="{{ ta('Signed in as {name}', name=user.displayName or user.sam) }}">{{ ((user.displayName or user.sam or '?')|trim)[:1]|upper }}</button>
+        <div class="menu-pop" id="me-menu" hidden data-me-menu>
+          <div class="who"><strong>{{ user.displayName or user.sam }}</strong><div class="subtle">{{ user.sam }}</div></div>
+          <form method="post" action="/prefs" class="no-print" data-lang-form>
+            {{ csrf() }}<input type="hidden" name="next" value="{{ path }}">
+            {% if not school %}
+            <label class="sr-only" for="top-lang">{{ t('Language') }}</label>
+            <select id="top-lang" name="lang" data-autosubmit>
+              {% for k, v in lang_modes.items() %}<option value="{{ k }}" {% if tr.mode == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+            </select>
+            {% endif %}
+          </form>
+          <button type="button" class="row-btn" data-theme-toggle>{{ icon('theme') }}<span>{{ t('Switch light or dark theme') }}</span></button>
+          <form method="post" action="/undo" class="only-phone" style="display:contents">{{ csrf() }}<input type="hidden" name="back" value="{{ path }}"><button type="submit" class="row-btn">{{ icon('undo') }}<span>{{ t('Undo') }}</span></button></form>
+          <a class="row-btn" href="/history">{{ icon('history') }}<span>{{ t('Undo history') }}</span></a>
+          <a class="row-btn" href="/settings">{{ icon('settings') }}<span>{{ t('Settings') }}</span></a>
+          <form method="post" action="/logout" style="display:contents" data-logout-form>
+            {{ csrf() }}
+            <button class="row-btn" type="submit">{{ icon('logout') }}<span>{{ t('Sign out') }}</span></button>
+          </form>
+        </div>
+      </div>
     </header>
-    {% if plain_http_agent or plain_http_console %}
-    <div class="banner alert warn" role="note" data-dismiss-key="td_http_banner">
-      <div class="grow"><strong>{{ t('Unencrypted connection') }}</strong>
-        {% if plain_http_console %}{{ t('This console is served over plain HTTP.') }} {% endif %}{% if plain_http_agent %}{{ t('The connection to the TempDesk Agent uses plain HTTP.') }} {% endif %}
-        {{ t('Sign-ins, guest passwords and Wi-Fi keys cross the network unencrypted. Keep the server and portals on a trusted network segment, or turn on TLS.') }}</div>
-      <button type="button" class="btn sm text" data-dismiss>{{ t('Dismiss') }}</button>
-    </div>
-    {% endif %}
     <div class="doc-tabs" data-doc-tabs role="tablist" aria-label="{{ ta('Open tabs') }}"></div>
     {% endif %}
     <main id="main" class="content" tabindex="-1" {% if tab_title %}data-tab-title="{{ tab_title }}"{% endif %}>
@@ -63,6 +98,12 @@
   </div>
 </div>
 {% if session %}
+<nav class="bottombar" aria-label="{{ ta('Sections') }}">
+  {% for id in phone_ids %}{% for item in nav_items if item.id == id %}
+  <a href="{{ item.href }}" {% if is_cur(item) %}aria-current="page"{% endif %}><span class="ind">{{ icon(item.icon, 20) }}</span><span>{{ t(short[id]) }}</span></a>
+  {% endfor %}{% endfor %}
+  <a href="/more" {% if path == '/more' %}aria-current="page"{% endif %}><span class="ind">{{ icon('more', 20) }}</span><span>{{ t('More') }}</span></a>
+</nav>
 <div class="notif-panel card raised" data-notif-panel hidden role="dialog" aria-label="{{ ta('Notifications') }}">
   <div class="cluster"><h2 style="margin:0">{{ t('Notifications') }}</h2><span class="spacer"></span>
   <button type="button" class="btn sm text" data-notif-read>{{ t('Mark all read') }}</button><button type="button" class="btn sm text" data-notif-clear>{{ t('Clear all') }}</button></div>
@@ -82,4 +123,3 @@
 <div class="sr-only" aria-live="polite" data-live></div>
 {% endif %}
 {% endblock %}
-{% block scripts %}{% if session %}<script src="/static/js/admin.js" defer></script>{% endif %}{% endblock %}

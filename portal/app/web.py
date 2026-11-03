@@ -69,6 +69,10 @@ JS_STRINGS = [
     "Make data: URL", "Parse data: URL", "Save as file", "Undo", "Redo",
 ]
 
+# Strings used by the control room scripts (console.js, guests.js, directory-studio.js, gpo-editor.js).
+CONSOLE_JS_STRINGS = json.loads((HERE / "static" / "js" / "console-strings.json").read_text(encoding="utf-8"))
+JS_STRINGS = JS_STRINGS + [k for k in CONSOLE_JS_STRINGS if k not in JS_STRINGS]
+
 
 def get_settings(request: Request):
     return request.app.state.settings

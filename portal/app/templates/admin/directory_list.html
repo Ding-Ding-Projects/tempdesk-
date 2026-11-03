@@ -1,0 +1,47 @@
+{% extends "layouts/admin.html" %}
+{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel with context %}
+{% block title %}{{ ta('Directory') }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1 class="mid-title">{{ t('Directory') }}</h1>
+  <a class="btn tonal" href="/directory{% if dn %}?dn={{ dn|urlencode }}{% endif %}">{{ t('Open the studio') }}</a>
+  <a class="btn" href="/directory/search">{{ t('LDAP search') }}</a>
+  <a class="btn filled" href="/directory/create{% if dn %}?parent={{ dn|urlencode }}{% endif %}">{{ t('Create object') }}</a></div>
+<div class="panes">
+  <nav class="card pane-nav" aria-label="{{ ta('Directory tree') }}">
+    <ul class="tree" data-lazy-tree data-current="{{ dn or '' }}">
+      {% for n in root %}
+      <li><div class="node">{% if n.hasChildren %}<button type="button" class="twisty" aria-expanded="false" data-dn="{{ n.dn }}" aria-label="{{ ta('Expand') }} {{ n.name }}">&#9656;</button>{% else %}<span style="width:32px"></span>{% endif %}
+        <a href="/directory?view=list&dn={{ n.dn|urlencode }}" {% if n.dn == dn %}aria-current="page"{% endif %}>{{ n.name }}</a></div></li>
+      {% endfor %}
+    </ul>
+  </nav>
+  <section class="card pane-list" style="flex-basis:520px">
+    {% if dn %}<p class="subtle mono break">{{ dn }}</p>
+    <div class="cluster" style="margin-bottom:10px">
+      <a class="btn sm tonal" href="/directory/object?dn={{ dn|urlencode }}">{{ t('Open this container') }}</a>
+      <a class="btn sm" href="/directory/export?dn={{ dn|urlencode }}&scope=one&format=json" download>{{ t('Export children JSON') }}</a>
+      <a class="btn sm" href="/directory/export?dn={{ dn|urlencode }}&scope=one&format=csv" download>{{ t('Export children CSV') }}</a>
+      <a class="btn sm" href="/directory/export?dn={{ dn|urlencode }}&scope=sub&format=ldif" download>{{ t('Export subtree LDIF') }}</a>
+      <a class="btn sm" href="/import?ou={{ dn|urlencode }}">{{ t('Import users here') }}</a>
+      <a class="btn sm" href="/gpo/inheritance?target={{ dn|urlencode }}">{{ t('Block inheritance') }}</a>
+    </div>{% endif %}
+    {{ search_box(tv, regex_error, 'Filter objects') }}
+    {% if tv.rows %}
+    <form method="post" action="/directory/bulk" data-bulk-form>{{ csrf() }}<input type="hidden" name="back" value="{{ request.url.path }}?{{ request.url.query }}">
+      <div class="table-wrap"><table>
+        <thead><tr>{{ sel_all() }}{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}</tr></thead>
+        <tbody class="stagger">
+        {% for o in tv.rows %}
+        <tr data-ctx='[{"label":"{{ ta('Open') }}","href":"/directory/object?dn={{ o.dn|urlencode }}","key":"Enter"},{"label":"{{ ta('Browse children') }}","href":"/directory?view=list&dn={{ o.dn|urlencode }}"},{"label":"{{ ta('Open in a new tab') }}","href":"/directory/object?dn={{ o.dn|urlencode }}","tab":true}]'>
+          {{ sel(o.dn, o.name) }}
+          <td><a href="/directory/object?dn={{ o.dn|urlencode }}" data-tab-link>{{ o.name }}</a>{% if o.hasChildren %} <a class="small" href="/directory?view=list&dn={{ o.dn|urlencode }}" aria-label="{{ ta('Browse children') }} {{ o.name }}">&#9656;</a>{% endif %}</td>
+          <td>{{ o.objectClass }}</td><td class="mono small break">{{ o.dn }}</td></tr>
+        {% endfor %}
+        </tbody></table></div>
+      {{ bulk_bar([('enable','Enable'),('disable','Disable'),('move','Move to'),('add-to-group','Add to group'),('delete','Delete')], bulk_token, 'Target DN (for move or add to group)') }}
+    </form>
+    {% elif tv.total %}{{ empty('No objects match this filter', 'Clear the search box to see everything in this container.') }}
+    {% else %}{{ empty('This container is empty', 'Create an object here, or pick another container in the tree.') }}{% endif %}
+  </section>
+</div>
+{% endblock %}

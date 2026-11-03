@@ -39,7 +39,7 @@ The build context is the repository root, so the image also bundles `docs/*.md` 
 
 ### Plain HTTP
 
-The agent speaks plain HTTP by default. In that case keys, admin sign-ins, guest passwords and Wi-Fi keys cross the network unencrypted. The Admin console shows a warning banner whenever the agent URL or the console itself is plain HTTP. Keep the server and portals on a trusted network segment, or turn on TLS on the agent and put the portals behind an HTTPS reverse proxy.
+The agent speaks plain HTTP by default. In that case keys, admin sign-ins, guest passwords and Wi-Fi keys cross the network unencrypted. The Admin console shows a coral "HTTP, not encrypted" status pill (with an explanation popover that can be hidden for the session) whenever the agent URL or the console itself is plain HTTP. Keep the server and portals on a trusted network segment, or turn on TLS on the agent and put the portals behind an HTTPS reverse proxy.
 
 ## Security design
 
@@ -87,4 +87,4 @@ The fake agent accepts any admin username with the password `Passw0rd!`.
 
 ## Design
 
-Colors, shapes, type and motion live in `app/static/css/tokens.css` (from `design/README.md`). Dark is the default; light follows the same hues. Components are in `app/static/css/app.css`. Motion respects `prefers-reduced-motion` and the in-app Motion setting (Full, Reduced, Off).
+Colors, shapes, type and motion live in `app/static/css/tokens.css` (from `design/README.md`). Dark is the default on every OS; the light theme applies only when the user picks it. Shared components are in `app/static/css/app.css`; the admin control room (dock, command bar, tiles, guest cards, directory studio, Group Policy editor) is in `app/static/css/console.css` with its scripts in `app/static/js/console.js`, `guests.js`, `directory-studio.js` and `gpo-editor.js`. The command bar (also Ctrl+Shift+F) understands `new guest 4h [name]`, `extend <guest> 1h`, `reset password <user>`, `unlock <user>`, `enable|disable <user>`, `open gpo <name>` and `find <text>`, and falls back to a global search. Motion respects `prefers-reduced-motion` and the in-app Motion setting (Full, Reduced, Off).

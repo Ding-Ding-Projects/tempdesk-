@@ -75,7 +75,7 @@
   }
   function toggleTheme() {
     var cur = root.getAttribute('data-theme');
-    if (!cur) cur = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    if (!cur) cur = 'dark'; // dark is the default on every OS; light only when picked
     var next = cur === 'dark' ? 'light' : 'dark';
     var run = function () { setTheme(next); };
     if (doc.startViewTransition && !motionOff()) doc.startViewTransition(run); else run();

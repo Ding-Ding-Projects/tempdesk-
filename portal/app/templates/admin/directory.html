@@ -1,46 +1,79 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel with context %}
+{% from "macros.html" import csrf with context %}
 {% block title %}{{ ta('Directory') }}{% endblock %}
 {% block content %}
-<div class="page-head"><h1>{{ t('Directory') }}</h1>
-  <a class="btn" href="/directory/search">{{ t('LDAP search') }}</a>
-  <a class="btn filled" href="/directory/create{% if dn %}?parent={{ dn|urlencode }}{% endif %}">{{ t('Create object') }}</a></div>
-<div class="panes">
-  <nav class="card pane-nav" aria-label="{{ ta('Directory tree') }}">
-    <ul class="tree" data-lazy-tree data-current="{{ dn or '' }}">
-      {% for n in root %}
-      <li><div class="node">{% if n.hasChildren %}<button type="button" class="twisty" aria-expanded="false" data-dn="{{ n.dn }}" aria-label="{{ ta('Expand') }} {{ n.name }}">&#9656;</button>{% else %}<span style="width:32px"></span>{% endif %}
-        <a href="/directory?dn={{ n.dn|urlencode }}" {% if n.dn == dn %}aria-current="page"{% endif %}>{{ n.name }}</a></div></li>
-      {% endfor %}
-    </ul>
+<div class="studio rise" data-studio data-pane="explorer" role="application" aria-label="{{ ta('Directory studio') }}">
+  <header class="st-top">
+    <span class="ttl">{{ t('Directory') }}</span>
+    <span class="dom" data-st-domain>{{ (health.domain if health else '') or '' }}</span>
+    <div class="find">
+      <label class="sr-only" for="st-find">{{ t('Find any object or attribute') }}</label>
+      <input id="st-find" type="search" placeholder="{{ ta('Find any object or attribute') }}" autocomplete="off" data-st-find aria-keyshortcuts="Control+K">
+    </div>
+    <button type="button" class="st-btn" data-st-undo aria-keyshortcuts="Control+Z" title="{{ ta('Undo') }} (Ctrl+Z)">&#8630; <span class="lbl-d">{{ t('Undo') }}</span></button>
+    <div class="pill-wrap">
+      <button type="button" class="st-btn primary" data-st-new aria-haspopup="true" aria-expanded="false">+ <span class="lbl-d">{{ t('New') }}</span></button>
+      <div class="menu-pop" hidden data-st-newmenu style="min-width:220px">
+        <a class="row-btn" data-new="user" href="/directory/create">{{ t('User') }}</a>
+        <a class="row-btn" data-new="group" href="/directory/create">{{ t('Group') }}</a>
+        <a class="row-btn" data-new="organizationalUnit" href="/directory/create">{{ t('Organizational unit') }}</a>
+        <a class="row-btn" data-new="computer" href="/directory/create">{{ t('Computer') }}</a>
+        <a class="row-btn" href="/import">{{ t('CSV import') }}</a>
+      </div>
+    </div>
+  </header>
+  <div class="st-body">
+    <aside class="st-explorer" aria-label="{{ ta('Explorer') }}">
+      <div class="flt"><label class="sr-only" for="st-flt">{{ t('Filter tree') }}</label><input id="st-flt" type="search" placeholder="{{ ta('Filter tree') }}" data-st-filter></div>
+      <div class="st-tree" role="tree" aria-label="{{ ta('Directory tree') }}" aria-multiselectable="true" data-st-tree></div>
+      <div class="st-extra">
+        <div class="st-sec">{{ t('Saved queries') }}</div>
+        <div data-st-saved></div>
+        <div class="st-sec">{{ t('Views') }}</div>
+        <button type="button" class="st-q" data-open-tab="map">{{ t('Map') }}</button>
+        <button type="button" class="st-q" data-open-tab="query">{{ t('Query builder') }}</button>
+        <a class="st-q" href="/directory?view=list{% if dn %}&dn={{ dn|urlencode }}{% endif %}">{{ t('Tree and table view') }}</a>
+        <a class="st-q" href="/directory/search">{{ t('LDAP search') }}</a>
+      </div>
+    </aside>
+    <div class="st-main">
+      <div class="st-tabs" role="tablist" aria-label="{{ ta('Open objects') }}" data-st-tabs></div>
+      <div class="st-center">
+        <section class="st-editor" role="tabpanel" data-st-editor aria-live="polite"></section>
+        <aside class="st-inspector" aria-label="{{ ta('Inspector') }}" data-st-inspector></aside>
+      </div>
+      <section class="st-panel" aria-label="{{ ta('Panel') }}" data-st-panel>
+        <div class="st-ptabs" role="tablist" aria-label="{{ ta('Panel') }}">
+          <button type="button" role="tab" aria-selected="true" data-ptab="problems">{{ t('Problems') }} <span class="b" data-prob-count>0</span></button>
+          <button type="button" role="tab" aria-selected="false" data-ptab="search">{{ t('Search') }}</button>
+          <button type="button" role="tab" aria-selected="false" data-ptab="history">{{ t('History') }}</button>
+          <button type="button" role="tab" aria-selected="false" data-ptab="ldap">LDAP</button>
+          <span class="spacer"></span>
+          <button type="button" data-ptoggle aria-expanded="true" aria-label="{{ ta('Collapse') }}">&#9662;</button>
+        </div>
+        <div class="st-pbody" role="tabpanel" data-st-pbody></div>
+      </section>
+    </div>
+  </div>
+  <footer class="st-status" aria-live="off">
+    <span data-sb="dc">{{ (health.dc if health else '') or '' }}</span><span data-sb="nc"></span><span data-sb="sel">0 {{ t('selected') }}</span>
+    <span class="r" data-sb="objects"></span><span data-sb="undo"></span>
+  </footer>
+  <nav class="st-phone-tabs" role="tablist" aria-label="{{ ta('Panes') }}">
+    <button type="button" role="tab" aria-selected="true" data-pane-btn="explorer">{{ t('Explorer') }}</button>
+    <button type="button" role="tab" aria-selected="false" data-pane-btn="editor">{{ t('Editor') }}</button>
+    <button type="button" role="tab" aria-selected="false" data-pane-btn="inspector">{{ t('Inspector') }}</button>
+    <button type="button" role="tab" aria-selected="false" data-pane-btn="problems">{{ t('Problems') }}</button>
   </nav>
-  <section class="card pane-list" style="flex-basis:520px">
-    {% if dn %}<p class="subtle mono break">{{ dn }}</p>
-    <div class="cluster" style="margin-bottom:10px">
-      <a class="btn sm tonal" href="/directory/object?dn={{ dn|urlencode }}">{{ t('Open this container') }}</a>
-      <a class="btn sm" href="/directory/export?dn={{ dn|urlencode }}&scope=one&format=json" download>{{ t('Export children JSON') }}</a>
-      <a class="btn sm" href="/directory/export?dn={{ dn|urlencode }}&scope=one&format=csv" download>{{ t('Export children CSV') }}</a>
-      <a class="btn sm" href="/directory/export?dn={{ dn|urlencode }}&scope=sub&format=ldif" download>{{ t('Export subtree LDIF') }}</a>
-      <a class="btn sm" href="/import?ou={{ dn|urlencode }}">{{ t('Import users here') }}</a>
-      <a class="btn sm" href="/gpo/inheritance?target={{ dn|urlencode }}">{{ t('Block inheritance') }}</a>
-    </div>{% endif %}
-    {{ search_box(tv, regex_error, 'Filter objects') }}
-    {% if tv.rows %}
-    <form method="post" action="/directory/bulk" data-bulk-form>{{ csrf() }}<input type="hidden" name="back" value="{{ request.url.path }}?{{ request.url.query }}">
-      <div class="table-wrap"><table>
-        <thead><tr>{{ sel_all() }}{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}</tr></thead>
-        <tbody class="stagger">
-        {% for o in tv.rows %}
-        <tr data-ctx='[{"label":"{{ ta('Open') }}","href":"/directory/object?dn={{ o.dn|urlencode }}","key":"Enter"},{"label":"{{ ta('Browse children') }}","href":"/directory?dn={{ o.dn|urlencode }}"},{"label":"{{ ta('Open in a new tab') }}","href":"/directory/object?dn={{ o.dn|urlencode }}","tab":true}]'>
-          {{ sel(o.dn, o.name) }}
-          <td><a href="/directory/object?dn={{ o.dn|urlencode }}" data-tab-link>{{ o.name }}</a>{% if o.hasChildren %} <a class="small" href="/directory?dn={{ o.dn|urlencode }}" aria-label="{{ ta('Browse children') }} {{ o.name }}">&#9656;</a>{% endif %}</td>
-          <td>{{ o.objectClass }}</td><td class="mono small break">{{ o.dn }}</td></tr>
-        {% endfor %}
-        </tbody></table></div>
-      {{ bulk_bar([('enable','Enable'),('disable','Disable'),('move','Move to'),('add-to-group','Add to group'),('delete','Delete')], bulk_token, 'Target DN (for move or add to group)') }}
-    </form>
-    {% elif tv.total %}{{ empty('No objects match this filter', 'Clear the search box to see everything in this container.') }}
-    {% else %}{{ empty('This container is empty', 'Create an object here, or pick another container in the tree.') }}{% endif %}
-  </section>
 </div>
+<dialog data-st-dialog aria-labelledby="st-dlg-t">
+  <form method="dialog" class="stack" data-st-dlgform>
+    <h2 id="st-dlg-t" data-st-dlgtitle></h2>
+    <div data-st-dlgbody class="stack"></div>
+    <div class="form-actions"><button class="btn filled" value="ok" data-st-dlgok>{{ t('Confirm') }}</button><button class="btn" value="cancel" formnovalidate>{{ t('Cancel') }}</button></div>
+  </form>
+</dialog>
+<form method="post" action="/directory/user/password" hidden data-st-pwform>{{ csrf() }}<input type="hidden" name="dn"><input type="hidden" name="password"><input type="hidden" name="mustChange"></form>
+<script type="application/json" data-studio-cfg>{{ studio_cfg }}</script>
 {% endblock %}
+{% block scripts %}<script src="/static/js/directory-studio.js" defer></script>{% endblock %}

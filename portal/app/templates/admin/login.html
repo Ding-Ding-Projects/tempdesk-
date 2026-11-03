@@ -15,7 +15,7 @@
     <div class="field"><label for="u">{{ t('Username') }}</label><input id="u" name="username" type="text" value="{{ username or '' }}" required autocapitalize="off" spellcheck="false" autocomplete="username" autofocus></div>
     <div class="field"><label for="p">{{ t('Password') }}</label><input id="p" name="password" type="password" required autocomplete="current-password"></div>
     <button class="btn filled lg block" type="submit">{{ t('Sign in') }}</button>
-    {% if plain_http_agent or plain_http_console %}<p class="alert warn small" role="note">{{ t('Sign-ins, guest passwords and Wi-Fi keys cross the network unencrypted. Keep the server and portals on a trusted network segment, or turn on TLS.') }}</p>{% endif %}
+    {% if plain_http_agent or plain_http_console %}<p class="alert coral small" role="note">{{ t('Sign-ins, guest passwords and Wi-Fi keys cross the network unencrypted. Keep the server and portals on a trusted network segment, or turn on TLS.') }}</p>{% endif %}
   </form>
 </div>
 {% endblock %}

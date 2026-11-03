@@ -1,0 +1,22 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ ta('Search') }}{% endblock %}
+{% block content %}
+<div class="page-head rise"><h1 class="mid-title" style="flex:1 1 auto">{{ t('Search: {text}', text=q) if q else t('Search everything') }}</h1></div>
+<form method="get" action="/find" class="tile rise" role="search" style="padding:14px 16px">
+  <div class="cluster"><label class="sr-only" for="fq">{{ t('Search everything') }}</label>
+    <input id="fq" type="search" name="q" value="{{ q }}" placeholder="{{ ta('Guests, directory, policies and pages') }}" style="flex:1 1 260px">
+    <button class="btn filled" type="submit">{{ t('Search') }}</button></div>
+</form>
+{% if q and not total %}<div class="tile">{{ t('No matches') }}</div>{% endif %}
+{% for key, label in [('guests', 'Guests'), ('objects', 'Directory'), ('gpos', 'Group Policy'), ('pages', 'Pages')] if res[key] %}
+<section class="find-group rise" style="--i:{{ loop.index }}" aria-labelledby="fg-{{ key }}">
+  <h2 id="fg-{{ key }}" class="sec-k">{{ t(label) }} · {{ res[key]|length }}</h2>
+  {% for r in res[key] %}
+    {% if key == 'guests' %}<a class="find-item" href="/guests?open={{ r.username|urlencode }}"><span class="mono" style="font-weight:700">{{ r.username }}</span><span class="sub">{{ r.displayName }}</span></a>
+    {% elif key == 'objects' %}<a class="find-item" href="/directory?open={{ r.dn|urlencode }}"><span style="font-weight:700">{{ r.name }}</span><span class="sub mono">{{ r.class }} · {{ r.dn }}</span></a>
+    {% elif key == 'gpos' %}<a class="find-item" href="/gpo/{{ r.id|urlencode }}/edit"><span style="font-weight:700">{{ r.name }}</span><span class="sub mono">{{ r.id }}</span></a>
+    {% else %}<a class="find-item" href="{{ r.href }}"><span style="font-weight:700">{{ r.label }}</span></a>{% endif %}
+  {% endfor %}
+</section>
+{% endfor %}
+{% endblock %}

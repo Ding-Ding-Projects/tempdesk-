@@ -1,21 +1,23 @@
 /* TempDesk design tokens.
-   Source: design/README.md (approved design). Dark is the default theme;
-   the light theme is derived from the same hues. A separate design pass can
+   Source: design/README.md (approved design). Dark is the default theme on
+   every OS; the light theme applies only when the user picks it. A separate design pass can
    change values here without touching components. */
 
 :root {
   color-scheme: dark;
   /* Ground and tonal surfaces, lowest to highest */
-  --ground: #0B1110;
-  --surface-1: #0F1716;
-  --surface-2: #121A19;
-  --surface-3: #16211F;
-  --surface-4: #1A2725;
+  --ground: #070B0B;
+  --ground-dot: #132220;
+  --panel: #0A1110;
+  --surface-1: #0B1312;
+  --surface-2: #0E1615;
+  --surface-3: #121C1B;
+  --surface-4: #172220;
   --surface-selected: #1F3A36;
   --surface-primary-tint: #13302C;
-  --outline: #22322F;
-  --outline-strong: #2E4642;
-  --divider: #1D2A28;
+  --outline: #1C2927;
+  --outline-strong: #2A3E3B;
+  --divider: #16201E;
 
   --text: #E8F1EF;
   --text-muted: #A9BBB8;
@@ -25,9 +27,13 @@
   --primary: #7CF3E6;
   --primary-hover: #B6FFF6;
   --on-primary: #04201D;
+  --primary-ink: #0B4F48;
   --coral: #FFB8A3;
   --coral-track: #F09A84;
   --on-coral: #2B0C03;
+  --coral-strong: #FFB8A3;
+  --coral-line: #4A2E26;
+  --bar-muted: #2E5C55;
   --coral-tint: #3A2620;
   --neutral-dot: #4C625E;
 
@@ -72,63 +78,37 @@
   --focus: 0 0 0 3px var(--ground), 0 0 0 5px var(--primary);
 }
 
-/* Light theme: same hues, inverted tonal ramp. */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    color-scheme: light;
-    --ground: #F4FBF9;
-    --surface-1: #EAF4F2;
-    --surface-2: #FFFFFF;
-    --surface-3: #E3EFEC;
-    --surface-4: #D9E8E5;
-    --surface-selected: #BFEDE6;
-    --surface-primary-tint: #D3F5F0;
-    --outline: #C2D3CF;
-    --outline-strong: #8FA8A3;
-    --divider: #D6E3E0;
-    --text: #0B1A18;
-    --text-muted: #3E524E;
-    --text-subtle: #4A5F5B;
-    --text-steps: #263735;
-    --primary: #006A62;
-    --primary-hover: #00504A;
-    --on-primary: #FFFFFF;
-    --coral: #FFB8A3;
-    --coral-track: #F09A84;
-    --on-coral: #2B0C03;
-    --coral-tint: #FFE1D8;
-    --neutral-dot: #8FA8A3;
-    --danger: #BA1A1A;
-    --danger-bg: #FFDAD6;
-    --on-danger: #FFFFFF;
-    --success: #006A62;
-    --warning: #6B4E00;
-    --warning-bg: #FFEFC7;
-    --scrim: rgba(11, 26, 24, 0.45);
-    --shadow: 0 10px 28px rgba(11, 26, 24, 0.16);
-  }
-}
+/* Light theme: only when the user picks it (dark is the default on every OS). */
 :root[data-theme="light"] {
   color-scheme: light;
-  --ground: #F4FBF9;
-  --surface-1: #EAF4F2;
+  --ground: #F2F8F6;
+  --ground-dot: #D3E2DE;
+  --panel: #E8F1EF;
+  --surface-1: #FFFFFF;
   --surface-2: #FFFFFF;
-  --surface-3: #E3EFEC;
-  --surface-4: #D9E8E5;
+  --surface-3: #E9F2F0;
+  --surface-4: #DCE9E6;
   --surface-selected: #BFEDE6;
   --surface-primary-tint: #D3F5F0;
-  --outline: #C2D3CF;
-  --outline-strong: #8FA8A3;
-  --divider: #D6E3E0;
+  --outline: #CFDDD9;
+  --outline-strong: #9DB4AF;
+  --divider: #DCE7E4;
   --text: #0B1A18;
-  --text-muted: #3E524E;
+  --text-muted: #344844;
   --text-subtle: #4A5F5B;
   --text-steps: #263735;
   --primary: #006A62;
   --primary-hover: #00504A;
   --on-primary: #FFFFFF;
+  --primary-ink: #0B4F48;
+  --coral: #9C3B22;
+  --coral-strong: #FFB8A3;
+  --coral-line: #E9B6A8;
+  --coral-track: #F09A84;
+  --on-coral: #2B0C03;
   --coral-tint: #FFE1D8;
   --neutral-dot: #8FA8A3;
+  --bar-muted: #9FCFC8;
   --danger: #BA1A1A;
   --danger-bg: #FFDAD6;
   --on-danger: #FFFFFF;
@@ -137,6 +117,12 @@
   --warning-bg: #FFEFC7;
   --scrim: rgba(11, 26, 24, 0.45);
   --shadow: 0 10px 28px rgba(11, 26, 24, 0.16);
+}
+
+/* Guest portal keeps the slightly lighter ground of Guest-Create / Guest-Credentials. */
+:root[data-mode="guest"]:not([data-theme="light"]) {
+  --ground: #0B1110; --ground-dot: transparent; --surface-1: #0F1716; --surface-2: #121A19;
+  --surface-3: #16211F; --surface-4: #1A2725; --outline: #22322F; --outline-strong: #2E4642;
 }
 
 /* High contrast option */

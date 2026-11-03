@@ -1,59 +1,113 @@
 {% extends "layouts/admin.html" %}
-{% from "macros.html" import csrf, search_box, th_sort, empty, bulk_bar, sel_all, sel, local_time, info with context %}
+{% from "macros.html" import csrf, search_box, empty, bulk_bar, local_time, info with context %}
 {% block title %}{{ ta('Guests') }}{% endblock %}
 {% block content %}
-<div class="page-head"><h1>{{ t('Guests') }}</h1><a class="btn" href="/import">{{ t('CSV import') }}</a></div>
-<section class="card rise" id="create">
-  <h2>{{ t('Create a guest account') }}</h2>
-  <form method="post" action="/guests" class="form-grid" data-expiry-form>
-    {{ csrf() }}
-    <div class="field"><label for="g-dn">{{ t('Display name') }} <span class="optional">({{ t('optional') }})</span></label><input id="g-dn" name="displayName" maxlength="64"></div>
-    <div class="field"><label for="g-exp">{{ t('Expiry') }}</label>
-      <select id="g-exp" name="expiryId" data-custom-toggle="#g-min-wrap">
-        {% for c in choices %}<option value="{{ c.id }}">{{ c.label }}</option>{% endfor %}
-        <option value="custom">{{ t('Custom number of minutes') }}</option>
-      </select></div>
-    <div class="field" data-advanced id="g-min-wrap" hidden><label for="g-min">{{ t('Minutes (0 = permanent)') }} {{ info('Minutes from now until the account expires. 0 creates an account that never expires.') }}</label><input id="g-min" type="number" name="minutes" min="0" max="525600" inputmode="numeric"></div>
-    <div class="field" style="justify-content:flex-end"><button class="btn filled" type="submit">{{ t('Create') }}</button></div>
-  </form>
-</section>
-<section class="card rise" style="--i:1">
-  {{ search_box(tv, regex_error, 'Search guests') }}
-  {% if tv.rows %}
-  <form method="post" action="/guests/bulk" data-bulk-form>
-    {{ csrf() }}
-    <div class="table-wrap"><table>
-      <thead><tr>{{ sel_all() }}{% for k, l in tv.columns %}{{ th_sort(tv, k, l) }}{% endfor %}<th><span class="sr-only">{{ t('Actions') }}</span></th></tr></thead>
-      <tbody class="stagger">
+<div class="layout-drawer" data-guests>
+  <div class="body">
+    <div class="page-head rise">
+      <h1 class="mid-title" style="flex:1 1 auto">{{ t('Guests') }}</h1>
+      <a class="c-chip primary" href="#create" data-open-create>+ {{ t('New sign-in') }}</a>
+      <a class="c-chip" href="/import">{{ t('CSV import') }}</a>
+    </div>
+
+    <section class="tile rise" id="create" style="--i:1;padding:18px" aria-labelledby="create-h">
+      <h2 id="create-h" style="margin-bottom:12px">{{ t('Create a guest account') }}</h2>
+      <form method="post" action="/guests" class="stack" style="gap:14px" data-expiry-form>
+        {{ csrf() }}
+        <div class="create-bar">
+          <div class="field"><label for="g-dn">{{ t('Display name') }} <span class="optional">({{ t('optional') }})</span></label><input id="g-dn" name="displayName" maxlength="64" placeholder="{{ ta('Shown on the sign-in screen') }}"></div>
+          <div class="field"><label for="g-exp">{{ t('Expiry') }}</label>
+            <select id="g-exp" name="expiryId" data-custom-toggle="#g-min-wrap">
+              {% for c in choices %}<option value="{{ c.id }}" {% if c.id == '4h' %}selected{% endif %}>{{ c.label }}</option>{% endfor %}
+              <option value="custom">{{ t('Custom number of minutes') }}</option>
+            </select></div>
+          <button class="btn filled lg" type="submit">{{ t('Create') }}</button>
+        </div>
+        <div class="field" data-advanced id="g-min-wrap" hidden style="max-width:320px"><label for="g-min">{{ t('Minutes (0 = permanent)') }} {{ info('Minutes from now until the account expires. 0 creates an account that never expires.') }}</label><input id="g-min" type="number" name="minutes" min="0" max="525600" inputmode="numeric"></div>
+      </form>
+    </section>
+
+    <div class="tile rise" style="--i:2;padding:14px 16px">
+      {{ search_box(tv, regex_error, 'Search guests') }}
+      <div class="chip-row" role="radiogroup" aria-label="{{ ta('Show') }}" data-g-filters>
+        <button type="button" class="c-chip sm" role="radio" aria-checked="true" data-g-filter="all">{{ t('All') }} <span class="count" data-g-count="all">{{ tv.rows|length }}</span></button>
+        <button type="button" class="c-chip sm" role="radio" aria-checked="false" data-g-filter="soon">{{ t('Ending soon') }} <span class="count" data-g-count="soon"></span></button>
+        <button type="button" class="c-chip sm" role="radio" aria-checked="false" data-g-filter="signed">{{ t('Signed in') }} <span class="count" data-g-count="signed"></span></button>
+        <button type="button" class="c-chip sm" role="radio" aria-checked="false" data-g-filter="perm">{{ t('Permanent') }} <span class="count" data-g-count="perm"></span></button>
+        <button type="button" class="c-chip sm" role="radio" aria-checked="false" data-g-filter="expired">{{ t('Expired') }} <span class="count" data-g-count="expired"></span></button>
+      </div>
+    </div>
+
+    {% if tv.rows %}
+    <form method="post" action="/guests/bulk" data-bulk-form>
+      {{ csrf() }}
+      <div class="g-grid" data-g-grid>
       {% for g in tv.rows %}
-      <tr data-ctx='[{"label":"{{ ta('Extend') }}","focus":"#ext-{{ loop.index }}"},{"label":"{{ ta('Delete') }}","href":"/guests/{{ g.username|urlencode }}/delete","key":"Del"}]'>
-        {{ sel(g.username, g.username) }}
-        <td class="mono">{{ g.username }}</td><td>{{ g.displayName or '' }}</td><td>{{ local_time(g.created) }}</td>
-        <td>{{ local_time(g.expiresAt, 'No expiry') }}</td>
-        <td>{% if g.enabled %}<span class="chip ok">{{ t('Yes') }}</span>{% else %}<span class="chip">{{ t('No') }}</span>{% endif %}</td>
-        <td>{{ local_time(g.lastLogon) }}</td>
-        <td class="actions">
-          <a class="btn sm" id="ext-{{ loop.index }}" href="#extend-{{ loop.index }}" data-open-dialog="#extend-{{ loop.index }}">{{ t('Extend') }}</a>
-          <a class="btn sm danger" href="/guests/{{ g.username|urlencode }}/delete">{{ t('Delete') }}</a>
-        </td>
-      </tr>
+        <article class="g-card rise" style="--i:{{ [loop.index0, 8]|min }}" tabindex="-1"
+          data-guest="{{ g.username }}" data-name="{{ g.displayName or '' }}" data-created="{{ g.created or '' }}" data-expires="{{ g.expiresAt or '' }}"
+          data-enabled="{{ '1' if g.enabled else '0' }}" data-last="{{ g.lastLogon or '' }}"
+          data-ctx='[{"label":"{{ ta('Open details') }}","focus":"#gn-{{ loop.index }}"},{"label":"{{ ta('Extend') }}","focus":"#ext-{{ loop.index }}"},{"label":"{{ ta('Delete') }}","href":"/guests/{{ g.username|urlencode }}/delete","key":"Del"}]'>
+          <label class="sel-box"><input type="checkbox" name="sel" value="{{ g.username }}" aria-label="{{ ta('Select {name}', name=g.username) }}"></label>
+          <div class="top">
+            <span data-ring aria-hidden="false"></span>
+            <div style="min-width:0;flex:1;padding-right:34px">
+              <button type="button" class="nm" id="gn-{{ loop.index }}" data-open-guest aria-haspopup="dialog">{{ g.username }}</button>
+              <div class="sub">{{ g.displayName or ta('No name') }} · {% if g.lastLogon %}{{ t('signed in') }}{% else %}{{ t('not signed in') }}{% endif %}{% if not g.enabled %} · {{ t('disabled') }}{% endif %}</div>
+            </div>
+          </div>
+          <div class="acts">
+            <button type="button" class="c-chip sm" data-quick-extend="60" aria-label="{{ ta('Extend {name} by {time}', name=g.username, time='1 h') }}">+1 h</button>
+            <button type="button" class="c-chip sm" data-quick-extend="1440" aria-label="{{ ta('Extend {name} by {time}', name=g.username, time='1 day') }}">+1 {{ t('day') }}</button>
+            <a class="c-chip sm" id="ext-{{ loop.index }}" href="#extend-{{ loop.index }}" data-open-dialog="#extend-{{ loop.index }}" style="margin-left:auto" aria-label="{{ ta('Extend {name}', name=g.username) }}">{{ t('Extend') }}</a>
+          </div>
+        </article>
       {% endfor %}
-      </tbody>
-    </table></div>
-    <div class="field" style="max-width:260px;margin-top:8px"><label for="bulk-min">{{ t('Minutes for bulk extend (0 = permanent)') }}</label><input id="bulk-min" type="number" name="minutes" min="0" max="525600"></div>
-    {{ bulk_bar([('extend', 'Extend selected'), ('delete', 'Delete selected')], bulk_token) }}
-  </form>
-  {% for g in tv.rows %}
-  <dialog id="extend-{{ loop.index }}" aria-labelledby="ext-t-{{ loop.index }}">
-    <form method="post" action="/guests/{{ g.username|urlencode }}/extend" class="stack">{{ csrf() }}
-      <h2 id="ext-t-{{ loop.index }}">{{ t('Extend {name}', name=g.username) }}</h2>
-      <div class="field"><label for="m-{{ loop.index }}">{{ t('Minutes from now (0 = permanent)') }}</label><input id="m-{{ loop.index }}" type="number" name="minutes" min="0" max="525600" value="60" required></div>
-      <p class="hint">{{ t('You can undo this afterwards.') }}</p>
-      <div class="form-actions"><button class="btn filled" type="submit">{{ t('Save') }}</button><button class="btn" type="button" data-close>{{ t('Cancel') }}</button></div>
+      </div>
+      <p class="muted" data-g-none hidden>{{ t('No guests match this filter') }}</p>
+      <div class="cluster" style="margin-top:12px">
+        <div class="field" style="max-width:300px"><label for="bulk-min">{{ t('Minutes for bulk extend (0 = permanent)') }}</label><input id="bulk-min" type="number" name="minutes" min="0" max="525600"></div>
+      </div>
+      {{ bulk_bar([('extend', 'Extend selected'), ('delete', 'Delete selected')], bulk_token) }}
     </form>
-  </dialog>
-  {% endfor %}
-  {% elif tv.total %}{{ empty('No guests match this filter', 'Clear the search box to see every guest.') }}
-  {% else %}{{ empty('No guest accounts yet', 'Guests create their own sign-in on the guest portal, or you can create one above.') }}{% endif %}
-</section>
+    {% for g in tv.rows %}
+    <dialog id="extend-{{ loop.index }}" aria-labelledby="ext-t-{{ loop.index }}">
+      <form method="post" action="/guests/{{ g.username|urlencode }}/extend" class="stack">{{ csrf() }}
+        <h2 id="ext-t-{{ loop.index }}">{{ t('Extend {name}', name=g.username) }}</h2>
+        <div class="field"><label for="m-{{ loop.index }}">{{ t('Minutes from now (0 = permanent)') }}</label><input id="m-{{ loop.index }}" type="number" name="minutes" min="0" max="525600" value="60" required></div>
+        <p class="hint">{{ t('You can undo this afterwards.') }}</p>
+        <div class="form-actions"><button class="btn filled" type="submit">{{ t('Save') }}</button><button class="btn" type="button" data-close>{{ t('Cancel') }}</button></div>
+      </form>
+    </dialog>
+    {% endfor %}
+    {% elif tv.total %}<div class="tile">{{ empty('No guests match this filter', 'Clear the search box to see every guest.') }}</div>
+    {% else %}<div class="tile">{{ empty('No guest accounts yet', 'Guests create their own sign-in on the guest portal, or you can create one above.') }}</div>{% endif %}
+  </div>
+
+  <div class="scrim" data-g-scrim></div>
+  <aside class="drawer" role="dialog" aria-modal="false" aria-labelledby="gd-name" hidden data-g-drawer>
+    <div class="hd"><span class="nm" id="gd-name"></span><span class="pill-tag" data-gd-tag></span>
+      <button type="button" class="btn icon text drawer-close" data-gd-close aria-label="{{ ta('Close') }}">×</button></div>
+    <div class="facts">
+      <div><div class="lb">{{ t('Display name') }}</div><span data-gd="name"></span></div>
+      <div><div class="lb">{{ t('Created') }}</div><span data-gd="created"></span></div>
+      <div><div class="lb">{{ t('Ends') }}</div><span data-gd="expires"></span></div>
+      <div><div class="lb">{{ t('Last sign-in') }}</div><span data-gd="last"></span></div>
+    </div>
+    <div class="sec-k">{{ t('Extend') }}</div>
+    <div class="chip-row" data-gd-extend>
+      <button type="button" class="c-chip" data-gd-min="30">+30 {{ t('min') }}</button>
+      <button type="button" class="c-chip primary" data-gd-min="60">+1 {{ t('hour') }}</button>
+      <button type="button" class="c-chip" data-gd-min="1440">+1 {{ t('day') }}</button>
+      <button type="button" class="c-chip" data-gd-min="0">{{ t('Permanent') }}</button>
+    </div>
+    <div class="sec-k">{{ t('Actions') }}</div>
+    <div class="stack tight">
+      <a class="c-chip block" data-gd-dir href="/directory">{{ t('Open in the directory') }}</a>
+      <a class="c-chip block" data-gd-reset href="/directory">{{ t('Reset password') }}</a>
+      <a class="c-chip block coral" data-gd-delete href="/guests">{{ t('Delete account and files') }}</a>
+    </div>
+    <p class="hint" style="margin:0">{{ t('Extending is recorded in the undo history.') }}</p>
+  </aside>
+</div>
 {% endblock %}
+{% block scripts %}<script src="/static/js/guests.js" defer></script>{% endblock %}
