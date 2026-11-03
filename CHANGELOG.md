@@ -3,6 +3,17 @@
 All notable changes to TempDesk. Release builds of TempDesk Deployer are numbered
 `major.minor.<workflow run>`; the release notes on GitHub list each build.
 
+## [Unreleased]
+
+### Added
+
+- Answer File Studio: rich controls for every setting. Each of the 1,029 catalog settings now has a
+  matching control (switches, segmented buttons, option cards, searchable time zone and locale lists
+  with the live UTC offset, IP and CIDR fields, size and duration fields with live previews, product
+  key boxes with generic edition keys, command line editor, colour picker and more), a written
+  description, the meaning of the current value, risk badges, related settings and an Unset button.
+  Search also matches descriptions and value meanings.
+
 ## [1.0.0] - 2026-11-02
 
 First version of TempDesk Deployer, the desktop app that deploys and manages TempDesk.

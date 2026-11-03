@@ -57,6 +57,12 @@ function words(name) {
 function lowerWords(name) {
   return words(name).split(/\s+/).map((w, i) => (/^[A-Z0-9]{2,}$/.test(w) || /^[A-Z][A-Z0-9]+s$/.test(w) ? w : w.toLowerCase())).join(' ');
 }
+/** Lowercases the first word of a sentence fragment unless it looks like a name (Windows Media, IPv4). */
+function lowerFirst(s) {
+  const m = /^(\S+)(\s+(\S+))?/.exec(s);
+  if (!m || /[A-Z].*[A-Z]/.test(m[1]) || (m[3] && /^[A-Z]/.test(m[3]))) return s;
+  return s[0].toLowerCase() + s.slice(1);
+}
 function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : s; }
 /** Generated true/false meanings from a boolean setting name, or null when the name has no clear verb. */
 export function boolMeaning(name) {
@@ -75,8 +81,10 @@ export function boolMeaning(name) {
   }
   return null;
 }
-function firstSentence(label) {
+function firstSentence(label, value) {
   let s = String(label || '').trim();
+  // a label that only repeats the value says nothing about what it means
+  if (!s || (value !== undefined && s.toLowerCase().replace(/[.\s]/g, '') === String(value).toLowerCase().replace(/[.\s]/g, ''))) return '';
   if (/\.\.\.$/.test(s)) return '';
   const m = s.match(/^(.+?[.!?])(?=\s+[A-Z]|$)/);
   s = m ? m[1] : s;
@@ -164,10 +172,10 @@ export function resolveHint(W, catalog, compName, s) {
     for (const v of ['true', 'false']) {
       if (out.valueHelp[v]) continue;
       const lab = (values || []).find((x) => x.value.toLowerCase() === v);
-      out.valueHelp[v] = (lab && firstSentence(lab.label)) || (gen && gen[v]) || '';
+      out.valueHelp[v] = (lab && firstSentence(lab.label, v)) || (gen && gen[v]) || '';
     }
   }
-  (values || []).forEach((v) => { if (!out.valueHelp[v.value]) out.valueHelp[v.value] = firstSentence(v.label) || ''; });
+  (values || []).forEach((v) => { if (!out.valueHelp[v.value]) out.valueHelp[v.value] = firstSentence(v.label, v.value) || ''; });
   for (const k of Object.keys(out.valueHelp)) if (!out.valueHelp[k]) delete out.valueHelp[k];
   // defaults and limits from the catalog unless the hint says otherwise
   if (out.default === undefined && s.default !== undefined && s.default !== '') out.default = String(s.default);
@@ -184,7 +192,7 @@ export function resolveHint(W, catalog, compName, s) {
     let defaultText = '';
     if (dv !== undefined && dv !== '') {
       const vh = out.valueHelp[dv] || out.valueHelp[String(dv).toLowerCase()] || '';
-      defaultText = ', which is ' + dv + (vh ? ' (' + vh.replace(/\.$/, '').replace(/^[A-Z](?=[a-z])/, (c) => c.toLowerCase()) + ')' : '');
+      defaultText = ', which is ' + dv + (vh ? ' (' + lowerFirst(vh.replace(/\.$/, '')) + ')' : '');
     }
     const unset = fill((W.raw.unsetSentences || {})[s.type] || (W.raw.unsetSentences || {}).default || '', Object.assign({}, vars, { defaultText }));
     const parts = [help];

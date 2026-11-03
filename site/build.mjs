@@ -5,7 +5,7 @@
 // - renders feature articles from features.json into features/<id>.html
 // - renders docs/*.md and component README.md files into docs/<name>.html (own Markdown renderer)
 // - copies the TempDesk payload into payload/ with manifest.json (relative paths and SHA-256)
-// - copies answerfile/unattend-catalog.json and answerfile/generate.mjs when they exist
+// - copies answerfile/unattend-catalog.json, generate.mjs, rules.mjs and the widget hints when they exist
 // - writes search-index.json for the command palette and the docs search
 import { createHash } from 'node:crypto';
 import { promises as fs, existsSync } from 'node:fs';
@@ -322,7 +322,7 @@ ${r.html}
 
   // 6. answer file catalog and generator (owned by answerfile/)
   const af = [];
-  for (const f of ['unattend-catalog.json', 'generate.mjs', 'rules.mjs']) {
+  for (const f of ['unattend-catalog.json', 'generate.mjs', 'rules.mjs', 'widgets.json', 'widgets.mjs']) {
     const src = path.join(REPO, 'answerfile', f);
     if (existsSync(src)) { await copyFile(src, path.join(OUT, 'answerfile', f)); af.push(f); }
   }

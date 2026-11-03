@@ -2,6 +2,7 @@
 // plain text (all words) or regular expression matching and a Show filter (all / only set / only
 // with problems). Pure ES module; the page supplies label lookups and problem lists.
 import { countSet, isEmpty } from './catalog.js';
+import { hintAt, hintSearchText, firstSentence } from './widgets/index.js';
 
 // Compile a query. Returns { ok, test(text) -> null | {index, length}, error }.
 export function compileQuery(q, useRegex) {
@@ -48,9 +49,10 @@ export function buildIndex({ model, catalog, friendly, problems }) {
             if (!isEmpty(v)) { setPasses.push(pass); if (!val && !s.sensitive) val = valueText(v); }
           }
           const problem = !!(problems && comp.passes.some((p) => problems.has(p + '|' + comp.name + '|' + path)));
+          const hint = hintAt(comp.name + '|' + (s.hintPath || path)); // descriptions and value meanings are searchable
           out.push({ kind: 'catalog', id: comp.name + '/' + path, comp: comp.name, path, pass: setPasses[0] || (s.passes[0] || comp.passes[0]), section: 'all', sectionLabel: comp.name,
-            label: s.name, help: s.help || '', value: val, isSet: setPasses.length > 0, problem, deprecated: s.deprecated,
-            text: [comp.name, path, s.name, s.help, val, (s.values || []).map((x) => x.value + ' ' + x.label).join(' ')].join('   ') });
+            label: s.name, help: hint && hint.description ? firstSentence(hint.description) : s.help || '', value: val, isSet: setPasses.length > 0, problem, deprecated: s.deprecated,
+            text: [comp.name, path, s.name, s.help, val, (s.values || []).map((x) => x.value + ' ' + x.label).join(' '), hintSearchText(hint)].join('   ') });
           if (s.type === 'container' || s.type === 'list') walk(s.children || [], path);
         }
       };

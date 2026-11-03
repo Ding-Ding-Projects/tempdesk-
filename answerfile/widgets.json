@@ -60,14 +60,23 @@
    "widget": "enum-flags"
   },
   {
-   "id": "enumWords",
+   "id": "enumPair",
    "when": {
     "type": "enum",
     "valuesMin": 2,
+    "valuesMax": 2,
+    "valueLenMax": 18
+   },
+   "widget": "segmented"
+  },
+  {
+   "id": "enumWords",
+   "when": {
+    "type": "enum",
+    "valuesMin": 3,
     "valuesMax": 4,
-    "valueLenMax": 18,
-    "name": "^(?!.*(Letter)).*$",
-    "help": "^(?!.*\\b(level|code)\\b)"
+    "valueLenMax": 14,
+    "valuePattern": "^[A-Za-z]"
    },
    "widget": "segmented"
   },
@@ -90,8 +99,11 @@
   {
    "id": "port",
    "when": {
-    "type": "integer",
-    "name": "(^|_)(Port|StartPort|EndPort)$"
+    "type": [
+     "integer",
+     "string"
+    ],
+    "name": "(^|_|Server)(Port|StartPort|EndPort)$"
    },
    "widget": "port"
   },
@@ -727,7 +739,6 @@
   {
    "component": "*",
    "path": "**/Key",
-   "widget": "text",
    "description": "A unique key for this list entry. Windows only uses it to tell the entries apart. Each entry in the list needs its own key, and the studio fills it in for you."
   },
   {
@@ -780,7 +791,7 @@
    "context": "OEMs use it to brand the troubleshooting pages."
   },
   "Microsoft-Windows-Disk-Failure-Diagnostic-Module": {
-   "context": "Leave it on unless you manage disk health another way."
+   "context": "It warns users before a failing disk loses data."
   },
   "Microsoft-Windows-DNS-Client": {
    "context": "Set it when a computer needs fixed DNS servers or suffixes instead of the ones DHCP hands out."
@@ -1468,6 +1479,7 @@
     }
    },
    "UserData/ProductKey/Key": {
+    "widget": "product-key",
     "description": "The product key used to install, which also picks the edition from the media. A generic key installs an edition without activating it. Generic keys only select an edition during Setup; they never activate Windows.",
     "related": [
      "UserData/ProductKey/WillShowUI",
@@ -1601,6 +1613,14 @@
     "related": [
      "ImageInstall/OSImage/InstallTo/DiskID"
     ]
+   },
+   "ImageInstall/OSImage/InstallFrom/MetaData/Key": {
+    "description": "How the image in install.wim is picked: by index number, by name or by description. Index is the most reliable. The value below must match the key you choose.",
+    "valueHelp": {
+     "/IMAGE/INDEX": "Pick the image by its index number, for example 1.",
+     "/IMAGE/NAME": "Pick the image by its name, for example Windows 11 Pro.",
+     "/IMAGE/DESCRIPTION": "Pick the image by its description text."
+    }
    },
    "ImageInstall/OSImage/InstallFrom/MetaData/Value": {
     "widget": "combobox-search",
@@ -2530,7 +2550,8 @@
    },
    "TrustedSites": {
     "widget": "string-list",
-    "sep": ";"
+    "sep": ";",
+    "description": "Web sites Internet Explorer puts in the Trusted sites zone, which has looser security. Separate several with semicolons. Internet Explorer is retired, so only IE mode setups use it."
    },
    "CompatibilityViewDomains": {
     "widget": "string-list",
@@ -3150,9 +3171,6 @@
      "0": "The sharing option starts cleared.",
      "1": "The sharing option starts checked."
     }
-   },
-   "DefaultAutoConnectOpenState": {
-    "description": "The default of the old Wi-Fi Sense option that joined open hotspots automatically. The feature was removed. Leave it unset."
    }
   },
   "Microsoft-Windows-MigrationWizardApplication": {
@@ -3194,6 +3212,237 @@
      "when": "Blocked",
      "reason": "Users cannot reach the security screen to lock, sign out or change passwords."
     }
+   },
+   "Alt": {
+    "description": "Blocks the Alt keys on both sides of the keyboard. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "AltF4": {
+    "description": "Blocks the Alt+F4 shortcut, which is used to close applications. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "AltSpace": {
+    "description": "Blocks the Alt+Spacebar shortcut. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "AltTab": {
+    "description": "Blocks the Alt+Tab shortcut, which is used to switch tasks. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "AltWin": {
+    "description": "Blocks the Alt+Windows logo key shortcut. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "BrowserBack": {
+    "description": "Blocks the Browser Back key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "BrowserFavorites": {
+    "description": "Blocks the Browser Favorites key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "BrowserForward": {
+    "description": "Blocks the Browser Forward key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "BrowserHome": {
+    "description": "Blocks the Browser Home key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "BrowserRefresh": {
+    "description": "Blocks the Browser Refresh key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "BrowserSearch": {
+    "description": "Blocks the Browser Search key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "BrowserStop": {
+    "description": "Blocks the Browser Stop key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "ControlEscape": {
+    "description": "Blocks the Ctrl+Esc shortcut, which is used to open the Start screen. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "ControlTab": {
+    "description": "Blocks the Ctrl+Tab shortcut, which is used to switch windows. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "ControlWindowsF": {
+    "description": "Blocks the Ctrl+Windows logo key+F shortcut, which is used to open the Find Computers dialog box. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "Ctrl": {
+    "description": "Blocks the Ctrl keys on both sides of the keyboard. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "CtrlF4": {
+    "description": "Blocks the Ctrl+F4 shortcut, which is used to close the active window. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "CtrlWin": {
+    "description": "Blocks the Ctrl+Windows logo key shortcut. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "Escape": {
+    "description": "Blocks the Esc key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "F21": {
+    "description": "Blocks the F21 key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "LaunchApp1": {
+    "description": "Blocks the Start Application 1 key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "LaunchMail": {
+    "description": "Blocks the Start Mail key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "LaunchMediaSelect": {
+    "description": "Blocks the Media Select key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "LeftShiftLeftAltNumLock": {
+    "description": "Blocks the Left Shift+Left Alt+Num Lock shortcut, which is used to open the Mouse Keys dialog box. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "LeftShiftLeftAltPrintScreen": {
+    "description": "Blocks the Left Shift+Left Alt+Print Screen shortcut, which is used to open the High Contrast dialog box. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "MediaNext": {
+    "description": "Blocks the Next Track key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "MediaPlayPause": {
+    "description": "Blocks the Play/Pause key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "MediaPrev": {
+    "description": "Blocks the Previous Track key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "MediaStop": {
+    "description": "Blocks the Stop Media key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "Shift": {
+    "description": "Blocks the Shift keys on both sides of the keyboard. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "ShiftControlEscape": {
+    "description": "Blocks the Shift+Ctrl+Esc shortcut, which is used to open Task Manager. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "ShiftWin": {
+    "description": "Blocks the Shift+Windows logo key shortcut. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "VolumeDown": {
+    "description": "Blocks the Volume Down key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "VolumeMute": {
+    "description": "Blocks the Volume Mute key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "VolumeUp": {
+    "description": "Blocks the Volume Up key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "Windows": {
+    "description": "Blocks the Windows logo keys on both sides of the keyboard. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsB": {
+    "description": "Blocks the Windows logo key+B shortcut, which is used to set focus in the Notification area. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsBreak": {
+    "description": "Blocks the Windows logo key+Break shortcut, which is used to open the System dialog box. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsC": {
+    "description": "Blocks the Windows logo key+C shortcut, which is used to open charms. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsComma": {
+    "description": "Blocks the Windows logo key+Comma shortcut, which is used to peek at the desktop. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsD": {
+    "description": "Blocks the Windows logo key+D shortcut, which is used to show the desktop. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsDown": {
+    "description": "Blocks the Windows logo key+Down Arrow shortcut, which is used to minimize the active window. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsE": {
+    "description": "Blocks the Windows logo key+E shortcut, which is used to open Windows Explorer. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsEnter": {
+    "description": "Blocks the Windows logo key+Enter shortcut, which is used to start Narrator. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsEscape": {
+    "description": "Blocks the Windows logo key+Esc shortcut, which is used to close the Magnifier application. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsF": {
+    "description": "Blocks the Windows logo key+F shortcut, which is used to open Search. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsF1": {
+    "description": "Blocks the Windows logo key+F1 shortcut, which is used to open Windows Help. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsH": {
+    "description": "Blocks the Windows logo key+H shortcut, which is used to open the Share charm. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsHome": {
+    "description": "Blocks the Windows logo key+Home shortcut, which is used to minimize or restore all inactive windows. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsI": {
+    "description": "Blocks the Windows logo key+I shortcut, which is used to open the Settings charm. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsJ": {
+    "description": "Blocks the Windows logo key+J shortcut, which is used to swap between snapped and filled applications. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsK": {
+    "description": "Blocks the Windows logo key+K shortcut, which is used to open the Connect charm. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsL": {
+    "description": "Blocks the Windows logo key+L shortcut, which is used to lock the device. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsLeft": {
+    "description": "Blocks the Windows logo key+Left Arrow shortcut, which is used to snap the active window to the left half of the screen. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsM": {
+    "description": "Blocks the Windows logo key+M shortcut, which is used to minimize all windows. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsMinus": {
+    "description": "Blocks the Windows logo key+Minus shortcut, which is used to zoom out. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsO": {
+    "description": "Blocks the Windows logo key+O shortcut, which is used to lock device orientation. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsP": {
+    "description": "Blocks the Windows logo key+P shortcut, which is used to cycle through Presentation Mode. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsPageDown": {
+    "description": "Blocks the Windows logo key+Page Down shortcut, which is used to move a Microsoft Store app to the right monitor. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsPageUp": {
+    "description": "Blocks the Windows logo key+Page Up shortcut, which is used to move a Microsoft Store app to the left monitor. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsPeriod": {
+    "description": "Blocks the Windows logo key+Period shortcut, which is used to snap the current screen to the left or right gutter. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsPlus": {
+    "description": "Blocks the Windows logo key+Plus shortcut, which is used to zoom in. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsQ": {
+    "description": "Blocks the Windows logo key+Q shortcut, which is used to open the Search charm. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsR": {
+    "description": "Blocks the Windows logo key+R shortcut, which is used to open the Run dialog box. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsRight": {
+    "description": "Blocks the Windows logo key+Right Arrow shortcut, which is used to snap the active windows to the right half of the screen. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsShiftDown": {
+    "description": "Blocks the Windows logo key+Shift+Down Arrow shortcut, which is used to minimize the active window. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsShiftLeft": {
+    "description": "Blocks the Windows logo key+Shift+Left Arrow shortcut, which is used to move the active window to the left monitor. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsShiftRight": {
+    "description": "Blocks the Windows logo key+Shift+Right Arrow shortcut, which is used to move the active window to the right monitor. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsShiftUp": {
+    "description": "Blocks the Windows logo key+Shift+Up Arrow shortcut, which is used to maximize the active window vertically. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsSlash": {
+    "description": "Blocks the Windows logo key+Slash shortcut, which is used to open the Input Method Editor (IME). Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsSpace": {
+    "description": "Blocks the Windows logo key+Spacebar shortcut, which is used to switch layout. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsT": {
+    "description": "Blocks the Windows logo key+T shortcut, which is used to set focus on taskbar and cycle through programs. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsTab": {
+    "description": "Blocks the Windows logo key+Tab shortcut, which is used to cycle through Microsoft Store apps. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsUp": {
+    "description": "Blocks the Windows logo key+Up Arrow shortcut, which is used to maximize the active window. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsV": {
+    "description": "Blocks the Windows logo key+V shortcut, which is used to cycle through toasts in reverse order. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsW": {
+    "description": "Blocks the Windows logo key+W shortcut, which is used to open the Settings Search charm. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsZ": {
+    "description": "Blocks the Windows logo key+Z shortcut, which is used to open the app bar. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
    }
   },
   "Microsoft-Windows-NetBT": {

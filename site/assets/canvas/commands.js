@@ -5,6 +5,10 @@
 import { h, iconButton, clone, ICONS } from './dom.js';
 import { startDrag } from './drag.js';
 import { searchBox } from './search-ui.js';
+import { quickField } from './widgets/index.js';
+
+const HINT = { runSync: 'Microsoft-Windows-Deployment|RunSynchronous/RunSynchronousCommand/', runAsync: 'Microsoft-Windows-Deployment|RunAsynchronous/RunAsynchronousCommand/', firstLogon: 'Microsoft-Windows-Shell-Setup|FirstLogonCommands/SynchronousCommand/', logon: 'Microsoft-Windows-Shell-Setup|LogonCommands/AsynchronousCommand/' };
+const CMD = { runSync: 'Path', runAsync: 'Path', firstLogon: 'CommandLine', logon: 'CommandLine' };
 
 export const LISTS = [
   { id: 'runSync', pass: 'specialize', reboot: true, creds: true },
@@ -36,7 +40,7 @@ export function mountCommands(root, ctx) {
     let n = 0, total = 0;
     root.querySelectorAll('.cmd-card[data-i]').forEach((c) => {
       total++;
-      const text = c.textContent + ' ' + [...c.querySelectorAll('textarea, input[type=text]')].map((x) => x.value).join(' ');
+      const text = c.textContent + ' ' + [...c.querySelectorAll('textarea, input[type=text]')].map((x) => x.value).join(' ');  // field cards include descriptions
       const ok = !m || !m.ok || m.empty || !!m.test(text);
       c.hidden = !ok; if (ok) n++;
     });
@@ -67,12 +71,12 @@ export function mountCommands(root, ctx) {
           if (e.key === 'ArrowDown' && i < cmds[def.id].length - 1) { e.preventDefault(); commit(moveCommand(C(), def.id, i, def.id, i + 1), 'hist.cmdMove', [t('cmd.' + def.id)]); }
         });
         const cmdId = `cmd-${def.id}-${i}`;
-        const cmdIn = h('textarea', { id: cmdId, rows: '2', spellcheck: 'false', value: it.command || '' });
-        cmdIn.value = it.command || '';
-        cmdIn.addEventListener('input', () => { const c = C(); c[def.id][i].command = cmdIn.value; commit(c, 'hist.cmdText', [t('cmd.' + def.id), i + 1], cmdId); });
-        cmdIn.addEventListener('blur', () => draw());
-        const descIn = h('input', { type: 'text', id: cmdId + '-d', value: it.description || '' });
-        descIn.addEventListener('input', () => { const c = C(); c[def.id][i].description = descIn.value; commit(c, 'hist.cmdDesc', [t('cmd.' + def.id), i + 1], cmdId + '-d'); });
+        const hk = HINT[def.id];
+        const cmdF = quickField({ id: cmdId, label: t('cmd.command'), hintKey: hk + CMD[def.id], hint: { widget: 'command-line' }, value: it.command || '', t, noUnset: true,
+          onChange: (v) => { const c = C(); c[def.id][i].command = v || ''; commit(c, 'hist.cmdText', [t('cmd.' + def.id), i + 1], cmdId); } });
+        const descF = quickField({ id: cmdId + '-d', label: t('cmd.description'), hintKey: hk + 'Description', hint: { widget: 'text' }, value: it.description || '', t, noUnset: true,
+          onChange: (v) => { const c = C(); c[def.id][i].description = v || ''; commit(c, 'hist.cmdDesc', [t('cmd.' + def.id), i + 1], cmdId + '-d'); } });
+        cmdF.input.addEventListener('blur', () => setTimeout(() => { if (!root.contains(document.activeElement) || !card.contains(document.activeElement)) draw(); }, 0));
         const err = !String(it.command || '').trim() && !it.disabled ? h('div', { class: 'err', role: 'alert', text: t('err.command') }) : null;
         card.appendChild(h('div', { class: 'inline', style: { alignItems: 'center', justifyContent: 'space-between' } }, [
           h('b', { text: '#' + (i + 1) }), handle,
@@ -83,26 +87,24 @@ export function mountCommands(root, ctx) {
             iconButton('del', t('list.remove'), () => { const c = C(); c[def.id].splice(i, 1); commit(c, 'hist.cmdRemove', [t('cmd.' + def.id), i + 1]); })
           ])
         ]));
-        card.appendChild(h('div', { class: 'field' }, [h('label', { for: cmdId, text: t('cmd.command') }), cmdIn, err]));
-        card.appendChild(h('div', { class: 'field' }, [h('label', { for: cmdId + '-d', text: t('cmd.description') }), descIn]));
-        const dis = h('input', { type: 'checkbox', checked: !!it.disabled });
-        dis.addEventListener('change', () => { const c = C(); c[def.id][i].disabled = dis.checked; commit(c, dis.checked ? 'hist.cmdDisable' : 'hist.cmdEnable', [t('cmd.' + def.id), i + 1]); });
-        const row = h('div', { class: 'inline', style: { flexWrap: 'wrap', alignItems: 'center' } }, [h('label', { class: 'check' }, [dis, t('cmd.disabled')])]);
+        card.appendChild(cmdF.el);
+        if (err) card.appendChild(err);
+        card.appendChild(descF.el);
+        const disF = quickField({ id: cmdId + '-off', label: t('cmd.disabled'), hint: { widget: 'toggle', description: t('cmd.disabledHelp', null, 'A turned-off command stays in the studio but is not written to the answer file.'), valueHelp: { true: t('cmd.offMeaning', null, 'Turned off: not written to the answer file.'), false: t('cmd.onMeaning', null, 'Written to the answer file and runs.') } }, value: it.disabled ? 'true' : 'false', t, noUnset: true,
+          onChange: (v) => { const c = C(); c[def.id][i].disabled = v === 'true'; commit(c, v === 'true' ? 'hist.cmdDisable' : 'hist.cmdEnable', [t('cmd.' + def.id), i + 1]); } });
+        const row = h('div', { class: 'grid2' }, [disF.el]);
         if (def.reboot) {
-          const rb = h('select', { 'aria-label': t('cmd.willReboot') }, ['Never', 'Always', 'OnRequest'].map((v) => h('option', { value: v, text: t('cmd.reboot.' + v) })));
-          rb.value = it.willReboot || 'Never';
-          rb.addEventListener('change', () => { const c = C(); c[def.id][i].willReboot = rb.value; commit(c, 'hist.cmdReboot', [t('cmd.' + def.id), i + 1, rb.value]); });
-          row.appendChild(h('label', { class: 'field', style: { flexDirection: 'row', alignItems: 'center', gap: '6px' } }, [t('cmd.willReboot'), rb]));
+          row.appendChild(quickField({ id: cmdId + '-rb', label: t('cmd.willReboot'), hintKey: hk + 'WillReboot', hint: { widget: 'segmented', values: ['Never', 'Always', 'OnRequest'].map((v) => ({ value: v, label: t('cmd.reboot.' + v) })) }, value: it.willReboot || 'Never', t, noUnset: true,
+            onChange: (v) => { const c = C(); c[def.id][i].willReboot = v || 'Never'; commit(c, 'hist.cmdReboot', [t('cmd.' + def.id), i + 1, v || 'Never']); } }).el);
         }
         card.appendChild(row);
         if (def.creds) {
           const det = h('details', { open: it.credentials && it.credentials.username ? true : undefined }, [h('summary', { style: { minHeight: '44px', display: 'flex', alignItems: 'center', cursor: 'pointer' }, text: t('cmd.credentials') })]);
           const g = h('div', { class: 'grid2' });
-          ['domain', 'username', 'password'].forEach((f) => {
+          [['domain', 'Domain', 'text'], ['username', 'Username', 'text'], ['password', 'Password', 'password']].forEach(([f, leaf, w]) => {
             const id = `${cmdId}-c-${f}`;
-            const inp = h('input', { type: f === 'password' ? 'password' : 'text', id, value: (it.credentials && it.credentials[f]) || '', autocomplete: 'off' });
-            inp.addEventListener('input', () => { const c = C(); c[def.id][i].credentials = Object.assign({ domain: '', username: '', password: '' }, c[def.id][i].credentials, { [f]: inp.value }); commit(c, f === 'password' ? 'hist.setSecret' : 'hist.cmdCred', [t('cmd.' + def.id) + ' #' + (i + 1)], id); });
-            g.appendChild(h('div', { class: 'field' }, [h('label', { for: id, text: t('cmd.cred.' + f) }), inp]));
+            g.appendChild(quickField({ id, label: t('cmd.cred.' + f), hintKey: hk + 'Credentials/' + leaf, hint: { widget: w, storage: f === 'password' ? 'plain' : undefined }, value: (it.credentials && it.credentials[f]) || '', t, noUnset: true,
+              onChange: (v) => { const c = C(); c[def.id][i].credentials = Object.assign({ domain: '', username: '', password: '' }, c[def.id][i].credentials, { [f]: v || '' }); commit(c, f === 'password' ? 'hist.setSecret' : 'hist.cmdCred', [t('cmd.' + def.id) + ' #' + (i + 1)], id); } }).el);
           });
           det.appendChild(g);
           det.appendChild(h('p', { class: 'notice warn', text: t('cmd.credWarn') }));
