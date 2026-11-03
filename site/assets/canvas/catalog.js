@@ -3,6 +3,7 @@
 // site at build time. Until it exists, a small built-in core subset is used and the page says so.
 // Framework-free ES module; operates on model.all = { "pass|Component": value } (see answer.js).
 import { h, iconButton, clone } from './dom.js';
+import { fieldCard, hintAt, basicHint, hintSearchText } from './widgets/index.js';
 
 export const PASSES = ['windowsPE', 'offlineServicing', 'generalize', 'specialize', 'auditSystem', 'auditUser', 'oobeSystem'];
 
@@ -37,6 +38,8 @@ function normSetting(s, parentPath) {
   const keyValueStyle = !!(li && li.keyStyle === 'keyValue');
   const textItems = !!(li && li.valueStyle === 'text');
   let srcKids = li ? arr(li.settings) : arr(s.children || s.settings || s.properties || s.items || s.fields);
+  const keySetting = li && li.key ? arr(li.settings).find((c) => c.name === li.key) : null;
+  const valueSetting = li && li.valueStyle === 'text' ? arr(li.settings).find((c) => c.name === 'Value') : null;
   if (keyValueStyle && li.key) srcKids = srcKids.filter((c) => c.name !== li.key);
   if (textItems) srcKids = [];
   const kids = srcKids.map((c) => normSetting(c, path)).filter(Boolean);
@@ -56,7 +59,10 @@ function normSetting(s, parentPath) {
     name, path, type, children: type === 'password' ? [] : kids, values, suggestions: (s.suggestions || []).map((v) => (v && typeof v === 'object' ? String(v.value ?? v.name) : String(v))),
     min: s.min ?? s.minimum, max: s.max ?? s.maximum, maxLength: s.maxLength,
     help: s.help || s.description || '', passes: passesOf(s), sensitive: !!(s.sensitive || type === 'password' || /password/i.test(name) && type !== 'container'),
-    keyed: !!(keyValueStyle || s.keyValue || s['wcm:keyValue']), deprecated: !!s.deprecated, default: s.default, doc: s.doc || ''
+    keyed: !!(keyValueStyle || s.keyValue || s['wcm:keyValue']), deprecated: !!s.deprecated, default: s.default, doc: s.doc || '',
+    // catalog path of the leaf whose widget hint applies (encoded passwords use their Value child)
+    hintPath: s.encodedPassword ? (s.path || path) + '/Value' : (s.path || path), rawType: raw,
+    keyHintPath: keySetting ? keySetting.path || path + '/' + keySetting.name : '', valueHintPath: valueSetting ? valueSetting.path || path + '/Value' : '', valueRaw: valueSetting ? normSetting(Object.assign({}, valueSetting, { listItem: undefined }), path) : null
   };
 }
 export function normalizeCatalog(src, origin) {
@@ -214,7 +220,7 @@ export function settingAllowedPasses(comp, setting) { return setting && setting.
 // Flatten names for search: "Component Setting/Child ..."
 export function searchText(comp) {
   const names = [];
-  (function walk(list) { list.forEach((s) => { names.push(s.name, s.help); walk(s.children); }); })(comp.settings);
+  (function walk(list) { list.forEach((s) => { names.push(s.name, s.help, hintSearchText(hintAt(comp.name + '|' + s.hintPath))); walk(s.children); }); })(comp.settings);
   return comp.name + ' ' + comp.help + ' ' + names.join(' ');
 }
 
@@ -244,12 +250,11 @@ export function renderSettings(comp, value, onChange, ctx) {
     wrap.appendChild(head);
     const refresh = () => { mark.hidden = isEmpty(getAt(holder(), setting.name)); };
     const msgPath = comp.name + ' ' + setting.path;
-    let control;
     if (setting.type === 'container') {
       const wantOpen = ctx.expandPath && (ctx.expandPath === setting.path || ctx.expandPath.startsWith(setting.path + '/'));
       const det = h('details', { class: 'cat-group', open: !isEmpty(cur) || wantOpen || undefined });
       det.appendChild(h('summary', { text: setting.name + (setting.children.length ? ' (' + setting.children.length + ')' : '') }));
-      const box = h('div');
+      const box = h('div', { class: 'cat-group-b' });
       const sub = () => { const hld = holder(); if (!hld[setting.name] || typeof hld[setting.name] !== 'object' || Array.isArray(hld[setting.name])) hld[setting.name] = {}; return hld[setting.name]; };
       let built = false;
       const build = () => { if (built) return; built = true; setting.children.forEach((c) => { const n = node(c, sub); if (n) box.appendChild(n); }); };
@@ -261,100 +266,84 @@ export function renderSettings(comp, value, onChange, ctx) {
       return wrap;
     }
     if (setting.type === 'list' || setting.type === 'stringList') {
-      control = listEditor(setting, holder, refresh, msgPath);
-    } else if (setting.type === 'boolean') {
-      const sw = h('input', { type: 'checkbox', id, role: 'switch', checked: String(cur).toLowerCase() === 'true' });
-      const clear = h('button', { type: 'button', class: 'btn btn-ghost btn-sm', text: t('cat.clear', null, 'Not set'), onclick: () => { setAt(holder(), setting.name, undefined); sw.checked = false; refresh(); commit('hist.unset', [msgPath]); } });
-      sw.addEventListener('change', () => { setAt(holder(), setting.name, sw.checked ? 'true' : 'false'); refresh(); commit('hist.set', [msgPath, sw.checked ? 'true' : 'false']); });
-      control = h('div', { class: 'inline', style: { alignItems: 'center' } }, [h('label', { class: 'switch' }, [sw, h('span', { text: 'true / false' })]), clear]);
-    } else if (setting.type === 'enum') {
-      const sel = h('select', { id }, [h('option', { value: '', text: t('cat.notSet', null, '(not set)') })].concat(setting.values.map((v) => h('option', { value: v.value, text: v.label + (v.help ? ': ' + v.help : '') }))));
-      sel.value = cur === undefined ? '' : String(cur);
-      sel.addEventListener('change', () => { setAt(holder(), setting.name, sel.value === '' ? undefined : sel.value); refresh(); commit(sel.value === '' ? 'hist.unset' : 'hist.set', [msgPath, sel.value]); });
-      control = sel;
-    } else if (setting.type === 'password') {
-      const pw = cur && typeof cur === 'object' ? cur['@password'] || '' : cur || '';
-      const inp = h('input', { type: ctx.revealPasswords ? 'text' : 'password', id, value: pw, autocomplete: 'new-password', spellcheck: 'false' });
-      inp.addEventListener('input', () => { setAt(holder(), setting.name, inp.value ? { '@password': inp.value } : undefined); refresh(); commit('hist.setSecret', [msgPath], id); });
-      control = h('div', { class: 'inline' }, [inp, iconButton('eye', t('pw.show', null, 'Show or hide'), () => { inp.type = inp.type === 'password' ? 'text' : 'password'; })]);
-    } else {
-      const isInt = setting.type === 'integer';
-      const inp = h('input', { type: isInt ? 'number' : setting.sensitive ? 'password' : 'text', id, value: cur === undefined ? '' : String(typeof cur === 'object' ? cur['#text'] || '' : cur), min: setting.min, max: setting.max, maxlength: setting.maxLength, inputmode: isInt ? 'numeric' : undefined, spellcheck: 'false', autocomplete: 'off' });
-      const err = h('div', { class: 'err', role: 'alert' });
-      inp.addEventListener('input', () => {
-        const v = inp.value;
-        let bad = '';
-        if (isInt && v !== '') {
-          if (!/^-?\d+$/.test(v)) bad = t('cat.errInt', null, 'Enter a whole number.');
-          else if (setting.min !== undefined && Number(v) < setting.min) bad = t('cat.errMin', [setting.min], 'Minimum {0}.');
-          else if (setting.max !== undefined && Number(v) > setting.max) bad = t('cat.errMax', [setting.max], 'Maximum {0}.');
-        }
-        err.textContent = bad;
-        inp.setAttribute('aria-invalid', String(!!bad));
-        setAt(holder(), setting.name, v === '' ? undefined : v);
+      wrap.appendChild(listEditor(setting, holder, refresh, msgPath));
+      if (setting.help) wrap.appendChild(h('div', { class: 'help', text: setting.help }));
+      return wrap;
+    }
+    // Scalar setting: one rich field card (widgets/index.js) bound to the nested value.
+    const hint = hintAt(comp.name + '|' + setting.hintPath) || basicHint(setting);
+    const isPw = setting.type === 'password';
+    const read = (v) => (v === undefined ? undefined : isPw ? (v && typeof v === 'object' ? v['@password'] : v) : v && typeof v === 'object' ? v['#text'] : v);
+    const card = fieldCard({
+      id, label: setting.name, hint, setting, value: read(cur), t, A: ctx.A, lang: ctx.lang, announce: ctx.announce, sensitive: setting.sensitive, deprecated: setting.deprecated,
+      passes: setting.passes.length && setting.passes.length < comp.passes.length ? setting.passes : passes, dataPath: comp.name + '/' + setting.path,
+      paletteGroup: t('tab.all', null, 'All settings'), noUnset: false, englishNote: ctx.englishNote,
+      issues: ctx.issuesFor ? () => ctx.issuesFor(comp.name, setting.path) : null,
+      onRelated: ctx.onRelated, relatedName: (k) => k.split('|')[0] === comp.name ? k.split('|')[1] : k.replace('Microsoft-Windows-', '').replace('|', ' / '),
+      onChange: (v, meta) => {
+        const prev = holder()[setting.name];
+        if (v === undefined) setAt(holder(), setting.name, undefined);
+        else if (isPw) setAt(holder(), setting.name, Object.assign({}, prev && typeof prev === 'object' ? prev : {}, { '@password': v }));
+        else if (prev && typeof prev === 'object' && !Array.isArray(prev)) setAt(holder(), setting.name, Object.assign({}, prev, { '#text': v }));
+        else setAt(holder(), setting.name, v);
         refresh();
-        commit(v === '' ? 'hist.unset' : setting.sensitive ? 'hist.setSecret' : 'hist.set', [msgPath, v.length > 40 ? v.slice(0, 40) + '...' : v], id);
-      });
-      control = setting.sensitive ? h('div', { class: 'inline' }, [inp, iconButton('eye', t('pw.show', null, 'Show or hide'), () => { inp.type = inp.type === 'password' ? 'text' : 'password'; })]) : inp;
-      wrap.appendChild(control);
-      wrap.appendChild(err);
-      control = null;
-    }
-    if (control) wrap.appendChild(control);
-    if (ctx.unsetButtons && setting.type !== 'list' && setting.type !== 'stringList') {
-      const def = setting.default !== undefined && setting.default !== '' ? String(setting.default) : t('cat.noDefault', null, 'Windows default');
-      const ub = h('button', { type: 'button', class: 'btn btn-ghost btn-sm cat-unset', hidden: isEmpty(getAt(holder(), setting.name)) || undefined, text: t('cat.unset', [def], 'Unset (default: {0})') });
-      ub.addEventListener('click', () => {
-        setAt(holder(), setting.name, undefined); refresh(); ub.hidden = true;
-        wrap.querySelectorAll('input, select').forEach((x) => { if (x.type === 'checkbox') x.checked = false; else x.value = ''; });
-        commit('hist.unset', [msgPath]);
-      });
-      wrap.addEventListener('input', () => { ub.hidden = isEmpty(getAt(holder(), setting.name)); });
-      wrap.addEventListener('change', () => { ub.hidden = isEmpty(getAt(holder(), setting.name)); });
-      wrap.appendChild(ub);
-    }
-    if (setting.help) wrap.appendChild(h('div', { class: 'help', text: setting.help }));
-    if (setting.passes.length && setting.passes.length < comp.passes.length) wrap.appendChild(h('div', { class: 'pass-chips' }, setting.passes.map((p) => h('span', { class: 'pass-chip', text: p }))));
+        const secret = isPw || setting.sensitive || (meta && meta.secret);
+        const shown = v === undefined ? '' : String(v).length > 40 ? String(v).slice(0, 40) + '...' : String(v);
+        const discrete = ['toggle', 'segmented', 'cards'].includes(hint.widget) || meta.unset || meta.generated;
+        commit(v === undefined ? 'hist.unset' : secret ? 'hist.setSecret' : 'hist.set', secret ? [msgPath] : [msgPath, shown], discrete ? null : id);
+      }
+    });
+    wrap.replaceChildren(card.el);
+    wrap.classList.add('cat-set-card');
     return wrap;
   }
   function listEditor(setting, holder, refresh, msgPath) {
     const box = h('div', { class: 'list-ed' });
     const items = () => { const hld = holder(); if (!Array.isArray(hld[setting.name])) hld[setting.name] = []; return hld[setting.name]; };
+    const keyHint = (setting.keyHintPath && hintAt(comp.name + '|' + setting.keyHintPath)) || { widget: 'text', description: t('cat.keyHelp', null, 'A unique key for this entry, written as the wcm:keyValue attribute.'), valueHelp: {}, risk: { level: 'none' }, related: [] };
+    const valHint = setting.valueHintPath ? hintAt(comp.name + '|' + setting.valueHintPath) || basicHint(setting.valueRaw || { type: 'string' }) : basicHint({ type: 'string', help: setting.help });
     function draw() {
       box.replaceChildren();
-      items().forEach((item, i) => {
-        const row = h('div', { class: 'list-row' });
+      const all = items();
+      all.forEach((item, i) => {
+        const row = h('div', { class: 'list-row', role: 'group', 'aria-label': setting.name + ' ' + (i + 1) });
+        row.appendChild(h('div', { class: 'list-row-h' }, [h('b', { text: setting.name + ' ' + (i + 1) })]));
         const isScalar = setting.type === 'stringList' || !setting.children.length;
+        const rid = (ctx.idPrefix || 'cat') + '-' + (uid++);
         if (setting.keyed) {
-          const key = h('input', { type: 'text', value: item && item['@keyValue'] !== undefined ? item['@keyValue'] : String(i + 1), 'aria-label': t('cat.key', null, 'Key (wcm:keyValue)'), placeholder: t('cat.key', null, 'Key (wcm:keyValue)') });
-          key.addEventListener('input', () => { const it = items()[i]; if (typeof it !== 'object') items()[i] = { '#text': it }; items()[i]['@keyValue'] = key.value; commit('hist.set', [msgPath + ' #' + (i + 1), key.value], 'k' + setting.path + i); });
-          row.appendChild(h('div', { class: 'field' }, [h('label', { text: t('cat.key', null, 'Key (wcm:keyValue)') }), key]));
+          const kv = item && typeof item === 'object' && item['@keyValue'] !== undefined ? item['@keyValue'] : String(i + 1);
+          const kc = fieldCard({ id: rid + '-k', label: t('cat.key', null, 'Key (wcm:keyValue)'), hint: keyHint, value: kv, t, noUnset: true, compact: true, lang: ctx.lang,
+            onChange: (v) => { const a = items(); if (typeof a[i] !== 'object' || a[i] === null) a[i] = { '#text': a[i] }; a[i]['@keyValue'] = v === undefined ? '' : v; commit('hist.set', [msgPath + ' #' + (i + 1), v || ''], 'k' + setting.path + i); } });
+          row.appendChild(kc.el);
         }
         if (isScalar) {
-          const v = item && typeof item === 'object' ? item['#text'] || '' : item || '';
-          const inp = h('input', { type: 'text', value: v, 'aria-label': setting.name + ' ' + (i + 1) });
-          inp.addEventListener('input', () => {
-            const it = items()[i];
-            if (it && typeof it === 'object') it['#text'] = inp.value; else items()[i] = setting.keyed ? { '#text': inp.value, '@keyValue': String(i + 1) } : inp.value;
-            refresh(); commit('hist.set', [msgPath + ' #' + (i + 1), inp.value], 's' + setting.path + i);
-          });
-          row.appendChild(h('div', { class: 'field' }, [h('label', { text: setting.name + ' ' + (i + 1) }), inp]));
+          const v = item && typeof item === 'object' ? item['#text'] : item;
+          const vc = fieldCard({ id: rid + '-v', label: setting.valueHintPath ? 'Value' : setting.name, hint: valHint, value: v, t, compact: true, lang: ctx.lang, A: ctx.A, dataPath: comp.name + '/' + (setting.valueHintPath || setting.path),
+            issues: ctx.issuesFor ? () => ctx.issuesFor(comp.name, setting.path, i) : null,
+            onChange: (nv) => {
+              const a = items(), it = a[i];
+              if (it && typeof it === 'object') it['#text'] = nv === undefined ? '' : nv; else a[i] = setting.keyed ? { '#text': nv === undefined ? '' : nv, '@keyValue': String(i + 1) } : (nv === undefined ? '' : nv);
+              refresh(); commit('hist.set', [msgPath + ' #' + (i + 1), nv || ''], 's' + setting.path + i);
+            } });
+          row.appendChild(vc.el);
         } else {
           const sub = () => { const arr2 = items(); if (!arr2[i] || typeof arr2[i] !== 'object') arr2[i] = {}; return arr2[i]; };
           setting.children.forEach((c) => { const n = node(c, sub); if (n) row.appendChild(n); });
         }
-        const move = (d) => { const a = items(); const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; draw(); commit('hist.reorder', [msgPath]); };
+        const move = (d) => { const a = items(); const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; draw(); commit('hist.reorder', [msgPath]); const r = box.children[j]; if (r) { const b = r.querySelector('.row-tools .iconbtn:not([disabled])'); if (b) b.focus(); } };
         row.appendChild(h('div', { class: 'row-tools' }, [
           iconButton('up', t('list.up', null, 'Move up'), () => move(-1), { disabled: i === 0 || undefined }),
-          iconButton('down', t('list.down', null, 'Move down'), () => move(1), { disabled: i === items().length - 1 || undefined }),
+          iconButton('down', t('list.down', null, 'Move down'), () => move(1), { disabled: i === all.length - 1 || undefined }),
+          iconButton('dup', t('cmd.duplicate', null, 'Duplicate'), () => { const a = items(); const c = clone(a[i]); if (c && typeof c === 'object' && setting.keyed) c['@keyValue'] = String(a.length + 1); a.splice(i + 1, 0, c); draw(); commit('hist.addItem', [msgPath]); }),
           iconButton('del', t('list.remove', null, 'Remove'), () => { items().splice(i, 1); draw(); refresh(); commit('hist.removeItem', [msgPath]); })
         ]));
         box.appendChild(row);
       });
-      box.appendChild(h('button', { type: 'button', class: 'btn btn-ghost btn-sm', text: t('list.add', null, 'Add item'), onclick: () => {
+      box.appendChild(h('button', { type: 'button', class: 'btn btn-ghost btn-sm list-add', text: t('list.add', null, 'Add item'), onclick: () => {
         const a = items();
         a.push(setting.type === 'stringList' || !setting.children.length ? (setting.keyed ? { '#text': '', '@keyValue': String(a.length + 1) } : '') : (setting.keyed ? { '@keyValue': String(a.length + 1) } : {}));
         draw(); commit('hist.addItem', [msgPath]);
+        const last = box.children[a.length - 1]; if (last) { const f = last.querySelector('input, textarea, button[role]'); if (f) f.focus(); }
       } }));
     }
     draw();

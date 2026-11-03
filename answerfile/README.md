@@ -9,7 +9,9 @@ Windows answer files (`autounattend.xml` and `unattend.xml`):
 | `catalog.schema.json` | JSON Schema (draft 2020-12) for the catalog. |
 | `generate.mjs` | Dependency-free ES module: `buildXml`, `parseXml`, password encoding, `<servicing>` packages and a tiny XML parser. Runs in browsers and in Node 18+. Re-exports `validateModel`. |
 | `rules.mjs` | Validation rules table (56 rules with ids, severity and messages) and `validateModel`. |
-| `tests/` | `node --test` suites for the catalog and the generator. |
+| `widgets.json` | Widget hints: a control kind, a written description and the meaning of every value for each of the 1,029 leaf settings. |
+| `widgets.mjs` | Dependency-free loader and checker for `widgets.json` (`compileWidgets`, `resolveHint`, `allHints`, `validateWidgets`). |
+| `tests/` | `node --test` suites for the catalog, the generator and the widget hints. |
 | `tools/` | Python scripts that download the reference and rebuild the catalog. |
 
 The help text is a short paraphrase of the official documentation, written for tooltips. It is not a copy of
@@ -267,6 +269,42 @@ partition reference rules are skipped.
 | `servicing.selection` | error | Feature selection needs a name and a true or false state |
 | `servicing.selectionDuplicate` | error | Feature selected twice in one package |
 | `servicing.selectionWithoutConfigure` | warning | Feature selections apply to install or configure actions |
+
+## Widget hints
+
+`widgets.json` tells the builders how to edit each setting. `widgets.mjs` resolves one hint per leaf
+setting from four layers, in this order (later layers win field by field):
+
+1. **rules**: first match by type, name, path, help text or documented values assigns the widget kind
+   (for example every `boolean` is a `toggle`, an `enum` with two short values is `segmented`, a name
+   ending in `Port` is a `port`).
+2. **shapes**: wildcard entries keyed by component and path pattern for shared shapes
+   (`**/Credentials/Password`, `*Profile_EnableFirewall`, `StartTiles/**/AppId`). `*` matches one path
+   segment, `**` any number. `{profile}` and `{words}` placeholders are filled from the setting name.
+3. **settings**: explicit entries keyed by component and exact path for the most used settings.
+4. **generated**: when no layer gives a description, one is built from the cleaned catalog help, a
+   sentence about when to change the component (`components`) and what happens when it is unset
+   (`unsetSentences`, which names the default and what it means).
+
+Entry fields: `widget`, `description` (2 to 4 plain sentences written for TempDesk, not copied from the
+reference), `example`, `default`, `unit`, `min`/`max`/`step`, `valueHelp` (`{ value: one sentence }`),
+`values` (for free-form strings that take fixed words, such as Keyboard Filter `Allowed`/`Blocked`),
+`risk` (`{ level: none|caution|danger, when, reason }`), `related` (other `Component|path` keys), `docUrl`
+and widget parameters (`source`, `presets`, `format`, `sep`, `storage`, `allowIpv6`, `imageSize`...).
+
+Widget kinds: toggle, segmented, cards, combobox-search, number, size, duration, time, port, ipv4, ipv6,
+cidr, mac, guid, product-key, password, path, command-line, url, email, registry-path, account-picker,
+color, file, multiline, string-list, key-value, enum-flags and text. The renderers live in
+`site/assets/canvas/widgets/` and are shared with the desktop app.
+
+`tests/widgets.test.mjs` fails when any leaf setting has no widget or no 2 to 4 sentence description,
+when an enum or boolean value has no meaning, or when an explicit entry points at a setting or value
+that is not in the catalog. Descriptions are English only, like the rest of the catalog text; the
+widget controls themselves are translated through `site/i18n`.
+
+Generic product keys offered by the product key widget come from Microsoft's published KMS client
+setup keys and Automatic Virtual Machine Activation keys. They only select an edition; they never
+activate Windows.
 
 ## How the builders use it
 

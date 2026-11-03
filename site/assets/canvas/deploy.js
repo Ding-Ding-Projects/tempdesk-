@@ -2,6 +2,12 @@
 // edited as connected nodes. Writes back the TempDesk server fields (firstboot.json), the guest PC
 // join settings and model.deploy. Pure helpers are exported for tests.
 import { h, clone } from './dom.js';
+import { quickField } from './widgets/index.js';
+
+// Widget for each map field (the map edits the same values as the Guided fields).
+const MAP_HINTS = { 'map-prefix': { widget: 'number', min: 1, max: 32, unit: 'bits' }, 'map-gw': { widget: 'ipv4' }, 'map-dns': { widget: 'string-list', sep: ',' }, 'map-dc-ip': { widget: 'ipv4' },
+  'map-dc-name': { widget: 'text', format: 'computername', maxLength: 15 }, 'map-dc-domain': { widget: 'text', format: 'fqdn' }, 'map-portals-ip': { widget: 'ipv4' }, 'map-app-ip': { widget: 'ipv4' },
+  'map-guest-dns': { widget: 'ipv4' }, 'map-guest-ou': { widget: 'text', format: 'dn' }, 'map-portals-name': { widget: 'text', format: 'computername' }, 'map-app-name': { widget: 'text', format: 'computername' } };
 
 export function ipToInt(ip) { const p = String(ip).split('.').map(Number); return p.length === 4 && p.every((x) => x >= 0 && x <= 255 && Number.isInteger(x)) ? ((p[0] << 24) >>> 0) + (p[1] << 16) + (p[2] << 8) + p[3] : null; }
 export function inCidr(ip, cidr) {
@@ -61,11 +67,15 @@ export function mountDeploy(root, ctx) {
   const t = ctx.t;
   function field(id, label, value, onInput, opts) {
     opts = opts || {};
-    const inp = opts.options ? h('select', { id }, opts.options.map((o) => h('option', { value: o[0], text: o[1] }))) : h('input', { type: 'text', id, value, inputmode: opts.numeric ? 'decimal' : undefined, spellcheck: 'false', autocomplete: 'off' });
-    inp.value = value;
-    inp.addEventListener(opts.options ? 'change' : 'input', () => onInput(inp.value, id));
-    if (!opts.options) inp.addEventListener('blur', draw);
-    return h('div', { class: 'field', 'data-palette-field': label, 'data-palette-group': t('tab.map') }, [h('label', { for: id, text: label }), inp]);
+    const hint = opts.options ? { widget: 'segmented', values: opts.options.map((o) => ({ value: o[0], label: o[1] })), valueHelp: Object.fromEntries(opts.options.map((o) => [o[0], o[1] + '.'])) } : Object.assign({ widget: 'text' }, MAP_HINTS[id] || {});
+    let tm;
+    const card = quickField({ id, label, hint, value, t, noUnset: true, onChange: (v) => {
+      if (opts.options) { onInput(v || '', id); return; }
+      clearTimeout(tm); tm = setTimeout(() => onInput(v || '', id), 250);
+    } });
+    if (!opts.options) card.input.addEventListener('blur', () => setTimeout(() => { if (!root.contains(document.activeElement) || !root.querySelector('#' + CSS.escape(id))?.closest('.wf')?.contains(document.activeElement)) draw(); }, 300));
+    card.el.setAttribute('data-palette-field', label); card.el.setAttribute('data-palette-group', t('tab.map'));
+    return card.el;
   }
   function edit(f, label) { return (v, id) => { ctx.setModel(applyMapEdit(ctx.getModel(), f, v), { key: 'hist.mapSet', args: [label, v] }, id); }; }
   function draw() {

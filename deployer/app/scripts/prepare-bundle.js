@@ -78,6 +78,8 @@ function main() {
   copy(path.join(REPO, 'answerfile', 'generate.mjs'), path.join(VENDOR, 'answerfile', 'generate.mjs'), false);
   copy(path.join(REPO, 'answerfile', 'rules.mjs'), path.join(VENDOR, 'answerfile', 'rules.mjs'), false);
   copy(path.join(REPO, 'answerfile', 'unattend-catalog.json'), path.join(VENDOR, 'answerfile', 'unattend-catalog.json'), false);
+  copy(path.join(REPO, 'answerfile', 'widgets.json'), path.join(VENDOR, 'answerfile', 'widgets.json'), false);
+  copy(path.join(REPO, 'answerfile', 'widgets.mjs'), path.join(VENDOR, 'answerfile', 'widgets.mjs'), false);
   // The canvas modules are ES modules; the classic scripts load as globals.
   fs.writeFileSync(path.join(VENDOR, 'package.json'), '{ "type": "commonjs" }\n');
   if (fs.existsSync(path.join(VENDOR, 'canvas'))) fs.writeFileSync(path.join(VENDOR, 'canvas', 'package.json'), '{ "type": "module" }\n');

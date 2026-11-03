@@ -1,0 +1,3481 @@
+{
+ "$comment": "Widget hints for answerfile/unattend-catalog.json. See answerfile/README.md (Widget hints). Descriptions are original plain English; catalog text is English only.",
+ "schemaVersion": 1,
+ "typeDefaults": {
+  "boolean": "toggle",
+  "enum": "cards",
+  "integer": "number",
+  "string": "text",
+  "password": "password"
+ },
+ "unsetSentences": {
+  "boolean": "Leave it unset to keep the Windows default{defaultText}.",
+  "enum": "Leave it unset to keep the Windows default{defaultText}.",
+  "integer": "Leave it unset to keep the Windows default{defaultText}.",
+  "string": "Leave it empty to keep the Windows default{defaultText}.",
+  "password": "Leave it empty to keep the account without a password set by this file.",
+  "default": "Leave it unset to keep the Windows default{defaultText}."
+ },
+ "fallbackSentence": "Sets the {words} value of this component.",
+ "rules": [
+  {
+   "id": "password",
+   "when": {
+    "type": "password"
+   },
+   "widget": "password"
+  },
+  {
+   "id": "plainPassword",
+   "when": {
+    "type": "string",
+    "name": "^(Password|MachinePassword|SitePassword|FaxUserPassword)$"
+   },
+   "widget": "password",
+   "set": {
+    "storage": "plain"
+   }
+  },
+  {
+   "id": "productKey",
+   "when": {
+    "type": "string",
+    "path": "(^|/)ProductKey(/Key)?$"
+   },
+   "widget": "product-key"
+  },
+  {
+   "id": "boolean",
+   "when": {
+    "type": "boolean"
+   },
+   "widget": "toggle"
+  },
+  {
+   "id": "flags",
+   "when": {
+    "type": "integer",
+    "flags": true
+   },
+   "widget": "enum-flags"
+  },
+  {
+   "id": "enumPair",
+   "when": {
+    "type": "enum",
+    "valuesMin": 2,
+    "valuesMax": 2,
+    "valueLenMax": 18
+   },
+   "widget": "segmented"
+  },
+  {
+   "id": "enumWords",
+   "when": {
+    "type": "enum",
+    "valuesMin": 3,
+    "valuesMax": 4,
+    "valueLenMax": 14,
+    "valuePattern": "^[A-Za-z]"
+   },
+   "widget": "segmented"
+  },
+  {
+   "id": "enumCards",
+   "when": {
+    "type": "enum",
+    "valuesMin": 2,
+    "valuesMax": 8
+   },
+   "widget": "cards"
+  },
+  {
+   "id": "enumLarge",
+   "when": {
+    "type": "enum"
+   },
+   "widget": "combobox-search"
+  },
+  {
+   "id": "port",
+   "when": {
+    "type": [
+     "integer",
+     "string"
+    ],
+    "name": "(^|_|Server)(Port|StartPort|EndPort)$"
+   },
+   "widget": "port"
+  },
+  {
+   "id": "intColor",
+   "when": {
+    "type": "integer",
+    "name": "^(TileColor|Color)$"
+   },
+   "widget": "color",
+   "set": {
+    "format": "rgb-int"
+   }
+  },
+  {
+   "id": "scheduleTime",
+   "when": {
+    "type": "integer",
+    "name": "^ScheduleTime$"
+   },
+   "widget": "time",
+   "set": {
+    "storage": "minutes"
+   }
+  },
+  {
+   "id": "ms",
+   "when": {
+    "type": "integer",
+    "name": "(TimeOut|Timeout|Period|Interval|Timeout)$",
+    "help": "millisecond"
+   },
+   "widget": "duration",
+   "set": {
+    "unit": "ms"
+   }
+  },
+  {
+   "id": "minutes",
+   "when": {
+    "type": "integer",
+    "name": "InMinutes$"
+   },
+   "widget": "duration",
+   "set": {
+    "unit": "min"
+   }
+  },
+  {
+   "id": "durations",
+   "when": {
+    "type": "integer",
+    "name": "(Timeout|TimeOut|Interval|Period)(On(AC|DC))?$"
+   },
+   "widget": "duration",
+   "set": {
+    "unit": "s"
+   }
+  },
+  {
+   "id": "sizeMB",
+   "when": {
+    "type": "integer",
+    "name": "^(Size|CacheSizeMB|OverlayMaximumSize|OverlayCriticalThreshold|OverlayWarningThreshold)$"
+   },
+   "widget": "size",
+   "set": {
+    "storage": "MB"
+   }
+  },
+  {
+   "id": "sizeKB",
+   "when": {
+    "type": "integer",
+    "name": "(LogFileSize|CacheLimit)$"
+   },
+   "widget": "size",
+   "set": {
+    "storage": "KB"
+   }
+  },
+  {
+   "id": "sizeBytes",
+   "when": {
+    "type": "integer",
+    "component": "SecureStartup",
+    "name": "(Size|Length|Overhead)$"
+   },
+   "widget": "size",
+   "set": {
+    "storage": "B"
+   }
+  },
+  {
+   "id": "integer",
+   "when": {
+    "type": "integer"
+   },
+   "widget": "number"
+  },
+  {
+   "id": "timeZone",
+   "when": {
+    "name": "^TimeZone$"
+   },
+   "widget": "combobox-search",
+   "set": {
+    "source": "timezones",
+    "allowCustom": false
+   }
+  },
+  {
+   "id": "inputLocale",
+   "when": {
+    "name": "^InputLocale$"
+   },
+   "widget": "combobox-search",
+   "set": {
+    "source": "inputLocales",
+    "allowCustom": true,
+    "sep": ";"
+   }
+  },
+  {
+   "id": "locale",
+   "when": {
+    "name": "^(UILanguage|UILanguageFallback|SystemLocale|UserLocale)$"
+   },
+   "widget": "combobox-search",
+   "set": {
+    "source": "locales",
+    "allowCustom": true
+   }
+  },
+  {
+   "id": "cidrAddr",
+   "when": {
+    "path": "UnicastIpAddresses/IpAddress/Value$"
+   },
+   "widget": "cidr",
+   "set": {
+    "allowIpv6": true
+   }
+  },
+  {
+   "id": "prefix",
+   "when": {
+    "name": "^Prefix$"
+   },
+   "widget": "cidr",
+   "set": {
+    "allowIpv6": true
+   }
+  },
+  {
+   "id": "dnsServer",
+   "when": {
+    "path": "(DNSServerSearchOrder|NameServerList)/IpAddress/Value$"
+   },
+   "widget": "ipv4",
+   "set": {
+    "allowIpv6": true
+   }
+  },
+  {
+   "id": "ipv4",
+   "when": {
+    "type": "string",
+    "name": "^(NextHopAddress|ClusterIpAddress|VirtualIpAddress|IpAddress|NetworkMask|ClusterNetMask)$"
+   },
+   "widget": "ipv4"
+  },
+  {
+   "id": "mac",
+   "when": {
+    "name": "MacAddress$"
+   },
+   "widget": "mac"
+  },
+  {
+   "id": "guid",
+   "when": {
+    "type": "string",
+    "name": "^(GUID|AddonGuid|Team|PreferredPlan|Link|FlyoutAutoPowerScheme|FlyoutHighPerformancePowerScheme|FlyoutPowerSaverPowerScheme|CacheID)$"
+   },
+   "widget": "guid"
+  },
+  {
+   "id": "commandLine",
+   "when": {
+    "type": "string",
+    "path": "(Run(A)?[Ss]ynchronousCommand/Path|CommandLine|ShellLauncher.*Shell|^Shell)$"
+   },
+   "widget": "command-line"
+  },
+  {
+   "id": "logo",
+   "when": {
+    "type": "string",
+    "path": "OEMInformation/Logo$"
+   },
+   "widget": "file",
+   "set": {
+    "imageSize": [
+     120,
+     120
+    ],
+    "accept": ".bmp"
+   }
+  },
+  {
+   "id": "url",
+   "when": {
+    "type": "string",
+    "name": "(URL|Url|URI|^href|^Home_Page|^Help_Page|_JSON)$"
+   },
+   "widget": "url"
+  },
+  {
+   "id": "email",
+   "when": {
+    "type": "string",
+    "name": "SenderAddress$"
+   },
+   "widget": "email"
+  },
+  {
+   "id": "regPath",
+   "when": {
+    "type": "string",
+    "name": "^RegistryExceptionsUserDefined$"
+   },
+   "widget": "registry-path"
+  },
+  {
+   "id": "account",
+   "when": {
+    "type": "string",
+    "path": "(LocalAccount|DomainAccount|OfflineDomainAccount)/Group$|ShellLauncher/UserSettings/User/AccountName$"
+   },
+   "widget": "account-picker"
+  },
+  {
+   "id": "sid",
+   "when": {
+    "type": "string",
+    "name": "^SID$"
+   },
+   "widget": "account-picker",
+   "set": {
+    "storage": "sid"
+   }
+  },
+  {
+   "id": "paths",
+   "when": {
+    "type": "string",
+    "name": "(Path|Directory|^ProgramData|File|Folder(Name)?|Dll|^Logo|^Icon|^IconID|^DesktopBackground|^BrandIcon|^LogPath|Location$)$"
+   },
+   "widget": "path"
+  },
+  {
+   "id": "blob",
+   "when": {
+    "type": "string",
+    "name": "^AccountData$"
+   },
+   "widget": "multiline",
+   "set": {
+    "note": "blob"
+   }
+  },
+  {
+   "id": "longText",
+   "when": {
+    "type": "string",
+    "name": "(Description|AlertTextOverride|RadioLocation)$",
+    "path": "^(?!.*(Command|Run)).*"
+   },
+   "widget": "multiline"
+  },
+  {
+   "id": "string",
+   "when": {
+    "type": "string"
+   },
+   "widget": "text"
+  }
+ ],
+ "shapes": [
+  {
+   "component": "*",
+   "path": "**/Credentials/Domain",
+   "description": "Domain of the account that reaches the network share or runs the command. Use the computer name for a local account. Leave it empty when no credentials are needed.",
+   "example": "CORP"
+  },
+  {
+   "component": "*",
+   "path": "**/Credentials/Username",
+   "description": "User name of the account that reaches the network share or runs the command. The account needs read access to the share. Leave it empty when no credentials are needed.",
+   "example": "deploy"
+  },
+  {
+   "component": "*",
+   "path": "**/Credentials/UserName",
+   "description": "User name of the account that reaches the network share or runs the command. The account needs read access to the share. Leave it empty when no credentials are needed.",
+   "example": "deploy"
+  },
+  {
+   "component": "*",
+   "path": "**/Credentials/Password",
+   "description": "Password of that account. It is written to the answer file in plain text, so use a low-privilege account made for deployment. Leave it empty when no credentials are needed.",
+   "risk": {
+    "level": "caution",
+    "reason": "Stored in plain text in the answer file."
+   }
+  },
+  {
+   "component": "*",
+   "path": "**/Run*Command/Order",
+   "widget": "number",
+   "min": 1,
+   "max": 500,
+   "description": "Position of this command in the list, from 1 to 500. Commands run in ascending order, and each number must be unique in the list. The studio renumbers commands when you reorder them."
+  },
+  {
+   "component": "*",
+   "path": "**/RunSynchronousCommand/Path",
+   "description": "The command line to run, with its arguments. It runs as SYSTEM and Setup waits for it to finish before the next command. Quote paths that contain spaces.",
+   "example": "powershell -ExecutionPolicy Bypass -File C:\\Setup\\prepare.ps1"
+  },
+  {
+   "component": "*",
+   "path": "**/RunAsynchronousCommand/Path",
+   "description": "The command line to start, with its arguments. Setup does not wait for it, so it can still be running when the next pass starts. Quote paths that contain spaces.",
+   "example": "cmd /c start C:\\Tools\\agent.exe"
+  },
+  {
+   "component": "*",
+   "path": "**/Run*Command/Description",
+   "widget": "text",
+   "description": "A short label for the command. It appears in logs and on some Setup progress screens. It does not change what runs.",
+   "example": "Install drivers"
+  },
+  {
+   "component": "*",
+   "path": "**/RunSynchronousCommand/WillReboot",
+   "description": "Whether the computer restarts after this command. Use OnRequest for installers that return code 3010 when they need a restart. Leave it unset for Never.",
+   "valueHelp": {
+    "Always": "The computer always restarts after this command finishes.",
+    "OnRequest": "The computer restarts only if the command asks for it, for example with exit code 3010.",
+    "Never": "The computer never restarts because of this command."
+   }
+  },
+  {
+   "component": "*",
+   "path": "DriverPaths/PathAndCredentials/Key",
+   "widget": "text",
+   "description": "A unique name for this driver location, for example 1, 2 or 3. Windows only uses it to tell the entries apart. Each entry in the list needs its own key.",
+   "example": "1"
+  },
+  {
+   "component": "*",
+   "path": "DriverPaths/PathAndCredentials/Path",
+   "widget": "path",
+   "description": "A folder that holds driver .inf files, on the install media or a network share. Windows searches it and its subfolders for matching drivers. Leave the list empty if Windows already has every driver it needs.",
+   "example": "D:\\Drivers"
+  },
+  {
+   "component": "Microsoft-Windows-Shell-Setup",
+   "path": "**/Password/PlainText",
+   "valueHelp": {
+    "true": "The password is stored as readable text in the answer file.",
+    "false": "The password is stored encoded (base64, not encrypted) in the answer file."
+   },
+   "description": "Whether the password next to it is written as readable text or with the Windows unattend encoding. The encoding only hides the password from casual reading; it is not encryption. The studio sets this for you when you edit the password.",
+   "risk": {
+    "level": "caution",
+    "when": "true",
+    "reason": "Anyone who opens the file can read the password."
+   }
+  },
+  {
+   "component": "Microsoft-Windows-Shell-Setup",
+   "path": "OfflineUserAccounts/**/Password/PlainText",
+   "valueHelp": {
+    "true": "The password is stored as readable text in the answer file.",
+    "false": "The password is stored encoded (base64, not encrypted) in the answer file."
+   },
+   "description": "Whether the password next to it is written as readable text or with the Windows unattend encoding. The encoding only hides the password from casual reading; it is not encryption. The studio sets this for you when you edit the password."
+  },
+  {
+   "component": "Microsoft-Windows-Shell-Setup",
+   "path": "StartTiles/**/FirstRunTask",
+   "widget": "text",
+   "description": "The background task of the app that runs when the user first signs in, so the tile can show live content right away. Use the task name the app documents. Leave it empty for a plain tile."
+  },
+  {
+   "component": "Microsoft-Windows-Shell-Setup",
+   "path": "StartTiles/**/AppId",
+   "widget": "text",
+   "description": "The app user model ID of the app pinned to this tile, for example a Store app family name followed by !App. Tiles only apply to older Start layouts. Leave it empty to keep the default tile.",
+   "example": "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"
+  },
+  {
+   "component": "Microsoft-Windows-Shell-Setup",
+   "path": "StartTiles/**/AppIdOrPath",
+   "widget": "path",
+   "description": "The app user model ID of a Store app or the full path of a desktop app shortcut for this tile. Tiles only apply to older Start layouts. Leave it empty to keep the default tile.",
+   "example": "%ALLUSERSPROFILE%\\Microsoft\\Windows\\Start Menu\\Programs\\Contoso.lnk"
+  },
+  {
+   "component": "Microsoft-Windows-Shell-Setup",
+   "path": "StartPanelLinks/Link*",
+   "widget": "path",
+   "description": "A shortcut (.lnk) shown in the old Start menu list of frequent programs. This applies to Windows 7 era Start menus only. Leave it empty to keep the default list."
+  },
+  {
+   "component": "Microsoft-Windows-Shell-Setup",
+   "path": "OEMWelcomeCenterLinks/Link*",
+   "widget": "path",
+   "description": "A shortcut (.lnk) shown as a task in the OEM first run app Jump List. This applies to Windows 7 and 8 era images only. Leave it empty for no extra task."
+  },
+  {
+   "component": "Microsoft-Windows-Shell-Setup",
+   "path": "TaskbarLinks/Link*",
+   "widget": "path",
+   "description": "A shortcut (.lnk) pinned to the taskbar on the first sign-in. This applies to Windows 7 and 8 era images only; use a taskbar layout file on current Windows. Leave it empty for the default taskbar."
+  },
+  {
+   "component": "Microsoft-Windows-Shell-Setup",
+   "path": "NotificationArea/PromotedIcon*/GUID",
+   "description": "The GUID of a notification area icon to keep visible instead of hiding it in the overflow. This applies to older Windows releases. Leave it empty for the default behaviour."
+  },
+  {
+   "component": "Microsoft-Windows-Shell-Setup",
+   "path": "NotificationArea/PromotedIcon*/Path",
+   "widget": "path",
+   "description": "The path of the program whose notification area icon is kept visible. This applies to older Windows releases. Leave it empty for the default behaviour."
+  },
+  {
+   "component": "Microsoft-Windows-Shell-Setup",
+   "path": "ClientApplications/*",
+   "widget": "text",
+   "description": "The registered name of the default program for this kind of task in the old Set Program Access and Defaults page. This applies to Windows 7 era images only. Leave it empty to keep the Windows default."
+  },
+  {
+   "component": "Microsoft-Windows-Shell-Setup",
+   "path": "Display/*",
+   "description": "A display setting applied at sign-in. The value must be supported by the graphics adapter and monitor or Windows ignores it. Leave it unset so Windows picks the best mode."
+  },
+  {
+   "component": "Microsoft-Windows-Setup",
+   "path": "Display/*",
+   "description": "A display setting used by the Windows Setup screens. The value must be supported by the graphics adapter and monitor or Windows ignores it. Leave it unset so Setup picks a safe mode."
+  },
+  {
+   "component": "*",
+   "path": "**/Display/ColorDepth",
+   "unit": "bits",
+   "min": 8,
+   "max": 32,
+   "presets": [
+    {
+     "value": "16",
+     "label": "16 bit"
+    },
+    {
+     "value": "32",
+     "label": "32 bit"
+    }
+   ]
+  },
+  {
+   "component": "*",
+   "path": "**/Display/HorizontalResolution",
+   "unit": "px",
+   "min": 640,
+   "max": 7680
+  },
+  {
+   "component": "*",
+   "path": "**/Display/VerticalResolution",
+   "unit": "px",
+   "min": 480,
+   "max": 4320
+  },
+  {
+   "component": "*",
+   "path": "**/Display/RefreshRate",
+   "unit": "Hz",
+   "min": 50,
+   "max": 240
+  },
+  {
+   "component": "Microsoft-Windows-Shell-Setup",
+   "path": "Display/DPI",
+   "unit": "dpi",
+   "min": 96,
+   "max": 480,
+   "presets": [
+    {
+     "value": "96",
+     "label": "100%"
+    },
+    {
+     "value": "120",
+     "label": "125%"
+    },
+    {
+     "value": "144",
+     "label": "150%"
+    }
+   ]
+  },
+  {
+   "component": "Microsoft-Windows-Embedded-KeyboardFilterService",
+   "path": "*",
+   "widget": "segmented",
+   "values": [
+    {
+     "value": "Allowed",
+     "label": "Allowed"
+    },
+    {
+     "value": "Blocked",
+     "label": "Blocked"
+    }
+   ],
+   "valueHelp": {
+    "Allowed": "The key or shortcut works as normal.",
+    "Blocked": "Keyboard Filter swallows the key or shortcut."
+   },
+   "default": "Allowed"
+  },
+  {
+   "component": "Microsoft-Windows-Embedded-KeyboardFilterService",
+   "path": "Custom*",
+   "widget": "string-list",
+   "sep": ";",
+   "values": null
+  },
+  {
+   "component": "Microsoft-Windows-Embedded-KeyboardFilterService",
+   "path": "DisableKeyboardFilterForAdministrators",
+   "widget": "toggle",
+   "values": null,
+   "valueHelp": {}
+  },
+  {
+   "component": "Microsoft-Windows-Embedded-KeyboardFilterService",
+   "path": "ForceOffAccessibility",
+   "widget": "toggle",
+   "values": null,
+   "valueHelp": {}
+  },
+  {
+   "component": "Microsoft-Windows-IE-InternetExplorer",
+   "path": "**/*Item*/*"
+  },
+  {
+   "component": "Networking-MPSSVC-Svc",
+   "path": "*Profile_EnableFirewall",
+   "description": "Turns Windows Firewall on or off for the {profile} network profile. Windows picks the profile from the network the computer is connected to. Leave it unset to keep the firewall on, which is the default.",
+   "valueHelp": {
+    "true": "Windows Firewall is on for the {profile} profile.",
+    "false": "Windows Firewall is off for the {profile} profile, so every port is open."
+   },
+   "risk": {
+    "level": "danger",
+    "when": "false",
+    "reason": "Turning the firewall off exposes every listening service to the network."
+   }
+  },
+  {
+   "component": "Networking-MPSSVC-Svc",
+   "path": "*Profile_DisableNotifications",
+   "description": "Whether Windows tells the user when the firewall blocks a new app on the {profile} profile. Turning notifications off is common on servers and kiosks. Leave it unset to show notifications.",
+   "valueHelp": {
+    "true": "No pop-up appears when the firewall blocks an app.",
+    "false": "Windows asks the user when the firewall blocks a new app."
+   }
+  },
+  {
+   "component": "Networking-MPSSVC-Svc",
+   "path": "*Profile_LogDroppedPackets",
+   "description": "Whether the firewall writes dropped packets to its log for the {profile} profile. Turn it on while you troubleshoot a blocked connection. Leave it unset to keep logging off.",
+   "valueHelp": {
+    "true": "Dropped packets are written to the firewall log.",
+    "false": "Dropped packets are not logged."
+   }
+  },
+  {
+   "component": "Networking-MPSSVC-Svc",
+   "path": "*Profile_LogSuccessfulConnections",
+   "description": "Whether the firewall writes allowed connections to its log for the {profile} profile. The log grows quickly, so use it only while troubleshooting. Leave it unset to keep logging off.",
+   "valueHelp": {
+    "true": "Allowed connections are written to the firewall log.",
+    "false": "Allowed connections are not logged."
+   }
+  },
+  {
+   "component": "Networking-MPSSVC-Svc",
+   "path": "*Profile_LogFile",
+   "widget": "path",
+   "description": "Where the firewall log for the {profile} profile is written. The folder must exist and be writable by the firewall service. Leave it empty for %SystemRoot%\\System32\\LogFiles\\Firewall\\pfirewall.log.",
+   "example": "%SystemRoot%\\System32\\LogFiles\\Firewall\\pfirewall.log"
+  },
+  {
+   "component": "Networking-MPSSVC-Svc",
+   "path": "*Profile_LogFileSize",
+   "default": "4096",
+   "min": 1,
+   "max": 32767,
+   "description": "Maximum size of the firewall log for the {profile} profile, in kilobytes. When it is full, older entries are overwritten. Leave it unset for 4,096 KB (4 MB)."
+  },
+  {
+   "component": "Security-Malware-Windows-Defender",
+   "path": "ThreatSeverityDefaultAction/*",
+   "widget": "cards",
+   "description": "What Microsoft Defender does by default with threats of this severity. Choose Quarantine or Remove for a hands-off device. Leave it unset (NULL) to use the action Defender recommends.",
+   "valueHelp": {
+    "1": "Clean: Defender tries to repair the infected file.",
+    "2": "Quarantine: the file is moved to a safe store where it cannot run.",
+    "3": "Remove: the file is deleted.",
+    "6": "Allow: the threat is ignored and allowed to run.",
+    "8": "User defined: the user picks the action each time.",
+    "9": "No action: Defender only reports the threat.",
+    "10": "Block: the threat is stopped from running.",
+    "NULL": "Use the default action Defender recommends for this threat."
+   }
+  },
+  {
+   "component": "*",
+   "path": "**/Key",
+   "description": "A unique key for this list entry. Windows only uses it to tell the entries apart. Each entry in the list needs its own key, and the studio fills it in for you."
+  },
+  {
+   "component": "*",
+   "path": "**/Order",
+   "description": "The position of this entry in its list, starting at 1. Entries are applied in ascending order. Each number must be unique in the list."
+  }
+ ],
+ "components": {
+  "Microsoft-Windows-AllUserInstallAgent": {
+   "context": "It matters only for images that preinstall Store apps."
+  },
+  "Microsoft-Windows-Audio-AudioCore": {
+   "context": "Change it only on devices with an audio input jack you want users to monitor."
+  },
+  "Microsoft-Windows-Audio-VolumeControl": {
+   "context": "Kiosks and shared devices often lock this down."
+  },
+  "Microsoft-Windows-Authentication-AuthUI": {
+   "context": "Most deployments leave it alone; quiet labs and kiosks turn the sound off."
+  },
+  "Microsoft-Windows-BLB-WSB-Online-Main": {
+   "context": "Only OEMs that bundle an online backup offer for Windows Server Backup need it."
+  },
+  "Microsoft-Windows-BrowserService": {
+   "context": "The Computer Browser service is legacy SMB1 behaviour and is rarely needed today."
+  },
+  "Microsoft-Windows-CodeIntegrity": {
+   "context": "Only devices sold in S mode set this."
+  },
+  "Microsoft-Windows-CoreMmRes": {
+   "context": "Device makers set this to match their camera hardware."
+  },
+  "Microsoft-Windows-Deployment": {
+   "context": "Imaging teams use it for audit mode, sysprep resealing and commands that run as SYSTEM."
+  },
+  "Microsoft-Windows-DeviceAccess": {
+   "context": "Only devices sold in regions with special privacy policies need it."
+  },
+  "Microsoft-Windows-DeviceGuard-Unattend": {
+   "context": "Turn these on for hardened enterprise builds on hardware that supports virtualization."
+  },
+  "Microsoft-Windows-Devices-Lights-Configuration": {
+   "context": "Only laptops with a keyboard backlight and an ambient light sensor use it."
+  },
+  "Microsoft-Windows-Devices-Lights-WinRT": {
+   "context": "Only devices with RGB lighting supported by Dynamic Lighting use it."
+  },
+  "Microsoft-Windows-DiagCpl": {
+   "context": "OEMs use it to brand the troubleshooting pages."
+  },
+  "Microsoft-Windows-Disk-Failure-Diagnostic-Module": {
+   "context": "It warns users before a failing disk loses data."
+  },
+  "Microsoft-Windows-DNS-Client": {
+   "context": "Set it when a computer needs fixed DNS servers or suffixes instead of the ones DHCP hands out."
+  },
+  "Microsoft-Windows-ehome-reg-inf": {
+   "context": "Windows Media Center no longer ships, so this only matters for old images."
+  },
+  "Microsoft-Windows-Embedded-BootExp": {
+   "context": "Kiosk and appliance builds use it to hide boot screens."
+  },
+  "Microsoft-Windows-Embedded-EmbeddedLogon": {
+   "context": "Kiosk and appliance builds use it to hide sign-in screen buttons."
+  },
+  "Microsoft-Windows-Embedded-KeyboardFilterService": {
+   "context": "Kiosk builds use it to stop users escaping the locked-down app with shortcuts."
+  },
+  "Microsoft-Windows-Embedded-ShellLauncher": {
+   "context": "Kiosk builds use it to run one app instead of the desktop."
+  },
+  "Microsoft-Windows-Embedded-UnifiedWriteFilter": {
+   "context": "Shared and kiosk devices use it to throw away changes at every restart."
+  },
+  "Microsoft-Windows-EnhancedStorage-Adm": {
+   "context": "Only relevant for self-encrypting drives."
+  },
+  "Microsoft-Windows-ErrorReportingCore": {
+   "context": "Privacy-sensitive and offline builds often change it."
+  },
+  "Microsoft-Windows-Fax-Service": {
+   "context": "Only computers with a fax modem and the Fax service use it."
+  },
+  "Microsoft-Windows-Gaming-Configuration": {
+   "context": "Only gaming hardware makers use it."
+  },
+  "Microsoft-Windows-GPIOButtons": {
+   "context": "Only hardware makers with custom buttons use it."
+  },
+  "Microsoft-Windows-HelpAndSupport": {
+   "context": "The old Help and Support centre is gone, so this matters only for legacy images."
+  },
+  "Microsoft-Windows-IE-ClientNetworkProtocolImplementation": {
+   "context": "Internet Explorer is retired, but these WinINet values can still affect apps that use the same network stack."
+  },
+  "Microsoft-Windows-IE-ESC": {
+   "context": "On servers you may turn it off for administrators who browse vendor sites, at a security cost."
+  },
+  "Microsoft-Windows-IE-InternetExplorer": {
+   "context": "Internet Explorer is retired, so only older images or IE mode setups need it."
+  },
+  "Microsoft-Windows-International-Core": {
+   "context": "Set it to match the people who will use the installed system."
+  },
+  "Microsoft-Windows-International-Core-WinPE": {
+   "context": "Set it so the Setup screens and the first boot use the right language and keyboard."
+  },
+  "Microsoft-Windows-LUA-Settings": {
+   "context": "Leave UAC on for every normal deployment."
+  },
+  "Microsoft-Windows-MapControl-Desktop": {
+   "context": "Only devices sold in China change it."
+  },
+  "Microsoft-Windows-MediaPlayer-Core": {
+   "context": "Only OEMs with a media store partnership use it."
+  },
+  "Microsoft-Windows-MicrosoftEdgeBrowser": {
+   "context": "Use it to preload company bookmarks on the Edge favorites bar."
+  },
+  "Microsoft-Windows-MigrationWizardApplication": {
+   "context": "Windows Easy Transfer is gone, so this only matters for old images."
+  },
+  "Microsoft-Windows-MobilePC-Sensors-API": {
+   "context": "Only laptops and tablets with light sensors use it."
+  },
+  "Microsoft-Windows-NetBT": {
+   "context": "Change it to turn NetBIOS off on modern networks or to point at WINS servers."
+  },
+  "Microsoft-Windows-NetworkBridge": {
+   "context": "Rarely used; bridging is normally set up after installation."
+  },
+  "Microsoft-Windows-NetworkLoadBalancing-Core": {
+   "context": "Only servers that join a Network Load Balancing cluster use it."
+  },
+  "Microsoft-Windows-OutOfBoxExperience": {
+   "context": "This applies to older Windows Server releases only."
+  },
+  "Microsoft-Windows-PartitionManager": {
+   "context": "Change it when shared or SAN disks must stay offline until an administrator brings them online."
+  },
+  "Microsoft-Windows-PerfCenterCPL": {
+   "context": "The Windows Experience Index is gone, so this only matters for old images."
+  },
+  "Microsoft-Windows-PnpCustomizationsNonWinPE": {
+   "context": "Use it to add drivers to the installed system, for example chipset or network drivers."
+  },
+  "Microsoft-Windows-PnpCustomizationsWinPE": {
+   "context": "Use it when Setup cannot see the disk or network card without an extra driver."
+  },
+  "Microsoft-Windows-PnpSysprep": {
+   "context": "Imaging teams set it when the same hardware gets the image back."
+  },
+  "Microsoft-Windows-PowerCPL": {
+   "context": "Pick a plan to match how the computer is used, for example High performance for servers."
+  },
+  "Microsoft-Windows-Printing-Spooler-Core": {
+   "context": "Most deployments leave it alone."
+  },
+  "Microsoft-Windows-RasServer": {
+   "context": "Only remote access servers use it."
+  },
+  "Microsoft-Windows-RemoteAssistance-Exe": {
+   "context": "Help desks change it to allow or block Remote Assistance offers."
+  },
+  "Microsoft-Windows-SecureStartup-FilterDriver": {
+   "context": "Only change these on hardware where BitLocker performance needs tuning."
+  },
+  "Microsoft-Windows-Security-Licensing-SLC": {
+   "context": "This applies to old Windows releases only."
+  },
+  "Microsoft-Windows-Security-Licensing-SLC-UX": {
+   "context": "This applies to old Windows releases only."
+  },
+  "Microsoft-Windows-Security-Licensing-SLCC": {
+   "context": "This applies to old Windows releases only."
+  },
+  "Microsoft-Windows-Security-SPP": {
+   "context": "Imaging teams change it when an image will be generalized more than a few times."
+  },
+  "Microsoft-Windows-Security-SPP-UX": {
+   "context": "Labs and offline builds often stop automatic activation."
+  },
+  "Microsoft-Windows-Security-SPP-UX-SPPCC": {
+   "context": "This applies to old Windows releases only."
+  },
+  "Microsoft-Windows-Sensors-Core": {
+   "context": "Only devices with a presence sensor use it."
+  },
+  "Microsoft-Windows-ServerManager-SvrMgrNc": {
+   "context": "Server builds that are managed remotely usually hide Server Manager."
+  },
+  "Microsoft-Windows-Setup": {
+   "context": "It controls the Windows PE stage: disks, image selection, product key and the license page."
+  },
+  "Microsoft-Windows-SharedAccess": {
+   "context": "Only computers that share an internet connection use it."
+  },
+  "Microsoft-Windows-Shell-Setup": {
+   "context": "It is the most used component: name, time zone, accounts, first sign-in and branding."
+  },
+  "Microsoft-Windows-SHWebSVC": {
+   "context": "Only OEMs with a photo printing partner use it."
+  },
+  "Microsoft-Windows-Sidebar": {
+   "context": "Desktop gadgets are gone, so this only matters for old images."
+  },
+  "Microsoft-Windows-SMBServer": {
+   "context": "File servers and locked-down builds may change it."
+  },
+  "Microsoft-Windows-SNMP-Agent-Service": {
+   "context": "Only computers monitored by SNMP tools need it."
+  },
+  "Microsoft-Windows-SQMAPI": {
+   "context": "Privacy-sensitive builds turn the program off."
+  },
+  "Microsoft-Windows-STObject": {
+   "context": "This applies to old Windows releases only."
+  },
+  "Microsoft-Windows-Store-Client-UI": {
+   "context": "This applies to old Windows releases only."
+  },
+  "Microsoft-Windows-StorPort-RegistrySettings": {
+   "context": "Only storage performance tuning needs it."
+  },
+  "Microsoft-Windows-SystemMaintenanceService": {
+   "context": "ReadyBoost is rarely used on computers with solid state disks."
+  },
+  "Microsoft-Windows-SystemRestore-Main": {
+   "context": "Labs and disposable machines often turn it off to save disk space."
+  },
+  "Microsoft-Windows-SystemSettings": {
+   "context": "Only devices with mobile broadband use it."
+  },
+  "Microsoft-Windows-SystemSettings-SettingsHandlers-OneCore-BatterySaver": {
+   "context": "Only battery powered devices use it."
+  },
+  "Microsoft-Windows-SystemSettingsThreshold": {
+   "context": "Only devices with mobile broadband use it."
+  },
+  "Microsoft-Windows-TabletPC-Platform-Input-Core": {
+   "context": "Only touch and pen devices use it."
+  },
+  "Microsoft-Windows-TapiSetup": {
+   "context": "Only computers with a telephony modem use it."
+  },
+  "Microsoft-Windows-TCPIP": {
+   "context": "Set it when a computer needs a fixed address instead of DHCP, such as a domain controller."
+  },
+  "Microsoft-Windows-TerminalServices-CentralPublishing": {
+   "context": "Only Remote Desktop Services deployments use it."
+  },
+  "Microsoft-Windows-TerminalServices-LicenseServer": {
+   "context": "Only Remote Desktop license servers use it."
+  },
+  "Microsoft-Windows-TerminalServices-LocalSessionManager": {
+   "context": "Turn Remote Desktop on for servers and lab machines you manage remotely."
+  },
+  "Microsoft-Windows-TerminalServices-Publishing-WMIProvider": {
+   "context": "Only Remote Desktop Services deployments use it."
+  },
+  "Microsoft-Windows-TerminalServices-RDP-WinStationExtensions": {
+   "context": "Keep the secure defaults unless old clients cannot connect."
+  },
+  "Microsoft-Windows-TerminalServices-RemoteConnectionManager": {
+   "context": "Only Remote Desktop Session Host servers with licensing need it."
+  },
+  "Microsoft-Windows-Tpm-Tasks": {
+   "context": "Change it only when you deliberately reset the TPM of a device."
+  },
+  "Microsoft-Windows-TwinUI": {
+   "context": "Only pen devices with their own pen app use it."
+  },
+  "Microsoft-Windows-UnattendedJoin": {
+   "context": "Use it to join a domain during setup, so the computer comes up managed."
+  },
+  "Microsoft-Windows-WDF-KernelLibrary": {
+   "context": "Only driver developers need it."
+  },
+  "Microsoft-Windows-WiFiNetworkManager": {
+   "context": "The Wi-Fi Sense features are gone, so this only matters for old images."
+  },
+  "Microsoft-Windows-WinRE-RecoveryAgent": {
+   "context": "Keep the recovery environment unless disk space is extremely tight."
+  },
+  "Microsoft-Windows-WLANSVC": {
+   "context": "Only hardware makers set Wi-Fi capabilities here."
+  },
+  "Microsoft-Windows-WorkstationService": {
+   "context": "Change it only for old file servers that need guest access."
+  },
+  "Microsoft-Windows-WPD-BusEnumService": {
+   "context": "Only devices that talk to phones or players over Bluetooth use it."
+  },
+  "Microsoft-Windows-WWANUI": {
+   "context": "Only devices with mobile broadband use it."
+  },
+  "Networking-MPSSVC-Svc": {
+   "context": "Keep every profile on; open only the rule groups the computer needs."
+  },
+  "Security-Malware-Windows-Defender": {
+   "context": "Leave Defender on unless another managed antivirus replaces it."
+  },
+  "UDDI-Setup": {
+   "context": "The UDDI role is gone, so this only matters for very old servers."
+  }
+ },
+ "settings": {
+  "Microsoft-Windows-Shell-Setup": {
+   "ComputerName": {
+    "widget": "text",
+    "format": "computername",
+    "maxLength": 15,
+    "description": "The network name of the computer, up to 15 letters, digits and hyphens, not only digits. Use * to let Windows make a random name. Leave it unset and Windows also makes a random name.",
+    "example": "LAB-PC-01",
+    "presets": [
+     {
+      "value": "*",
+      "label": "Random name"
+     }
+    ],
+    "related": [
+     "Microsoft-Windows-UnattendedJoin|Identification/JoinDomain"
+    ]
+   },
+   "TimeZone": {
+    "description": "The Windows time zone id, which sets the clock offset and the daylight saving rules. Pick the zone where the computer is used. Leave it unset and Windows uses the zone that matches the install language or asks during the out-of-box experience.",
+    "example": "Pacific Standard Time",
+    "related": [
+     "DisableAutoDaylightTimeSet"
+    ]
+   },
+   "DisableAutoDaylightTimeSet": {
+    "description": "Whether Windows moves the clock automatically for daylight saving time. Turn it on only when another system sets the clock, for example a lab that must stay on standard time. Leave it unset to follow daylight saving time.",
+    "valueHelp": {
+     "true": "The clock does not change for daylight saving time.",
+     "false": "The clock moves automatically for daylight saving time."
+    },
+    "related": [
+     "TimeZone"
+    ]
+   },
+   "RegisteredOrganization": {
+    "description": "The organization name shown in About and in winver. It is only informational. Leave it empty to show nothing.",
+    "example": "Contoso Ltd"
+   },
+   "RegisteredOwner": {
+    "description": "The owner name shown in About and in winver. It is only informational. Leave it empty to show nothing.",
+    "example": "IT Department"
+   },
+   "ProductKey": {
+    "description": "The product key applied in the specialize pass, which can differ from the key used to install. Use a volume (MAK) or retail key to activate, or a generic key to only pick the edition. Generic keys only select an edition during Setup; they never activate Windows.",
+    "related": [
+     "Microsoft-Windows-Setup|UserData/ProductKey/Key"
+    ]
+   },
+   "CopyProfile": {
+    "description": "Copies the customized built-in Administrator profile to the default user profile during sysprep. Use it after customizing the desktop in audit mode so every new user gets those settings. Leave it unset to keep the stock default profile.",
+    "valueHelp": {
+     "true": "The Administrator profile becomes the default profile for new users.",
+     "false": "New users get the stock default profile."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "true",
+     "reason": "Anything in the Administrator profile, including cached data, is copied to every new user."
+    }
+   },
+   "AutoLogon/Enabled": {
+    "description": "Signs in automatically with the account below after Setup, for the number of times in LogonCount. Use it to run first sign-in scripts without someone typing a password. Leave it unset so Windows shows the sign-in screen.",
+    "valueHelp": {
+     "true": "Windows signs in automatically with the account below.",
+     "false": "Windows shows the sign-in screen as normal."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "true",
+     "reason": "The automatic sign-in password is kept in the registry until the count runs out."
+    },
+    "related": [
+     "AutoLogon/LogonCount",
+     "AutoLogon/Username",
+     "AutoLogon/Password/Value"
+    ]
+   },
+   "AutoLogon/LogonCount": {
+    "min": 1,
+    "max": 999,
+    "unit": "sign-ins",
+    "description": "How many times Windows signs in automatically before it stops. Each restart uses one. Leave it unset for a single automatic sign-in.",
+    "example": "1"
+   },
+   "AutoLogon/Username": {
+    "widget": "text",
+    "description": "The account that signs in automatically, usually Administrator or an account created in LocalAccounts. It must exist when the sign-in happens. Leave it empty to turn automatic sign-in off.",
+    "example": "Administrator"
+   },
+   "AutoLogon/Domain": {
+    "widget": "text",
+    "description": "The domain of the automatic sign-in account, or the computer name for a local account. Leave it empty for a local account. Domain accounts work only after the computer has joined the domain.",
+    "example": "."
+   },
+   "AutoLogon/Password/Value": {
+    "description": "The password of the automatic sign-in account. Windows stores it in the registry until the sign-in count runs out. Leave it empty for an account without a password."
+   },
+   "UserAccounts/AdministratorPassword/Value": {
+    "description": "The password of the built-in Administrator account. Setting it skips the password prompt and lets you sign in as Administrator. Leave it empty and the Administrator account stays disabled on client editions.",
+    "related": [
+     "UserAccounts/AdministratorPassword/PlainText"
+    ]
+   },
+   "UserAccounts/LocalAccounts/LocalAccount/Name": {
+    "widget": "text",
+    "maxLength": 20,
+    "description": "The user name of a local account created during Setup, up to 20 characters. It cannot contain characters such as \\ / [ ] : ; | = , + * ? < > \". Each account in the list needs a unique name.",
+    "example": "kiosk"
+   },
+   "UserAccounts/LocalAccounts/LocalAccount/DisplayName": {
+    "description": "The full name shown on the sign-in screen and in Settings. It can contain spaces. Leave it empty to show the user name.",
+    "example": "Kiosk User"
+   },
+   "UserAccounts/LocalAccounts/LocalAccount/Description": {
+    "widget": "text",
+    "description": "A note stored with the account and shown in Computer Management. It is only informational. Leave it empty for no note."
+   },
+   "UserAccounts/LocalAccounts/LocalAccount/Group": {
+    "description": "The local group the account joins, usually Administrators or Users. Separate several groups with semicolons. Leave it empty and the account joins Users.",
+    "example": "Users",
+    "related": [
+     "UserAccounts/LocalAccounts/LocalAccount/Name"
+    ]
+   },
+   "UserAccounts/LocalAccounts/LocalAccount/Password/Value": {
+    "description": "The password of this local account. Use a strong password, or a temporary one the user changes later. Leave it empty for an account without a password, which Windows only allows for local sign-in."
+   },
+   "UserAccounts/DomainAccounts/DomainAccountList/Domain": {
+    "widget": "text",
+    "description": "The domain whose accounts or groups are added to local groups. The computer must already be joined to it. Use the NetBIOS or DNS domain name.",
+    "example": "CORP"
+   },
+   "UserAccounts/DomainAccounts/DomainAccountList/DomainAccount/Name": {
+    "widget": "text",
+    "description": "A domain user or group to add to the local group below. It must exist in the domain above. A group such as Domain Admins is a common choice.",
+    "example": "Helpdesk"
+   },
+   "UserAccounts/DomainAccounts/DomainAccountList/DomainAccount/Group": {
+    "description": "The local group that the domain account joins, such as Administrators or Remote Desktop Users. It must be an existing local group. Leave it empty and Windows uses Users.",
+    "example": "Administrators"
+   },
+   "OOBE/HideEULAPage": {
+    "description": "Hides the Windows license page during the out-of-box experience. You accept the license on behalf of the user when you turn it on. Leave it unset and the user must accept the license.",
+    "valueHelp": {
+     "true": "The license page is skipped; the license counts as accepted.",
+     "false": "The user sees the license page and must accept it."
+    }
+   },
+   "OOBE/HideLocalAccountScreen": {
+    "description": "Hides the page that creates a local account during the out-of-box experience. Use it when the answer file already creates accounts or sets the Administrator password. Leave it unset to show the page.",
+    "valueHelp": {
+     "true": "The create account page is skipped.",
+     "false": "The user is asked to create an account."
+    },
+    "related": [
+     "UserAccounts/LocalAccounts/LocalAccount/Name",
+     "UserAccounts/AdministratorPassword/Value"
+    ]
+   },
+   "OOBE/HideOEMRegistrationScreen": {
+    "description": "Hides the device maker registration page during the out-of-box experience. Most organizations turn it on. Leave it unset to show the page when the image has one.",
+    "valueHelp": {
+     "true": "The OEM registration page is skipped.",
+     "false": "The OEM registration page is shown when the image has one."
+    }
+   },
+   "OOBE/HideOnlineAccountScreens": {
+    "description": "Hides the Microsoft account and work account sign-in pages during the out-of-box experience. Use it for local or domain accounts. Leave it unset to offer online accounts.",
+    "valueHelp": {
+     "true": "The online account pages are skipped.",
+     "false": "The user is offered a Microsoft or work account sign-in."
+    }
+   },
+   "OOBE/HideWirelessSetupInOOBE": {
+    "description": "Hides the Wi-Fi network page during the out-of-box experience. Use it on wired or offline builds. Leave it unset to let the user pick a network.",
+    "valueHelp": {
+     "true": "The Wi-Fi page is skipped.",
+     "false": "The user can pick a Wi-Fi network."
+    }
+   },
+   "OOBE/ProtectYourPC": {
+    "description": "Answers the privacy and update settings page of the out-of-box experience. Use 3 for kiosks and labs that must not send data, or 1 to accept the recommended settings. Leave it unset and the user is asked.",
+    "valueHelp": {
+     "1": "Use the recommended settings, including automatic updates and diagnostics.",
+     "2": "Install important updates only.",
+     "3": "Turn off the optional settings; the user can change them later."
+    }
+   },
+   "OOBE/NetworkLocation": {
+    "description": "The network location chosen for the first network on older Windows releases. Work and Home allow discovery; Other is the public profile. Leave it unset and Windows asks or uses the public profile.",
+    "valueHelp": {
+     "Home": "Private network: the computer can be discovered and share files.",
+     "Work": "Work network: like Home, for an office.",
+     "Other": "Public network: discovery and sharing are off."
+    }
+   },
+   "OOBE/SkipMachineOOBE": {
+    "description": "An old switch that skipped the whole machine part of the out-of-box experience. Windows no longer supports it and may leave the computer unconfigured. Use the Hide settings instead.",
+    "valueHelp": {
+     "true": "Skips the machine out-of-box experience (unsupported on current Windows).",
+     "false": "The machine out-of-box experience runs as normal."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "true",
+     "reason": "Deprecated; current Windows may skip required steps."
+    }
+   },
+   "OOBE/SkipUserOOBE": {
+    "description": "An old switch that skipped the user part of the out-of-box experience. Windows no longer supports it. Use the Hide settings instead.",
+    "valueHelp": {
+     "true": "Skips the user out-of-box experience (unsupported on current Windows).",
+     "false": "The user out-of-box experience runs as normal."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "true",
+     "reason": "Deprecated; current Windows may skip required steps."
+    }
+   },
+   "OOBE/UnattendEnableRetailDemo": {
+    "description": "Puts the device in retail demo mode for store displays. Never use it on a computer people will work on, because demo mode resets the device. Leave it unset for a normal install.",
+    "valueHelp": {
+     "true": "The device starts in retail demo mode.",
+     "false": "The device installs normally."
+    },
+    "risk": {
+     "level": "danger",
+     "when": "true",
+     "reason": "Retail demo mode wipes user content and is meant for store displays only."
+    }
+   },
+   "OEMInformation/Manufacturer": {
+    "description": "The manufacturer name shown in Settings, System, About. It helps users know who supports the computer. Leave it empty to show the hardware maker reported by the firmware.",
+    "example": "Contoso IT"
+   },
+   "OEMInformation/Model": {
+    "description": "The model name shown in Settings, System, About. Recent Windows versions read the model from the firmware instead. Leave it empty to show the firmware model.",
+    "example": "Lab Desktop"
+   },
+   "OEMInformation/SupportHours": {
+    "description": "The hours when support is available, shown in Settings, System, About. Write it the way users read it. Leave it empty to hide the line.",
+    "example": "Mon to Fri, 9:00 to 17:00"
+   },
+   "OEMInformation/SupportPhone": {
+    "widget": "text",
+    "format": "phone",
+    "description": "The support phone number shown in Settings, System, About. Include the country code for devices that travel. Leave it empty to hide the line.",
+    "example": "+852 2123 4567"
+   },
+   "OEMInformation/SupportURL": {
+    "description": "The support web page shown in Settings, System, About and in the Get Help app. Use an https address. Leave it empty to hide the link.",
+    "example": "https://support.example.com"
+   },
+   "OEMInformation/Logo": {
+    "description": "Path on the installed computer to a 120 by 120 pixel BMP logo shown in Settings, System, About. Copy the file with $OEM$ folders or a command first. Leave it empty for no logo.",
+    "example": "C:\\Windows\\System32\\oemlogo.bmp"
+   },
+   "Themes/WindowColor": {
+    "widget": "color",
+    "format": "argb-hex",
+    "presets": [
+     {
+      "value": "Automatic",
+      "label": "Automatic (from the wallpaper)"
+     }
+    ],
+    "description": "The accent color for title bars, Start and other surfaces, written as 0xAARRGGBB or Automatic. Windows adjusts very dark or very light colors so text stays readable. Leave it unset for the default blue.",
+    "example": "0xff0078d7"
+   },
+   "Themes/DesktopBackground": {
+    "description": "Path on the installed computer to the default wallpaper image. The file must already exist when the user signs in. Leave it empty for the Windows wallpaper.",
+    "example": "C:\\Windows\\Web\\Wallpaper\\Contoso\\wall.jpg"
+   },
+   "Themes/ThemeName": {
+    "description": "The name of your custom theme as it appears in Personalization. It labels the theme built from these settings. Leave it empty when you do not ship a theme.",
+    "example": "Contoso"
+   },
+   "FirstLogonCommands/SynchronousCommand/CommandLine": {
+    "description": "The command line that runs when a user signs in for the first time, one command after another. It runs as that user, so it cannot install machine-wide software without rights. Quote paths that contain spaces.",
+    "example": "powershell -ExecutionPolicy Bypass -File C:\\Setup\\firstlogon.ps1"
+   },
+   "FirstLogonCommands/SynchronousCommand/Order": {
+    "widget": "number",
+    "min": 1,
+    "max": 500,
+    "description": "Position of this command in the first sign-in list, from 1 to 500. Commands run in ascending order and each number must be unique. The studio renumbers commands when you reorder them."
+   },
+   "FirstLogonCommands/SynchronousCommand/Description": {
+    "widget": "text",
+    "description": "A short label for the command. It is only informational. Leave it empty if the command line explains itself."
+   },
+   "FirstLogonCommands/SynchronousCommand/RequiresUserInput": {
+    "description": "Tells Windows that the command opens a window the user must answer. Windows then waits for the user instead of continuing. Leave it unset for commands that run on their own.",
+    "valueHelp": {
+     "true": "Windows waits for the user to answer the command.",
+     "false": "The command runs without user interaction."
+    }
+   },
+   "LogonCommands/AsynchronousCommand/CommandLine": {
+    "description": "The command line that starts at each of the first sign-ins, without waiting for it. Use it for long-running tools. Quote paths that contain spaces.",
+    "example": "C:\\Tools\\agent.exe /background"
+   },
+   "LogonCommands/AsynchronousCommand/Order": {
+    "widget": "number",
+    "min": 1,
+    "max": 500,
+    "description": "Position of this command in the list, from 1 to 500. Commands start in ascending order without waiting for each other. Each number must be unique."
+   },
+   "LogonCommands/AsynchronousCommand/Description": {
+    "widget": "text",
+    "description": "A short label for the command. It is only informational. Leave it empty if the command line explains itself."
+   },
+   "LogonCommands/AsynchronousCommand/RequiresUserInput": {
+    "description": "Tells Windows that the command opens a window the user must answer. Windows then waits for the user instead of continuing. Leave it unset for commands that run on their own.",
+    "valueHelp": {
+     "true": "Windows waits for the user to answer the command.",
+     "false": "The command runs without user interaction."
+    }
+   },
+   "StartTiles/RegionalOverrides/RegionalOverride/Order": {
+    "min": 1,
+    "max": 199
+   },
+   "OEMInformation/HelpCustomized": {
+    "description": "An old switch that said the device maker customized Windows Help. Current Windows ignores it; set SupportURL or SupportAppURL instead. Leave it unset.",
+    "valueHelp": {
+     "true": "Marks Help as customized (ignored on current Windows).",
+     "false": "Help is not customized."
+    }
+   },
+   "OEMInformation/TradeinURL": {
+    "description": "A web page about trading in the device, shown in the Get Help app. Use an https address. Leave it empty to hide the link."
+   },
+   "OEMInformation/RecycleURL": {
+    "description": "A web page about recycling the device, shown in the Get Help app. Use an https address. Leave it empty to hide the link."
+   },
+   "OEMInformation/SupportAppURL": {
+    "description": "A link that opens the device maker support app from the Get Help app. Use the protocol link the app registers. Leave it empty to hide the link."
+   },
+   "OEMInformation/SupportProvider": {
+    "description": "The name of your support app or website, shown next to the support link in Get Help. Use a short name people recognise. Leave it empty to show the manufacturer name."
+   },
+   "OOBE/OEMAppId": {
+    "description": "The app user model ID of a device maker app the out-of-box experience can hand off to. Only device makers set it. Leave it empty for none."
+   },
+   "OOBE/VMModeOptimizations/SkipWinREInitialization": {
+    "description": "Skips preparing the recovery environment when Windows runs as a virtual machine. It saves time on disposable VMs that never need recovery. Leave it unset to prepare it as normal.",
+    "valueHelp": {
+     "true": "The recovery environment is not prepared in VM mode.",
+     "false": "The recovery environment is prepared as normal."
+    }
+   },
+   "OOBE/VMModeOptimizations/SkipAdministratorProfileRemoval": {
+    "description": "Keeps the built-in Administrator profile when Windows runs as a virtual machine. It saves time on VMs that reuse that profile. Leave it unset to remove it as normal."
+   },
+   "OOBE/VMModeOptimizations/SkipNotifyUILanguageChange": {
+    "description": "Skips telling apps about a display language change when Windows runs as a virtual machine. It saves time on VMs. Leave it unset for the normal notification."
+   },
+   "Themes/CustomDefaultThemeFile": {
+    "description": "Path to a .theme file once used as the default theme. Current Windows no longer accepts a theme file here. Leave it empty.",
+    "risk": {
+     "level": "none"
+    }
+   },
+   "Themes/ScreenSaver": {
+    "description": "The screen saver of the default theme on older Windows releases. Current Windows ignores it. Leave it empty."
+   },
+   "Themes/BrandIcon": {
+    "description": "Path to an image shown in Personalization next to the custom theme name. The file must exist on the installed computer. Leave it empty for no icon."
+   },
+   "Themes/UWPAppsUseLightTheme": {
+    "description": "Chooses light or dark mode for apps by default. Users can still change it in Settings. Leave it unset for light mode.",
+    "valueHelp": {
+     "true": "Apps use the light theme.",
+     "false": "Apps use the dark theme."
+    }
+   },
+   "Themes/DefaultThemesOff": {
+    "description": "Hides the themes that ship with Windows so users only see your custom theme. Use it with ThemeName. Leave it unset to show every theme.",
+    "valueHelp": {
+     "true": "Built-in themes are hidden.",
+     "false": "Built-in themes are shown."
+    }
+   },
+   "VisualEffects/FontSmoothing": {
+    "description": "How the screen smooths font edges on older Windows releases. Current Windows always uses ClearType. Leave it unset.",
+    "valueHelp": {
+     "Standard": "Windows picks after a performance test.",
+     "On": "Standard font smoothing is on.",
+     "Off": "Font smoothing is off.",
+     "ClearType": "ClearType smoothing is used."
+    }
+   },
+   "VisualEffects/SystemDefaultBackgroundColor": {
+    "description": "A background color number for the old Start screen. Current Windows ignores it. Leave it empty."
+   },
+   "ShowWindowsLive": {
+    "description": "Shows or hides Windows Live links on the old Start menu. This applies to Windows 7 era images only. Leave it unset.",
+    "valueHelp": {
+     "true": "Windows Live links are shown.",
+     "false": "Windows Live links are hidden."
+    }
+   },
+   "ConvertibleSlateModePromptPreference": {
+    "description": "Whether a convertible device asks before switching to tablet mode when the keyboard is removed. Only 2 in 1 devices use it. Leave it unset for the Windows default.",
+    "valueHelp": {
+     "0": "Windows does not ask before switching.",
+     "1": "Windows asks before switching to tablet mode."
+    }
+   },
+   "SignInMode": {
+    "description": "Which mode a tablet capable device starts in after sign-in. Use Desktop for laptops used like PCs. Leave it unset for the Windows default.",
+    "valueHelp": {
+     "0": "Start in tablet mode.",
+     "1": "Start on the desktop.",
+     "2": "Start in the mode last used."
+    }
+   },
+   "OEMName": {
+    "description": "The device maker name shown on the group of pinned Start tiles. Only applies to older Start layouts. Leave it empty for no group name."
+   }
+  },
+  "Microsoft-Windows-Setup": {
+   "UserData/AcceptEula": {
+    "description": "Accepts the Windows license terms during Setup so the license page does not appear. You accept the terms on behalf of the organization. Leave it unset and Setup stops at the license page.",
+    "valueHelp": {
+     "true": "The license terms are accepted; Setup does not stop.",
+     "false": "Setup shows the license page and waits."
+    }
+   },
+   "UserData/ProductKey/Key": {
+    "widget": "product-key",
+    "description": "The product key used to install, which also picks the edition from the media. A generic key installs an edition without activating it. Generic keys only select an edition during Setup; they never activate Windows.",
+    "related": [
+     "UserData/ProductKey/WillShowUI",
+     "Microsoft-Windows-Shell-Setup|ProductKey"
+    ]
+   },
+   "UserData/ProductKey/WillShowUI": {
+    "description": "When Setup shows the product key page. OnError shows it only if the key is missing or wrong. Leave it unset for OnError.",
+    "valueHelp": {
+     "Always": "Setup always shows the product key page.",
+     "OnError": "Setup shows the page only when the key is missing or invalid.",
+     "Never": "Setup never shows the page; a bad key stops Setup."
+    }
+   },
+   "UserData/FullName": {
+    "widget": "text",
+    "description": "The name of the person or team the copy of Windows is licensed to. It is only informational. Leave it empty to skip.",
+    "example": "IT Department"
+   },
+   "UserData/Organization": {
+    "widget": "text",
+    "description": "The organization the copy of Windows is licensed to. It is only informational. Leave it empty to skip.",
+    "example": "Contoso Ltd"
+   },
+   "DiskConfiguration/Disk/WillWipeDisk": {
+    "description": "Erases every partition on this disk before creating the new ones. Use it for clean installs on new or repurposed disks. Leave it unset to keep existing partitions.",
+    "valueHelp": {
+     "true": "Every partition and all data on this disk are erased.",
+     "false": "Existing partitions are kept; only the listed changes are made."
+    },
+    "risk": {
+     "level": "danger",
+     "when": "true",
+     "reason": "All data on the disk is destroyed."
+    },
+    "related": [
+     "DiskConfiguration/Disk/DiskID"
+    ]
+   },
+   "DiskConfiguration/Disk/DiskID": {
+    "min": 0,
+    "max": 99,
+    "description": "The number of the disk to configure; 0 is the first disk Windows PE finds. Disk numbers can change when you add USB drives, so unplug extras. The studio disk canvas edits this for you.",
+    "example": "0"
+   },
+   "DiskConfiguration/Disk/CreatePartitions/CreatePartition/Size": {
+    "description": "Size of the new partition in megabytes. Leave Extend on for the last partition instead of a size. The percentage is shown against the disk size you enter in the widget.",
+    "example": "300"
+   },
+   "DiskConfiguration/Disk/CreatePartitions/CreatePartition/Extend": {
+    "description": "Makes this partition fill the rest of the disk. Use it on the last partition only, and do not also set Size. Leave it unset to use the Size value.",
+    "valueHelp": {
+     "true": "The partition grows to fill the rest of the disk.",
+     "false": "The partition uses the Size value."
+    }
+   },
+   "DiskConfiguration/Disk/CreatePartitions/CreatePartition/Type": {
+    "description": "The partition type. A UEFI disk needs an EFI partition, an MSR partition and a Primary partition for Windows. Leave it unset for Primary.",
+    "valueHelp": {
+     "Primary": "A normal data partition, used for Windows itself.",
+     "EFI": "The EFI system partition that holds the UEFI boot files (FAT32, about 100 to 300 MB).",
+     "Extended": "A container for logical partitions on MBR disks only.",
+     "Logical": "A partition inside an extended partition, MBR disks only.",
+     "MSR": "The Microsoft reserved partition required on GPT disks (16 MB, never formatted)."
+    }
+   },
+   "DiskConfiguration/Disk/CreatePartitions/CreatePartition/Order": {
+    "min": 1,
+    "max": 128,
+    "description": "The order in which this partition is created, starting at 1. Partitions are created in this order from the start of the disk. Each number must be unique on the disk."
+   },
+   "DiskConfiguration/Disk/ModifyPartitions/ModifyPartition/Format": {
+    "description": "The file system to format the partition with. EFI partitions use FAT32; Windows partitions use NTFS. Leave it unset to keep the partition unformatted.",
+    "valueHelp": {
+     "NTFS": "Format with NTFS, used for Windows and data partitions.",
+     "FAT32": "Format with FAT32, used for the EFI system partition."
+    }
+   },
+   "DiskConfiguration/Disk/ModifyPartitions/ModifyPartition/Letter": {
+    "description": "The drive letter given to the partition in Windows PE and in the installed system. The Windows partition is usually C. Leave it unset for no letter.",
+    "example": "C"
+   },
+   "DiskConfiguration/Disk/ModifyPartitions/ModifyPartition/Label": {
+    "widget": "text",
+    "maxLength": 32,
+    "description": "The volume label shown in File Explorer, up to 32 characters for NTFS and 11 for FAT32. It is only informational. Leave it empty for no label.",
+    "example": "Windows"
+   },
+   "DiskConfiguration/Disk/ModifyPartitions/ModifyPartition/Active": {
+    "description": "Marks the partition as the active boot partition on BIOS (MBR) computers. UEFI computers ignore it. Leave it unset unless you install on a BIOS computer.",
+    "valueHelp": {
+     "true": "The partition is marked active so BIOS firmware boots from it.",
+     "false": "The partition is not marked active."
+    }
+   },
+   "DiskConfiguration/Disk/ModifyPartitions/ModifyPartition/TypeID": {
+    "widget": "text",
+    "format": "typeid",
+    "presets": [
+     {
+      "value": "de94bba4-06d1-4d40-a16a-bfd50179d6ac",
+      "label": "Windows RE (GPT)"
+     },
+     {
+      "value": "0x27",
+      "label": "Windows RE (MBR)"
+     }
+    ],
+    "description": "A partition type GUID (GPT) or type number (MBR) to set, for example the recovery partition type. Setup uses it to hide utility partitions. Leave it empty for a normal partition."
+   },
+   "DiskConfiguration/WillShowUI": {
+    "description": "When Setup shows the disk page. OnError shows it only if the disk settings fail. Leave it unset for OnError.",
+    "valueHelp": {
+     "Always": "Setup always shows the disk page.",
+     "OnError": "Setup shows the disk page only when the settings fail.",
+     "Never": "Setup never shows the page; a failure stops Setup."
+    }
+   },
+   "ImageInstall/OSImage/InstallTo/DiskID": {
+    "min": 0,
+    "max": 99,
+    "description": "The disk to install Windows on; 0 is the first disk. It must match a disk in DiskConfiguration or an existing disk. The disk canvas sets it when you mark the target.",
+    "related": [
+     "ImageInstall/OSImage/InstallTo/PartitionID"
+    ]
+   },
+   "ImageInstall/OSImage/InstallTo/PartitionID": {
+    "min": 1,
+    "max": 128,
+    "description": "The partition to install Windows on, counting from 1 on that disk. On the usual UEFI layout it is 3 (after EFI and MSR). The disk canvas sets it when you mark the target.",
+    "related": [
+     "ImageInstall/OSImage/InstallTo/DiskID"
+    ]
+   },
+   "ImageInstall/OSImage/InstallFrom/MetaData/Key": {
+    "description": "How the image in install.wim is picked: by index number, by name or by description. Index is the most reliable. The value below must match the key you choose.",
+    "valueHelp": {
+     "/IMAGE/INDEX": "Pick the image by its index number, for example 1.",
+     "/IMAGE/NAME": "Pick the image by its name, for example Windows 11 Pro.",
+     "/IMAGE/DESCRIPTION": "Pick the image by its description text."
+    }
+   },
+   "ImageInstall/OSImage/InstallFrom/MetaData/Value": {
+    "widget": "combobox-search",
+    "source": "editions",
+    "allowCustom": true,
+    "description": "The value that selects the image in install.wim: an index number, an image name or a description, depending on the key. Run dism /Get-ImageInfo on the media to list them. A wrong value stops Setup.",
+    "example": "1"
+   },
+   "ImageInstall/OSImage/InstallFrom/Path": {
+    "description": "The path of the install.wim or install.esd file, local or on a network share. Leave it empty to use the image on the install media. Network paths need credentials.",
+    "example": "\\\\server\\images\\install.wim"
+   },
+   "ImageInstall/OSImage/WillShowUI": {
+    "description": "When Setup shows the page that picks an image and partition. OnError shows it only when the settings fail. Leave it unset for OnError.",
+    "valueHelp": {
+     "Always": "Setup always shows the image page.",
+     "OnError": "Setup shows the page only when the settings fail.",
+     "Never": "Setup never shows the page; a failure stops Setup."
+    }
+   },
+   "EnableFirewall": {
+    "description": "Turns Windows Firewall on in Windows PE during Setup. Keep it on unless a deployment tool must connect in to Windows PE. Leave it unset to keep the firewall on.",
+    "valueHelp": {
+     "true": "The firewall is on in Windows PE.",
+     "false": "The firewall is off in Windows PE."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "false",
+     "reason": "Windows PE runs with an open firewall during Setup."
+    }
+   },
+   "EnableNetwork": {
+    "description": "Starts networking in Windows PE so Setup can reach shares and updates. Turn it on when the image or drivers come from the network. Leave it unset to keep networking off during the Windows PE stage.",
+    "valueHelp": {
+     "true": "Networking starts in Windows PE.",
+     "false": "Windows PE runs without networking."
+    }
+   },
+   "Restart": {
+    "description": "What Windows PE does after the windowsPE pass finishes. Shutdown is useful when you capture or move the disk before first boot. Leave it unset to restart.",
+    "valueHelp": {
+     "Restart": "The computer restarts and continues Setup.",
+     "Shutdown": "The computer shuts down after Windows PE."
+    }
+   },
+   "LogPath": {
+    "description": "A folder where Setup writes its logs during Windows PE. It must be writable, for example a RAM drive or a share. Leave it empty for the default Panther folder.",
+    "example": "X:\\Logs"
+   },
+   "DynamicUpdate/Enable": {
+    "description": "Lets Setup download the latest Setup and compatibility updates before installing. Turn it off for offline or repeatable builds. Leave it unset to keep Dynamic Update off.",
+    "valueHelp": {
+     "true": "Setup downloads updates before it installs.",
+     "false": "Setup uses only what is on the media."
+    }
+   },
+   "ComplianceCheck/DisplayReport": {
+    "description": "When Setup shows the compatibility report during an upgrade. Leave it unset for OnError.",
+    "valueHelp": {
+     "OnError": "The report appears only when a problem blocks the upgrade.",
+     "Never": "The report never appears; a blocking problem stops Setup."
+    }
+   },
+   "UseConfigurationSet": {
+    "description": "Tells Setup to use the files of a configuration set next to the answer file, such as $OEM$ folders. Turn it on when you built a configuration set with Windows SIM. Leave it unset otherwise.",
+    "valueHelp": {
+     "true": "Setup copies the configuration set files.",
+     "false": "Setup ignores configuration set folders."
+    }
+   },
+   "PageFile/Path": {
+    "description": "Path of the page file Windows PE uses during Setup. Only computers with very little memory need it. Leave it empty for the default.",
+    "example": "C:\\pagefile.sys"
+   },
+   "ImageInstall/OSImage/InstallToAvailablePartition": {
+    "valueHelp": {
+     "true": "Windows goes to the first partition with enough space.",
+     "false": "Windows goes to the partition set in InstallTo."
+    }
+   },
+   "WindowsDeploymentServices/ImageSelection/InstallImage/Filename": {
+    "description": "The file name of the image to install from the Windows Deployment Services server, such as install.wim. It applies only when Setup installs from a Windows Deployment Services server. Leave it empty and the user picks an image."
+   },
+   "WindowsDeploymentServices/ImageSelection/InstallImage/ImageGroup": {
+    "description": "The image group on the Windows Deployment Services server that holds the image. It applies only when Setup installs from a Windows Deployment Services server. Leave it empty and the user picks an image."
+   },
+   "WindowsDeploymentServices/ImageSelection/InstallImage/ImageName": {
+    "description": "The name of the image to install from the Windows Deployment Services server. It applies only when Setup installs from a Windows Deployment Services server. Leave it empty and the user picks an image."
+   },
+   "WindowsDeploymentServices/ImageSelection/InstallTo/DiskID": {
+    "description": "The disk to install the server image on; 0 is the first disk. It applies only when Setup installs from a Windows Deployment Services server. Leave it unset and the user picks the disk."
+   },
+   "WindowsDeploymentServices/ImageSelection/InstallTo/PartitionID": {
+    "description": "The partition to install the server image on, counting from 1. It applies only when Setup installs from a Windows Deployment Services server. Leave it empty and the user picks the partition.",
+    "widget": "number",
+    "min": 1,
+    "max": 128
+   },
+   "WindowsDeploymentServices/ImageSelection/WillShowUI": {
+    "description": "When Setup shows the Windows Deployment Services image page. It applies only when Setup installs from a Windows Deployment Services server. Leave it unset for OnError.",
+    "valueHelp": {
+     "Always": "The image page is always shown.",
+     "OnError": "The image page is shown only when the settings fail.",
+     "Never": "The image page is never shown."
+    }
+   },
+   "WindowsDeploymentServices/Login/WillShowUI": {
+    "description": "When Setup shows the Windows Deployment Services sign-in page. It applies only when Setup installs from a Windows Deployment Services server. Leave it unset for OnError.",
+    "valueHelp": {
+     "Always": "The sign-in page is always shown.",
+     "OnError": "The sign-in page is shown only when the credentials fail.",
+     "Never": "The sign-in page is never shown."
+    }
+   }
+  },
+  "Microsoft-Windows-International-Core": {
+   "InputLocale": {
+    "description": "The keyboard layouts and input methods, as a language tag such as en-US or a pair such as 0409:00000409. Separate several with semicolons; the first is the default. Leave it unset to use the layout that matches the display language.",
+    "example": "en-US;zh-HK"
+   },
+   "SystemLocale": {
+    "description": "The language used by programs that are not Unicode, and the default code page. Change it only when such programs show garbled text. Leave it unset to match the display language.",
+    "example": "en-US"
+   },
+   "UILanguage": {
+    "description": "The display language of menus, dialogs and messages. The language pack must be on the image. Leave it unset to keep the language of the image.",
+    "example": "en-US"
+   },
+   "UILanguageFallback": {
+    "description": "The language used for text that is not translated in a partly localized display language. Usually en-US. Leave it unset to use the image default.",
+    "example": "en-US"
+   },
+   "UserLocale": {
+    "description": "The formats for dates, times, numbers and currency. It can differ from the display language, for example English text with Hong Kong formats. Leave it unset to match the display language.",
+    "example": "zh-HK"
+   }
+  },
+  "Microsoft-Windows-International-Core-WinPE": {
+   "InputLocale": {
+    "description": "The keyboard layouts and input methods, as a language tag such as en-US or a pair such as 0409:00000409. Separate several with semicolons; the first is the default. Leave it unset to use the layout that matches the Setup language.",
+    "example": "en-US;zh-HK"
+   },
+   "SystemLocale": {
+    "description": "The language used by programs that are not Unicode, and the default code page. Change it only when such programs show garbled text. Leave it unset to match the display language.",
+    "example": "en-US"
+   },
+   "UILanguage": {
+    "description": "The display language of the installed system when no other setting overrides it. The language pack must be on the image. Leave it unset to keep the language of the image.",
+    "example": "en-US"
+   },
+   "UILanguageFallback": {
+    "description": "The language used for text that is not translated in a partly localized display language. Usually en-US. Leave it unset to use the image default.",
+    "example": "en-US"
+   },
+   "UserLocale": {
+    "description": "The formats for dates, times, numbers and currency. It can differ from the display language, for example English text with Hong Kong formats. Leave it unset to match the display language.",
+    "example": "zh-HK"
+   },
+   "SetupUILanguage/UILanguage": {
+    "description": "The language of the Windows Setup screens. The media must include it. Leave it unset and Setup asks or uses the media language.",
+    "example": "en-US"
+   },
+   "SetupUILanguage/WillShowUI": {
+    "description": "When Setup shows its language page. OnError shows it only if the language is missing. Leave it unset for OnError.",
+    "valueHelp": {
+     "Always": "Setup always shows the language page.",
+     "onError": "Setup shows the page only when the language is missing or wrong.",
+     "Never": "Setup never shows the page."
+    }
+   }
+  },
+  "Microsoft-Windows-TCPIP": {
+   "Interfaces/Interface/Identifier": {
+    "widget": "text",
+    "presets": [
+     {
+      "value": "Ethernet",
+      "label": "Ethernet"
+     },
+     {
+      "value": "Ethernet0",
+      "label": "Ethernet0 (VMware)"
+     }
+    ],
+    "description": "Which network adapter these settings apply to: its connection name such as Ethernet, or its MAC address such as 00-15-5D-01-02-03. A MAC address is safer when there are several adapters. A wrong name means nothing is applied.",
+    "example": "Ethernet"
+   },
+   "Interfaces/Interface/Ipv4Settings/DhcpEnabled": {
+    "description": "Whether the adapter gets its IPv4 address from DHCP. Turn it off when you set a static address below. Leave it unset to keep DHCP on.",
+    "valueHelp": {
+     "true": "The adapter gets its IPv4 address from DHCP.",
+     "false": "DHCP is off; use the static addresses below."
+    },
+    "related": [
+     "Interfaces/Interface/UnicastIpAddresses/IpAddress/Value"
+    ]
+   },
+   "Interfaces/Interface/Ipv6Settings/DhcpEnabled": {
+    "description": "Whether the adapter asks DHCPv6 for an IPv6 address. Most networks use router advertisements instead. Leave it unset for the Windows default.",
+    "valueHelp": {
+     "true": "The adapter asks DHCPv6 for an address.",
+     "false": "DHCPv6 is off."
+    }
+   },
+   "Interfaces/Interface/Ipv4Settings/Metric": {
+    "min": 1,
+    "max": 9999,
+    "description": "The interface metric for IPv4; lower numbers are preferred when several adapters can reach a network. Typical values run from 5 for fast links to 50 for slow ones. Leave it unset so Windows picks it from the link speed."
+   },
+   "Interfaces/Interface/Ipv6Settings/Metric": {
+    "min": 1,
+    "max": 9999,
+    "description": "The interface metric for IPv6; lower numbers are preferred when several adapters can reach a network. Typical values run from 5 for fast links to 50 for slow ones. Leave it unset so Windows picks it from the link speed."
+   },
+   "Interfaces/Interface/UnicastIpAddresses/IpAddress/Value": {
+    "description": "A static address with its prefix length, such as 192.168.10.20/24 or 2001:db8::20/64. Turn DHCP off for the adapter when you set one. Each address needs a unique key.",
+    "example": "192.168.10.20/24",
+    "related": [
+     "Interfaces/Interface/Ipv4Settings/DhcpEnabled"
+    ]
+   },
+   "Interfaces/Interface/UnicastIpAddresses/IpAddress/Key": {
+    "widget": "number",
+    "min": 1,
+    "max": 99,
+    "description": "A unique number for this address entry, starting at 1. Windows only uses it to tell the entries apart. The studio fills it in for you."
+   },
+   "Interfaces/Interface/Routes/Route/Prefix": {
+    "description": "The destination network of the route in CIDR form. Use 0.0.0.0/0 for the default gateway. Each route needs a unique identifier.",
+    "example": "0.0.0.0/0"
+   },
+   "Interfaces/Interface/Routes/Route/NextHopAddress": {
+    "description": "The gateway address that traffic for this route goes to. It must be on the same subnet as the adapter address. For the default route it is the router of the network.",
+    "example": "192.168.10.1"
+   },
+   "Interfaces/Interface/Routes/Route/Identifier": {
+    "widget": "number",
+    "min": 0,
+    "max": 99,
+    "description": "A unique number for this route entry, often starting at 0 or 1. Windows only uses it to tell routes apart. The studio fills it in for you."
+   },
+   "Interfaces/Interface/Routes/Route/Metric": {
+    "min": 1,
+    "max": 9999,
+    "description": "The route metric; lower numbers win when several routes match the same prefix. Leave it unset for the default. Only set it when you have more than one gateway."
+   }
+  },
+  "Microsoft-Windows-DNS-Client": {
+   "DNSDomain": {
+    "widget": "text",
+    "format": "fqdn",
+    "description": "The primary DNS suffix of the computer, added to short names when resolving. Domain members get it from the domain automatically. Leave it empty unless the computer stays in a workgroup.",
+    "example": "corp.example.com"
+   },
+   "UseDomainNameDevolution": {
+    "description": "Whether Windows also tries parent domains of the suffix when resolving short names. For example a.b.example.com also tries b.example.com. Leave it unset to keep devolution on.",
+    "valueHelp": {
+     "true": "Parent domains of the suffix are tried too.",
+     "false": "Only the exact suffixes are tried."
+    }
+   },
+   "DNSSuffixSearchOrder/DomainName/Value": {
+    "widget": "text",
+    "format": "fqdn",
+    "description": "A DNS suffix added to short names, in the order of the keys. Use it when users type short names from several domains. Each suffix needs a unique key.",
+    "example": "corp.example.com"
+   },
+   "Interfaces/Interface/Identifier": {
+    "widget": "text",
+    "presets": [
+     {
+      "value": "Ethernet",
+      "label": "Ethernet"
+     }
+    ],
+    "description": "Which network adapter these DNS settings apply to: its connection name or its MAC address. It must match the adapter name in the installed system. A wrong name means nothing is applied.",
+    "example": "Ethernet"
+   },
+   "Interfaces/Interface/DNSServerSearchOrder/IpAddress/Value": {
+    "description": "A DNS server address for this adapter, tried in key order. Domain members should point at a domain controller first. Each server needs a unique key starting at 1.",
+    "example": "192.168.10.10"
+   },
+   "Interfaces/Interface/DNSDomain": {
+    "widget": "text",
+    "format": "fqdn",
+    "description": "A DNS suffix specific to this adapter. It is added to short names resolved through it. Leave it empty to use the primary suffix only.",
+    "example": "lab.example.com"
+   },
+   "Interfaces/Interface/EnableAdapterDomainNameRegistration": {
+    "description": "Whether Windows registers the adapter suffix name and address in DNS. Turn it on when other computers must find this one by the adapter suffix. Leave it unset for the default.",
+    "valueHelp": {
+     "true": "The adapter registers its suffix name in DNS.",
+     "false": "The adapter does not register its suffix name."
+    }
+   },
+   "Interfaces/Interface/DisableDynamicUpdate": {
+    "description": "Stops the adapter from registering its name and address in DNS. Note that true turns registration OFF. Leave it unset so the computer registers itself, which domain members need.",
+    "valueHelp": {
+     "true": "Dynamic DNS registration is OFF for this adapter.",
+     "false": "The adapter registers its name and address in DNS."
+    }
+   }
+  },
+  "Microsoft-Windows-UnattendedJoin": {
+   "Identification/JoinDomain": {
+    "widget": "text",
+    "format": "fqdn",
+    "description": "The DNS name of the domain to join during specialize. The computer must reach a domain controller through DNS at that time. Leave it empty to stay in a workgroup.",
+    "example": "corp.example.com",
+    "related": [
+     "Identification/Credentials/Username",
+     "Identification/MachineObjectOU",
+     "Microsoft-Windows-DNS-Client|Interfaces/Interface/DNSServerSearchOrder/IpAddress/Value"
+    ]
+   },
+   "Identification/JoinWorkgroup": {
+    "widget": "text",
+    "maxLength": 15,
+    "description": "The workgroup to join instead of a domain. Use it only when you do not join a domain. Leave it empty for WORKGROUP.",
+    "example": "LAB"
+   },
+   "Identification/MachineObjectOU": {
+    "widget": "text",
+    "format": "dn",
+    "description": "The organizational unit, as a distinguished name, where the computer account is created. The join account needs rights to create computers there. Leave it empty for the default Computers container.",
+    "example": "OU=Computers,OU=TempDesk,DC=corp,DC=example,DC=com"
+   },
+   "Identification/UnsecureJoin": {
+    "description": "Joins with a computer account that was created in advance, using the machine password instead of user credentials. Leave Credentials empty when you turn it on. Leave it unset for a normal join.",
+    "valueHelp": {
+     "true": "Join with a pre-created computer account and the machine password; no user credentials.",
+     "false": "Join with the user credentials below."
+    },
+    "related": [
+     "Identification/MachinePassword"
+    ]
+   },
+   "Identification/MachinePassword": {
+    "description": "The one-time password of a computer account created in advance, used with UnsecureJoin. It is written in plain text. Leave it empty for a normal join.",
+    "risk": {
+     "level": "caution",
+     "reason": "Stored in plain text in the answer file."
+    }
+   },
+   "Identification/DebugJoin": {
+    "description": "Stops Setup when the domain join fails, so you can read the logs before the computer moves on. Use it while you test a deployment. Leave it unset so Setup continues in a workgroup.",
+    "valueHelp": {
+     "true": "Setup stops on a join failure for troubleshooting.",
+     "false": "Setup continues if the join fails."
+    }
+   },
+   "Identification/TimeoutPeriodInMinutes": {
+    "description": "How long Windows keeps trying to reach the domain before it gives up, from 5 to 60 minutes. Raise it for slow networks. Leave it unset for 15 minutes.",
+    "default": "15"
+   },
+   "Identification/Credentials/Username": {
+    "description": "An account allowed to join computers to the domain. Use a delegated join account, not a domain administrator. It is written to the answer file.",
+    "example": "svc-join"
+   },
+   "Identification/Credentials/Domain": {
+    "description": "The domain of the join account, as a NetBIOS or DNS name. It is usually the domain you join. Leave it empty only with UnsecureJoin.",
+    "example": "CORP"
+   },
+   "Identification/Credentials/Password": {
+    "description": "The password of the join account. It is written in plain text, so use a delegated account that can only join computers. Leave it empty only with UnsecureJoin."
+   },
+   "Identification/Provisioning/AccountData": {
+    "description": "An offline domain join blob made with djoin /provision, pasted as one line. It lets the computer join without reaching a domain controller during Setup. Treat it like a password, because it holds the computer account secret.",
+    "risk": {
+     "level": "caution",
+     "reason": "The blob contains the computer account password."
+    }
+   },
+   "OfflineIdentification/Provisioning/AccountData": {
+    "description": "An offline domain join blob made with djoin /provision, applied in the offlineServicing pass. It lets the computer join without reaching a domain controller. Treat it like a password, because it holds the computer account secret.",
+    "risk": {
+     "level": "caution",
+     "reason": "The blob contains the computer account password."
+    }
+   }
+  },
+  "Microsoft-Windows-LUA-Settings": {
+   "EnableLUA": {
+    "description": "Turns User Account Control on or off. With UAC off every administrator runs everything with full rights and many apps stop working. Leave it unset to keep UAC on.",
+    "valueHelp": {
+     "true": "User Account Control is on: administrators confirm elevation.",
+     "false": "User Account Control is off: every admin process runs elevated without asking."
+    },
+    "risk": {
+     "level": "danger",
+     "when": "false",
+     "reason": "Disabling UAC removes a key security boundary and breaks Store apps."
+    }
+   }
+  },
+  "Microsoft-Windows-TerminalServices-LocalSessionManager": {
+   "fDenyTSConnections": {
+    "description": "Allows or blocks Remote Desktop connections to this computer. The name is inverted: false allows connections and true denies them. Leave it unset to keep Remote Desktop blocked, which is the default.",
+    "valueHelp": {
+     "false": "Remote Desktop connections are allowed.",
+     "true": "Remote Desktop connections are blocked."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "false",
+     "reason": "Remote Desktop listens on TCP 3389; also open the firewall rule group and keep Network Level Authentication on."
+    },
+    "related": [
+     "Microsoft-Windows-TerminalServices-RDP-WinStationExtensions|UserAuthentication",
+     "Networking-MPSSVC-Svc|FirewallGroups/FirewallGroup/Group"
+    ]
+   }
+  },
+  "Microsoft-Windows-TerminalServices-RDP-WinStationExtensions": {
+   "UserAuthentication": {
+    "description": "Requires Network Level Authentication, so users sign in before a Remote Desktop session starts. Keep it on unless very old clients must connect. Leave it unset to use the Windows default.",
+    "valueHelp": {
+     "0": "Network Level Authentication is not required.",
+     "1": "Network Level Authentication is required."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "0",
+     "reason": "Without NLA the sign-in screen is exposed to anyone who can reach the port."
+    }
+   },
+   "SecurityLayer": {
+    "description": "How the Remote Desktop server proves its identity before the session starts. TLS is the most secure; Negotiate picks TLS when the client supports it. Leave it unset for Negotiate.",
+    "valueHelp": {
+     "0": "RDP security only, without TLS server authentication.",
+     "1": "Negotiate: use TLS when the client supports it.",
+     "2": "TLS is required."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "0",
+     "reason": "Without TLS the server identity is not verified."
+    }
+   }
+  },
+  "Microsoft-Windows-IE-ESC": {
+   "IEHardenAdmin": {
+    "description": "Keeps Internet Explorer Enhanced Security Configuration on for administrators. Turning it off lets admins browse freely from the server, which is a security cost. Leave it unset to keep it on.",
+    "valueHelp": {
+     "true": "Enhanced Security Configuration is on for administrators.",
+     "false": "Enhanced Security Configuration is off for administrators."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "false",
+     "reason": "Browsing from a server as an administrator is risky."
+    }
+   },
+   "IEHardenUser": {
+    "description": "Keeps Internet Explorer Enhanced Security Configuration on for standard users. Turning it off lets users browse freely from the server. Leave it unset to keep it on.",
+    "valueHelp": {
+     "true": "Enhanced Security Configuration is on for users.",
+     "false": "Enhanced Security Configuration is off for users."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "false",
+     "reason": "Browsing from a server is risky."
+    }
+   }
+  },
+  "Microsoft-Windows-ServerManager-SvrMgrNc": {
+   "DoNotOpenServerManagerAtLogon": {
+    "description": "Stops Server Manager from opening every time an administrator signs in. Common for servers managed remotely or with scripts. Leave it unset to open Server Manager.",
+    "valueHelp": {
+     "true": "Server Manager does not open at sign-in.",
+     "false": "Server Manager opens at sign-in."
+    }
+   }
+  },
+  "Microsoft-Windows-Security-SPP-UX": {
+   "SkipAutoActivation": {
+    "description": "Stops Windows from activating automatically over the internet after Setup. Use it for labs, offline builds or when KMS activation happens later. Leave it unset to activate automatically.",
+    "valueHelp": {
+     "true": "Windows does not try to activate automatically.",
+     "false": "Windows activates automatically when it can."
+    }
+   }
+  },
+  "Microsoft-Windows-Security-SPP": {
+   "SkipRearm": {
+    "description": "Whether sysprep resets the activation grace period when it generalizes the image. Windows allows only a few resets, so set 1 while you build and capture an image repeatedly. Leave it unset to reset as normal.",
+    "valueHelp": {
+     "0": "The licensing state is reset to out of box when generalizing.",
+     "1": "The licensing state is kept; the reset count is not used."
+    }
+   }
+  },
+  "Microsoft-Windows-SQMAPI": {
+   "CEIPEnabled": {
+    "description": "Turns the Customer Experience Improvement Program on or off. It sends usage data to Microsoft on older releases. Leave it unset for the Windows default.",
+    "valueHelp": {
+     "0": "The program is off; no usage data is sent.",
+     "1": "The program is on; usage data is sent."
+    }
+   }
+  },
+  "Microsoft-Windows-ErrorReportingCore": {
+   "DisableWER": {
+    "description": "Turns Windows Error Reporting off or on. With it off, crash reports are not collected or sent. Leave it unset to keep error reporting on.",
+    "valueHelp": {
+     "0": "Windows Error Reporting is on.",
+     "1": "Windows Error Reporting is off."
+    }
+   },
+   "DefaultConsent": {
+    "valueHelp": {
+     "2": "Ask before sending anything except basic app details such as name and version.",
+     "3": "Send basic app details and data that is likely safe; ask for the rest.",
+     "4": "Send all error reports without asking."
+    }
+   }
+  },
+  "Microsoft-Windows-PowerCPL": {
+   "PreferredPlan": {
+    "presets": [
+     {
+      "value": "381b4222-f694-41f0-9685-ff5bb260df2e",
+      "label": "Balanced"
+     },
+     {
+      "value": "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c",
+      "label": "High performance"
+     },
+     {
+      "value": "a1841308-3541-4fab-bc81-f71556f20b4a",
+      "label": "Power saver"
+     }
+    ],
+    "description": "The GUID of the power plan to make active. Pick a built-in plan or the GUID of a custom plan you import. Leave it unset for Balanced.",
+    "example": "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"
+   }
+  },
+  "Microsoft-Windows-Tpm-Tasks": {
+   "ClearTpm": {
+    "risk": {
+     "level": "danger",
+     "when": "1",
+     "reason": "Clearing the TPM destroys keys, including BitLocker recovery protection."
+    },
+    "description": "Clears the TPM during Setup so it starts with no owner and no keys. Only use it on devices you are repurposing. Leave it unset to keep the TPM as it is (0)."
+   }
+  },
+  "Microsoft-Windows-WorkstationService": {
+   "AllowInsecureGuestAuth": {
+    "description": "Allows connecting to file shares that accept guest access without a password. Modern Windows blocks this because it exposes users to rogue servers. Leave it unset to keep it blocked.",
+    "valueHelp": {
+     "0": "Guest access to file shares is blocked.",
+     "1": "Guest access to file shares is allowed."
+    },
+    "risk": {
+     "level": "danger",
+     "when": "1",
+     "reason": "Unauthenticated SMB guest access lets rogue servers pose as file shares."
+    }
+   },
+   "OtherDomains": {
+    "widget": "string-list",
+    "sep": " "
+   }
+  },
+  "Microsoft-Windows-WinRE-RecoveryAgent": {
+   "UninstallWindowsRE": {
+    "valueHelp": {
+     "true": "The Windows Recovery Environment is removed after Setup.",
+     "false": "The Windows Recovery Environment is kept on the disk."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "true",
+     "reason": "Without Windows RE you cannot use startup repair or reset this PC."
+    }
+   }
+  },
+  "Microsoft-Windows-SystemRestore-Main": {
+   "DisableSR": {
+    "valueHelp": {
+     "0": "System Restore is on and creates restore points.",
+     "1": "System Restore is off."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "1",
+     "reason": "No restore points can be used to undo bad changes."
+    }
+   }
+  },
+  "Security-Malware-Windows-Defender": {
+   "DisableAntiSpyware": {
+    "description": "Turns Microsoft Defender Antivirus off. Only do this when another managed antivirus is installed, because Windows is otherwise unprotected. Leave it unset to keep Defender on.",
+    "valueHelp": {
+     "true": "Microsoft Defender Antivirus is turned off.",
+     "false": "Microsoft Defender Antivirus stays on."
+    },
+    "risk": {
+     "level": "danger",
+     "when": "true",
+     "reason": "The computer has no antivirus unless another product is installed."
+    }
+   },
+   "FallbackOrder": {
+    "widget": "string-list",
+    "sep": "|",
+    "options": [
+     "InternalDefinitionUpdateServer",
+     "MicrosoftUpdateServer",
+     "MMPC",
+     "FileShares"
+    ]
+   },
+   "DefinitionUpdateFileSharesSources": {
+    "widget": "string-list",
+    "sep": "|"
+   },
+   "Scan/ScheduleTime": {
+    "description": "The local time of day when the scheduled full scan starts. It is stored as minutes past midnight. Leave it unset for 02:00.",
+    "default": "120"
+   },
+   "SignatureUpdateInterval": {
+    "unit": "hours"
+   },
+   "Scan/ScanParameters": {
+    "description": "Which kind of scan the scheduled scan runs. A quick scan checks common places; a full scan checks every file. Leave it unset for quick.",
+    "valueHelp": {
+     "1": "Quick scan.",
+     "2": "Full scan of every file."
+    }
+   },
+   "Scan/ScheduleDay": {
+    "description": "Which day the scheduled scan runs. Pick a day when the device is on but not busy. Leave it unset for never (8).",
+    "valueHelp": {
+     "0": "Every day.",
+     "1": "Sunday.",
+     "2": "Monday.",
+     "3": "Tuesday.",
+     "4": "Wednesday.",
+     "5": "Thursday.",
+     "6": "Friday.",
+     "7": "Saturday.",
+     "8": "Never."
+    }
+   }
+  },
+  "Networking-MPSSVC-Svc": {
+   "FirewallGroups/FirewallGroup/Group": {
+    "widget": "combobox-search",
+    "source": "firewallGroups",
+    "allowCustom": true,
+    "description": "The name of a built-in firewall rule group to turn on or off, such as Remote Desktop or File and Printer Sharing. Use the English group name or its resource id. A wrong name is ignored.",
+    "example": "Remote Desktop"
+   },
+   "FirewallGroups/FirewallGroup/Active": {
+    "description": "Whether every rule in the group is turned on. Turn it on to open the ports the group covers, for example Remote Desktop. Leave it unset to keep the group as Windows ships it.",
+    "valueHelp": {
+     "true": "The rules in the group are turned on (the ports open).",
+     "false": "The rules in the group are turned off."
+    }
+   },
+   "FirewallGroups/FirewallGroup/Profile": {
+    "description": "Which network profiles the group change applies to. Use all for servers that may move between networks. Leave it unset for all profiles.",
+    "valueHelp": {
+     "all": "The change applies to every profile.",
+     "domain": "Only the domain profile.",
+     "private": "Only the private profile.",
+     "public": "Only the public profile."
+    }
+   },
+   "FirewallGroups/FirewallGroup/Key": {
+    "widget": "text",
+    "description": "A unique name for this entry, for example RemoteDesktop. Windows only uses it to tell the entries apart. Each entry in the list needs its own key.",
+    "example": "RemoteDesktop"
+   }
+  },
+  "Microsoft-Windows-Deployment": {
+   "Reseal/Mode": {
+    "description": "Where the computer goes after this pass: audit mode for more customization or the out-of-box experience for the end user. Use OOBE for the final image. Leave it unset for the Windows default.",
+    "valueHelp": {
+     "Audit": "The computer restarts into audit mode.",
+     "OOBE": "The computer restarts into the out-of-box experience."
+    }
+   },
+   "Reseal/ForceShutdownNow": {
+    "description": "Shuts the computer down right after reseal instead of restarting. Use it before you capture or ship the disk. Leave it unset to restart.",
+    "valueHelp": {
+     "true": "The computer shuts down after reseal.",
+     "false": "The computer restarts after reseal."
+    }
+   },
+   "Generalize/ForceShutdownNow": {
+    "valueHelp": {
+     "true": "The computer shuts down after the generalize pass.",
+     "false": "The computer restarts after the generalize pass."
+    }
+   },
+   "DeviceForm": {
+    "valueHelp": {
+     "0": "Unknown form factor.",
+     "1": "Phone.",
+     "2": "Tablet under 18 inches.",
+     "3": "Desktop tower or small desktop.",
+     "4": "Notebook with an attached keyboard.",
+     "5": "Convertible notebook with a swivel or fold-back keyboard.",
+     "6": "Detachable with a removable keyboard.",
+     "7": "All-in-one desktop with an attached display.",
+     "8": "Stick PC that plugs into a TV.",
+     "9": "Puck: a very small desktop.",
+     "10": "Surface Hub.",
+     "11": "Head-mounted display.",
+     "12": "Industry handheld under 7 inches.",
+     "13": "Industry tablet over 7 inches.",
+     "14": "Banking machine.",
+     "15": "Building automation controller.",
+     "16": "Digital signage player.",
+     "17": "Gaming device.",
+     "18": "Home automation controller.",
+     "19": "Industrial automation computer.",
+     "20": "Kiosk.",
+     "21": "Maker board.",
+     "22": "Medical device.",
+     "23": "Networking device.",
+     "24": "Point of service terminal.",
+     "25": "Printer or copier.",
+     "26": "Thin client.",
+     "27": "Toy.",
+     "28": "Vending machine.",
+     "29": "Other industry device.",
+     "46": "Handheld gaming device."
+    },
+    "description": "Tells Windows what kind of device this is, such as a desktop, laptop or kiosk. Windows uses it to tune the interface and for telemetry. Leave it unset so the firmware reports it."
+   },
+   "ExtendOSPartition/Size": {
+    "description": "How many megabytes to add to the Windows partition. Leave it unset with Extend on to use all free space. The partition must be NTFS."
+   },
+   "AuditComputerName/MustReboot": {
+    "description": "Restarts the computer right after it takes the audit mode name, so the name is in effect. Use it when later audit commands depend on the name. Leave it unset to keep running without a restart.",
+    "valueHelp": {
+     "true": "The computer restarts right after the name changes.",
+     "false": "The computer keeps running; the name applies at the next restart."
+    }
+   },
+   "AuditComputerName/Name": {
+    "description": "A computer name to use while the image is in audit mode. It does not carry into the final installation. Leave it empty for a random name.",
+    "maxLength": 15
+   },
+   "Generalize/Mode": {
+    "description": "Where the computer goes after the generalize pass: audit mode or the out-of-box experience. Use OOBE for an image you will ship. Leave it unset for OOBE.",
+    "valueHelp": {
+     "Audit": "The computer starts in audit mode.",
+     "OOBE": "The computer starts the out-of-box experience."
+    }
+   },
+   "ExtendOSPartition/Extend": {
+    "description": "Grows the Windows partition into free space at the end of the disk during specialize. Use it when the image was captured from a smaller disk. Leave it unset to keep the size.",
+    "valueHelp": {
+     "true": "The Windows partition grows into the free space.",
+     "false": "The partition keeps its size."
+    }
+   }
+  },
+  "Microsoft-Windows-PartitionManager": {
+   "SanPolicy": {
+    "description": "Which newly found disks Windows brings online automatically. Use 2 on servers with shared SAN disks so another server cannot corrupt them. Leave it unset to bring all disks online (1).",
+    "valueHelp": {
+     "1": "Every disk is brought online.",
+     "2": "Disks on a shared bus (SCSI, iSCSI, Fibre Channel, SAS) stay offline.",
+     "3": "No new disk is brought online automatically."
+    }
+   }
+  },
+  "Microsoft-Windows-PnpSysprep": {
+   "PersistAllDeviceInstalls": {
+    "valueHelp": {
+     "true": "Installed drivers are kept through sysprep generalize.",
+     "false": "Device drivers are removed by sysprep generalize."
+    }
+   },
+   "DoNotCleanUpNonPresentDevices": {
+    "valueHelp": {
+     "true": "Devices that are not detected stay installed after the next specialize pass.",
+     "false": "Devices that are not detected are removed in the next specialize pass."
+    }
+   }
+  },
+  "Microsoft-Windows-AllUserInstallAgent": {
+   "LogonWaitForPackageRegistration": {
+    "valueHelp": {
+     "false": "Start appears right away while app registration continues in the background."
+    }
+   }
+  },
+  "Microsoft-Windows-BrowserService": {
+   "MaintainServerList": {
+    "valueHelp": {
+     "Auto": "The computer becomes a browser only when the subnet needs one."
+    }
+   }
+  },
+  "Microsoft-Windows-CoreMmRes": {
+   "CameraSoundLevel": {
+    "valueHelp": {
+     "0": "No sound plays for photos and recordings.",
+     "1-100": "A sound plays at this volume for photos and recordings."
+    }
+   }
+  },
+  "Microsoft-Windows-ehome-reg-inf": {
+   "BindNavHintsToToolbars": {
+    "valueHelp": {
+     "false": "Navigation hints appear when the mouse hovers near a menu edge."
+    }
+   },
+   "EnableSPADLaunchErrors": {
+    "valueHelp": {
+     "true": "An error appears when the remote cannot start Media Center.",
+     "false": "No error appears when the remote cannot start Media Center."
+    },
+    "description": "Shows an error when the remote control cannot start Windows Media Center. Media Center no longer ships with Windows. Leave it unset."
+   },
+   "Color": {
+    "description": "The color number of a Windows Media Center element. Media Center no longer ships with Windows. Leave it unset."
+   },
+   "FontSize": {
+    "description": "The text size used by a Windows Media Center element. Media Center no longer ships with Windows. Leave it unset."
+   },
+   "MuteTimeout": {
+    "description": "How long, in milliseconds, Windows Media Center waits before muting. Media Center no longer ships with Windows. Leave it unset."
+   },
+   "Timeout": {
+    "description": "A Windows Media Center timeout in milliseconds. Media Center no longer ships with Windows. Leave it unset."
+   },
+   "DisableExpressSetup": {
+    "description": "Hides the Express Setup choice the first time Windows Media Center starts. Media Center no longer ships with Windows. Leave it unset."
+   },
+   "DisableHighResolutionCheck": {
+    "description": "Skips the Windows Media Center screen resolution check. Media Center no longer ships with Windows. Leave it empty."
+   },
+   "OCURProductKey": {
+    "description": "A product key for an OpenCable tuner used by Windows Media Center. Media Center no longer ships with Windows. Leave it empty.",
+    "widget": "text"
+   },
+   "OEMLogoUri": {
+    "description": "The path of a device maker logo shown in Windows Media Center. Media Center no longer ships with Windows. Leave it empty.",
+    "widget": "path"
+   },
+   "RestartEnabled": {
+    "description": "Turns on the daily maintenance restart of Windows Media Center. Media Center no longer ships with Windows. Leave it unset."
+   },
+   "RestartHour": {
+    "description": "The hour of the Windows Media Center maintenance restart. Media Center no longer ships with Windows. Leave it empty.",
+    "widget": "number",
+    "min": 0,
+    "max": 23
+   },
+   "RestartMinute": {
+    "description": "The minute of the Windows Media Center maintenance restart. Media Center no longer ships with Windows. Leave it empty.",
+    "widget": "number",
+    "min": 0,
+    "max": 59
+   },
+   "TBP": {
+    "description": "Keeps the Windows Media Center mouse toolbars on screen all the time. Media Center no longer ships with Windows. Leave it unset."
+   },
+   "WorkOffline": {
+    "description": "Stops Windows Media Center from downloading album and movie information. Media Center no longer ships with Windows. Leave it unset."
+   }
+  },
+  "Microsoft-Windows-Fax-Service": {
+   "Fax/IncomingFaxesArePublic": {
+    "valueHelp": {
+     "false": "Only administrators can see unassigned incoming faxes."
+    }
+   },
+   "FaxUnattend/Rings": {
+    "default": "5",
+    "min": 1,
+    "max": 99
+   }
+  },
+  "Microsoft-Windows-HelpAndSupport": {
+   "HelpAndSupport/SearchContent": {
+    "valueHelp": {
+     "true": "Search also looks in the help files the OEM provides.",
+     "false": "Search uses only the Windows help files."
+    },
+    "description": "Also searches device maker help files in the old Help and Support centre. The old Help and Support centre is gone from current Windows. Leave it unset."
+   },
+   "HelpAndSupport/Logo": {
+    "description": "A logo for the device maker tile in the old Help and Support centre. The old Help and Support centre is gone from current Windows. Leave it empty."
+   },
+   "HelpAndSupport/LogoURL": {
+    "description": "The link behind the device maker logo in the old Help and Support centre. The old Help and Support centre is gone from current Windows. Leave it empty."
+   },
+   "HelpAndSupport/Manufacturer": {
+    "description": "The device maker name on its tile in the old Help and Support centre. The old Help and Support centre is gone from current Windows. Leave it empty."
+   },
+   "HelpAndSupport/SupportSearchURL": {
+    "description": "A search page for device maker support in the old Help and Support centre. The old Help and Support centre is gone from current Windows. Leave it empty."
+   },
+   "HelpAndSupport/TileColor": {
+    "description": "The background color of the device maker tile in the old Help and Support centre, as red plus green times 256 plus blue times 65,536. The old Help and Support centre is gone from current Windows. Leave it unset."
+   }
+  },
+  "Microsoft-Windows-IE-InternetExplorer": {
+   "TabProcessGrowth": {
+    "valueHelp": {
+     "High": "Many tab processes, for computers with plenty of memory."
+    }
+   },
+   "IEWelcomeMsg": {
+    "valueHelp": {
+     "false": "The welcome message does not appear."
+    }
+   },
+   "AllowedSites": {
+    "widget": "string-list",
+    "sep": ";"
+   },
+   "LocalIntranetSites": {
+    "widget": "string-list",
+    "sep": ";"
+   },
+   "TrustedSites": {
+    "widget": "string-list",
+    "sep": ";",
+    "description": "Web sites Internet Explorer puts in the Trusted sites zone, which has looser security. Separate several with semicolons. Internet Explorer is retired, so only IE mode setups use it."
+   },
+   "CompatibilityViewDomains": {
+    "widget": "string-list",
+    "sep": ";"
+   },
+   "ShowCommandBar": {
+    "description": "An Internet Explorer option (show command bar) that later releases removed or ignore. Internet Explorer is retired. Leave it unset."
+   },
+   "ShowMenuBar": {
+    "description": "An Internet Explorer option (show menu bar) that later releases removed or ignore. Internet Explorer is retired. Leave it unset."
+   },
+   "ShowStatusBar": {
+    "description": "An Internet Explorer option (show status bar) that later releases removed or ignore. Internet Explorer is retired. Leave it unset."
+   },
+   "SmallCommandBarIcons": {
+    "description": "An Internet Explorer option (small command bar icons) that later releases removed or ignore. Internet Explorer is retired. Leave it unset."
+   },
+   "ShowCompatibilityViewButton": {
+    "description": "An Internet Explorer option (show compatibility view button) that later releases removed or ignore. Internet Explorer is retired. Leave it unset."
+   },
+   "AllSitesCompatibilityMode": {
+    "description": "An Internet Explorer option (all sites compatibility mode) that later releases removed or ignore. Internet Explorer is retired. Leave it unset."
+   },
+   "PrintBackground": {
+    "description": "An Internet Explorer option (print background) that later releases removed or ignore. Internet Explorer is retired. Leave it unset."
+   },
+   "EnableLinksBar": {
+    "description": "An Internet Explorer option (enable links bar) that later releases removed or ignore. Internet Explorer is retired. Leave it unset."
+   },
+   "SearchScopes/Scope/DisplayQuickPick": {
+    "description": "Showed this search provider in the old Internet Explorer quick pick menu. Internet Explorer is retired. Leave it unset."
+   }
+  },
+  "Microsoft-Windows-MapControl-Desktop": {
+   "ChinaVariantWin10": {
+    "valueHelp": {
+     "1": "Maps approved in China are used, from a server in China."
+    }
+   }
+  },
+  "Microsoft-Windows-NetworkLoadBalancing-Core": {
+   "Clusters/Cluster/Portrules/Portrule/EqualLoad": {
+    "valueHelp": {
+     "false": "Each host takes the share set by LoadWeight."
+    }
+   },
+   "Clusters/Cluster/Portrules/Portrule/Mode": {
+    "valueHelp": {
+     "Single": "One host handles this traffic, by priority."
+    }
+   },
+   "Clusters/Cluster/IdentityHeartbeatPeriod": {
+    "min": 10000,
+    "default": "10000"
+   },
+   "Clusters/Cluster/MembershipHeartbeatPeriod": {
+    "default": "1000"
+   },
+   "Clusters/Cluster/MaximumConnectionDescriptors": {
+    "min": 1,
+    "max": 1048576,
+    "default": "262144"
+   },
+   "Clusters/Cluster/Portrules/Portrule/Timeout": {
+    "unit": "s"
+   }
+  },
+  "Microsoft-Windows-RemoteAssistance-Exe": {
+   "fAllowFullControl": {
+    "valueHelp": {
+     "true": "Helpers can take full control of the computer.",
+     "false": "Helpers can only view the screen."
+    }
+   },
+   "MaxTicketExpiry": {
+    "min": 1,
+    "max": 999,
+    "description": "How long a Remote Assistance invitation stays valid, in the unit set by MaxTicketExpiryUnits. Shorter is safer. Leave it unset for 6 hours.",
+    "related": [
+     "MaxTicketExpiryUnits"
+    ]
+   },
+   "MaxTicketExpiryUnits": {
+    "description": "The unit of MaxTicketExpiry: minutes, hours or days. Together they decide how long an invitation stays valid. Leave it unset for hours.",
+    "valueHelp": {
+     "0": "MaxTicketExpiry counts minutes.",
+     "1": "MaxTicketExpiry counts hours.",
+     "2": "MaxTicketExpiry counts days."
+    },
+    "related": [
+     "MaxTicketExpiry"
+    ]
+   },
+   "fAllowToGetHelp": {
+    "description": "Lets users send Remote Assistance invitations to get help. Turn it off where help desks use another tool. Leave it unset for the default.",
+    "valueHelp": {
+     "true": "Users can ask for Remote Assistance.",
+     "false": "Users cannot ask for Remote Assistance."
+    }
+   }
+  },
+  "Microsoft-Windows-TabletPC-Platform-Input-Core": {
+   "TouchKeyboardAutoInvokeEnabled": {
+    "valueHelp": {
+     "false": "The touch keyboard does not open on its own.",
+     "true": "The touch keyboard opens on its own when no keyboard is attached."
+    }
+   },
+   "TouchUI": {
+    "description": "Turns the touch optimised interface on or off on old tablet releases. Current Windows ignores it. Leave it unset."
+   },
+   "TouchUISize": {
+    "description": "The size of touch targets on old tablet releases. Current Windows ignores it. Leave it unset."
+   }
+  },
+  "Microsoft-Windows-TerminalServices-RemoteConnectionManager": {
+   "LicensingMode": {
+    "valueHelp": {
+     "2": "Per device: each client device needs a client access license.",
+     "4": "Per user: each user needs a client access license.",
+     "5": "Licensing is not configured."
+    },
+    "description": "How the Remote Desktop Session Host counts client access licenses. It must match the licenses you bought. Leave it unset to configure licensing later."
+   }
+  },
+  "Microsoft-Windows-Devices-Lights-WinRT": {
+   "WinDLDefaultEffectMainColor": {
+    "widget": "color",
+    "format": "abgr-hex"
+   },
+   "WinDLDefaultSecondaryColor": {
+    "widget": "color",
+    "format": "abgr-hex"
+   },
+   "WinDLDefaultBrightness": {
+    "unit": "%"
+   }
+  },
+  "Microsoft-Windows-Devices-Lights-Configuration": {
+   "BacklightAutobrightnessBucketMapping": {
+    "widget": "key-value",
+    "sep": ",",
+    "fieldSep": ":",
+    "columns": [
+     "Min lux",
+     "Max lux",
+     "Brightness %"
+    ]
+   }
+  },
+  "Microsoft-Windows-Sensors-Core": {
+   "CapableDistancesInMillimeters": {
+    "widget": "string-list",
+    "sep": ";",
+    "default": "450;750;1200",
+    "unit": "mm"
+   },
+   "DefaultOnlookerDetectionDimOverride": {
+    "unit": "%",
+    "default": "50"
+   },
+   "DefaultWakeDetectionDistance": {
+    "unit": "mm"
+   },
+   "DefaultLockDetectionDistance": {
+    "unit": "mm"
+   },
+   "DefaultOnlookerDetectionDistance": {
+    "unit": "mm"
+   },
+   "DefaultOnlookerNotPresentTimeout": {
+    "widget": "duration",
+    "unit": "ms",
+    "default": "5000"
+   },
+   "DefaultOnlookerPresentTimeout": {
+    "widget": "duration",
+    "unit": "ms",
+    "default": "2000"
+   },
+   "DefaultSensorExtensionReadingTimeout": {
+    "widget": "duration",
+    "unit": "ms",
+    "default": "5000"
+   },
+   "DefaultSensorExtensionProcessReadingTimeout": {
+    "widget": "duration",
+    "unit": "ms",
+    "default": "500"
+   }
+  },
+  "Microsoft-Windows-IE-ClientNetworkProtocolImplementation": {
+   "HKLMProxyOverride": {
+    "widget": "string-list",
+    "sep": ";"
+   },
+   "HKLMConnectTimeOut": {
+    "default": "60000"
+   },
+   "HKLMReceiveTimeOut": {
+    "default": "30000"
+   },
+   "HKLMSendTimeOut": {
+    "default": "30000"
+   },
+   "CacheLimit": {
+    "min": 8192,
+    "max": 1048576
+   },
+   "HKLMConnectRetries": {
+    "default": "5"
+   }
+  },
+  "Microsoft-Windows-Embedded-UnifiedWriteFilter": {
+   "OverlayType": {
+    "widget": "segmented",
+    "values": [
+     {
+      "value": "RAM",
+      "label": "RAM"
+     },
+     {
+      "value": "Disk",
+      "label": "Disk"
+     }
+    ],
+    "valueHelp": {
+     "RAM": "Changes are kept in memory and lost at restart.",
+     "Disk": "Changes are kept in a file on the system volume until restart."
+    }
+   },
+   "Binding": {
+    "widget": "segmented",
+    "values": [
+     {
+      "value": "Loose Binding",
+      "label": "Loose"
+     },
+     {
+      "value": "Tight Binding",
+      "label": "Tight"
+     }
+    ],
+    "valueHelp": {
+     "Loose Binding": "The volume is matched by drive letter.",
+     "Tight Binding": "The volume is matched by volume name."
+    }
+   },
+   "ProtectedVolumeList/ProtectedVolumeEntry/FileExceptionsUserDefined": {
+    "widget": "string-list",
+    "sep": ";"
+   },
+   "OverlayMaximumSize": {
+    "default": "1024"
+   },
+   "OverlayFlags": {
+    "description": "Whether writes to free space on a disk overlay may go straight to the disk. It only matters with a disk overlay. Leave it unset for the default of the overlay type.",
+    "valueHelp": {
+     "0": "Every write goes to the overlay.",
+     "1": "Writes to unused space pass through to the disk."
+    }
+   },
+   "BootStatusPolicy": {
+    "description": "Which boot or shutdown failures show the Windows Error Recovery screen on a protected device. Kiosks usually ignore failures so the device always starts. Leave it unset to ignore all failures.",
+    "valueHelp": {
+     "DisplayAllFailures": "Show every boot and shutdown failure.",
+     "IgnoreAllFailures": "Ignore failures and start normally.",
+     "IgnoreShutdownFailures": "Show only boot failures.",
+     "IgnoreBootFailures": "Show only shutdown failures."
+    }
+   }
+  },
+  "Microsoft-Windows-Embedded-ShellLauncher": {
+   "Shell": {
+    "default": "cmd.exe",
+    "description": "The program that replaces the desktop shell for everyone not listed below, with its arguments. A kiosk usually names its app here. Leave it unset for cmd.exe.",
+    "example": "C:\\Kiosk\\app.exe /fullscreen"
+   },
+   "DefaultReturnCodeAction": {
+    "description": "What happens when the custom shell exits with a code that has no mapping. Restarting the shell keeps a kiosk running. Leave it unset to restart the shell (0).",
+    "valueHelp": {
+     "0": "Restart the shell.",
+     "1": "Restart the device.",
+     "2": "Shut down the device.",
+     "3": "Do nothing."
+    }
+   },
+   "UserSettings/User/DefaultReturnCodeAction": {
+    "description": "What happens when this user custom shell exits with a code that has no mapping. Restarting the shell keeps a kiosk running. Leave it unset to use the global setting.",
+    "valueHelp": {
+     "0": "Restart the shell.",
+     "1": "Restart the device.",
+     "2": "Shut down the device.",
+     "3": "Do nothing."
+    }
+   },
+   "UserSettings/User/Shell": {
+    "description": "The program that replaces the desktop shell for this user or group, with its arguments. Use explorer.exe to give administrators a normal desktop. Leave it empty to use the default shell.",
+    "example": "explorer.exe"
+   }
+  },
+  "Microsoft-Windows-MobilePC-Sensors-API": {
+   "AdaptiveBrightness/DisplayResponseInterval": {
+    "widget": "duration",
+    "unit": "ms",
+    "min": 100,
+    "max": 36000000,
+    "default": "2000"
+   },
+   "AdaptiveBrightness/IlluminanceChangeSensitivity": {
+    "unit": "%",
+    "default": "10"
+   },
+   "AdaptiveBrightness/AutobrightnessLuxToNitsCurve": {
+    "description": "A curve that maps ambient light in lux to screen brightness in nits for automatic brightness. Device makers tune it for their panel. Leave it empty to use the built-in curve."
+   },
+   "SensorPermissions/Sensor/GUID": {
+    "description": "The GUID of a sensor or sensor category this permission entry applies to. Use it together with GUIDClassification. Leave the list empty to keep the default sensor permissions."
+   },
+   "SensorPermissions/Sensor/GUIDClassification": {
+    "description": "Says whether the GUID next to it names one sensor or a whole category of sensors. Use it together with GUID. Leave the list empty to keep the default sensor permissions."
+   }
+  },
+  "Microsoft-Windows-WPD-BusEnumService": {
+   "BTSearchIntervalOnAC": {
+    "widget": "duration",
+    "unit": "s",
+    "default": "120"
+   },
+   "BTSearchIntervalOnDC": {
+    "widget": "duration",
+    "unit": "s",
+    "default": "240"
+   }
+  },
+  "Microsoft-Windows-SystemMaintenanceService": {
+   "CacheList/Cache/CacheSizeMB": {}
+  },
+  "Microsoft-Windows-WLANSVC": {
+   "NumAntennaConnected": {
+    "min": 1,
+    "max": 255
+   },
+   "SimultaneousMultiChannelSupported": {
+    "min": 1,
+    "max": 255
+   }
+  },
+  "Microsoft-Windows-Embedded-EmbeddedLogon": {
+   "BrandingNeutral": {
+    "default": "17"
+   }
+  },
+  "Microsoft-Windows-CodeIntegrity": {
+   "SKUPolicyRequired": {
+    "description": "Marks the device as running Windows in S mode, which only allows apps from the Microsoft Store. Only devices sold in S mode set this. Leave it unset for a normal edition (0).",
+    "valueHelp": {
+     "0": "Windows runs normally, not in S mode.",
+     "1": "Windows runs in S mode: only Store apps can run."
+    }
+   }
+  },
+  "Microsoft-Windows-DeviceGuard-Unattend": {
+   "EnableVirtualizationBasedSecurity": {
+    "description": "Turns on virtualization-based security, which uses the hypervisor to isolate parts of memory from Windows itself. It is required for Credential Guard and memory integrity. Leave it unset to keep it off (0) unless policy turns it on later.",
+    "valueHelp": {
+     "0": "Virtualization-based security is off.",
+     "1": "Virtualization-based security is on."
+    }
+   },
+   "LsaCfgFlags": {
+    "description": "Turns on Credential Guard, which keeps sign-in secrets in an isolated part of memory so malware cannot steal them. It needs virtualization-based security. Leave it unset to keep Credential Guard off (0).",
+    "valueHelp": {
+     "0": "Credential Guard is off.",
+     "1": "Credential Guard is on and locked with a UEFI variable.",
+     "2": "Credential Guard is on without the UEFI lock, so it can be turned off remotely."
+    }
+   },
+   "HypervisorEnforcedCodeIntegrity": {
+    "description": "Turns on memory integrity, where the hypervisor checks every kernel driver before it runs. Some old drivers will not load with it on. Leave it unset to keep it off (0)."
+   }
+  },
+  "Microsoft-Windows-DeviceAccess": {
+   "SetRegionSpecificPrivacyAccessPolicy": {
+    "description": "Applies the device access policy required for devices sold in mainland China. Only device makers selling there set it. Leave it empty for every other device."
+   }
+  },
+  "Microsoft-Windows-Gaming-Configuration": {
+   "OEMGameBarWidget": {
+    "description": "The app user model ID of a device maker widget shown in Game Bar. Only gaming hardware makers set it. Leave it unset for no extra widget."
+   },
+   "OEMAppPathsAndName1": {
+    "description": "Registers a device maker app for gaming features: its program path, image path and display name in one value. Only gaming hardware makers set it. Leave it empty for no app."
+   },
+   "OEMAppPathsAndName2": {
+    "description": "Registers a device maker app for gaming features: its program path, image path and display name in one value. Only gaming hardware makers set it. Leave it empty for no app."
+   },
+   "OEMAppPathsAndName3": {
+    "description": "Registers a device maker app for gaming features: its program path, image path and display name in one value. Only gaming hardware makers set it. Leave it empty for no app."
+   }
+  },
+  "Microsoft-Windows-OutOfBoxExperience": {
+   "OemExtensionXmlFilePath": {
+    "description": "Path to an XML file that adds device maker tasks to the old Initial Configuration Tasks window on Windows Server. Current Windows Server releases no longer show that window. Leave it empty."
+   }
+  },
+  "Microsoft-Windows-Printing-Spooler-Core": {
+   "RemoveMPDW": {
+    "description": "Removes the Microsoft Print to PDF printer during installation. It cannot be added back later, so remove it only on locked-down devices. Leave it unset to keep the printer (0).",
+    "valueHelp": {
+     "0": "Microsoft Print to PDF is kept.",
+     "1": "Microsoft Print to PDF is removed for good."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "1",
+     "reason": "The printer cannot be reinstalled afterwards."
+    }
+   },
+   "RemoveMXDW": {
+    "description": "Removes the Microsoft XPS Document Writer printer during installation. It cannot be added back later. Leave it unset to keep the printer (0).",
+    "valueHelp": {
+     "0": "Microsoft XPS Document Writer is kept.",
+     "1": "Microsoft XPS Document Writer is removed for good."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "1",
+     "reason": "The printer cannot be reinstalled afterwards."
+    }
+   }
+  },
+  "Microsoft-Windows-SecureStartup-FilterDriver": {
+   "BytesDecryptedInDiskRequestOverhead": {
+    "description": "How many bytes BitLocker may decrypt for one disk request, a performance tuning value. Tune it only when testing shows a BitLocker throughput problem on that hardware. Leave it unset for 524,288 bytes."
+   },
+   "MaxCryptoRequestsPerIo": {
+    "description": "The most encryption requests BitLocker splits one disk operation into. Tune it only when testing shows a BitLocker throughput problem on that hardware. Leave it unset for 5."
+   },
+   "MaxDecryptRequests": {
+    "description": "The most decrypt requests BitLocker runs at the same time; 0 means no limit. Tune it only when testing shows a BitLocker throughput problem on that hardware. Leave it unset for 0."
+   },
+   "MaxEncryptRequests": {
+    "description": "The most encrypt requests BitLocker runs at the same time. Tune it only when testing shows a BitLocker throughput problem on that hardware. Leave it unset for 2."
+   },
+   "SlicedEncryptionInPlace": {
+    "description": "Whether BitLocker encrypts large requests in place or copies them to a second buffer first. Tune it only when testing shows a BitLocker throughput problem on that hardware. Leave it unset for in place (1)."
+   },
+   "SlicedEncryptionMinSize": {
+    "description": "The smallest request, in bytes, that BitLocker splits into slices. Tune it only when testing shows a BitLocker throughput problem on that hardware. Leave it unset for 524,288 bytes."
+   },
+   "SlicedEncryptionRequestsMax": {
+    "description": "The most slices BitLocker processes at the same time. Tune it only when testing shows a BitLocker throughput problem on that hardware. Leave it unset for 1."
+   },
+   "WriteIoAggregateMaxSize": {
+    "description": "The largest combined write, in bytes, that BitLocker builds from small writes. Tune it only when testing shows a BitLocker throughput problem on that hardware. Leave it unset for the default, which depends on the disk type."
+   },
+   "WriteIoAggregateMinSize": {
+    "description": "The smallest write, in bytes, that BitLocker combines with others. Tune it only when testing shows a BitLocker throughput problem on that hardware. Leave it unset for the default, which depends on the disk type."
+   },
+   "WriteSubrequestLength": {
+    "description": "The size, in bytes, of each part when BitLocker splits a large write. Tune it only when testing shows a BitLocker throughput problem on that hardware. Leave it unset for 524,288 bytes."
+   },
+   "InPlaceCrypto": {
+    "description": "Whether BitLocker may encrypt in place while double buffering is on. Tune it only when testing shows a BitLocker throughput problem on that hardware. Leave it unset to keep it off (0)."
+   },
+   "ModifiedWriteMaximum": {
+    "description": "The most modified pages BitLocker writes in one go. Tune it only when testing shows a BitLocker throughput problem on that hardware. Leave it unset for 4."
+   },
+   "ReadDoubleBuffering": {
+    "description": "Whether BitLocker reads into a second buffer before decrypting. Tune it only when testing shows a BitLocker throughput problem on that hardware. Leave it unset to keep it off (0)."
+   },
+   "PreventDeviceEncryption": {
+    "description": "Stops Windows from turning on automatic device encryption (BitLocker) on supported hardware. Use it when you manage BitLocker yourself or must avoid encryption on test machines. Leave it unset so Windows can encrypt the device.",
+    "valueHelp": {
+     "true": "Automatic device encryption is not turned on.",
+     "false": "Windows may turn on device encryption automatically."
+    },
+    "risk": {
+     "level": "caution",
+     "when": "true",
+     "reason": "The disk stays unencrypted unless you turn BitLocker on another way."
+    }
+   }
+  },
+  "Microsoft-Windows-Sidebar": {
+   "LayoutPosition": {
+    "description": "Where desktop gadgets appear on old Windows releases. Gadgets were removed in Windows 8. Leave it unset."
+   },
+   "SidebarOnByDefault": {
+    "description": "Starts the gadget sidebar at sign-in on old Windows releases. Gadgets were removed in Windows 8. Leave it unset."
+   },
+   "SidebarVisible": {
+    "description": "Shows the gadget sidebar on old Windows releases. Gadgets were removed in Windows 8. Leave it unset."
+   },
+   "Gadget1": {
+    "description": "A gadget to show in the sidebar on old Windows releases. Gadgets were removed in Windows 8. Leave it empty."
+   },
+   "Gadget2": {
+    "description": "A gadget to show in the sidebar on old Windows releases. Gadgets were removed in Windows 8. Leave it empty."
+   },
+   "Gadget3": {
+    "description": "A gadget to show in the sidebar on old Windows releases. Gadgets were removed in Windows 8. Leave it empty."
+   },
+   "Gadget4": {
+    "description": "A gadget to show in the sidebar on old Windows releases. Gadgets were removed in Windows 8. Leave it empty."
+   },
+   "Gadget5": {
+    "description": "A gadget to show in the sidebar on old Windows releases. Gadgets were removed in Windows 8. Leave it empty."
+   }
+  },
+  "Microsoft-Windows-STObject": {
+   "FlyoutHighPerformancePowerScheme": {
+    "description": "The GUID of the power plan shown as High performance in the old battery menu. This applies to old Windows releases only. Leave it empty for the built-in plan."
+   },
+   "FlyoutAutoPowerScheme": {
+    "description": "The GUID of the power plan shown as Balanced in the old battery menu. This applies to old Windows releases only. Leave it empty for the built-in plan."
+   },
+   "FlyoutPowerSaverPowerScheme": {
+    "description": "The GUID of the power plan shown as Power saver in the old battery menu. This applies to old Windows releases only. Leave it empty for the built-in plan."
+   },
+   "CustomPowerApplication1/ItemName": {
+    "description": "The display name of a custom power app in the old battery menu, written as @dllpath,-resourceid. This applies to old Windows releases only. Leave it empty for no entry."
+   },
+   "CustomPowerApplication1/IconID": {
+    "description": "The icon of a custom power app in the old battery menu, written as @dllpath,-resourceid. This applies to old Windows releases only. Leave it empty for no icon.",
+    "widget": "text"
+   },
+   "CustomPowerApplication1/Parameters": {
+    "description": "Command line arguments for a custom power app in the old battery menu. This applies to old Windows releases only. Leave it empty for none.",
+    "widget": "command-line"
+   },
+   "CustomPowerApplication1/Application": {
+    "description": "The program of a custom power app in the old battery menu. This applies to old Windows releases only. Leave it empty for no entry.",
+    "widget": "path"
+   },
+   "CustomPowerApplication2/ItemName": {
+    "description": "The display name of a custom power app in the old battery menu, written as @dllpath,-resourceid. This applies to old Windows releases only. Leave it empty for no entry."
+   },
+   "CustomPowerApplication2/IconID": {
+    "description": "The icon of a custom power app in the old battery menu, written as @dllpath,-resourceid. This applies to old Windows releases only. Leave it empty for no icon.",
+    "widget": "text"
+   },
+   "CustomPowerApplication2/Parameters": {
+    "description": "Command line arguments for a custom power app in the old battery menu. This applies to old Windows releases only. Leave it empty for none.",
+    "widget": "command-line"
+   },
+   "CustomPowerApplication2/Application": {
+    "description": "The program of a custom power app in the old battery menu. This applies to old Windows releases only. Leave it empty for no entry.",
+    "widget": "path"
+   },
+   "CustomPowerApplication3/ItemName": {
+    "description": "The display name of a custom power app in the old battery menu, written as @dllpath,-resourceid. This applies to old Windows releases only. Leave it empty for no entry."
+   },
+   "CustomPowerApplication3/IconID": {
+    "description": "The icon of a custom power app in the old battery menu, written as @dllpath,-resourceid. This applies to old Windows releases only. Leave it empty for no icon.",
+    "widget": "text"
+   },
+   "CustomPowerApplication3/Parameters": {
+    "description": "Command line arguments for a custom power app in the old battery menu. This applies to old Windows releases only. Leave it empty for none.",
+    "widget": "command-line"
+   },
+   "CustomPowerApplication3/Application": {
+    "description": "The program of a custom power app in the old battery menu. This applies to old Windows releases only. Leave it empty for no entry.",
+    "widget": "path"
+   },
+   "CustomPowerApplication4/ItemName": {
+    "description": "The display name of a custom power app in the old battery menu, written as @dllpath,-resourceid. This applies to old Windows releases only. Leave it empty for no entry."
+   },
+   "CustomPowerApplication4/IconID": {
+    "description": "The icon of a custom power app in the old battery menu, written as @dllpath,-resourceid. This applies to old Windows releases only. Leave it empty for no icon.",
+    "widget": "text"
+   },
+   "CustomPowerApplication4/Parameters": {
+    "description": "Command line arguments for a custom power app in the old battery menu. This applies to old Windows releases only. Leave it empty for none.",
+    "widget": "command-line"
+   },
+   "CustomPowerApplication4/Application": {
+    "description": "The program of a custom power app in the old battery menu. This applies to old Windows releases only. Leave it empty for no entry.",
+    "widget": "path"
+   },
+   "CustomPowerApplication5/ItemName": {
+    "description": "The display name of a custom power app in the old battery menu, written as @dllpath,-resourceid. This applies to old Windows releases only. Leave it empty for no entry."
+   },
+   "CustomPowerApplication5/IconID": {
+    "description": "The icon of a custom power app in the old battery menu, written as @dllpath,-resourceid. This applies to old Windows releases only. Leave it empty for no icon.",
+    "widget": "text"
+   },
+   "CustomPowerApplication5/Parameters": {
+    "description": "Command line arguments for a custom power app in the old battery menu. This applies to old Windows releases only. Leave it empty for none.",
+    "widget": "command-line"
+   },
+   "CustomPowerApplication5/Application": {
+    "description": "The program of a custom power app in the old battery menu. This applies to old Windows releases only. Leave it empty for no entry.",
+    "widget": "path"
+   },
+   "CustomPowerApplication6/ItemName": {
+    "description": "The display name of a custom power app in the old battery menu, written as @dllpath,-resourceid. This applies to old Windows releases only. Leave it empty for no entry."
+   },
+   "CustomPowerApplication6/IconID": {
+    "description": "The icon of a custom power app in the old battery menu, written as @dllpath,-resourceid. This applies to old Windows releases only. Leave it empty for no icon.",
+    "widget": "text"
+   },
+   "CustomPowerApplication6/Parameters": {
+    "description": "Command line arguments for a custom power app in the old battery menu. This applies to old Windows releases only. Leave it empty for none.",
+    "widget": "command-line"
+   },
+   "CustomPowerApplication6/Application": {
+    "description": "The program of a custom power app in the old battery menu. This applies to old Windows releases only. Leave it empty for no entry.",
+    "widget": "path"
+   }
+  },
+  "Microsoft-Windows-WiFiNetworkManager": {
+   "DefaultAutoConnectSharedState": {
+    "description": "The default of the old Wi-Fi Sense option that shared network access with contacts. The feature was removed. Leave it unset.",
+    "valueHelp": {
+     "0": "The sharing option starts cleared.",
+     "1": "The sharing option starts checked."
+    }
+   }
+  },
+  "Microsoft-Windows-MigrationWizardApplication": {
+   "HideDiscontinuedComponents": {
+    "description": "Hides discontinued programs from the old Windows Easy Transfer report. Easy Transfer no longer ships. Leave it unset."
+   }
+  },
+  "Microsoft-Windows-Embedded-KeyboardFilterService": {
+   "WindowsU": {
+    "description": "Blocks the Windows logo key+U shortcut that opens Ease of Access settings. Kiosk builds block it so users cannot change accessibility options. Leave it unset to allow it."
+   },
+   "LaunchApp2": {
+    "description": "Blocks the Start Application 2 key found on some keyboards. Kiosk builds block it so users cannot start other apps. Leave it unset to allow it."
+   },
+   "CustomFilters": {
+    "description": "Extra key combinations to block, written the way Keyboard Filter names them, for example Ctrl+Alt+K. Use it for shortcuts that have no setting of their own. Leave it empty for none."
+   },
+   "CustomScancodes": {
+    "description": "Extra keys to block by hardware scan code, for keys that have no name. Find the code with a keyboard test tool. Leave it empty for none."
+   },
+   "DisableKeyboardFilterForAdministrators": {
+    "description": "Lets administrators use every key even when Keyboard Filter is on. Keep it on so you can still manage a kiosk. Leave it unset for the default.",
+    "valueHelp": {
+     "true": "Administrators are not filtered.",
+     "false": "Administrators are filtered like every other user."
+    }
+   },
+   "ForceOffAccessibility": {
+    "description": "Turns off Ease of Access features and stops users turning them back on. Kiosks use it to close accessibility shortcuts as an escape route. Leave it unset to keep accessibility available.",
+    "valueHelp": {
+     "true": "Ease of Access features are off and locked.",
+     "false": "Ease of Access features stay available."
+    }
+   },
+   "ControlAltDelete": {
+    "description": "Blocks Ctrl+Alt+Delete, the Windows Security screen. Kiosk builds block it, but keep a way to manage the device. Leave it unset to allow it.",
+    "risk": {
+     "level": "caution",
+     "when": "Blocked",
+     "reason": "Users cannot reach the security screen to lock, sign out or change passwords."
+    }
+   },
+   "Alt": {
+    "description": "Blocks the Alt keys on both sides of the keyboard. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "AltF4": {
+    "description": "Blocks the Alt+F4 shortcut, which is used to close applications. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "AltSpace": {
+    "description": "Blocks the Alt+Spacebar shortcut. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "AltTab": {
+    "description": "Blocks the Alt+Tab shortcut, which is used to switch tasks. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "AltWin": {
+    "description": "Blocks the Alt+Windows logo key shortcut. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "BrowserBack": {
+    "description": "Blocks the Browser Back key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "BrowserFavorites": {
+    "description": "Blocks the Browser Favorites key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "BrowserForward": {
+    "description": "Blocks the Browser Forward key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "BrowserHome": {
+    "description": "Blocks the Browser Home key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "BrowserRefresh": {
+    "description": "Blocks the Browser Refresh key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "BrowserSearch": {
+    "description": "Blocks the Browser Search key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "BrowserStop": {
+    "description": "Blocks the Browser Stop key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "ControlEscape": {
+    "description": "Blocks the Ctrl+Esc shortcut, which is used to open the Start screen. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "ControlTab": {
+    "description": "Blocks the Ctrl+Tab shortcut, which is used to switch windows. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "ControlWindowsF": {
+    "description": "Blocks the Ctrl+Windows logo key+F shortcut, which is used to open the Find Computers dialog box. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "Ctrl": {
+    "description": "Blocks the Ctrl keys on both sides of the keyboard. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "CtrlF4": {
+    "description": "Blocks the Ctrl+F4 shortcut, which is used to close the active window. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "CtrlWin": {
+    "description": "Blocks the Ctrl+Windows logo key shortcut. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "Escape": {
+    "description": "Blocks the Esc key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "F21": {
+    "description": "Blocks the F21 key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "LaunchApp1": {
+    "description": "Blocks the Start Application 1 key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "LaunchMail": {
+    "description": "Blocks the Start Mail key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "LaunchMediaSelect": {
+    "description": "Blocks the Media Select key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "LeftShiftLeftAltNumLock": {
+    "description": "Blocks the Left Shift+Left Alt+Num Lock shortcut, which is used to open the Mouse Keys dialog box. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "LeftShiftLeftAltPrintScreen": {
+    "description": "Blocks the Left Shift+Left Alt+Print Screen shortcut, which is used to open the High Contrast dialog box. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "MediaNext": {
+    "description": "Blocks the Next Track key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "MediaPlayPause": {
+    "description": "Blocks the Play/Pause key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "MediaPrev": {
+    "description": "Blocks the Previous Track key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "MediaStop": {
+    "description": "Blocks the Stop Media key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "Shift": {
+    "description": "Blocks the Shift keys on both sides of the keyboard. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "ShiftControlEscape": {
+    "description": "Blocks the Shift+Ctrl+Esc shortcut, which is used to open Task Manager. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "ShiftWin": {
+    "description": "Blocks the Shift+Windows logo key shortcut. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "VolumeDown": {
+    "description": "Blocks the Volume Down key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "VolumeMute": {
+    "description": "Blocks the Volume Mute key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "VolumeUp": {
+    "description": "Blocks the Volume Up key. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "Windows": {
+    "description": "Blocks the Windows logo keys on both sides of the keyboard. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsB": {
+    "description": "Blocks the Windows logo key+B shortcut, which is used to set focus in the Notification area. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsBreak": {
+    "description": "Blocks the Windows logo key+Break shortcut, which is used to open the System dialog box. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsC": {
+    "description": "Blocks the Windows logo key+C shortcut, which is used to open charms. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsComma": {
+    "description": "Blocks the Windows logo key+Comma shortcut, which is used to peek at the desktop. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsD": {
+    "description": "Blocks the Windows logo key+D shortcut, which is used to show the desktop. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsDown": {
+    "description": "Blocks the Windows logo key+Down Arrow shortcut, which is used to minimize the active window. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsE": {
+    "description": "Blocks the Windows logo key+E shortcut, which is used to open Windows Explorer. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsEnter": {
+    "description": "Blocks the Windows logo key+Enter shortcut, which is used to start Narrator. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsEscape": {
+    "description": "Blocks the Windows logo key+Esc shortcut, which is used to close the Magnifier application. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsF": {
+    "description": "Blocks the Windows logo key+F shortcut, which is used to open Search. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsF1": {
+    "description": "Blocks the Windows logo key+F1 shortcut, which is used to open Windows Help. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsH": {
+    "description": "Blocks the Windows logo key+H shortcut, which is used to open the Share charm. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsHome": {
+    "description": "Blocks the Windows logo key+Home shortcut, which is used to minimize or restore all inactive windows. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsI": {
+    "description": "Blocks the Windows logo key+I shortcut, which is used to open the Settings charm. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsJ": {
+    "description": "Blocks the Windows logo key+J shortcut, which is used to swap between snapped and filled applications. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsK": {
+    "description": "Blocks the Windows logo key+K shortcut, which is used to open the Connect charm. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsL": {
+    "description": "Blocks the Windows logo key+L shortcut, which is used to lock the device. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsLeft": {
+    "description": "Blocks the Windows logo key+Left Arrow shortcut, which is used to snap the active window to the left half of the screen. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsM": {
+    "description": "Blocks the Windows logo key+M shortcut, which is used to minimize all windows. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsMinus": {
+    "description": "Blocks the Windows logo key+Minus shortcut, which is used to zoom out. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsO": {
+    "description": "Blocks the Windows logo key+O shortcut, which is used to lock device orientation. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsP": {
+    "description": "Blocks the Windows logo key+P shortcut, which is used to cycle through Presentation Mode. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsPageDown": {
+    "description": "Blocks the Windows logo key+Page Down shortcut, which is used to move a Microsoft Store app to the right monitor. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsPageUp": {
+    "description": "Blocks the Windows logo key+Page Up shortcut, which is used to move a Microsoft Store app to the left monitor. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsPeriod": {
+    "description": "Blocks the Windows logo key+Period shortcut, which is used to snap the current screen to the left or right gutter. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsPlus": {
+    "description": "Blocks the Windows logo key+Plus shortcut, which is used to zoom in. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsQ": {
+    "description": "Blocks the Windows logo key+Q shortcut, which is used to open the Search charm. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsR": {
+    "description": "Blocks the Windows logo key+R shortcut, which is used to open the Run dialog box. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsRight": {
+    "description": "Blocks the Windows logo key+Right Arrow shortcut, which is used to snap the active windows to the right half of the screen. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsShiftDown": {
+    "description": "Blocks the Windows logo key+Shift+Down Arrow shortcut, which is used to minimize the active window. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsShiftLeft": {
+    "description": "Blocks the Windows logo key+Shift+Left Arrow shortcut, which is used to move the active window to the left monitor. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsShiftRight": {
+    "description": "Blocks the Windows logo key+Shift+Right Arrow shortcut, which is used to move the active window to the right monitor. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsShiftUp": {
+    "description": "Blocks the Windows logo key+Shift+Up Arrow shortcut, which is used to maximize the active window vertically. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsSlash": {
+    "description": "Blocks the Windows logo key+Slash shortcut, which is used to open the Input Method Editor (IME). Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsSpace": {
+    "description": "Blocks the Windows logo key+Spacebar shortcut, which is used to switch layout. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsT": {
+    "description": "Blocks the Windows logo key+T shortcut, which is used to set focus on taskbar and cycle through programs. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsTab": {
+    "description": "Blocks the Windows logo key+Tab shortcut, which is used to cycle through Microsoft Store apps. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsUp": {
+    "description": "Blocks the Windows logo key+Up Arrow shortcut, which is used to maximize the active window. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsV": {
+    "description": "Blocks the Windows logo key+V shortcut, which is used to cycle through toasts in reverse order. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsW": {
+    "description": "Blocks the Windows logo key+W shortcut, which is used to open the Settings Search charm. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   },
+   "WindowsZ": {
+    "description": "Blocks the Windows logo key+Z shortcut, which is used to open the app bar. Kiosk builds block keys so users cannot leave the locked-down app. Leave it unset to allow the key (Allowed)."
+   }
+  },
+  "Microsoft-Windows-NetBT": {
+   "Interfaces/Interface/NetbiosOptions": {
+    "description": "Turns NetBIOS over TCP/IP on or off for this adapter. Turning it off reduces old broadcast name traffic on modern networks. Leave it unset to follow DHCP.",
+    "valueHelp": {
+     "0": "Use the setting from DHCP.",
+     "1": "NetBIOS over TCP/IP is on.",
+     "2": "NetBIOS over TCP/IP is off."
+    }
+   }
+  },
+  "Microsoft-Windows-SMBServer": {
+   "Size": {
+    "description": "How much memory the file server uses for sharing. Choose 3 for file servers and 1 for computers that rarely share files. Leave it unset for 3.",
+    "valueHelp": {
+     "1": "Use little memory.",
+     "2": "Balance memory and network performance.",
+     "3": "Use more memory for file sharing throughput."
+    }
+   },
+   "LmAnnounce": {
+    "description": "Makes the computer announce itself to old LAN Manager browse lists. Modern networks do not need it. Leave it unset to stay quiet.",
+    "valueHelp": {
+     "true": "The server sends LAN Manager announcements.",
+     "false": "The server does not announce itself."
+    }
+   }
+  },
+  "Microsoft-Windows-EnhancedStorage-Adm": {
+   "TCGSecurityActivationDisabled": {
+    "description": "Stops Windows from turning on hardware encryption for self-encrypting drives. Use it when another tool manages those drives. Leave it unset so Windows can manage them."
+   }
+  }
+ }
+}

@@ -4,6 +4,7 @@
 import { h, iconButton, clone } from './dom.js';
 import { startDrag } from './drag.js';
 import { searchBox } from './search-ui.js';
+import { quickField } from './widgets/index.js';
 
 export const PART_TYPES = ['EFI', 'MSR', 'Primary', 'Recovery', 'Extended', 'Logical'];
 export const PRESETS = {
@@ -72,6 +73,13 @@ export function mountDisk(root, ctx) {
   function L() { return clone(ctx.get()) || PRESETS.uefi(); }
   function commit(layout, key, args, co) { ctx.set(layout, { key, args }, co); draw(); }
   function draw() {
+    // keep focus and caret in the field being typed in across the redraw
+    const act = document.activeElement, keepId = act && root.contains(act) && act.id ? act.id : null;
+    const caret = keepId && act.selectionStart != null ? [act.selectionStart, act.selectionEnd] : null;
+    drawInner();
+    if (keepId) { const n = document.getElementById(keepId); if (n) { n.focus({ preventScroll: true }); if (caret && n.setSelectionRange) try { n.setSelectionRange(caret[0], caret[1]); } catch (e) { /* not a text field */ } } }
+  }
+  function drawInner() {
     const layout = ctx.get();
     root.replaceChildren();
     const presetSel = h('select', { 'aria-label': t('disk.preset') }, [h('option', { value: '', text: t('disk.preset') })].concat(Object.keys(PRESETS).map((k) => h('option', { value: k, text: t('disk.preset.' + k) }))));
@@ -88,18 +96,14 @@ export function mountDisk(root, ctx) {
     layout.disks.forEach((disk, di) => {
       const m = layoutMath(disk);
       const box = h('div', { class: 'disk' });
-      const sizeInp = h('input', { type: 'number', min: '1', value: disk.sizeMB, 'aria-label': t('disk.size'), inputmode: 'numeric', style: { maxWidth: '160px' } });
-      sizeInp.addEventListener('change', () => { const l = L(); l.disks[di].sizeMB = sizeInp.value; commit(l, 'hist.diskSize', [disk.diskId, sizeInp.value]); });
-      const idInp = h('input', { type: 'number', min: '0', max: '99', value: disk.diskId, 'aria-label': t('disk.id'), style: { maxWidth: '90px' } });
-      idInp.addEventListener('change', () => { const l = L(); const old = l.disks[di].diskId; l.disks[di].diskId = idInp.value; if (String(l.target.diskId) === String(old)) l.target.diskId = idInp.value; commit(l, 'hist.diskId', [idInp.value]); });
-      const wipe = h('input', { type: 'checkbox', checked: disk.wipe !== false });
-      wipe.addEventListener('change', () => { const l = L(); l.disks[di].wipe = wipe.checked; commit(l, 'hist.diskWipe', [disk.diskId, String(wipe.checked)]); });
-      box.appendChild(h('div', { class: 'inline', style: { flexWrap: 'wrap', alignItems: 'center', marginBottom: '8px' } }, [
-        h('b', { text: t('disk.disk', [disk.diskId]) }), h('label', { class: 'field', style: { flexDirection: 'row', alignItems: 'center', gap: '6px' } }, [t('disk.id'), idInp]),
-        h('label', { class: 'field', style: { flexDirection: 'row', alignItems: 'center', gap: '6px' } }, [t('disk.sizeMB'), sizeInp]),
-        h('label', { class: 'check' }, [wipe, t('disk.wipe')]),
-        iconButton('del', t('disk.removeDisk'), () => { const l = L(); l.disks.splice(di, 1); sel = { disk: 0, part: 0 }; commit(l, 'hist.removeDisk', [disk.diskId]); })
-      ]));
+      const SPD = 'Microsoft-Windows-Setup|DiskConfiguration/Disk/';
+      let idTimer, sizeTimer;
+      const idF = quickField({ id: 'dk-id-' + di, label: t('disk.id'), hintKey: SPD + 'DiskID', value: disk.diskId, t, noUnset: true, onChange: (v) => { clearTimeout(idTimer); idTimer = setTimeout(() => { const l = L(); const old = l.disks[di].diskId; l.disks[di].diskId = v || '0'; if (String(l.target.diskId) === String(old)) l.target.diskId = v || '0'; commit(l, 'hist.diskId', [v || '0']); }, 600); } });
+      const sizeF = quickField({ id: 'dk-dsize-' + di, label: t('disk.sizeMB'), value: disk.sizeMB, t, noUnset: true, hint: { widget: 'size', storage: 'MB', description: t('disk.sizeHelp', null, 'The size of the disk, used only to draw this layout and check that the partitions fit. It is not written to the answer file.') }, onChange: (v) => { clearTimeout(sizeTimer); sizeTimer = setTimeout(() => { const l = L(); l.disks[di].sizeMB = v || '0'; commit(l, 'hist.diskSize', [disk.diskId, v || '0']); }, 600); } });
+      const wipeF = quickField({ id: 'dk-wipe-' + di, label: t('disk.wipe'), hintKey: SPD + 'WillWipeDisk', value: disk.wipe !== false ? 'true' : 'false', t, noUnset: true, onChange: (v) => { const l = L(); l.disks[di].wipe = v === 'true'; commit(l, 'hist.diskWipe', [disk.diskId, String(v === 'true')]); } });
+      box.appendChild(h('div', { class: 'disk-head' }, [h('div', { class: 'inline', style: { alignItems: 'center', justifyContent: 'space-between' } }, [h('b', { text: t('disk.disk', [disk.diskId]) }),
+        iconButton('del', t('disk.removeDisk'), () => { const l = L(); l.disks.splice(di, 1); sel = { disk: 0, part: 0 }; commit(l, 'hist.removeDisk', [disk.diskId]); })]),
+        h('div', { class: 'grid2' }, [idF.el, sizeF.el, wipeF.el])]));
       const bar = h('div', { class: 'disk-bar', role: 'listbox', 'aria-label': t('disk.disk', [disk.diskId]) });
       const total = Math.max(m.total, m.used, 1);
       disk.partitions.forEach((p, pi) => {
@@ -146,17 +150,19 @@ export function mountDisk(root, ctx) {
       const ed = h('div', { class: 'b-sec', style: { marginTop: '8px' } }, [h('header', null, [h('h2', { text: t('disk.partTitle', [d.diskId, sel.part + 1]) })])]);
       const g = h('div', { class: 'grid2' });
       const upd = (k, v, co) => { const l = L(); l.disks[sel.disk].partitions[sel.part][k] = v; commit(l, 'hist.partField', [sel.part + 1, t('disk.f.' + k), String(v)], co); };
-      const typeSel = h('select', { id: 'dk-type' }, PART_TYPES.map((x) => h('option', { value: x, text: x })));
-      typeSel.value = p.type; typeSel.addEventListener('change', () => upd('type', typeSel.value));
-      const size = h('input', { type: 'number', id: 'dk-size', min: '1', value: p.sizeMB, disabled: p.extend || undefined }); size.addEventListener('change', () => upd('sizeMB', size.value));
-      const ext = h('input', { type: 'checkbox', checked: !!p.extend }); ext.addEventListener('change', () => upd('extend', ext.checked));
-      const fmt = h('select', { id: 'dk-fmt' }, ['', 'NTFS', 'FAT32'].map((x) => h('option', { value: x, text: x || t('cat.notSet') }))); fmt.value = p.format || ''; fmt.addEventListener('change', () => upd('format', fmt.value));
-      const lab = h('input', { type: 'text', id: 'dk-label', value: p.label || '', maxlength: '32' }); lab.addEventListener('change', () => upd('label', lab.value));
-      const let_ = h('select', { id: 'dk-letter' }, [''].concat('CDEFGHIJKLMNOPQRSTUVWXYZ'.split('')).map((x) => h('option', { value: x, text: x || t('cat.notSet') }))); let_.value = (p.letter || '').toUpperCase(); let_.addEventListener('change', () => upd('letter', let_.value));
-      const act = h('input', { type: 'checkbox', checked: !!p.active }); act.addEventListener('change', () => upd('active', act.checked));
-      [['dk-type', 'disk.f.type', typeSel], ['dk-size', 'disk.f.sizeMB', size], ['dk-fmt', 'disk.f.format', fmt], ['dk-label', 'disk.f.label', lab], ['dk-letter', 'disk.f.letter', let_]].forEach(([id, k, c]) => g.appendChild(h('div', { class: 'field' }, [h('label', { for: id, text: t(k) }), c])));
-      g.appendChild(h('label', { class: 'check' }, [ext, t('disk.f.extend')]));
-      g.appendChild(h('label', { class: 'check' }, [act, t('disk.f.active')]));
+      // Partition detail sheet: the same rich field cards as the settings editors.
+      const SP = 'Microsoft-Windows-Setup|DiskConfiguration/Disk/';
+      const diskMB = parseInt(d.sizeMB, 10) || 0;
+      let labTimer, szTimer;
+      const qf = (key, label, hintKey, value, onv, hint) => quickField({ id: 'dk-' + key, label, hintKey, hint, value, t, noUnset: true, onChange: onv }).el;
+      g.append(
+        qf('type', t('disk.f.type'), SP + 'CreatePartitions/CreatePartition/Type', p.type, (v) => upd('type', v || 'Primary'), { widget: 'cards', values: PART_TYPES.map((x) => ({ value: x, label: x })), valueHelp: { Recovery: t('disk.recoveryHelp', null, 'A Windows recovery tools partition (NTFS, about 1 GB, hidden with a type id).') } }),
+        p.extend ? null : qf('size', t('disk.f.sizeMB'), SP + 'CreatePartitions/CreatePartition/Size', p.sizeMB, (v) => { clearTimeout(szTimer); szTimer = setTimeout(() => upd('sizeMB', v || '0', 'size'), 500); }, { widget: 'size', storage: 'MB', diskMB }),
+        qf('extend', t('disk.f.extend'), SP + 'CreatePartitions/CreatePartition/Extend', p.extend ? 'true' : 'false', (v) => { upd('extend', v === 'true'); }),
+        qf('fmt', t('disk.f.format'), SP + 'ModifyPartitions/ModifyPartition/Format', p.format || undefined, (v) => upd('format', v || '')),
+        qf('label', t('disk.f.label'), SP + 'ModifyPartitions/ModifyPartition/Label', p.label || '', (v) => { clearTimeout(labTimer); labTimer = setTimeout(() => upd('label', v || '', 'label'), 500); }),
+        qf('letter', t('disk.f.letter'), SP + 'ModifyPartitions/ModifyPartition/Letter', (p.letter || '').toUpperCase() || undefined, (v) => upd('letter', v || ''), { widget: 'combobox-search', allowCustom: false }),
+        qf('active', t('disk.f.active'), SP + 'ModifyPartitions/ModifyPartition/Active', p.active ? 'true' : 'false', (v) => upd('active', v === 'true')));
       ed.appendChild(g);
       const isT = String(layout.target.diskId) === String(d.diskId) && String(layout.target.partitionId) === String(sel.part + 1);
       ed.appendChild(h('div', { class: 'cta', style: { marginTop: '12px' } }, [

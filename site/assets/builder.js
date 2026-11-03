@@ -9,6 +9,7 @@ import { mountDeploy } from './canvas/deploy.js';
 import { buildIndex, search as searchIndex, problemKeys, filterList, compileQuery } from './canvas/search.js';
 import { searchBox, combobox } from './canvas/search-ui.js';
 import * as DX from './canvas/direct.js';
+import { registerHints, hintAt, hintCount, fieldCard, quickField, meaningOf, hintSearchText, firstSentence } from './canvas/widgets/index.js';
 
 const A = window.TempDeskAnswer, Z = window.TempDeskZip, HI = window.TempDeskHistory, S = window.TempDeskSite;
 const t = (k, args, fb) => S.t(k, args, fb);
@@ -81,6 +82,36 @@ const FIELDS = {
   raw: { type: 'raw' }
 };
 const X = (ids) => ids.map((i) => 'x.' + i);
+// Rich controls for the Guided fields: each friendly field borrows the widget and description of the
+// catalog setting it writes, or gets its own hint.
+const SH = 'Microsoft-Windows-Shell-Setup|';
+const GUIDED_HINTS = {
+  computerName: { key: SH + 'ComputerName' }, timeZone: { key: SH + 'TimeZone' }, organization: { key: SH + 'RegisteredOrganization' }, owner: { key: SH + 'RegisteredOwner' },
+  productKey: { key: 'Microsoft-Windows-Setup|UserData/ProductKey/Key' }, setupLanguage: { key: 'Microsoft-Windows-International-Core-WinPE|SetupUILanguage/UILanguage' },
+  locale: { key: 'Microsoft-Windows-International-Core|UserLocale' }, keyboard: { key: 'Microsoft-Windows-International-Core|InputLocale' },
+  joinDomain: { key: 'Microsoft-Windows-UnattendedJoin|Identification/JoinDomain' }, ou: { key: 'Microsoft-Windows-UnattendedJoin|Identification/MachineObjectOU' },
+  joinUser: { key: 'Microsoft-Windows-UnattendedJoin|Identification/Credentials/Username' },
+  ipAddress: { hint: { widget: 'ipv4' } }, gateway: { hint: { widget: 'ipv4' } }, dnsServer: { hint: { widget: 'ipv4' } },
+  prefixLength: { hint: { widget: 'number', min: 1, max: 32, unit: 'bits', presets: [{ value: '24', label: '/24 (255.255.255.0)' }, { value: '16', label: '/16' }] } },
+  dnsServers: { hint: { widget: 'string-list', sep: ',' } }, diskId: { hint: { widget: 'number', min: 0, max: 99 } }, partitionId: { hint: { widget: 'number', min: 1, max: 128 } },
+  autoLogonCount: { key: SH + 'AutoLogon/LogonCount' }, domainName: { hint: { widget: 'text', format: 'fqdn' } }, netbiosName: { hint: { widget: 'text', maxLength: 15 } },
+  'x.oemManufacturer': { key: SH + 'OEMInformation/Manufacturer' }, 'x.oemModel': { key: SH + 'OEMInformation/Model' }, 'x.oemSupportUrl': { key: SH + 'OEMInformation/SupportURL' },
+  'x.oemSupportPhone': { key: SH + 'OEMInformation/SupportPhone' }, 'x.oemSupportHours': { key: SH + 'OEMInformation/SupportHours' }, 'x.oemLogo': { key: SH + 'OEMInformation/Logo' },
+  'x.monitorTimeout': { hint: { widget: 'duration', unit: 'min', min: 0, max: 999 } }, 'x.ntpServer': { hint: { widget: 'text', format: 'fqdn' } },
+  imageName: { hint: { widget: 'combobox-search', source: 'editions', allowCustom: true } }, features: { hint: { widget: 'string-list', sep: ',' } },
+  driversPE: { hint: { widget: 'string-list', sep: '\n' } }, driversOffline: { hint: { widget: 'string-list', sep: '\n' } },
+  'x.uacOff': { key: 'Microsoft-Windows-LUA-Settings|EnableLUA', invert: true }, rdp: { key: 'Microsoft-Windows-TerminalServices-LocalSessionManager|fDenyTSConnections', invert: true }
+};
+function guidedHint(id) {
+  const g = GUIDED_HINTS[id];
+  if (!g) return null;
+  const base = g.key ? hintAt(g.key) : null;
+  const hint = Object.assign({ valueHelp: {}, risk: { level: 'none' }, related: [] }, base ? JSON.parse(JSON.stringify(base)) : {}, g.hint || {});
+  const help = t('h.' + id.replace(/^x\./, 'x_'), null, '');
+  if (!base && help && help !== 'h.' + id.replace(/^x\./, 'x_')) hint.description = help;
+  if (g.key) hint.related = [g.key].concat(hint.related || []);
+  return hint;
+}
 // About 20 sections, each mapped to real catalog settings for Advanced.
 const SECTIONS = [
   { id: 'disk', f: { server: ['firmware'], guest: ['firmware', 'diskId'], custom: ['diskLayout', 'diskId', 'partitionId'] }, canvas: 'disk', adv: [['Microsoft-Windows-Setup', ['DiskConfiguration']]] },
@@ -130,6 +161,15 @@ function fileXml(m) {
 function safeXml(m) { try { return fileXml(m); } catch (e) { return '<!-- ' + String(e.message).replace(/--/g, '- -') + ' -->\n'; } }
 let rules = null; // { parseXml, validateModel, raw catalog } from answerfile/ when the build ships them
 let ruleIssues = [];
+// Widget hints (answerfile/widgets.json through answerfile/widgets.mjs): a widget and a written
+// description for every catalog leaf setting. Without them the editors fall back to basic controls.
+async function loadHints() {
+  if (!catalog || !catalog.raw) return;
+  try {
+    const [W, json] = await Promise.all([import(new URL(ROOT + 'answerfile/widgets.mjs', document.baseURI).href), fetch(ROOT + 'answerfile/widgets.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null))]);
+    if (json) registerHints(W.allHints(W.compileWidgets(json), catalog.raw));
+  } catch (e) { output('Widget hints: ' + e.message); }
+}
 async function loadRules() {
   if (!catalog || catalog.origin !== 'full' || !catalog.raw) return;
   try {
@@ -551,12 +591,38 @@ function renderInspector() {
   if (selected.path) { let list = comp.settings; selected.path.split('/').forEach((seg) => { setting = list && list.find((s) => s.name === seg); list = setting ? setting.children : null; }); }
   if (setting) {
     body.appendChild(h('h4', { class: 'mono', text: selected.path }));
-    body.appendChild(h('p', { class: 'help', text: setting.help || '' }));
-    if (setting.doc) body.appendChild(h('a', { class: 'linkish', href: docUrl(comp, setting), target: '_blank', rel: 'noopener', text: t('direct.docsSetting') }));
-    body.appendChild(h('dl', { class: 'st-dl' }, [h('dt', { text: t('studio.type') }), h('dd', { text: setting.type }), h('dt', { text: t('cat.pass') }), h('dd', { text: (setting.passes.length ? setting.passes : comp.passes).join(', ') }),
-      setting.default !== undefined ? h('dt', { text: t('studio.default') }) : null, setting.default !== undefined ? h('dd', { text: String(setting.default) }) : null,
-      setting.min !== undefined ? h('dt', { text: t('studio.range') }) : null, setting.min !== undefined ? h('dd', { text: setting.min + ' .. ' + (setting.max ?? '') }) : null]));
-    if (setting.values.length) body.appendChild(h('ul', { class: 'st-values' }, setting.values.map((v) => h('li', null, [h('code', { text: v.value }), ' ', v.label]))));
+    const srcAll = isDirect() ? model.direct.all : model.all;
+    const key = selected.pass + '|' + comp.name;
+    const leaf = setting.type !== 'container' && setting.type !== 'list' && setting.type !== 'stringList';
+    if (leaf) {
+      // The inspector edits the selected setting with the same rich field card as the editor.
+      const parts = selected.path.split('/');
+      const holder = () => { let o = srcAll[key] = srcAll[key] || {}; parts.slice(0, -1).forEach((p) => { if (!o[p] || typeof o[p] !== 'object' || Array.isArray(o[p])) o[p] = {}; o = o[p]; }); return o; };
+      let peek = srcAll[key]; parts.forEach((p) => { peek = peek && typeof peek === 'object' ? peek[p] : undefined; });
+      const isPw = setting.type === 'password';
+      const read = (v) => (v === undefined ? undefined : isPw ? (v && typeof v === 'object' ? v['@password'] : v) : v && typeof v === 'object' ? v['#text'] : v);
+      const hint = hintAt(comp.name + '|' + setting.hintPath);
+      const card = fieldCard({ id: 'insp-f', label: setting.name, hint, setting, value: read(peek), t, A, announce, sensitive: setting.sensitive, deprecated: setting.deprecated,
+        passes: setting.passes.length ? setting.passes : comp.passes, issues: () => fieldIssues(selected.pass)(comp.name, selected.path), onRelated: (k) => goRelated(k, selected.pass),
+        relatedName: (k) => k.split('|')[0] === comp.name ? k.split('|')[1] : k.replace('Microsoft-Windows-', '').replace('|', ' / '), englishNote: document.documentElement.lang === 'zh-HK' ? t('w.englishOnly') : '',
+        onChange: (v, meta) => {
+          const o = holder(), last = parts[parts.length - 1], prev = o[last];
+          if (v === undefined) delete o[last];
+          else if (isPw) o[last] = Object.assign({}, prev && typeof prev === 'object' ? prev : {}, { '@password': v });
+          else o[last] = v;
+          if (!isDirect() && isEmpty(srcAll[key])) delete srcAll[key];
+          const secret = isPw || setting.sensitive || (meta && meta.secret);
+          commit({ key: v === undefined ? 'hist.unset' : secret ? 'hist.setSecret' : 'hist.set', args: secret ? [comp.name + ' ' + selected.path] : [comp.name + ' ' + selected.path, String(v === undefined ? '' : v).slice(0, 40)] }, ['toggle', 'segmented', 'cards'].includes(card.widget && hint && hint.widget) ? null : 'insp:' + key + ':' + selected.path);
+          if (isDirect()) refreshDirectTree();
+          const twin = mainEl.querySelector(`[data-setting-path="${CSS.escape(comp.name + '/' + selected.path)}"]`);
+          if (twin && !twin.contains(document.activeElement)) inspDirty = true;
+        } });
+      card.el.querySelector('.wf-more-b') && card.el.querySelector('.wf-more-b').click();
+      body.appendChild(card.el);
+    } else {
+      body.appendChild(h('p', { class: 'help', text: setting.help || '' }));
+      if (setting.doc) body.appendChild(h('a', { class: 'linkish', href: docUrl(comp, setting), target: '_blank', rel: 'noopener', text: t('direct.docsSetting') }));
+    }
   }
   body.appendChild(h('h4', { text: t('studio.related') }));
   const rel = h('ul', { class: 'st-values' });
@@ -568,10 +634,18 @@ function renderInspector() {
   body.appendChild(rel);
   body.appendChild(h('div', { class: 'cta' }, [btn('ctx.open', () => openTab('comp:' + selected.pass + '|' + comp.name), 'btn-ghost btn-sm'), btn('ctx.revealXml', () => revealInXml(comp.name, selected.pass), 'btn-ghost btn-sm')]));
 }
+let inspDirty = false;
+document.addEventListener('focusout', (e) => {
+  const insp = $('#st-insp');
+  if (!inspDirty || !insp.contains(e.target) || (e.relatedTarget && insp.contains(e.relatedTarget))) return;
+  inspDirty = false;
+  const scroll = mainEl.scrollTop; renderEditorOnly(); mainEl.scrollTop = scroll;
+});
 document.addEventListener('focusin', (e) => {
   const cs = e.target.closest && e.target.closest('[data-setting-path]');
   if (!cs || !$('#st-editor').contains(cs)) return;
   const [comp, ...rest] = cs.dataset.settingPath.split('/');
+  if (cs.closest('.list-row') && cs.closest('.list-row') !== cs) return; // fields inside list items keep the list selected
   const pass = view.startsWith('comp:') ? view.slice(5).split('|')[0] : (allState.pass !== 'all' ? allState.pass : (catalog && catalog.byName.get(comp) ? catalog.byName.get(comp).passes[0] : ''));
   const next = { comp, pass, path: rest.join('/') };
   if (!selected || selected.comp !== next.comp || selected.path !== next.path) { selected = next; if (layout.inspOpen) renderInspector(); }
@@ -710,6 +784,8 @@ function strengthEl(id) {
 }
 function renderField(id, mode, errors) {
   const def = FIELDS[id];
+  const dflt = (() => { const d = A.defaultModel(); const x = id.startsWith('x.') ? d.extras[id.slice(2)] : d[mode][id]; return x === undefined || x === null ? '' : String(x); })();
+  const isChanged = (nv) => String(nv === undefined || nv === '(default)' ? '' : nv) !== dflt && !(dflt === 'false' && (nv === undefined || nv === 'false'));
   const form = model[mode];
   if (!def || (def.show && !def.show(form))) return null;
   const domId = 'fld-' + mode + '-' + id.replace(/\./g, '-');
@@ -733,16 +809,50 @@ function renderField(id, mode, errors) {
     renderView();
   };
   if (def.type === 'check') {
-    const cb = h('input', { type: 'checkbox', id: domId, checked: !!v, 'aria-describedby': described });
-    cb.addEventListener('change', () => { setVal(id, cb.checked); commit({ key: cb.checked ? 'hist.on' : 'hist.off', args: ['@f.' + id.replace(/^x\./, 'x_')] }); renderView(); });
-    wrap.appendChild(h('label', { class: 'check', for: domId }, [cb, h('span', { text: lab })]));
+    const g = guidedHint(id);
+    const hint = Object.assign({ widget: 'toggle', description: help, valueHelp: { true: t('w.guidedOn', [lab], 'On: {0}.'), false: t('w.guidedOff', null, 'Off: the template leaves this alone.') }, risk: { level: 'none' }, related: [] }, g ? { related: g.related, docUrl: g.docUrl, risk: g.invert && g.risk && g.risk.when !== undefined ? Object.assign({}, g.risk, { when: String(g.risk.when) === 'false' ? 'true' : 'false' }) : { level: 'none' } } : {});
+    if (g && g.valueHelp) { const on = g.valueHelp[GUIDED_HINTS[id].invert ? 'false' : 'true'], off = g.valueHelp[GUIDED_HINTS[id].invert ? 'true' : 'false']; if (on) hint.valueHelp.true = on; if (off) hint.valueHelp.false = off; }
+    if (!hint.description) hint.description = lab;
+    const card = fieldCard({ id: domId, isChanged, label: lab, hint, value: v ? 'true' : 'false', t, compact: true, noUnset: true, onRelated: (k) => goRelated(k, ''),
+      relatedName: (k) => t('w.writes', [k.replace('Microsoft-Windows-', '').replace('|', ' / ')], 'Writes {0}'),
+      onChange: (nv) => { const on = nv === 'true'; setVal(id, on); commit({ key: on ? 'hist.on' : 'hist.off', args: ['@f.' + id.replace(/^x\./, 'x_')] }); renderView(); } });
+    wrap.classList.add('field-rich');
+    wrap.appendChild(card.el);
   } else {
     wrap.appendChild(h('label', { for: domId, text: lab }));
-    if (id === 'timeZone' || def.type === 'datalist') {
+    if ((id === 'timeZone' || def.type === 'datalist') && guidedHint(id) && hintCount()) {
+      const hint = guidedHint(id);
+      const card = fieldCard({ id: domId, isChanged, label: lab, hint, value: v, t, A, compact: true, noUnset: true, lang: document.documentElement.lang,
+        onRelated: (k) => goRelated(k, ''), relatedName: (k) => t('w.writes', [k.replace('Microsoft-Windows-', '').replace('|', ' / ')], 'Writes {0}'),
+        onChange: (nv) => { setVal(id, nv === undefined ? '' : nv); const e = fieldErrors(); err.textContent = e[id] || ''; commit({ key: 'hist.setField', args: ['@f.' + id, String(nv || '')] }); updateStatus(); } });
+      wrap.classList.add('field-rich');
+      wrap.replaceChildren(card.el);
+    } else if (id === 'timeZone' || def.type === 'datalist') {
       const opts = id === 'timeZone' ? TZ_OPTS().map(([v, l]) => [v, l]) : (def.list === 'dl-keyboards' ? A.KEYBOARDS.map(([v, l]) => [v, v + ' (' + l + ')']) : A.LOCALES.map((l) => [l, l]));
       const cb = combobox({ id: domId, options: opts, value: v === undefined ? '' : String(v), allowCustom: id !== 'timeZone', mono: true, emptyText: t('palette.empty'), openLabel: t('combo.open'), describedby: described,
         onChange: (val, shown) => { setVal(id, val); const e = fieldErrors(); err.textContent = e[id] || ''; cb.input.setAttribute('aria-invalid', String(!!e[id])); commit({ key: 'hist.setField', args: ['@f.' + id, shown] }); updateStatus(); } });
       wrap.appendChild(cb.el);
+    } else if ((def.type === 'select' || def.type === 'edition') && hintCount()) {
+      // Choices become radio cards (with what each option means) or segmented buttons.
+      const opts = def.type === 'edition' ? editionOptions(mode) : (typeof def.options === 'function' ? def.options() : def.options);
+      const values = opts.map(([ov, ol, raw]) => ({ value: ov, label: raw ? ol : t(ol) }));
+      if (def.type === 'edition' && v !== undefined && !values.some((o) => o.value === String(v))) values.push({ value: String(v), label: String(v) + ': ' + t('opt.customIndex') });
+      const short = values.every((o) => o.label.length <= 22) && values.length <= 4;
+      const g = guidedHint(id);
+      const hint = Object.assign({ description: help || lab, risk: { level: 'none' }, related: [] }, g ? { related: g.related, docUrl: g.docUrl } : {},
+        { widget: short ? 'segmented' : 'cards', values: values.map((o) => ({ value: o.value === '' ? '(default)' : o.value, label: o.label })), valueHelp: Object.fromEntries(values.map((o) => [o.value === '' ? '(default)' : o.value, o.label.replace(/^\d+: /, '') + (/[.!?]$/.test(o.label) ? '' : '.')])) });
+      const card = fieldCard({ id: domId, isChanged, label: lab, hint, setting: { type: 'enum' }, value: v === '' || v === undefined ? '(default)' : v, t, compact: true, noUnset: true, onRelated: (k) => goRelated(k, ''),
+        relatedName: (k) => t('w.writes', [k.replace('Microsoft-Windows-', '').replace('|', ' / ')], 'Writes {0}'),
+        onChange: (nv) => { const val = nv === '(default)' || nv === undefined ? '' : nv; const o = values.find((x) => x.value === val); selectChange(val, o ? o.label : val); } });
+      wrap.classList.add('field-rich');
+      wrap.replaceChildren(card.el);
+      if (def.type === 'edition') wrap.appendChild(h('button', { type: 'button', class: 'btn btn-ghost btn-sm', text: t('opt.otherIndex'), onclick: () => { const n = window.prompt(t('opt.otherIndexPrompt'), String(v || '1')); if (n && /^\d{1,2}$/.test(n)) selectChange(n); } }));
+    } else if (def.type === 'password' && hintCount()) {
+      const card = fieldCard({ id: domId, isChanged, label: lab, hint: { widget: 'password', storage: def.plain ? 'plain' : undefined, description: help || lab, valueHelp: {}, risk: { level: 'none' }, related: [] }, value: v, t, A, announce, compact: true, noUnset: true,
+        onChange: (nv, meta) => { setVal(id, nv || ''); const e = fieldErrors(); err.textContent = e[id] || ''; commit({ key: 'hist.setSecret', args: ['@f.' + id.replace(/^x\./, 'x_'), ''] }, meta && meta.generated ? null : mode + ':' + id); if (meta && meta.generated && history) history.flush(); } });
+      wrap.classList.add('field-rich');
+      wrap.replaceChildren(card.el);
+      if (def.plain) wrap.appendChild(h('p', { class: 'notice warn', text: t('warn.plainJoin') }));
     } else if (def.type === 'select' || def.type === 'edition') {
       const opts = def.type === 'edition' ? editionOptions(mode) : (typeof def.options === 'function' ? def.options() : def.options);
       const sel = h('select', { id: domId, 'aria-describedby': described }, opts.map(([ov, ol, raw]) => h('option', { value: ov, text: raw ? ol : t(ol) })));
@@ -787,6 +897,22 @@ function renderField(id, mode, errors) {
         box.appendChild(h('label', { class: 'check' }, [cb, h('span', { text: t('app.' + app) })]));
       });
       wrap.appendChild(box);
+    } else if (guidedHint(id) && !(def.type === 'select' || def.type === 'check')) {
+      const hint = guidedHint(id);
+      const card = fieldCard({ id: domId, isChanged, label: lab, hint, value: v, t, A, announce, compact: true, noUnset: true, lang: document.documentElement.lang,
+        onRelated: (k) => goRelated(k, ''), relatedName: (k) => t('w.writes', [k.replace('Microsoft-Windows-', '').replace('|', ' / ')], 'Writes {0}'),
+        onChange: (nv) => {
+          if (id === 'domainName' && mode === 'server') {
+            const old = A.suggestNetbios(model.server.domainName);
+            if (!model.server.netbiosName || model.server.netbiosName === old) { model.server.netbiosName = A.suggestNetbios(nv || ''); const nb = document.getElementById('fld-server-netbiosName'); if (nb) nb.value = model.server.netbiosName; }
+          }
+          setVal(id, nv === undefined ? '' : nv);
+          const e = fieldErrors(); err.textContent = e[id] || '';
+          commit({ key: 'hist.setField', args: ['@f.' + id.replace(/^x\./, 'x_'), String(nv || '').slice(0, 60)] }, mode + ':' + id);
+          updateStatus();
+        } });
+      wrap.classList.add('field-rich');
+      wrap.replaceChildren(card.el);
     } else {
       const inp = h('input', { type: 'text', id: domId, value: v === undefined ? '' : String(v), spellcheck: 'false', autocomplete: 'off', inputmode: def.numeric ? 'decimal' : undefined, list: def.list || undefined,
         placeholder: def.placeholderFn ? def.placeholderFn(model[mode]) : def.placeholder || undefined, class: def.mono ? 'mono' : undefined, 'aria-describedby': described, 'aria-invalid': String(!!errors[id]) });
@@ -803,7 +929,7 @@ function renderField(id, mode, errors) {
       wrap.appendChild(inp);
     }
   }
-  if (help) wrap.appendChild(h('div', { class: 'help', id: domId + '-help', text: help }));
+  if (help && !wrap.classList.contains('field-rich')) wrap.appendChild(h('div', { class: 'help', id: domId + '-help', text: help }));
   wrap.appendChild(err);
   return wrap;
 }
@@ -847,6 +973,36 @@ function sectionStatus(sec, mode, errors) {
   if (sec.id === 'apps' && Object.values(model.commands).some((l) => l.length)) return 'set';
   return changed || advSet ? 'set' : 'empty';
 }
+// Context shared by every catalog editor (renderSettings): translations, password helpers, live rule
+// issues for a field, and navigation to related settings.
+function fieldIssues(pass) {
+  return (comp, path, index) => {
+    const prefix = pass + '/' + comp + '/';
+    return computeIssuesCached().filter((i) => {
+      const w = String(i.where || '');
+      if (!w.startsWith(prefix)) return false;
+      const rest = w.slice(prefix.length);
+      const bare = rest.replace(/\[\d+\]/g, '');
+      return bare === path || (index !== undefined && rest.startsWith(path + '[' + index + ']'));
+    }).map((i) => ({ level: i.level, message: i.message }));
+  };
+}
+function goRelated(key, pass) {
+  const [comp, path] = key.split('|');
+  const c = catalog && catalog.byName.get(comp);
+  if (!c) return;
+  const p = c.passes.includes(pass) ? pass : (c.passes.find((x) => (isDirect() ? model.direct.all : model.all)[x + '|' + comp]) || c.passes[0]);
+  selected = { comp, pass: p, path };
+  if (isDirect() && !model.direct.all[p + '|' + comp]) { allState.open = comp; allState.focusPath = path; allState.focusPass = p; openTab('all', { noFocus: true }); }
+  else openTab('comp:' + p + '|' + comp, { noFocus: true });
+  const tg = mainEl.querySelector(`[data-setting-path="${CSS.escape(comp + '/' + path)}"]`);
+  if (tg) S.focusTarget(tg);
+  renderInspector();
+}
+function catCtx(pass, extra) {
+  return Object.assign({ t, pass, A, lang: S.lang ? S.lang() : document.documentElement.lang, announce, issuesFor: fieldIssues(pass), onRelated: (k) => goRelated(k, pass),
+    englishNote: document.documentElement.lang === 'zh-HK' ? t('w.englishOnly') : '' }, extra || {});
+}
 function renderAdvanced(sec, box) {
   box.replaceChildren();
   if (!catalog) { box.appendChild(h('p', { class: 'empty', text: t('cat.loading') })); return; }
@@ -863,7 +1019,7 @@ function renderAdvanced(sec, box) {
       const key = pass + '|' + cname;
       const det = h('details', { class: 'cat-comp', open: countSet(model.all[key]) > 0 || undefined }, [h('summary', null, [h('span', { text: cname }), h('span', { class: 'pass-chip', text: pass }), h('small', { class: 'cnt', text: t('cat.countSet', [countSet(model.all[key])]) })])]);
       const body = h('div', { class: 'cat-body' });
-      const build = () => { if (body.childNodes.length) return; body.appendChild(renderSettings(sub, model.all[key], (v, msg, co) => allChange(key, v, msg, co, det), { t, pass, idPrefix: 'adv-' + sec.id + '-' + pass })); };
+      const build = () => { if (body.childNodes.length) return; body.appendChild(renderSettings(sub, model.all[key], (v, msg, co) => allChange(key, v, msg, co, det), catCtx(pass, { idPrefix: 'adv-' + sec.id + '-' + pass }))); };
       det.addEventListener('toggle', () => { if (det.open) build(); });
       if (det.open) build();
       det.appendChild(body);
@@ -872,6 +1028,13 @@ function renderAdvanced(sec, box) {
   });
   if (!any) box.appendChild(h('p', { class: 'empty', text: t('adv.none') }));
   box.appendChild(h('p', { class: 'help', text: t('adv.note') }));
+}
+// Text a field filter matches: the visible card (label, meaning, description) plus the hint's value
+// meanings and the current non-secret values.
+function fieldText(f) {
+  const p = f.dataset.settingPath;
+  const hint = p ? hintAt(p.replace('/', '|')) : null;
+  return f.textContent + ' ' + hintSearchText(hint) + ' ' + [...f.querySelectorAll('input, select, textarea')].map((x) => (x.type === 'password' || x.classList.contains('masked') ? '' : x.value)).join(' ');
 }
 function catAll() { return isDirect() ? model.direct.all : model.all; }
 function allChange(key, v, msg, co, det) {
@@ -910,7 +1073,7 @@ function renderMode(mode) {
         let shown = 0, total = 0;
         el.querySelectorAll('.grid2 > .field, .cat-set').forEach((f) => {
           total++;
-          const ok = !m.ok ? false : m.empty || !!m.test(f.textContent + ' ' + [...f.querySelectorAll('input, select, textarea')].map((x) => x.type === 'password' ? '' : x.value).join(' '));
+          const ok = !m.ok ? false : m.empty || !!m.test(fieldText(f));
           f.hidden = !ok; if (ok) shown++;
         });
         if (!m.ok) return;
@@ -995,7 +1158,7 @@ function renderAll() {
         const holder = h('div');
         const drawPass = () => {
           const key = pass + '|' + comp.name;
-          holder.replaceChildren(renderSettings(comp, catAll()[key], (v, msg, co) => allChange(key, v, msg, co, det), { t, pass, expandPath: allState.focusPath, idPrefix: 'all-' + comp.name.replace(/[^A-Za-z0-9]/g, '') + '-' + pass }));
+          holder.replaceChildren(renderSettings(comp, catAll()[key], (v, msg, co) => allChange(key, v, msg, co, det), catCtx(pass, { expandPath: allState.focusPath, idPrefix: 'all-' + comp.name.replace(/[^A-Za-z0-9]/g, '') + '-' + pass })));
         };
         if (passes.length > 1) {
           const ps = h('select', { 'aria-label': t('cat.pass') }, passes.map((p) => h('option', { value: p, text: p + (countSet(catAll()[p + '|' + comp.name]) ? ' (' + t('cat.countSet', [countSet(catAll()[p + '|' + comp.name])]) + ')' : '') })));
@@ -1730,10 +1893,10 @@ function renderDirectComponent(key) {
   const raws = model.direct.rawBlocks.filter((b) => b.scope === 'inside' && b.pass === pass && b.component === name);
   raws.forEach((b) => sec.appendChild(rawBlockEditor(b)));
   const ff = searchBox({ label: t('search.fields'), placeholder: t('search.fields'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
-    onChange: (q, re, m) => { let n = 0, total = 0; holder.querySelectorAll('.cat-set').forEach((f) => { total++; const ok = m.ok && (m.empty || !!m.test(f.textContent)); f.hidden = !ok; if (ok) n++; if (ok && !m.empty) { let p = f.parentElement; while (p && p !== holder) { if (p.tagName === 'DETAILS') p.open = true; p = p.parentElement; } } }); if (m.ok) ff.setStatus(m.empty ? '' : t('search.fieldCount', [n, total]), !n); } });
+    onChange: (q, re, m) => { let n = 0, total = 0; holder.querySelectorAll('.cat-set').forEach((f) => { total++; const ok = m.ok && (m.empty || !!m.test(fieldText(f))); f.hidden = !ok; if (ok) n++; if (ok && !m.empty) { let p = f.parentElement; while (p && p !== holder) { if (p.tagName === 'DETAILS') p.open = true; p = p.parentElement; } } }); if (m.ok) ff.setStatus(m.empty ? '' : t('search.fieldCount', [n, total]), !n); } });
   sec.appendChild(ff.el);
   const holder = h('div');
-  holder.appendChild(renderSettings(comp, model.direct.all[key], (v, msg, co) => { model.direct.all[key] = v || {}; commit(msg, co ? 'd:' + key + ':' + co : null); refreshDirectTree(); }, { t, pass, unsetButtons: true, expandPath: selected && selected.comp === name ? selected.path : null, idPrefix: 'dc-' + name.replace(/[^A-Za-z0-9]/g, '') + '-' + pass }));
+  holder.appendChild(renderSettings(comp, model.direct.all[key], (v, msg, co) => { model.direct.all[key] = v || {}; commit(msg, co ? 'd:' + key + ':' + co : null); refreshDirectTree(); }, catCtx(pass, { unsetButtons: true, expandPath: selected && selected.comp === name ? selected.path : null, idPrefix: 'dc-' + name.replace(/[^A-Za-z0-9]/g, '') + '-' + pass })));
   sec.appendChild(holder);
 }
 let treeTimer = null;
@@ -1864,10 +2027,10 @@ function renderComponentTab(key) {
   if (comp.help) sec.appendChild(h('p', { class: 'help', style: { color: 'var(--muted)' }, text: comp.help }));
   if (!comp.passes.includes(pass)) sec.appendChild(h('p', { class: 'notice warn', text: t('flow.compNotInPass', [name, pass]) }));
   const ff = searchBox({ label: t('search.fields'), placeholder: t('search.fields'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'),
-    onChange: (q, re, m) => { let n = 0, total = 0; holder.querySelectorAll('.cat-set').forEach((f) => { total++; const ok = m.ok && (m.empty || !!m.test(f.textContent)); f.hidden = !ok; if (ok) n++; if (ok && !m.empty) { let p = f.parentElement; while (p && p !== holder) { if (p.tagName === 'DETAILS') p.open = true; if (p.hidden) p.hidden = false; p = p.parentElement; } } }); if (m.ok) ff.setStatus(m.empty ? '' : t('search.fieldCount', [n, total]), !n); } });
+    onChange: (q, re, m) => { let n = 0, total = 0; holder.querySelectorAll('.cat-set').forEach((f) => { total++; const ok = m.ok && (m.empty || !!m.test(fieldText(f))); f.hidden = !ok; if (ok) n++; if (ok && !m.empty) { let p = f.parentElement; while (p && p !== holder) { if (p.tagName === 'DETAILS') p.open = true; if (p.hidden) p.hidden = false; p = p.parentElement; } } }); if (m.ok) ff.setStatus(m.empty ? '' : t('search.fieldCount', [n, total]), !n); } });
   sec.querySelector('header').appendChild(h('div', { class: 'sec-tools' }, [ff.el]));
   const holder = h('div');
-  holder.appendChild(renderSettings(comp, model.all[key], (v, msg, co) => allChange(key, v, msg, co, null), { t, pass, expandPath: selected && selected.comp === name ? selected.path : null, idPrefix: 'ct-' + name.replace(/[^A-Za-z0-9]/g, '') + '-' + pass }));
+  holder.appendChild(renderSettings(comp, model.all[key], (v, msg, co) => allChange(key, v, msg, co, null), catCtx(pass, { expandPath: selected && selected.comp === name ? selected.path : null, idPrefix: 'ct-' + name.replace(/[^A-Za-z0-9]/g, '') + '-' + pass })));
   sec.appendChild(holder);
 }
 // Code editor: a textarea over a highlighted layer, with line numbers. Two-way for autounattend.xml.
@@ -2214,6 +2377,7 @@ async function init() {
   output(t('studio.ready'));
   catalog = await loadCatalog(ROOT);
   await loadRules();
+  await loadHints();
   // ?mode=direct opens straight into Direct; otherwise the last mode is restored.
   const wantDirect = want === 'direct' || (want !== 'guided' && LS.get('td.studio.mode', 'guided') === 'direct');
   if (wantDirect && !isDirect()) { if (want === 'direct' && !Object.keys(model.all).length && history && history.entries.length <= 1) newBlankDirect(); else setMode('direct'); }
