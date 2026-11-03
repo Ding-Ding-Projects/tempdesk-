@@ -142,7 +142,7 @@ def _build(area: Area, item: dict):
         el.set("status", str(item["status"]))
     uid = item.get("id") or ("{" + str(uuid.uuid4()).upper() + "}")
     el.set("uid", uid)
-    el.set("changed", dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
+    el.set("changed", dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S"))
     for attr, key in (("disabled", "disabled"), ("userContext", "userContext"),
                       ("removePolicy", "removePolicy"), ("bypassErrors", "bypassErrors")):
         if item.get(key):

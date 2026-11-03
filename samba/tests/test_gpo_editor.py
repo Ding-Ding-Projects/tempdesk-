@@ -42,17 +42,17 @@ def test_tree_has_every_major_node(admin):
 
     walk(body["nodes"])
     for expect in [
-        "machine/pol/sw/install", "machine/pol/win/scripts/startup",
-        "machine/pol/win/sec/account/password", "machine/pol/win/sec/local/rights",
-        "machine/pol/win/sec/local/options", "machine/pol/win/sec/eventlog",
-        "machine/pol/win/sec/restrictedgroups", "machine/pol/win/sec/services",
-        "machine/pol/win/sec/registry", "machine/pol/win/sec/filesystem",
-        "machine/pol/win/sec/firewall/inbound", "machine/pol/win/sec/firewall/profiles",
-        "machine/pol/win/sec/wireless", "machine/pol/win/sec/wired",
-        "machine/pol/win/sec/applocker", "machine/pol/win/sec/srp",
-        "machine/pol/win/sec/advaudit", "machine/pol/nrpt", "machine/pol/admx",
-        "machine/pol/win/qos", "machine/pol/win/printers",
-        "user/pol/win/folderredir", "user/pref/win/drives", "machine/pref/cp/scheduledtasks",
+        "machine.pol.sw.install", "machine.pol.win.scripts.startup",
+        "machine.pol.win.sec.account.password", "machine.pol.win.sec.local.rights",
+        "machine.pol.win.sec.local.options", "machine.pol.win.sec.eventlog",
+        "machine.pol.win.sec.restrictedgroups", "machine.pol.win.sec.services",
+        "machine.pol.win.sec.registry", "machine.pol.win.sec.filesystem",
+        "machine.pol.win.sec.firewall.inbound", "machine.pol.win.sec.firewall.profiles",
+        "machine.pol.win.sec.wireless", "machine.pol.win.sec.wired",
+        "machine.pol.win.sec.applocker", "machine.pol.win.sec.srp",
+        "machine.pol.win.sec.advaudit", "machine.pol.nrpt", "machine.pol.admx",
+        "machine.pol.win.qos", "machine.pol.win.printers",
+        "user.pol.win.folderredir", "user.pref.win.drives", "machine.pref.cp.scheduledtasks",
     ]:
         assert expect in ids, expect
 
@@ -68,9 +68,9 @@ def test_ad_object_nodes_marked_unavailable(admin):
             walk(n.get("children", []))
 
     walk(body["nodes"])
-    for nid in ["machine/pol/win/sec/wireless", "machine/pol/win/sec/wired",
-                "machine/pol/win/printers", "machine/pol/sw/install",
-                "machine/pol/win/sec/ipsec"]:
+    for nid in ["machine.pol.win.sec.wireless", "machine.pol.win.sec.wired",
+                "machine.pol.win.printers", "machine.pol.sw.install",
+                "machine.pol.win.sec.ipsec"]:
         assert found[nid]["available"] is False
         assert found[nid]["unavailableReason"]
 
@@ -95,7 +95,7 @@ def test_schema_published(admin):
 
 def test_password_policy_form_writes_inf_and_bumps_version(admin, app):
     gid = _gpo(admin)
-    st, _ = admin.call("PUT", f"/gpo/{gid}/node/machine/pol/win/sec/account/password",
+    st, _ = admin.call("PUT", f"/gpo/{gid}/node/machine.pol.win.sec.account.password",
                        {"values": {"MinimumPasswordLength": 14, "PasswordComplexity": True}}, key=ADMIN_KEY)
     assert st == 200
     guid = _guid(gid)
@@ -110,7 +110,7 @@ def test_password_policy_form_writes_inf_and_bumps_version(admin, app):
     assert gpt.split_version(meta["versionNumber"])[1] >= 1
     assert gpt.SECURITY_CSE in (meta["machineExt"] or "")
 
-    st, body = admin.call("GET", f"/gpo/{gid}/node/machine/pol/win/sec/account/password", key=ADMIN_KEY)
+    st, body = admin.call("GET", f"/gpo/{gid}/node/machine.pol.win.sec.account.password", key=ADMIN_KEY)
     assert body["values"]["MinimumPasswordLength"] == "14"
 
 
@@ -120,7 +120,7 @@ def test_password_policy_form_writes_inf_and_bumps_version(admin, app):
 
 def test_user_rights_crud(admin):
     gid = _gpo(admin)
-    base = f"/gpo/{gid}/node/machine/pol/win/sec/local/rights/items"
+    base = f"/gpo/{gid}/node/machine.pol.win.sec.local.rights/items"
     st, row = admin.call("POST", base, {"right": "SeDenyNetworkLogonRight", "accounts": "*S-1-1-0"}, key=ADMIN_KEY)
     assert st == 201 and row["right"] == "SeDenyNetworkLogonRight"
     st, body = admin.call("GET", base, key=ADMIN_KEY)
@@ -140,7 +140,7 @@ def test_user_rights_crud(admin):
 
 def test_advanced_audit_csv(admin, app):
     gid = _gpo(admin)
-    base = f"/gpo/{gid}/node/machine/pol/win/sec/advaudit/items"
+    base = f"/gpo/{gid}/node/machine.pol.win.sec.advaudit/items"
     gu = "{0CCE921D-69AE-11D9-BED3-505054503030}"
     st, row = admin.call("POST", base, {"subcategoryGuid": gu, "subcategory": "File System",
                                         "policyTarget": "System", "settingValue": "3"}, key=ADMIN_KEY)
@@ -165,7 +165,7 @@ def test_advanced_audit_csv(admin, app):
 
 def test_firewall_rule_round_trip(admin, app):
     gid = _gpo(admin)
-    base = f"/gpo/{gid}/node/machine/pol/win/sec/firewall/inbound/items"
+    base = f"/gpo/{gid}/node/machine.pol.win.sec.firewall.inbound/items"
     body = {"name": "Allow RPC", "action": "Allow", "protocol": "6", "localPorts": "RPC",
             "remoteAddresses": "LocalSubnet", "application": r"c:\app.exe"}
     st, row = admin.call("POST", base, body, key=ADMIN_KEY)
@@ -181,14 +181,14 @@ def test_firewall_rule_round_trip(admin, app):
     st, listing = admin.call("GET", base, key=ADMIN_KEY)
     assert any(i["name"] == "Allow RPC" and i["action"] == "Allow" for i in listing["items"])
     # Outbound list does not include an inbound rule.
-    st, out = admin.call("GET", f"/gpo/{gid}/node/machine/pol/win/sec/firewall/outbound/items", key=ADMIN_KEY)
+    st, out = admin.call("GET", f"/gpo/{gid}/node/machine.pol.win.sec.firewall.outbound/items", key=ADMIN_KEY)
     assert all(i["name"] != "Allow RPC" for i in out["items"])
     assert admin.call("DELETE", base + "/" + rid, key=ADMIN_KEY)[0] == 204
 
 
 def test_firewall_profiles_form(admin, app):
     gid = _gpo(admin)
-    node = f"/gpo/{gid}/node/machine/pol/win/sec/firewall/profiles"
+    node = f"/gpo/{gid}/node/machine.pol.win.sec.firewall.profiles"
     st, _ = admin.call("PUT", node, {"values": {"DomainState": "1", "DomainInbound": "1", "PublicState": "1"}},
                        key=ADMIN_KEY)
     assert st == 200
@@ -203,7 +203,7 @@ def test_firewall_profiles_form(admin, app):
 
 def test_gpp_drive_map_round_trip_and_clsid(admin, app):
     gid = _gpo(admin)
-    base = f"/gpo/{gid}/node/user/pref/win/drives/items"
+    base = f"/gpo/{gid}/node/user.pref.win.drives/items"
     item = {"name": "S:", "properties": {"action": "U", "path": r"\\files\scratch", "letter": "S", "persistent": "1"}}
     st, row = admin.call("POST", base, item, key=ADMIN_KEY)
     assert st == 201
@@ -233,7 +233,7 @@ def test_gpp_drive_map_round_trip_and_clsid(admin, app):
 
 def test_gpp_item_level_targeting_preserved(admin, app):
     gid = _gpo(admin)
-    base = f"/gpo/{gid}/node/user/pref/win/drives/items"
+    base = f"/gpo/{gid}/node/user.pref.win.drives/items"
     filters = ('<Filters><FilterGroup bool="AND" not="0" name="CORP\\Sales" '
                'sid="" userContext="1" primaryGroup="0" localGroup="0"/></Filters>')
     st, row = admin.call("POST", base, {"name": "T:", "filters": filters,
@@ -247,7 +247,7 @@ def test_gpp_item_level_targeting_preserved(admin, app):
 
 def test_gpp_registry_collection_clsid(admin):
     gid = _gpo(admin)
-    base = f"/gpo/{gid}/node/machine/pref/win/registry/items"
+    base = f"/gpo/{gid}/node/machine.pref.win.registry/items"
     st, row = admin.call("POST", base, {"elementType": "Registry", "name": "Disallowed",
                                         "properties": {"action": "U", "hive": "HKEY_LOCAL_MACHINE",
                                                        "key": r"Software\MP3", "name": "Disallowed",
@@ -261,7 +261,7 @@ def test_gpp_registry_collection_clsid(admin):
 
 def test_scripts_ini_and_psscripts(admin, app):
     gid = _gpo(admin)
-    base = f"/gpo/{gid}/node/machine/pol/win/scripts/startup/items"
+    base = f"/gpo/{gid}/node/machine.pol.win.scripts.startup/items"
     st, _ = admin.call("POST", base, {"script": "setup.cmd", "parameters": "/q"}, key=ADMIN_KEY)
     assert st == 201
     st, _ = admin.call("POST", base, {"script": "init.ps1", "parameters": "", "powershell": True}, key=ADMIN_KEY)
@@ -284,7 +284,7 @@ def test_scripts_ini_and_psscripts(admin, app):
 
 def test_folder_redirection_fdeploy(admin, app):
     gid = _gpo(admin)
-    base = f"/gpo/{gid}/node/user/pol/win/folderredir/items"
+    base = f"/gpo/{gid}/node/user.pol.win.folderredir/items"
     docs = "{FDD39AD0-238F-46AF-ADB4-6C85480369C7}"
     st, row = admin.call("POST", base, {"folder": docs, "securityGroup": "S-1-1-0",
                                         "fullPath": r"\\fs\home\%USERNAME%\Documents", "flags": "1001"}, key=ADMIN_KEY)
@@ -308,7 +308,7 @@ def test_folder_redirection_fdeploy(admin, app):
 
 def test_nrpt_rule(admin, app):
     gid = _gpo(admin)
-    base = f"/gpo/{gid}/node/machine/pol/nrpt/items"
+    base = f"/gpo/{gid}/node/machine.pol.nrpt/items"
     st, row = admin.call("POST", base, {"ruleName": "corp", "name": ".example.com",
                                         "genericDnsServers": "10.1.1.1;10.2.2.2", "configOptions": "8"}, key=ADMIN_KEY)
     assert st == 201
@@ -322,7 +322,7 @@ def test_nrpt_rule(admin, app):
 
 def test_applocker_rule(admin, app):
     gid = _gpo(admin)
-    base = f"/gpo/{gid}/node/machine/pol/win/sec/applocker/items"
+    base = f"/gpo/{gid}/node/machine.pol.win.sec.applocker/items"
     rule = '<FilePathRule Id="x" Name="All" Action="Allow"><Conditions><FilePathCondition Path="*"/></Conditions></FilePathRule>'
     st, row = admin.call("POST", base, {"collection": "Exe", "enforcementMode": "Enabled", "ruleXml": rule},
                          key=ADMIN_KEY)
@@ -340,14 +340,14 @@ def test_applocker_rule(admin, app):
 
 def test_wireless_node_unavailable(admin):
     gid = _gpo(admin)
-    st, body = admin.call("GET", f"/gpo/{gid}/node/machine/pol/win/sec/wireless/items", key=ADMIN_KEY)
+    st, body = admin.call("GET", f"/gpo/{gid}/node/machine.pol.win.sec.wireless/items", key=ADMIN_KEY)
     assert st == 404
     assert "Samba" in body["message"]
 
 
 def test_software_installation_unavailable(admin):
     gid = _gpo(admin)
-    st, body = admin.call("GET", f"/gpo/{gid}/node/machine/pol/sw/install/items", key=ADMIN_KEY)
+    st, body = admin.call("GET", f"/gpo/{gid}/node/machine.pol.sw.install/items", key=ADMIN_KEY)
     assert st == 404
 
 

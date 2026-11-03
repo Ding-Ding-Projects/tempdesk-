@@ -94,11 +94,24 @@ namespace TempDesk.Agent
             return result;
         }
 
+        // Node ids contain '/' internally (e.g. machine/pol/win/sec); the
+        // routers split paths on '/', so the API exposes ids with '.' instead
+        // and translates back on the way in.
+        private static string ExposeId(string id)
+        {
+            return id == null ? null : id.Replace('/', '.');
+        }
+
+        private static string InternalId(string id)
+        {
+            return id == null ? null : id.Replace('.', '/');
+        }
+
         private object ShapeNode(string id)
         {
             GpoNode n = GpoNodes.Get(id);
             Dictionary<string, object> row = new Dictionary<string, object>(StringComparer.Ordinal);
-            row["id"] = n.Id;
+            row["id"] = ExposeId(n.Id);
             row["name"] = n.Name;
             row["kind"] = n.Kind;
             row["class"] = n.Class;
@@ -117,7 +130,7 @@ namespace TempDesk.Agent
 
         private GpoNode RequireNode(RequestContext ctx)
         {
-            string nodeId = ctx.Route("nodeId");
+            string nodeId = InternalId(ctx.Route("nodeId"));
             GpoNode n = GpoNodes.Get(nodeId);
             if (n == null) { throw AgentException.NotFound("No such node '" + nodeId + "'."); }
             return n;
@@ -137,7 +150,7 @@ namespace TempDesk.Agent
             }
             Dictionary<string, object> values = ReadForm(ctx, gpoId, n);
             Dictionary<string, object> result = new Dictionary<string, object>(StringComparer.Ordinal);
-            result["nodeId"] = n.Id;
+            result["nodeId"] = ExposeId(n.Id);
             result["schema"] = n.ItemSchema;
             result["values"] = values;
             return result;
@@ -208,7 +221,7 @@ namespace TempDesk.Agent
             GpoNode n = RequireNode(ctx);
             List<object> items = ReadItems(ctx, gpoId, n);
             Dictionary<string, object> result = new Dictionary<string, object>(StringComparer.Ordinal);
-            result["nodeId"] = n.Id;
+            result["nodeId"] = ExposeId(n.Id);
             result["schema"] = n.ItemSchema;
             result["items"] = items;
             return result;

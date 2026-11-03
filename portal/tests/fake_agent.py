@@ -19,15 +19,20 @@ from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 
+from . import fake_gpo_editor as editor
+
 GUEST_KEY = os.environ.get("FAKE_GUEST_KEY", "guest-key")
 ADMIN_KEY = os.environ.get("FAKE_ADMIN_KEY", "admin-key")
 ADMIN_PASSWORD = os.environ.get("FAKE_ADMIN_PASSWORD", "Passw0rd!")
 DOMAIN = "corp.example"
 BASE = "DC=corp,DC=example"
+_EDITOR_CAPS = ["gpo-editor", "gpo-security-full", "gpo-advanced-audit", "gpo-firewall", "gpo-scripts-full",
+                "gpo-folder-redirection", "gpo-nrpt", "gpo-qos", "gpo-srp", "gpo-applocker", "gpo-preferences-full"]
 WINDOWS_CAPS = ["guest", "directory", "gpo", "gpo-registry", "gpo-preferences", "gpo-permissions", "gpo-backup",
-                "wmifilters", "admx", "security", "cmdlets", "wifi", "scripts", "allowlist", "audit"]
+                "wmifilters", "admx", "security", "cmdlets", "wifi", "scripts", "allowlist", "audit",
+                "gpo-wired", "gpo-wireless", "gpo-deployed-printers", "gpo-ipsec", "gpo-software-installation"] + _EDITOR_CAPS
 SAMBA_CAPS = ["guest", "directory", "gpo", "gpo-registry", "gpo-permissions", "gpo-backup", "admx", "security",
-              "samba-tool", "wifi", "scripts", "allowlist", "audit"]
+              "samba-tool", "wifi", "scripts", "allowlist", "audit"] + _EDITOR_CAPS
 
 with open(os.path.join(os.path.dirname(__file__), "..", "..", "server", "config", "settings.default.json"), encoding="utf-8") if os.path.exists(os.path.join(os.path.dirname(__file__), "..", "..", "server", "config", "settings.default.json")) else open(os.path.join(os.path.dirname(__file__), "settings_fixture.json"), encoding="utf-8") as fh:
     DEFAULT_SETTINGS = json.load(fh)
@@ -63,6 +68,7 @@ class State:
         self.prefs: dict[str, list[dict]] = {}
         self.admx_state: dict[tuple[str, str, str], dict] = {}
         self.security: dict[str, dict] = {}
+        self.node_items: dict[str, dict] = {}  # gid -> {nodeId: [items]} and "_forms"
         self.backups: list[dict] = []
         self.wmi: list[dict] = [{"name": "Windows 11", "description": "Client OS only", "query": "SELECT * FROM Win32_OperatingSystem WHERE ProductType = 1"}]
         self._seed()
@@ -507,13 +513,19 @@ def create_app(backend: str | None = None) -> FastAPI:
         st.gpos[gid]["wmiFilter"] = (await request.json()).get("name")
         return Response(status_code=204)
 
+    # The original hand-written sample (DisableCMD, WelcomeTimeout) is kept so
+    # the portal's existing tests stay green; the generated catalog of several
+    # thousand policies is appended for building against a realistic store.
+    all_categories = ADMX_CATEGORIES + editor.ADMX_CATEGORIES
+    all_policies = ADMX_POLICIES + editor.ADMX_POLICIES
+
     @app.get("/api/v1/admx/categories")
     async def admx_categories():
-        return ADMX_CATEGORIES
+        return all_categories
 
     @app.get("/api/v1/admx/policies")
     async def admx_policies(category: str | None = None, q: str | None = None):
-        rows = ADMX_POLICIES
+        rows = all_policies
         if category:
             rows = [p for p in rows if p["categoryId"] == category]
         if q:
@@ -606,6 +618,9 @@ def create_app(backend: str | None = None) -> FastAPI:
         if request.method == "PUT":
             st.allow = await request.json()
         return st.allow
+
+    # Full Group Policy editor: tree, schema, node CRUD and generated ADMX.
+    editor.register(app, st, err, Response, JSONResponse, Request)
 
     return app
 

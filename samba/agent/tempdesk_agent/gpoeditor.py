@@ -51,6 +51,18 @@ def _node(nid, name, kind, cls, schema=None, children=None):
     return n
 
 
+def _public_tree(nodes):
+    """Return a deep copy of the tree with ids exposed using '.' (route paths
+    split on '/'), for the GET /gpo/{id}/tree response."""
+    out = []
+    for n in nodes:
+        row = dict(n)
+        row["id"] = n["id"].replace("/", ".")
+        row["children"] = _public_tree(n.get("children", []))
+        out.append(row)
+    return out
+
+
 def _class_tree(cls, p, label):
     pol_win = _pol_win(cls, p)
     pol_children = [
@@ -167,9 +179,8 @@ class GpoEditorMixin:
 
     # -- tree / schema ----------------------------------------------------
     def gpo_tree(self, gpo_id):
-        norm_guid(gpo_id)
         self._require_gpo(norm_guid(gpo_id))
-        return {"nodes": build_tree()}
+        return {"nodes": _public_tree(build_tree())}
 
     def gpo_node_schemas(self):
         from . import gposchema
@@ -177,7 +188,8 @@ class GpoEditorMixin:
 
     # -- helpers ----------------------------------------------------------
     def _node(self, node_id):
-        n = NODE_INDEX.get(node_id)
+        internal = (node_id or "").replace(".", "/")
+        n = NODE_INDEX.get(internal)
         if n is None:
             raise not_found(f"no such node '{node_id}'")
         if not n.get("available", True):
@@ -224,7 +236,9 @@ class GpoEditorMixin:
         n = self._node(node_id)
         if n["kind"] != "form":
             raise bad(f"node '{node_id}' is a {n['kind']} node; use the items endpoint")
-        section = self._section_for(node_id)
+        if n["id"].endswith("/firewall/profiles"):
+            return {"nodeId": node_id, "schema": n["itemSchema"], "values": self._read_firewall_profiles(guid)}
+        section = self._section_for(n["id"])
         sections = self._read_inf(guid)
         values = dict(sections.get(section, {}))
         return {"nodeId": node_id, "schema": n["itemSchema"], "values": values}
@@ -237,10 +251,10 @@ class GpoEditorMixin:
             raise bad(f"node '{node_id}' is a {n['kind']} node; use the items endpoint")
         if not isinstance(values, dict):
             raise bad("values must be an object")
-        if node_id.endswith("/firewall/profiles"):
+        if n["id"].endswith("/firewall/profiles"):
             self._write_firewall_profiles(guid, values)
             return self.gpo_node_get(gpo_id, node_id)
-        section = self._section_for(node_id)
+        section = self._section_for(n["id"])
         sections = self._read_inf(guid)
         sect = dict(sections.get(section, {}))
         for k, v in values.items():
@@ -685,6 +699,10 @@ class GpoEditorMixin:
             pol.remove(base + "\\" + item_id, None, recursive=True)
             self._save_pol_side(guid, side, pol)
             return None
+        if schema == "applocker-rule" and body.get("enforcementMode"):
+            mode = {"Enabled": 1, "AuditOnly": 0}.get(body["enforcementMode"])
+            if mode is not None:
+                pol.set_value(base, "EnforcementMode", "DWord", mode)
         sub = item_id if op == "update" else "{" + str(uuid.uuid4()).upper() + "}"
         key = base + "\\" + sub
         for value_name, type_name, value in _subkey_values(schema, body):
@@ -850,6 +868,8 @@ class GpoEditorMixin:
             if op == "update":
                 item["id"] = item_id
                 items = [it for it in items if (it.get("id") or "").lower() != (item_id or "").lower()]
+            elif not item.get("id"):
+                item["id"] = "{" + str(uuid.uuid4()).upper() + "}"
             items.append(item)
             result = item
         gppxml.write_items(path, a, items)
