@@ -440,7 +440,7 @@
     '.rxb-x{min-width:44px;min-height:44px;border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer;border-radius:10px}',
     '.rxb-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}',
     '.rxb-chip{min-height:44px;padding:0 12px;border:1px solid var(--outline2,var(--outline,#8a8a8a));border-radius:22px;background:transparent;color:inherit;font:inherit;cursor:pointer}',
-    '.rxb-chip:hover,.rxb-btn:hover{background:var(--primary-soft,rgba(80,120,255,.12))}',
+    '.rxb-chip:hover{background:var(--primary-soft,rgba(80,120,255,.12))}',
     '.rxb-in{min-height:44px;padding:6px 10px;border:1px solid var(--outline2,var(--outline,#8a8a8a));border-radius:10px;background:transparent;color:inherit;font:inherit;min-width:0}',
     '.rxb-num{width:5.5em}',
     '.rxb-ed{position:relative;font-family:var(--mono,ui-monospace,Consolas,monospace);font-size:14px}',

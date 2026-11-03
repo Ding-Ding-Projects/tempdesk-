@@ -335,5 +335,5 @@ input[type=range] { width: 100%; accent-color: var(--primary); min-height: var(-
 .menu-box { min-width: 280px; max-width: calc(100vw - 8px); }
 .menu-box .rxb-filter { margin: 0 0 6px; }
 .menu .rxb-filter button, .menu .rxb-filter input { width: auto; }
-.menu .rxb-filter .rxb-btn { border: 1px solid var(--outline2); justify-content: center; min-height: 44px; }
+.menu .rxb-filter .rxb-ib { width: 32px; min-height: 32px; padding: 0; justify-content: center; }
 .rxb-wrap { min-width: 0; }
