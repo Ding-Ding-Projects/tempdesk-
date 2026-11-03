@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Console directory</title>
+<title>Directory studio</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -10,69 +10,122 @@
 <helmet>
 <style>
 body{margin:0;background:#070B0B}
-@keyframes pop{0%{opacity:0;transform:scale(.85)}100%{opacity:1;transform:none}}
-.d-n{animation:pop .5s cubic-bezier(.2,.9,.25,1.3) both}.d-1{animation-delay:.05s}.d-2{animation-delay:.1s}.d-3{animation-delay:.15s}.d-4{animation-delay:.2s}
-@media (prefers-reduced-motion: reduce){.d-n{animation:none}}
-.d-node{position:absolute;padding:10px 14px;border-radius:16px;background:#0E1615;border:1px solid #2A3E3B;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;white-space:nowrap}
-.d-sm{font-weight:400;color:#8EA29E;font-size:12px}
-.d-row{display:grid;grid-template-columns:140px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid #18221F;font-size:14px}
+.ds-t{display:flex;align-items:center;gap:8px;height:30px;padding:0 8px;border-radius:8px;font-size:13px;color:#B9C9C6;white-space:nowrap;overflow:hidden}
+.ds-ic{width:16px;height:16px;flex:none;border-radius:4px}
+.ds-tab{height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:13px;color:#8EA29E;border-right:1px solid #16201E;white-space:nowrap}
+.ds-sub{height:38px;padding:0 14px;display:inline-flex;align-items:center;font-size:14px;color:#8EA29E;border-radius:10px}
+.ds-f{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#8EA29E;font-weight:600}
+.ds-in{height:42px;padding:0 12px;border-radius:12px;border:1px solid #22322F;background:#070B0B;color:#E8F1EF;font-size:14px;box-sizing:border-box;width:100%}
+.ds-sw{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:52px;padding:0 14px;border-radius:14px;background:#0B1312;border:1px solid #18221F}
+.ds-pt{height:30px;padding:0 12px;display:flex;align-items:center;font-size:12px;font-weight:700;color:#8EA29E;letter-spacing:.04em}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.ds-in-a{animation:in .45s cubic-bezier(.2,.9,.25,1) both}
+@media (prefers-reduced-motion: reduce){.ds-in-a{animation:none}}
+@media (max-width:900px){.ds-side{display:none!important}}
 </style>
 </helmet>
-<div style="font-family: 'Segoe UI Variable Display','Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background: #070B0B; color: #E8F1EF; min-height: 100vh; padding: 20px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
-  <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
-    <h1 style="margin: 0; font-size: 40px; letter-spacing: -0.04em; font-weight: 800; flex: 1 1 auto">Directory</h1>
-    <div role="tablist" aria-label="View" style="display: flex; padding: 4px; border-radius: 999px; background: #0E1615; border: 1px solid #1C2927">
-      <button type="button" role="tab" aria-selected="true" style="height: 38px; padding: 0 16px; border-radius: 19px; border: 0; background: #7CF3E6; color: #04201D; font-weight: 800">Map</button>
-      <button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 16px; border-radius: 19px; border: 0; background: transparent; color: #8EA29E">Tree</button>
-      <button type="button" role="tab" aria-selected="false" style="height: 38px; padding: 0 16px; border-radius: 19px; border: 0; background: transparent; color: #8EA29E">LDAP query</button>
-    </div>
-    <span style="height: 44px; padding: 0 16px; border-radius: 22px; background: #0E1615; border: 1px solid #22322F; display: flex; align-items: center; gap: 8px; color: #8EA29E; min-width: 260px">Find users, groups, computers…</span>
-  </div>
-  <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 12px; align-items: stretch">
-    <section aria-label="Directory map" style="flex: 3 1 600px; min-width: 0; min-height: 640px; position: relative; border-radius: 28px; background-color: #0B1110; background-image: radial-gradient(#15211F 1px, transparent 1px); background-size: 24px 24px; border: 1px solid #1C2927; overflow: hidden">
-      <svg aria-hidden="true" width="100%" height="100%" viewBox="0 0 900 640" preserveAspectRatio="none" style="position: absolute; inset: 0">
-        <path d="M450 90 C450 160 200 150 200 230" fill="none" stroke="#2A3E3B" stroke-width="2"></path>
-        <path d="M450 90 C450 160 450 170 450 230" fill="none" stroke="#2A3E3B" stroke-width="2"></path>
-        <path d="M450 90 C450 160 700 150 700 230" fill="none" stroke="#2A3E3B" stroke-width="2"></path>
-        <path d="M450 270 C450 340 320 330 320 400" fill="none" stroke="#7CF3E6" stroke-width="2.5"></path>
-        <path d="M450 270 C450 340 580 330 580 400" fill="none" stroke="#2A3E3B" stroke-width="2"></path>
-        <path d="M320 440 C320 500 240 490 240 540" fill="none" stroke="#7CF3E6" stroke-width="2"></path>
-        <path d="M320 440 C320 500 400 490 400 540" fill="none" stroke="#7CF3E6" stroke-width="2"></path>
-      </svg>
-      <span class="d-node d-n" style="left: 50%; top: 50px; transform: translateX(-50%); background: #7CF3E6; color: #04201D; border: 0">lab.example.org</span>
-      <span class="d-node d-n d-1" style="left: 22%; top: 210px; transform: translateX(-50%)">Users <span class="d-sm">18</span></span>
-      <span class="d-node d-n d-1" style="left: 50%; top: 210px; transform: translateX(-50%); border-color: #7CF3E6">TempDesk <span class="d-sm">OU</span></span>
-      <span class="d-node d-n d-1" style="left: 78%; top: 210px; transform: translateX(-50%)">Domain Controllers <span class="d-sm">1</span></span>
-      <span class="d-node d-n d-2" style="left: 35.5%; top: 380px; transform: translateX(-50%); border-color: #7CF3E6; background: #13201E">Guests <span class="d-sm" style="color: #7CF3E6">24 users</span><span style="padding: 2px 8px; border-radius: 8px; background: #3A2620; color: #FFB8A3; font-size: 11px">GPO</span></span>
-      <span class="d-node d-n d-2" style="left: 64.5%; top: 380px; transform: translateX(-50%)">Computers <span class="d-sm">18 PCs</span><span style="padding: 2px 8px; border-radius: 8px; background: #3A2620; color: #FFB8A3; font-size: 11px">GPO</span></span>
-      <span class="d-node d-n d-3" style="left: 26.5%; top: 520px; transform: translateX(-50%); font-family: 'Cascadia Mono',Consolas,monospace; font-size: 13px">guest-k7m2qp</span>
-      <span class="d-node d-n d-4" style="left: 44.5%; top: 520px; transform: translateX(-50%); font-family: 'Cascadia Mono',Consolas,monospace; font-size: 13px">+23 more</span>
-      <div style="position: absolute; left: 16px; bottom: 16px; display: flex; gap: 6px">
-        <button type="button" aria-label="Zoom out" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #22322F; background: #0E1615; color: #E8F1EF">-</button>
-        <button type="button" aria-label="Zoom in" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #22322F; background: #0E1615; color: #E8F1EF">+</button>
-        <button type="button" style="height: 44px; padding: 0 14px; border-radius: 22px; border: 1px solid #22322F; background: #0E1615; color: #E8F1EF">Fit</button>
+<div style="font-family: 'Segoe UI Variable','Segoe UI',Roboto,system-ui,sans-serif; background: #070B0B; color: #E8F1EF; height: 100vh; min-height: 680px; display: flex; flex-direction: column; overflow: hidden; font-size: 14px">
+
+  <header style="height: 52px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 12px; border-bottom: 1px solid #16201E; background: #0A1110">
+    <span style="font-weight: 800; font-size: 16px">Directory</span>
+    <span style="height: 30px; padding: 0 10px; border-radius: 8px; background: #121C1B; color: #8EA29E; display: inline-flex; align-items: center; font-size: 13px">lab.example.org</span>
+    <span style="flex: 1; display: flex; justify-content: center"><span style="width: min(520px, 100%); height: 36px; border-radius: 18px; background: #0E1615; border: 1px solid #22322F; display: flex; align-items: center; gap: 8px; padding: 0 14px; color: #8EA29E; font-size: 13px"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>Find any object, attribute or command</span></span>
+    <span style="height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid #22322F; display: inline-flex; align-items: center; gap: 6px; font-size: 13px">&#8630; Undo</span>
+    <span style="height: 36px; padding: 0 14px; border-radius: 18px; background: #7CF3E6; color: #04201D; display: inline-flex; align-items: center; font-weight: 800; font-size: 13px">+ New</span>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: flex">
+    <aside aria-label="Explorer" class="ds-side" style="width: 270px; flex: none; border-right: 1px solid #16201E; background: #0A1110; display: flex; flex-direction: column; min-height: 0">
+      <div style="padding: 10px"><input type="search" aria-label="Filter tree" placeholder="Filter tree" class="ds-in" style="height: 34px"></div>
+      <div style="flex: 1; overflow: hidden; padding: 0 6px; display: flex; flex-direction: column; gap: 1px">
+        <span class="ds-t" style="color: #E8F1EF; font-weight: 700">&#9662; <span class="ds-ic" style="background: #7CF3E6"></span>lab.example.org</span>
+        <span class="ds-t" style="padding-left: 22px">&#9656; <span class="ds-ic" style="background: #2E5C55"></span>Builtin</span>
+        <span class="ds-t" style="padding-left: 22px">&#9656; <span class="ds-ic" style="background: #2E5C55"></span>Computers</span>
+        <span class="ds-t" style="padding-left: 22px">&#9656; <span class="ds-ic" style="background: #2E5C55"></span>Domain Controllers <span style="margin-left: auto; color: #8EA29E">1</span></span>
+        <span class="ds-t" style="padding-left: 22px; color: #E8F1EF">&#9662; <span class="ds-ic" style="background: #FFB8A3"></span>TempDesk</span>
+        <span class="ds-t" style="padding-left: 40px">&#9656; <span class="ds-ic" style="background: #FFB8A3"></span>Computers <span style="margin-left: auto; color: #8EA29E">18</span></span>
+        <span class="ds-t" style="padding-left: 40px; color: #E8F1EF">&#9662; <span class="ds-ic" style="background: #FFB8A3"></span>Guests <span style="margin-left: auto; color: #8EA29E">24</span></span>
+        <span class="ds-t" style="padding-left: 58px; background: #1F3A36; color: #E8F1EF; font-family: 'Cascadia Mono',Consolas,monospace">guest-k7m2qp</span>
+        <span class="ds-t" style="padding-left: 58px; font-family: 'Cascadia Mono',Consolas,monospace">guest-3fbh9r</span>
+        <span class="ds-t" style="padding-left: 58px; font-family: 'Cascadia Mono',Consolas,monospace">guest-wq2m8c</span>
+        <span class="ds-t" style="padding-left: 40px">TempDesk Admins</span>
+        <span class="ds-t" style="padding-left: 40px">TempDesk Guests</span>
+        <span class="ds-t" style="padding-left: 22px">&#9656; <span class="ds-ic" style="background: #2E5C55"></span>Users <span style="margin-left: auto; color: #8EA29E">18</span></span>
+        <span class="ds-t" style="color: #8EA29E; margin-top: 8px; font-size: 11px; font-weight: 700; letter-spacing: .08em">SAVED QUERIES</span>
+        <span class="ds-t">Disabled accounts <span style="margin-left: auto; color: #FFB8A3">2</span></span>
+        <span class="ds-t">Computers not seen in 30 days <span style="margin-left: auto; color: #FFB8A3">1</span></span>
+        <span class="ds-t">Members of Domain Admins</span>
       </div>
-    </section>
-    <aside aria-label="Selected object" style="flex: 1 1 320px; min-width: 0; max-width: 420px; border-radius: 28px; background: #0E1615; border: 1px solid #2A3E3B; padding: 20px; display: flex; flex-direction: column; gap: 12px">
-      <div style="color: #8EA29E; font-size: 13px">OU=Guests,OU=TempDesk,DC=lab,DC=example,DC=org</div>
-      <h2 style="margin: 0; font-size: 26px; letter-spacing: -0.02em">Guests</h2>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap">
-        <span style="height: 38px; padding: 0 14px; border-radius: 19px; background: #7CF3E6; color: #04201D; display: inline-flex; align-items: center; font-weight: 800; font-size: 14px">+ New object</span>
-        <span style="height: 38px; padding: 0 14px; border-radius: 19px; border: 1px solid #22322F; display: inline-flex; align-items: center; font-size: 14px">Move</span>
-        <span style="height: 38px; padding: 0 14px; border-radius: 19px; border: 1px solid #22322F; display: inline-flex; align-items: center; font-size: 14px">Delegate</span>
-      </div>
-      <div>
-        <div class="d-row"><span style="color: #8EA29E">Linked policies</span><span>Guest User Policy <span style="color: #8EA29E">(enforced)</span></span></div>
-        <div class="d-row"><span style="color: #8EA29E">Protected</span><span>Yes, from accidental deletion</span></div>
-        <div class="d-row"><span style="color: #8EA29E">Objects</span><span>24 users</span></div>
-        <div class="d-row"><span style="color: #8EA29E">Created</span><span>2 Nov 2026, 2:03 PM</span></div>
-      </div>
-      <div style="font-size: 13px; font-weight: 700; letter-spacing: .06em; color: #8EA29E; margin-top: 6px">ALL ATTRIBUTES</div>
-      <span style="height: 44px; border-radius: 14px; background: #070B0B; border: 1px solid #22322F; display: flex; align-items: center; padding: 0 14px; color: #8EA29E">Filter 37 attributes</span>
-      <div class="d-row" style="font-family: 'Cascadia Mono',Consolas,monospace; font-size: 13px"><span style="color: #8EA29E">description</span><span>Temporary guest accounts</span></div>
-      <div class="d-row" style="font-family: 'Cascadia Mono',Consolas,monospace; font-size: 13px"><span style="color: #8EA29E">gPLink</span><span style="word-break: break-all">[LDAP://cn={7A3...}...;2]</span></div>
     </aside>
+
+    <main style="flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0">
+      <div role="tablist" aria-label="Open objects" style="height: 36px; flex: none; display: flex; border-bottom: 1px solid #16201E; background: #0A1110; overflow: hidden">
+        <span role="tab" aria-selected="true" class="ds-tab" style="background: #070B0B; color: #E8F1EF; box-shadow: inset 0 2px 0 #7CF3E6; font-family: 'Cascadia Mono',Consolas,monospace">guest-k7m2qp &#215;</span>
+        <span role="tab" aria-selected="false" class="ds-tab">TempDesk Guests</span>
+        <span role="tab" aria-selected="false" class="ds-tab">Map</span>
+        <span role="tab" aria-selected="false" class="ds-tab">Query builder</span>
+        <span role="tab" aria-selected="false" class="ds-tab">Bulk edit: Guests</span>
+      </div>
+      <div style="flex: 1; min-height: 0; display: flex">
+        <section class="ds-in-a" aria-label="guest-k7m2qp" style="flex: 1; min-width: 0; padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; overflow: hidden">
+          <div style="display: flex; align-items: center; gap: 14px">
+            <span style="width: 56px; height: 56px; border-radius: 18px; background: #13302C; color: #7CF3E6; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px">A</span>
+            <div style="flex: 1; min-width: 0"><div style="font-size: 24px; font-weight: 800; letter-spacing: -0.02em">Alex</div><div style="color: #8EA29E; font-family: 'Cascadia Mono',Consolas,monospace; font-size: 13px">LAB\guest-k7m2qp · user · enabled</div></div>
+            <span style="padding: 5px 10px; border-radius: 999px; background: #3A2620; color: #FFB8A3; font-size: 12px; font-weight: 800">EXPIRES 2:43 PM</span>
+          </div>
+          <div role="tablist" aria-label="Object sections" style="display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid #16201E; padding-bottom: 6px">
+            <span role="tab" aria-selected="false" class="ds-sub">General</span>
+            <span role="tab" aria-selected="true" class="ds-sub" style="background: #1F3A36; color: #E8F1EF; font-weight: 700">Account</span>
+            <span role="tab" aria-selected="false" class="ds-sub">Member of</span>
+            <span role="tab" aria-selected="false" class="ds-sub">Profile</span>
+            <span role="tab" aria-selected="false" class="ds-sub">Sign-in history</span>
+            <span role="tab" aria-selected="false" class="ds-sub">Attributes</span>
+            <span role="tab" aria-selected="false" class="ds-sub">Security</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px">
+            <label class="ds-f">Sign-in name<input class="ds-in" value="guest-k7m2qp"></label>
+            <label class="ds-f">UPN<input class="ds-in" value="guest-k7m2qp@lab.example.org"></label>
+            <label class="ds-f">Account expires<span style="display: flex; gap: 8px"><input class="ds-in" value="Today, 2:43 PM"><span style="height: 42px; padding: 0 12px; border-radius: 12px; border: 1px solid #22322F; display: inline-flex; align-items: center; white-space: nowrap; color: #E8F1EF">+1 h</span></span></label>
+            <label class="ds-f">Logon hours<span style="height: 42px; border-radius: 12px; background: #070B0B; border: 1px solid #22322F; display: grid; grid-template-columns: repeat(24, 1fr); gap: 2px; padding: 8px" aria-label="Allowed 8 AM to 8 PM"><span style="background:#1C2927;border-radius:2px"></span><span style="background:#1C2927;border-radius:2px"></span><span style="background:#1C2927;border-radius:2px"></span><span style="background:#1C2927;border-radius:2px"></span><span style="background:#1C2927;border-radius:2px"></span><span style="background:#1C2927;border-radius:2px"></span><span style="background:#1C2927;border-radius:2px"></span><span style="background:#1C2927;border-radius:2px"></span><span style="background:#7CF3E6;border-radius:2px"></span><span style="background:#7CF3E6;border-radius:2px"></span><span style="background:#7CF3E6;border-radius:2px"></span><span style="background:#7CF3E6;border-radius:2px"></span><span style="background:#7CF3E6;border-radius:2px"></span><span style="background:#7CF3E6;border-radius:2px"></span><span style="background:#7CF3E6;border-radius:2px"></span><span style="background:#7CF3E6;border-radius:2px"></span><span style="background:#7CF3E6;border-radius:2px"></span><span style="background:#7CF3E6;border-radius:2px"></span><span style="background:#7CF3E6;border-radius:2px"></span><span style="background:#7CF3E6;border-radius:2px"></span><span style="background:#1C2927;border-radius:2px"></span><span style="background:#1C2927;border-radius:2px"></span><span style="background:#1C2927;border-radius:2px"></span><span style="background:#1C2927;border-radius:2px"></span></span></label>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px">
+            <label class="ds-sw"><span>Account enabled<br><small style="color: #8EA29E">Can sign in now</small></span><input type="checkbox" checked></label>
+            <label class="ds-sw"><span>Password never expires<br><small style="color: #8EA29E">Guests keep one password</small></span><input type="checkbox" checked></label>
+            <label class="ds-sw"><span>User cannot change password<br><small style="color: #8EA29E">Set by TempDesk</small></span><input type="checkbox" checked></label>
+            <label class="ds-sw"><span>Locked out<br><small style="color: #8EA29E">No failed sign-ins</small></span><input type="checkbox"></label>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto">
+            <span style="height: 42px; padding: 0 16px; border-radius: 21px; background: #7CF3E6; color: #04201D; display: inline-flex; align-items: center; font-weight: 800">Save</span>
+            <span style="height: 42px; padding: 0 16px; border-radius: 21px; border: 1px solid #22322F; display: inline-flex; align-items: center">Reset password</span>
+            <span style="height: 42px; padding: 0 16px; border-radius: 21px; border: 1px solid #22322F; display: inline-flex; align-items: center">Move</span>
+            <span style="height: 42px; padding: 0 16px; border-radius: 21px; border: 1px solid #4A2E26; color: #FFB8A3; display: inline-flex; align-items: center">Delete</span>
+          </div>
+        </section>
+        <aside aria-label="Inspector" class="ds-side" style="width: 290px; flex: none; border-left: 1px solid #16201E; background: #0A1110; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #8EA29E">INSPECTOR</div>
+          <div style="font-weight: 700">accountExpires</div>
+          <div style="color: #B9C9C6; line-height: 1.5; font-size: 13px">When the account stops working. TempDesk's reaper deletes guest accounts after this time and PCs sign them out.</div>
+          <div style="padding: 10px; border-radius: 12px; background: #070B0B; font-family: 'Cascadia Mono',Consolas,monospace; font-size: 12px; color: #8EA29E; word-break: break-all">134070465800000000<br>= 2026-11-03 19:43 UTC</div>
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #8EA29E; margin-top: 8px">EFFECTIVE POLICY</div>
+          <div style="padding: 10px; border-radius: 12px; background: #121C1B; font-size: 13px">Guest User Policy <span style="color: #8EA29E">via Guests (enforced)</span></div>
+          <div style="padding: 10px; border-radius: 12px; background: #121C1B; font-size: 13px">Default Domain Policy <span style="color: #8EA29E">via domain</span></div>
+        </aside>
+      </div>
+      <section aria-label="Panel" style="height: 150px; flex: none; border-top: 1px solid #16201E; background: #0A1110">
+        <div role="tablist" style="display: flex; border-bottom: 1px solid #16201E">
+          <span class="ds-pt" style="color: #E8F1EF; box-shadow: inset 0 -2px 0 #7CF3E6">PROBLEMS <span style="margin-left: 6px; padding: 0 6px; border-radius: 8px; background: #3A2620; color: #FFB8A3">3</span></span>
+          <span class="ds-pt">SEARCH</span><span class="ds-pt">HISTORY</span><span class="ds-pt">LDAP</span>
+        </div>
+        <div style="padding: 8px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+          <div style="display: flex; gap: 10px; align-items: center"><span style="color: #FFB8A3; font-weight: 800">!</span>2 disabled accounts still in Domain Admins<span style="margin-left: auto; padding: 3px 10px; border-radius: 8px; background: #7CF3E6; color: #04201D; font-weight: 700; font-size: 12px">Review</span></div>
+          <div style="display: flex; gap: 10px; align-items: center"><span style="color: #FFB8A3; font-weight: 800">!</span>LIB-PC-09 has not contacted the domain for 34 days<span style="margin-left: auto; padding: 3px 10px; border-radius: 8px; border: 1px solid #22322F; font-size: 12px">Disable</span></div>
+        </div>
+      </section>
+    </main>
   </div>
+  <footer style="height: 26px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 12px; background: #13302C; color: #BFF8F1; font-size: 12px">
+    <span>DC01</span><span>DC=lab,DC=example,DC=org</span><span>1 selected</span><span style="margin-left: auto">412 objects</span><span>Undo: 18 steps</span>
+  </footer>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>

@@ -40,7 +40,7 @@ Motion: entrance rise and pop with `cubic-bezier(.2,.9,.25,1)`, everything off u
 | --- | --- |
 | `Console-Home.dc.html` | Control room home: command bar, live tiles, today's session timeline, activity with undo |
 | `Console-Guests.dc.html` | Guest cards with countdown rings, quick extend, detail drawer |
-| `Console-Directory.dc.html` | Directory as a visual map with object inspector |
+| `Console-Directory.dc.html` | Directory studio: explorer tree, tabbed object editors, map, query builder, bulk edit, inspector, problems panel |
 | `Console-Policy.dc.html` | Group Policy editor: full editor tree, policy list, rich state editor |
 | `Console-Server.dc.html` | Server: live performance and tool tiles |
 | `Console-Phone.dc.html` | The console on a phone: command bar on top, bottom bar navigation |
