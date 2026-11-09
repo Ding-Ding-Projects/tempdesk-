@@ -31,7 +31,16 @@ if (-not (Test-Path $python)) {
     $url = "https://www.python.org/ftp/python/$PythonVersion/python-$PythonVersion-amd64.exe"
     $tmp = Join-Path $env:TEMP "python-$PythonVersion-amd64.exe"
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $tmp
+    # Right after the server becomes a domain controller its own DNS service may not answer internet
+    # names yet ("The remote name could not be resolved"). Try for a few minutes before giving up.
+    for ($try = 1; ; $try++) {
+        try { Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $tmp; break }
+        catch {
+            if ($try -ge 12) { throw }
+            Write-Host "    download attempt $try failed ($($_.Exception.Message)); trying again in 20 seconds"
+            Start-Sleep -Seconds 20
+        }
+    }
     $sig = Get-AuthenticodeSignature -FilePath $tmp
     if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Python Software Foundation') {
         throw "Python installer signature check failed: $($sig.Status)"
@@ -45,8 +54,13 @@ if (-not (Test-Path $python)) {
 Copy-Item -Path (Join-Path $PortalSource '*') -Destination $installDir -Recurse -Force
 $venv = Join-Path $installDir '.venv'
 if (-not (Test-Path (Join-Path $venv 'Scripts\python.exe'))) { & $python -m venv $venv }
-& (Join-Path $venv 'Scripts\python.exe') -m pip install --disable-pip-version-check -q -r (Join-Path $installDir 'requirements.txt')
-if ($LASTEXITCODE -ne 0) { throw 'pip install failed.' }
+for ($try = 1; ; $try++) {
+    & (Join-Path $venv 'Scripts\python.exe') -m pip install --disable-pip-version-check -q -r (Join-Path $installDir 'requirements.txt')
+    if ($LASTEXITCODE -eq 0) { break }
+    if ($try -ge 6) { throw 'pip install failed.' }
+    Write-Host "    pip attempt $try failed; trying again in 20 seconds"
+    Start-Sleep -Seconds 20
+}
 
 # --- Configuration from the agent's keys ----------------------------------------------------
 $agent = Get-Content -LiteralPath (Join-Path $env:ProgramData 'TempDesk\agent.json') -Raw | ConvertFrom-Json
