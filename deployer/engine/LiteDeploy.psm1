@@ -185,9 +185,16 @@ function Invoke-TdLiteDeploy {
     Invoke-TdStep -Id 'keys' -Title 'Fetch agent keys' -Always -Action {
         $r = Invoke-TdSsh -Ssh $ssh -Command ("cd $q/samba && docker compose exec -T dc cat /var/lib/tempdesk/agent.json") -Quiet
         $script:Agent = Save-TdAgentJson -Raw ($r.Output -join "`n") -Directory $Directory
+        # The Lite agent always serves HTTPS with its own certificate. Keep a copy so the portals
+        # and the health check can pin it; agent.json itself carries no "tls" flag.
+        $c = Invoke-TdSsh -Ssh $ssh -Command ("cd $q/samba && docker compose exec -T dc cat /var/lib/tempdesk/agent-cert.pem") -Quiet
+        $pem = (@($c.Output) -join "`n").Trim() + "`n"
+        $script:AgentPin = Get-TdCertSha256 -Pem $pem
+        Write-TdUtf8File -Path (Join-Path $Directory 'agent-cert.pem') -Text $pem
     }
     Invoke-TdStep -Id 'envs' -Title 'Write portal settings' -Always -Action {
-        $envs = New-TdPortalEnv -Agent $script:Agent -AgentHost ([string]$Config.lite.dcIp) -StreamingHost ([string]$ssh.host)
+        $agent = [pscustomobject]@{ guestKey = $script:Agent.guestKey; adminKey = $script:Agent.adminKey; tls = $true; port = $(if ($script:Agent.PSObject.Properties['port']) { [int]$script:Agent.port } else { 8443 }) }
+        $envs = New-TdPortalEnv -Agent $agent -AgentHost ([string]$Config.lite.dcIp) -CertSha256 $script:AgentPin -StreamingHost ([string]$ssh.host)
         Save-TdPortalEnv -Env $envs -Directory $Directory
     }
 }

@@ -116,7 +116,21 @@ try {
         }
         'Health' {
             $agentHost = [string](Get-Prop $cfg 'agentHost' $(if ($cfg.PSObject.Properties['lite'] -and $cfg.kind -eq 'lite') { $cfg.lite.dcIp } else { $cfg.server.ipAddress }))
-            $h = Invoke-TdHealthCheck -AgentUrl ('http://{0}:8080' -f $agentHost)
+            # The deployment saved agent.json (keys, port) and, for TempDesk Lite, the agent certificate.
+            $key = ''; $port = 0
+            $saved = Join-Path $dir 'agent.json'
+            if (Test-Path -LiteralPath $saved) {
+                $j = Get-Content -LiteralPath $saved -Raw | ConvertFrom-Json
+                if ($j.PSObject.Properties['guestKey']) { $key = [string]$j.guestKey; Register-TdSecret $key }
+                if ($j.PSObject.Properties['port'] -and [int]$j.port -gt 0) { $port = [int]$j.port }
+            }
+            $pemPath = Join-Path $dir 'agent-cert.pem'
+            if (Test-Path -LiteralPath $pemPath) {
+                # TempDesk Lite: HTTPS on the agent's own port, pinned to the saved certificate.
+                if (-not $port) { $port = 8443 }
+                $h = Invoke-TdHealthCheck -AgentUrl ('https://{0}:{1}' -f $agentHost, $port) -CertSha256 (Get-TdCertSha256 -Pem (Get-Content -LiteralPath $pemPath -Raw)) -Key $key
+            }
+            else { $h = Invoke-TdHealthCheck -AgentUrl ('http://{0}:8080' -f $agentHost) -Key $key }
             Write-TdLog ("Agent {0} on {1}: {2}" -f $h.version, $h.dc, $h.status)
             Write-TdResult $true ([ordered]@{ status = [string]$h.status; version = [string]$h.version; domain = [string]$h.domain; backend = [string]$h.backend })
         }

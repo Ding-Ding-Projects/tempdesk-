@@ -20,11 +20,46 @@ function Get-TdPortalUrls {
 }
 
 function Invoke-TdHealthCheck {
-    <# GET /api/v1/health on the agent. Returns the parsed body or throws. #>
-    param([Parameter(Mandatory)][string] $AgentUrl, [int] $TimeoutSec = 10)
+    <#
+    GET /api/v1/health on the agent. Returns the parsed body or throws.
+    With -CertSha256 the agent is reached over HTTPS and its certificate must match that pin.
+    -Key is the guest key: the API contract requires X-TempDesk-Key on every route, health included.
+    #>
+    param([Parameter(Mandatory)][string] $AgentUrl, [int] $TimeoutSec = 10, [string] $CertSha256 = '', [string] $Key = '')
     $u = $AgentUrl.TrimEnd('/')
     if ($u -notmatch '/api/v1$') { $u += '/api/v1' }
-    Invoke-RestMethod -Uri ($u + '/health') -Method Get -TimeoutSec $TimeoutSec -ErrorAction Stop
+    if ($Key -and $Key -notmatch '^[!-~]{1,256}$') { throw 'The saved agent key is not valid.' }
+    if (-not $CertSha256) {
+        $headers = @{}
+        if ($Key) { $headers['X-TempDesk-Key'] = $Key }
+        return Invoke-RestMethod -Uri ($u + '/health') -Method Get -Headers $headers -TimeoutSec $TimeoutSec -ErrorAction Stop
+    }
+    $uri = [Uri]($u + '/health')
+    $tcp = New-Object System.Net.Sockets.TcpClient
+    try {
+        $tcp.ReceiveTimeout = $TimeoutSec * 1000; $tcp.SendTimeout = $TimeoutSec * 1000
+        $tcp.Connect($uri.Host, $uri.Port)
+        # The certificate is checked against the pin right after the handshake, before anything is sent.
+        $ssl = New-Object System.Net.Security.SslStream($tcp.GetStream(), $false, ([System.Net.Security.RemoteCertificateValidationCallback] { param($a, $b, $c, $d) $true }))
+        $ssl.AuthenticateAsClient($uri.Host)
+        $sha = [System.Security.Cryptography.SHA256]::Create()
+        try { $seen = -join ($sha.ComputeHash($ssl.RemoteCertificate.GetRawCertData()) | ForEach-Object { $_.ToString('x2') }) } finally { $sha.Dispose() }
+        if ($seen -ne $CertSha256.ToLowerInvariant()) { throw 'The agent certificate does not match the saved fingerprint.' }
+        $keyLine = if ($Key) { "X-TempDesk-Key: $Key`r`n" } else { '' }
+        $req = [Text.Encoding]::ASCII.GetBytes(("GET {0} HTTP/1.0`r`nHost: {1}`r`nAccept: application/json`r`n{2}`r`n" -f $uri.AbsolutePath, $uri.Host, $keyLine))
+        $ssl.Write($req, 0, $req.Length); $ssl.Flush()
+        $ms = New-Object System.IO.MemoryStream
+        $buf = New-Object byte[] 8192
+        while (($n = $ssl.Read($buf, 0, $buf.Length)) -gt 0) { $ms.Write($buf, 0, $n); if ($ms.Length -gt 1MB) { throw 'The health reply is too large.' } }
+        $text = [Text.Encoding]::UTF8.GetString($ms.ToArray())
+        $cut = $text.IndexOf("`r`n`r`n")
+        if ($cut -lt 0 -or $text -notmatch '^HTTP/1\.[01] 200') { throw ('The agent health check failed: ' + ($text -split "`r`n")[0]) }
+        $body = $text.Substring($cut + 4)
+        $a = $body.IndexOf('{'); $z = $body.LastIndexOf('}')
+        if ($a -lt 0 -or $z -lt $a) { throw 'The agent health reply is not JSON.' }
+        $body.Substring($a, $z - $a + 1) | ConvertFrom-Json
+    }
+    finally { $tcp.Close() }
 }
 
 function Start-TdPortalsLocal {

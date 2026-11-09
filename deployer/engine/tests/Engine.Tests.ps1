@@ -190,6 +190,30 @@ Describe 'Progress protocol and secrets' {
     }
 }
 
+Describe 'Protected folders' {
+    It 'can protect the same folder again (a second run of one deployment)' {
+        $d = Join-Path $TestDrive 'deployments/again'
+        { 1..3 | ForEach-Object { New-TdProtectedDirectory -Path $d -ErrorAction Stop | Out-Null } } | Should -Not -Throw
+        Test-Path -LiteralPath $d | Should -BeTrue
+    }
+}
+
+Describe 'Agent certificate pin' {
+    It 'hashes the certificate body and rejects text that is not PEM' {
+        $der = [byte[]](1..64)
+        $pem = "-----BEGIN CERTIFICATE-----`n" + [Convert]::ToBase64String($der) + "`n-----END CERTIFICATE-----`n"
+        $sha = [System.Security.Cryptography.SHA256]::Create()
+        $want = -join ($sha.ComputeHash($der) | ForEach-Object { $_.ToString('x2') })
+        Get-TdCertSha256 -Pem $pem | Should -Be $want
+        { Get-TdCertSha256 -Pem 'not a certificate' } | Should -Throw
+    }
+    It 'writes an https agent address with the pin for an agent that uses TLS' {
+        $e = New-TdPortalEnv -Agent ([pscustomobject]@{ guestKey = 'g-key'; adminKey = 'a-key'; tls = $true; port = 8443 }) -AgentHost '192.168.10.30' -CertSha256 ('AB' * 32)
+        $e.guest | Should -Match '(?m)^AGENT_URL=https://192\.168\.10\.30:8443/api/v1$'
+        $e.admin | Should -Match ('(?m)^AGENT_CERT_SHA256=' + ('ab' * 32) + '$')
+    }
+}
+
 Describe 'Env files' {
     It 'builds guest, admin and streaming env files from agent.json' {
         $e = New-TdPortalEnv -Agent ([pscustomobject]@{ guestKey = 'g-key'; adminKey = 'a-key'; tls = $false }) -AgentHost '192.168.10.10' -GuacSecret ('ab' * 16) -SessionSecret ('s' * 40)

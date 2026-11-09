@@ -5,6 +5,16 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
 
 ## [Unreleased]
 
+### Fixed
+
+- Deployer: running any phase a second time for the same deployment no longer stops with
+  `SeSecurityPrivilege` before the first step.
+- Deployer: after a TempDesk Lite deployment the portal settings now use the agent's HTTPS address
+  with its certificate fingerprint, and the health check reaches the Lite agent with the saved key.
+- Guest portal: the header controls fit phone screens (checked at 390 and 320 px).
+- `build.bat` and `build-installer.bat` work when started from PowerShell 7.
+- Website tests pass on Windows.
+
 ### Added
 
 - Answer File Studio: rich controls for every setting. Each of the 1,029 catalog settings now has a

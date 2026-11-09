@@ -244,7 +244,11 @@ function New-TdProtectedDirectory {
         $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($sid, 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')
         $acl.AddAccessRule($rule)
         $acl.SetOwner($sid)
-        Set-Acl -LiteralPath $Path -AclObject $acl
+        # Not Set-Acl: on a folder that is already protected it also tries to write the audit list and
+        # fails with SeSecurityPrivilege, which stopped every later run for the same deployment.
+        $item = Get-Item -LiteralPath $Path -Force
+        if ($item.PSObject.Methods['SetAccessControl']) { $item.SetAccessControl($acl) }
+        else { [System.IO.FileSystemAclExtensions]::SetAccessControl($item, $acl) }
     }
     elseif (Get-Command chmod -ErrorAction SilentlyContinue) {
         & chmod 700 $Path
@@ -354,6 +358,15 @@ function New-TdPortalEnv {
         admin     = ConvertTo-TdEnvFile -Values $admin -Comment $note
         streaming = ConvertTo-TdEnvFile -Values $stream -Comment $note
     }
+}
+
+function Get-TdCertSha256 {
+    <# SHA-256 fingerprint (64 lower-case hex) of the first certificate in PEM text. #>
+    param([Parameter(Mandatory)][string] $Pem)
+    if ($Pem -notmatch '(?s)-----BEGIN CERTIFICATE-----(.+?)-----END CERTIFICATE-----') { throw 'The agent certificate is not PEM text.' }
+    $der = [Convert]::FromBase64String(($Matches[1] -replace '\s', ''))
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try { -join ($sha.ComputeHash($der) | ForEach-Object { $_.ToString('x2') }) } finally { $sha.Dispose() }
 }
 
 function Save-TdPortalEnv {
