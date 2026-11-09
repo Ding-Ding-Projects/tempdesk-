@@ -412,7 +412,8 @@ def main():
         raise SystemExit('duplicate keys: ' + ', '.join(dup))
     for lang, idx in (('en', 1), ('zh-HK', 2)):
         obj = {k: (en if idx == 1 else zh) for k, en, zh in E}
-        (HERE / (lang + '.json')).write_text(json.dumps(dict(sorted(obj.items())), ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
+        (HERE / (lang + '.json')).write_text(json.dumps(dict(sorted(obj.items())), ensure_ascii=False, indent=1) + '\n', encoding='utf-8', newline='
+')
     print('wrote', len(E), 'keys')
 
 
