@@ -538,6 +538,7 @@
  "pw.policy": "does not meet the policy (12+ characters, upper and lower case, digit, symbol)",
  "pw.show": "Show",
  "pw.strong": "Strong",
+ "pw.veryStrong": "Very strong",
  "pw.veryWeak": "Very weak",
  "pw.weak": "Weak",
  "run.cancel": "Cancel",

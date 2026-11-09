@@ -538,6 +538,7 @@
  "pw.policy": "不符合政策（12 個字元以上，包含大小寫字母、數字及符號）",
  "pw.show": "顯示",
  "pw.strong": "強",
+ "pw.veryStrong": "非常強",
  "pw.veryWeak": "非常弱",
  "pw.weak": "弱",
  "run.cancel": "取消",

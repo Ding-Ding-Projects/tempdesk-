@@ -80,7 +80,7 @@ s('opt.portals.none', 'None on the server (run them with Docker)', '伺服器上
 s('pw.show', 'Show', '顯示'); s('pw.generate', 'Generate', '產生'); s('pw.generated', 'A strong password was generated. Store it in your password manager.', '已產生強密碼。請把它存入密碼管理工具。')
 s('pw.notStored', 'Kept in memory for this session only. Never saved by the desktop app.', '只在本次工作階段的記憶體中保留，桌面應用程式永不儲存。')
 s('pw.policy', 'does not meet the policy (12+ characters, upper and lower case, digit, symbol)', '不符合政策（12 個字元以上，包含大小寫字母、數字及符號）')
-for k, en, zh in [('empty', 'Empty', '空白'), ('veryWeak', 'Very weak', '非常弱'), ('weak', 'Weak', '弱'), ('fair', 'Fair', '一般'), ('strong', 'Strong', '強')]:
+for k, en, zh in [('empty', 'Empty', '空白'), ('veryWeak', 'Very weak', '非常弱'), ('weak', 'Weak', '弱'), ('fair', 'Fair', '一般'), ('strong', 'Strong', '強'), ('veryStrong', 'Very strong', '非常強')]:
     s('pw.' + k, en, zh)
 s('media.title', 'Step 1: Install media', '第 1 步：安裝媒體'); s('media.kicker', 'Unattended install', '無人值守安裝')
 s('media.lead', 'Creates autounattend.xml and the TempDesk folder. Windows installs, becomes the first domain controller and finishes TempDesk by itself.', '建立 autounattend.xml 及 TempDesk 資料夾。Windows 會自行安裝、成為首個網域控制站並完成 TempDesk 設定。')
