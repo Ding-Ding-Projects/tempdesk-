@@ -22,6 +22,8 @@ By the owner's choice the agent and portals speak plain HTTP so no certificate i
 2. Put the domain controller and portals on their own network segment or VLAN.
 3. Turn TLS on for the agent (`agent\install.ps1 -Tls`) and put the portals behind an HTTPS reverse proxy.
 
+Windows Firewall: the agent and native portal ports are open on the Domain and Private profiles, and on the Public profile for the local subnet only. The Public rule exists because a new Windows Server 2025 domain controller can stay on the Public profile; remove the rules whose names end in "Public profile, local subnet" if your server always lands on the Domain profile and you do not want them.
+
 PowerShell remoting used by the Deployer stays on HTTP port 5985; Windows encrypts that traffic at the message level with the Negotiate session keys.
 
 ## Secrets at rest

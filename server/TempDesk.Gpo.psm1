@@ -16,9 +16,19 @@ function Get-TempDeskGpoPaths {
     param([Parameter(Mandatory)] [Guid] $GpoId)
     $domain = Get-ADDomain
     $dns = $domain.DNSRoot
+    $id = "{$($GpoId.ToString().ToUpper())}"
+    $root = "\\$dns\SYSVOL\$dns\Policies\$id"
+    # On the domain controller itself use the local SYSVOL folder. Right after the promotion restart the
+    # domain path is not reachable yet, and setup stopped with "The network path was not found" although
+    # the policy folder was already there locally.
+    try {
+        $sysvol = [string](Get-ItemProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters' -Name SysVol -ErrorAction Stop).SysVol
+        $local = Join-Path (Join-Path (Join-Path $sysvol $dns) 'Policies') $id
+        if ($sysvol -and (Test-Path -LiteralPath $local)) { $root = $local }
+    } catch { }
     [pscustomobject]@{
-        Dn      = "CN={$($GpoId.ToString().ToUpper())},CN=Policies,CN=System,$($domain.DistinguishedName)"
-        SysvolRoot = "\\$dns\SYSVOL\$dns\Policies\{$($GpoId.ToString().ToUpper())}"
+        Dn      = "CN=$id,CN=Policies,CN=System,$($domain.DistinguishedName)"
+        SysvolRoot = $root
     }
 }
 

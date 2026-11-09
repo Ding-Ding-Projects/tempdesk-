@@ -73,7 +73,8 @@ Get-Content -LiteralPath $EnvFile | ForEach-Object {
 }
 Set-Location -LiteralPath $PSScriptRoot
 while ($true) {
-    & (Join-Path $PSScriptRoot '.venv\Scripts\python.exe') -m uvicorn app.main:app --host 0.0.0.0 --port $env:PORT --proxy-headers
+    # Same entry point as the container image. It reads PORT and the other settings from the environment.
+    & (Join-Path $PSScriptRoot '.venv\Scripts\python.exe') -m app.main
     Start-Sleep -Seconds 5   # restart after a crash
 }
 '@ | Set-Content -LiteralPath $runner -Encoding utf8
@@ -84,11 +85,21 @@ foreach ($p in @(@('TempDesk Guest Portal', 'guest.env', $GuestPort), @('TempDes
     # Least privilege: the portals only need the network and their data folder, not SYSTEM.
     $principal = New-ScheduledTaskPrincipal -UserId 'NT AUTHORITY\NETWORK SERVICE' -LogonType ServiceAccount
     $set = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -StartWhenAvailable
+    # Installing again: stop the runner that is already going, or the new one is refused and the old code keeps running.
+    if (Get-ScheduledTask -TaskName $p[0] -TaskPath '\TempDesk\' -ErrorAction SilentlyContinue) {
+        Stop-ScheduledTask -TaskName $p[0] -TaskPath '\TempDesk\' -ErrorAction SilentlyContinue
+    }
     Register-ScheduledTask -TaskName $p[0] -TaskPath '\TempDesk\' -Action $action -Trigger $trigger -Principal $principal -Settings $set -Force | Out-Null
     Start-ScheduledTask -TaskName $p[0] -TaskPath '\TempDesk\'
     $rule = "TempDesk-Portal-$($p[2])"
     if (-not (Get-NetFirewallRule -Name $rule -ErrorAction SilentlyContinue)) {
         New-NetFirewallRule -Name $rule -DisplayName "TempDesk: $($p[0]) (HTTP $($p[2]))" -Protocol TCP -LocalPort $p[2] -Direction Inbound -Action Allow -Profile Domain, Private | Out-Null
+    }
+    # A new Windows Server 2025 domain controller can stay on the Public network profile, where the rule
+    # above does not apply. Allow the same port on Public for the local subnet only.
+    $publicRule = "$rule-Public"
+    if (-not (Get-NetFirewallRule -Name $publicRule -ErrorAction SilentlyContinue)) {
+        New-NetFirewallRule -Name $publicRule -DisplayName "TempDesk: $($p[0]) (HTTP $($p[2]), Public profile, local subnet)" -Protocol TCP -LocalPort $p[2] -Direction Inbound -Action Allow -Profile Public -RemoteAddress LocalSubnet | Out-Null
     }
 }
 Write-Host "Portals running: guest http://$($env:COMPUTERNAME):$GuestPort  admin http://$($env:COMPUTERNAME):$AdminPort" -ForegroundColor Green

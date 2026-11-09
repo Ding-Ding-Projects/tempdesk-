@@ -164,6 +164,13 @@ function Invoke-Install {
     if (-not (Test-Path $InstallDir)) {
         New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
     }
+    # A running service keeps the executable locked: stop it first so installing again (an upgrade,
+    # or setup continuing after a failure) can replace the file. It is started again further down, when the service is registered.
+    $running = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+    if ($running -and $running.Status -ne 'Stopped') {
+        Stop-Service -Name $ServiceName -Force
+        $running.WaitForStatus('Stopped', [TimeSpan]::FromSeconds(60))
+    }
     Copy-Item -Path $builtExe -Destination (Join-Path $InstallDir 'TempDeskAgent.exe') -Force
     Write-Host "  Installed binaries to $InstallDir"
     $installedExe = Join-Path $InstallDir 'TempDeskAgent.exe'
@@ -246,6 +253,15 @@ function Invoke-Install {
         New-NetFirewallRule -DisplayName $ruleName -Direction Inbound -Action Allow `
             -Protocol TCP -LocalPort $usePort -Profile Domain,Private | Out-Null
         Write-Host "  Opened firewall TCP $usePort (Domain, Private) as '$ruleName'"
+    }
+    # A new Windows Server 2025 domain controller can stay on the Public network profile, where the
+    # rule above does not apply and nothing else on the network can reach the agent. Allow the same
+    # port on Public for the local subnet only.
+    $publicRule = "$ruleName (Public profile, local subnet)"
+    if (-not (Get-NetFirewallRule -DisplayName $publicRule -ErrorAction SilentlyContinue)) {
+        New-NetFirewallRule -DisplayName $publicRule -Direction Inbound -Action Allow `
+            -Protocol TCP -LocalPort $usePort -Profile Public -RemoteAddress LocalSubnet | Out-Null
+        Write-Host "  Opened firewall TCP $usePort (Public, local subnet only) as '$publicRule'"
     }
 
     # 9. Event log source.

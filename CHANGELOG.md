@@ -7,6 +7,20 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
 
 ### Fixed
 
+- Windows agent: guest sign-ins can be created. The random number helper looped forever whenever
+  the range divided 2^32 exactly, which the 8-character digit alphabet always did, so password
+  generation never finished. The PowerShell host also starts now (it was created with a null host).
+- Server setup: the unattended install no longer stops at the Group Policy stage with "The network
+  path was not found"; policy files are written through the local SYSVOL folder on the domain controller.
+- Server setup: files copied from the install CD lose their read-only flag, so setup can remove the
+  passwords from `firstboot.json` and report ready.
+- Server setup: continuing after a failure works; the agent installer stops the running service
+  before replacing its executable.
+- Native portals: the guest portal and admin console start (the runner used an entry point that does
+  not exist), and installing again restarts them.
+- Firewall: the agent and native portal ports are also allowed on the Public profile for the local
+  subnet. A new Windows Server 2025 domain controller can stay on that profile, where the Domain and
+  Private rules did not apply and nothing on the network could reach TempDesk.
 - Deployer: running any phase a second time for the same deployment no longer stops with
   `SeSecurityPrivilege` before the first step.
 - Deployer: after a TempDesk Lite deployment the portal settings now use the agent's HTTPS address

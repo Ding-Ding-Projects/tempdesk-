@@ -57,6 +57,9 @@ try {
 
     # Remove secrets from the local copy of the answer data.
     $clean = $cfg | Select-Object -Property * -ExcludeProperty dsrmPassword, administratorPassword
+    # The file may still be read-only when it was copied from a CD or ISO by an older first-logon step.
+    $cfgItem = Get-Item -LiteralPath $cfgPath -Force
+    if ($cfgItem.IsReadOnly) { $cfgItem.IsReadOnly = $false }
     $clean | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $cfgPath -Encoding utf8
 
     Unregister-ScheduledTask -TaskName 'TempDesk Setup' -TaskPath '\TempDesk\' -Confirm:$false

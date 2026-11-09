@@ -90,13 +90,15 @@ namespace TempDesk.Agent
                 throw new ArgumentOutOfRangeException("bound");
             }
             byte[] buffer = new byte[4];
-            // Largest multiple of bound that fits in uint range; reject above it.
-            uint limit = (uint)(0x100000000L - (0x100000000L % bound));
+            // Largest multiple of bound that fits in the 32-bit range; reject above it. The limit is kept
+            // as 64 bits: when bound divides 2^32 exactly (1, 2, 4, 8, 16...) it equals 2^32, which wraps
+            // to 0 as a uint and made this loop spin forever (the digit alphabet has 8 characters).
+            long limit = 0x100000000L - (0x100000000L % bound);
             while (true)
             {
                 Rng.GetBytes(buffer);
                 uint value = BitConverter.ToUInt32(buffer, 0);
-                if (value < limit)
+                if ((long)value < limit)
                 {
                     return (int)(value % (uint)bound);
                 }

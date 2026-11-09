@@ -62,7 +62,11 @@ namespace TempDesk.Agent
             // Do not let an operator profile or execution policy interfere.
             iss.ExecutionPolicy = Microsoft.PowerShell.ExecutionPolicy.Bypass;
 
-            _pool = RunspaceFactory.CreateRunspacePool(1, 4, iss, null);
+            // The (min, max, state, host) overload rejects a null host ("argument host is null"), which
+            // left the agent without PowerShell. Create the pool from the session state and size it.
+            _pool = RunspaceFactory.CreateRunspacePool(iss);
+            _pool.SetMinRunspaces(1);
+            _pool.SetMaxRunspaces(4);
             _pool.Open();
         }
 

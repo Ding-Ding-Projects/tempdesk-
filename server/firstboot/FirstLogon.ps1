@@ -23,6 +23,9 @@ try {
     New-Item -ItemType Directory -Force -Path $target | Out-Null
     & icacls.exe $target /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' | Out-Null
     Copy-Item -Path (Join-Path $PSScriptRoot '*') -Destination $target -Recurse -Force
+    # Files copied from a CD or ISO keep their read-only flag. Clear it, or setup cannot later
+    # remove the passwords from firstboot.json and never reports ready.
+    Get-ChildItem -LiteralPath $target -Recurse -File -Force | Where-Object IsReadOnly | ForEach-Object { $_.IsReadOnly = $false }
     $cfg = Get-Content -LiteralPath (Join-Path $target 'firstboot.json') -Raw | ConvertFrom-Json
 
     # --- Static IP ---------------------------------------------------------------------------
