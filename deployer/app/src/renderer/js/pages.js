@@ -16,10 +16,12 @@ const secrets = new Map();
 function secretFor(name, key) { return (secrets.get(name) || {})[key] || ''; }
 function setSecret(name, key, v) { const s = secrets.get(name) || {}; s[key] = v; secrets.set(name, s); }
 
+// name may be a function, so a password typed after the deployment was renamed is stored under the new name.
 function passwordField(label, name, key, help) {
-  const inp = h('input', { type: 'password', autocomplete: 'new-password', spellcheck: 'false', value: secretFor(name, key) });
+  const nm = () => (typeof name === 'function' ? name() : name);
+  const inp = h('input', { type: 'password', autocomplete: 'new-password', spellcheck: 'false', value: secretFor(nm(), key) });
   const meter = h('div', { class: 'small muted', 'aria-live': 'polite' });
-  const upd = () => { setSecret(name, key, inp.value); const s = A.passwordStrength(inp.value); meter.textContent = inp.value ? t('pw.' + s.code) + (s.meetsPolicy ? '' : ' · ' + t('pw.policy')) : ''; };
+  const upd = () => { setSecret(nm(), key, inp.value); const s = A.passwordStrength(inp.value); meter.textContent = inp.value ? t('pw.' + s.code) + (s.meetsPolicy ? '' : ' · ' + t('pw.policy')) : ''; };
   inp.addEventListener('input', upd);
   const show = btn(t('pw.show'), () => { inp.type = inp.type === 'password' ? 'text' : 'password'; show.setAttribute('aria-pressed', String(inp.type === 'text')); }, 'btn-ghost btn-sm', { 'aria-pressed': 'false' });
   const gen = btn(t('pw.generate'), () => { inp.value = A.generatePassword(20); upd(); toast(t('pw.generated')); }, 'btn-ghost btn-sm');
@@ -51,7 +53,7 @@ function deployPage(root, app) {
   const b = app.info.build;
   root.appendChild(h('div', { class: 'page-head' }, [h('div', null, [h('div', { class: 'kicker', text: t('deploy.kicker') }), h('h1', { text: t('deploy.title') }), h('p', { class: 'muted', text: t('deploy.lead') }),
     h('p', { class: 'small muted mono', 'data-palette': t('about.version'), text: t('about.provenance', [b.version, String(b.commit || '').slice(0, 12), b.builtUtc]) })]), kindSeg]));
-  const nameField = text(t('dep.name'), draft.name, (v) => { draft.name = v; }, { info: 'info.depName', help: t('dep.nameHelp') });
+  const nameField = text(t('dep.name'), draft.name, (v) => { if (v !== draft.name && secrets.has(draft.name)) { secrets.set(v, secrets.get(draft.name)); secrets.delete(draft.name); } draft.name = v; }, { info: 'info.depName', help: t('dep.nameHelp') });
   if (draft.kind === 'server') serverDeploy(root, app, nameField); else liteDeploy(root, app, nameField);
 }
 
@@ -66,7 +68,7 @@ function serverDeploy(root, app, nameField) {
     nameField,
     h('div', { class: 'fields2' }, [
       text(t('f.computerName'), s.computerName, set('computerName', t('f.computerName')), { mono: true }),
-      text(t('f.domainName'), s.domainName, (v) => { s.domainName = v; if (!s._nbTouched) s.netbiosName = A.suggestNetbios(v); saveDraft(t('hist.setField', [t('f.domainName'), v]), 'server.domainName'); }, { mono: true, info: 'info.domain' }),
+      text(t('f.domainName'), s.domainName, (v) => { s.domainName = v; if (!s._nbTouched) { s.netbiosName = A.suggestNetbios(v); const nb = [...document.querySelectorAll('.field')].filter((f) => f.dataset.palette === t('f.netbiosName')).map((f) => f.querySelector('input'))[0]; if (nb) nb.value = s.netbiosName; } saveDraft(t('hist.setField', [t('f.domainName'), v]), 'server.domainName'); }, { mono: true, info: 'info.domain' }),
       text(t('f.netbiosName'), s.netbiosName, (v) => { s._nbTouched = true; s.netbiosName = v; saveDraft(t('hist.setField', [t('f.netbiosName'), v]), 'server.netbiosName'); }, { mono: true, info: 'info.netbios' }),
       text(t('f.ipAddress'), s.ipAddress, set('ipAddress', t('f.ipAddress')), { mono: true, numeric: true }),
       text(t('f.prefixLength'), s.prefixLength, set('prefixLength', t('f.prefixLength')), { numeric: true, info: 'info.prefix' }),
@@ -79,8 +81,8 @@ function serverDeploy(root, app, nameField) {
       text(t('f.productKey'), s.productKey, set('productKey', t('f.productKey')), { mono: true, help: t('f.productKeyHelp') }),
       field({ label: t('f.portalsMode'), info: 'info.portalsMode', control: select([['none', t('opt.portals.none')], ['native', t('opt.portals.native')]], s.portalsMode, set('portalsMode', t('f.portalsMode'))) })
     ]),
-    passwordField(t('f.adminPassword'), draft.name, 'admin'),
-    passwordField(t('f.dsrmPassword'), draft.name, 'dsrm', t('f.dsrmHelp')),
+    passwordField(t('f.adminPassword'), () => draft.name, 'admin'),
+    passwordField(t('f.dsrmPassword'), () => draft.name, 'dsrm', t('f.dsrmHelp')),
     h('div', { class: 'notice warn' }, [h('strong', { text: t('warn.mediaSecrets') }), h('div', { text: t('warn.mediaSecretsHelp') })])
   ]);
   const errs = () => { const f = Object.assign({}, s, { adminPassword: secretFor(draft.name, 'admin'), dsrmPassword: secretFor(draft.name, 'dsrm') }); return A.validateMode('server', f); };
@@ -183,7 +185,7 @@ function liteDeploy(root, app, nameField) {
       text(t('lite.dcIp'), l.dcIp, setL('dcIp', t('lite.dcIp')), { mono: true, info: 'info.dcIp' }), text(t('lite.parent'), l.parentInterface, setL('parentInterface', t('lite.parent')), { mono: true, info: 'info.macvlan' }),
       text(t('lite.subnet'), l.subnet, setL('subnet', t('lite.subnet')), { mono: true }), text(t('lite.gateway'), l.gateway, setL('gateway', t('lite.gateway')), { mono: true }),
       text(t('lite.forwarder'), l.dnsForwarder, setL('dnsForwarder', t('lite.forwarder')), { mono: true })]),
-    passwordField(t('lite.adminPassword'), draft.name, 'admin', t('lite.adminPasswordHelp'))
+    passwordField(t('lite.adminPassword'), () => draft.name, 'admin', t('lite.adminPasswordHelp'))
   ]));
   const run = progressPanel({
     kicker: t('lite.kicker'), title: t('lite.runTitle', [ss.host]), phase: 'Lite', logName: 'tempdesk-lite-' + draft.name, startLabel: t('lite.deploy'),
