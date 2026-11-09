@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const A = require('../assets/answer.js');
@@ -14,7 +14,7 @@ const catPath = path.join(REPO, 'answerfile', 'unattend-catalog.json');
 const genPath = path.join(REPO, 'answerfile', 'generate.mjs');
 const ok = existsSync(catPath) && existsSync(genPath);
 const cat = ok ? JSON.parse(readFileSync(catPath, 'utf8')) : null;
-const gen = ok ? await import(genPath) : null;
+const gen = ok ? await import(pathToFileURL(genPath).href) : null;
 const D = await import('../assets/canvas/direct.js');
 const opts = { skip: ok ? false : 'answerfile/ not present' };
 

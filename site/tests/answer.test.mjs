@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { promises as fs, readFileSync, existsSync, mkdtempSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -60,7 +60,7 @@ test('generated XML is accepted by the shared answerfile catalog and rules when 
   const genPath = path.join(REPO, 'answerfile', 'generate.mjs');
   const catPath = path.join(REPO, 'answerfile', 'unattend-catalog.json');
   if (!existsSync(genPath) || !existsSync(catPath)) { t.skip('answerfile/ not present'); return; }
-  const g = await import(genPath);
+  const g = await import(pathToFileURL(genPath).href);
   const catalog = JSON.parse(readFileSync(catPath, 'utf8'));
   const m = filledModel();
   for (const mode of A.MODES) {
@@ -216,8 +216,8 @@ test('zip.js produces a valid zip (python3 -m zipfile -t)', () => {
   writeFileSync(f, bytes);
   const out = execFileSync('python3', ['-I', '-m', 'zipfile', '-t', f], { encoding: 'utf8' });
   assert.match(out, /Done testing/);
-  const list = execFileSync('python3', ['-I', '-c', 'import sys,zipfile;z=zipfile.ZipFile(sys.argv[1]);print("\\n".join(z.namelist()));assert z.read("TempDesk/bin.dat")==bytes((i*31)&255 for i in range(200000))', f], { encoding: 'utf8' });
-  assert.deepEqual(list.trim().split('\n'), ['autounattend.xml', 'TempDesk/firstboot.json', 'TempDesk/\u4e2d\u6587.txt', 'TempDesk/bin.dat']);
+  const list = execFileSync('python3', ['-I', '-X', 'utf8', '-c', 'import sys,zipfile;z=zipfile.ZipFile(sys.argv[1]);print("\\n".join(z.namelist()));assert z.read("TempDesk/bin.dat")==bytes((i*31)&255 for i in range(200000))', f], { encoding: 'utf8' });
+  assert.deepEqual(list.trim().split(/\r?\n/), ['autounattend.xml', 'TempDesk/firstboot.json', 'TempDesk/\u4e2d\u6587.txt', 'TempDesk/bin.dat']);
   assert.throws(() => Z.makeZipBytes([{ name: '../evil', data: 'x' }]));
   assert.throws(() => Z.makeZipBytes([{ name: 'a', data: 'x' }, { name: 'a', data: 'y' }]));
 });

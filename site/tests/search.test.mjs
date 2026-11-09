@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { normalizeCatalog, CORE_CATALOG, countSet, orderLike } from '../assets/canvas/catalog.js';
 import { buildIndex, search, compileQuery, problemKeys, filterList } from '../assets/canvas/search.js';
@@ -82,7 +82,7 @@ test('Only with problems filter uses the rules engine issue locations', () => {
 test('real rules engine marks a problem that the Only with problems filter finds', async (t) => {
   const gen = path.join(REPO, 'answerfile', 'generate.mjs');
   if (!existsSync(gen) || catalog.origin !== 'full') { t.skip('answerfile/ not present'); return; }
-  const g = await import(gen);
+  const g = await import(pathToFileURL(gen).href);
   const raw = JSON.parse(readFileSync(fullPath, 'utf8'));
   const m = A.defaultModel();
   m.mode = 'custom'; m.custom.computerName = '';

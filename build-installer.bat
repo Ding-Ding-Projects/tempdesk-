@@ -13,6 +13,8 @@ if exist "%ROOT%.tools\node\node.exe" set "PATH=%ROOT%.tools\node;%PATH%"
 set "CSC_LINK=" & set "WIN_CSC_LINK=" & set "CSC_KEY_PASSWORD=" & set "WIN_CSC_KEY_PASSWORD="
 set "CSC_IDENTITY_AUTO_DISCOVERY=false"
 set "PSEXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+rem Started from PowerShell 7, the inherited module path breaks Windows PowerShell 5.1 (Get-FileHash goes missing).
+set "PSModulePath="
 set "EXTRA="
 if defined TEMPDESK_REMOTE_RELEASES set "EXTRA=-c.squirrelWindows.remoteReleases=%TEMPDESK_REMOTE_RELEASES%"
 if defined TEMPDESK_VERSION set "EXTRA=%EXTRA% -c.extraMetadata.version=%TEMPDESK_VERSION%"

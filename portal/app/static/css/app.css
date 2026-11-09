@@ -164,6 +164,9 @@ button.status-pill, a.status-pill { cursor: pointer; }
   .guest-header { padding: 14px 16px; }
   .guest-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; justify-content: space-around; padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); background: var(--surface-1); border-top: 1px solid var(--divider); }
   .guest-nav a { flex: 1 1 0; justify-content: center; text-align: center; font-size: .8rem; padding: 8px 6px; }
+  /* The language search, the language list and two icon buttons do not fit one phone row at fixed widths. */
+  .guest-header .actions { flex: 1 1 100%; min-width: 0; }
+  .guest-header .actions .guest-lang-search, .guest-header .actions select { flex: 1 1 0; width: auto; min-width: 0; max-width: none; }
 }
 
 /* ----------------------------------------------------------- surfaces */

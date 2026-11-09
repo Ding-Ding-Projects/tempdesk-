@@ -6,6 +6,8 @@ set "ROOT=%~dp0"
 set "QUIET="
 if /I "%~1"=="/s" set "QUIET=1"
 set "PSEXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+rem Started from PowerShell 7, the inherited module path breaks Windows PowerShell 5.1 (Get-FileHash goes missing).
+set "PSModulePath="
 set "LOG=%ROOT%deployer\bin\build.log"
 if not exist "%ROOT%deployer\bin" mkdir "%ROOT%deployer\bin"
 if exist "%LOG%" del "%LOG%"

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const A = require('../assets/answer.js');
@@ -52,7 +52,7 @@ test('XML two-way sync: invalid XML throws and nothing is applied; unknown parts
 
 test('quick fixes come from the rules engine and round-trip through the studio model', async (t) => {
   if (!haveShared) { t.skip('answerfile/ not present'); return; }
-  const g = await import(genPath);
+  const g = await import(pathToFileURL(genPath).href);
   const m = A.defaultModel();
   m.mode = 'custom'; m.custom.computerName = ''; m.custom.accounts[0].password = 'pw';
   m.all = {
@@ -109,7 +109,7 @@ test('simulate plays the passes in order with restarts and commands', () => {
 test('every snippet produces XML the shared catalog accepts', async (t) => {
   for (const id of Object.keys(A.SNIPPETS)) assert.ok(A.isWellFormed(A.buildXml(A.applySnippet(A.defaultModel(), id))), id);
   if (!haveShared) { t.skip('answerfile/ not present'); return; }
-  const g = await import(genPath);
+  const g = await import(pathToFileURL(genPath).href);
   for (const id of Object.keys(A.SNIPPETS)) {
     const r = g.parseXml(A.buildXml(A.applySnippet(A.defaultModel(), id)), rawCatalog);
     assert.deepEqual(r.unknown, [], id);
