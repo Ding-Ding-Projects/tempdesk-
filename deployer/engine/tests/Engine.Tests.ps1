@@ -299,3 +299,42 @@ Describe 'Personal wording validator' {
         (Test-TdVocabulary -Bytes ([byte[]](0x7B, 0xC3, 0x28, 0x7D))).Error | Should -Be 'encoding'
     }
 }
+
+Describe 'VMware virtual machine' {
+    BeforeAll { Import-Module (Join-Path $PSScriptRoot '..' 'VmDeploy.psm1') -Force -DisableNameChecking }
+    It 'writes a UEFI machine with an NVMe disk and both ISOs in order' {
+        $x = New-TdVmwareVmx -Name 'TempDesk TD-DC01' -DiskFile 'TempDesk TD-DC01.vmdk' -WindowsIso 'D:\iso' -KitIso 'D:\kit.iso' -Cpus 4 -MemoryMb 8192 -Network nat
+        $x | Should -Match '(?m)^firmware = "efi"?$'
+        $x | Should -Match '(?m)^nvme0:0.fileName = "TempDesk TD-DC01.vmdk"?$'
+        $x | Should -Match '(?m)^sata0:0.fileName = "D:\\iso"?$'
+        $x | Should -Match '(?m)^sata0:1.fileName = "D:\\kit.iso"?$'
+        $x | Should -Match '(?m)^ethernet0.connectionType = "nat"?$'
+        $x | Should -Match '(?m)^numvcpus = "4"?$'
+        $x | Should -Not -Match 'scsi0'
+    }
+    It 'uses a SAS disk for a BIOS machine' {
+        $x = New-TdVmwareVmx -Name 'lab' -DiskFile 'lab.vmdk' -WindowsIso 'w.iso' -KitIso 'k.iso' -Firmware bios
+        $x | Should -Match '(?m)^firmware = "bios"?$'
+        $x | Should -Match '(?m)^scsi0.virtualDev = "lsisas1068"?$'
+        $x | Should -Not -Match 'nvme0'
+    }
+    It 'rejects names and values that could break out of the file' {
+        { New-TdVmwareVmx -Name 'a/b' -DiskFile 'd' -WindowsIso 'w' -KitIso 'k' } | Should -Throw
+        { New-TdVmwareVmx -Name 'ok' -DiskFile 'd' -WindowsIso ('w"' + "`n" + 'x = "1') -KitIso 'k' } | Should -Throw
+        Test-TdVmName 'TempDesk TD-DC01' | Should -BeTrue
+        Test-TdVmName '..' | Should -BeFalse
+        Test-TdVmName 'trailing ' | Should -BeFalse
+    }
+    It 'reads settings with defaults and checks the ranges' {
+        $cfg = [pscustomobject]@{ server = [pscustomobject]@{ computerName = 'TD-DC01'; firmware = 'uefi' }; vm = [pscustomobject]@{ windowsIso = 'D:\w.iso'; folder = 'D:\vms'; network = 'nat' } }
+        $s = Get-TdVmSettings -Config $cfg
+        $s.Name | Should -Be 'TempDesk TD-DC01'
+        $s.Cpus | Should -Be 2
+        $s.DiskGb | Should -Be 60
+        $s.Network | Should -Be 'nat'
+        $s.Folder | Should -Be (Join-Path 'D:\vms' 'TempDesk TD-DC01')
+        $cfg.vm | Add-Member -NotePropertyName diskGb -NotePropertyValue '5'
+        { Get-TdVmSettings -Config $cfg } | Should -Throw
+        { Get-TdVmSettings -Config ([pscustomobject]@{ server = [pscustomobject]@{ computerName = 'X' } }) } | Should -Throw
+    }
+}

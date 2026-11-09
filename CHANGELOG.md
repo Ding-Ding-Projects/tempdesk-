@@ -5,6 +5,13 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
 
 ## [Unreleased]
 
+### Added
+
+- Deployer: **VMware virtual machine** step on the Deploy page. Choose or drop the Windows Server ISO
+  and the app creates a VMware Workstation virtual machine with an empty disk, attaches the Windows
+  ISO and the answer ISO, starts it and presses the key for the "Press any key to boot from CD or DVD"
+  prompt, so the unattended install starts with no clicks. Engine phase `Vm`.
+
 ### Fixed
 
 - Windows agent: guest sign-ins can be created. The random number helper looped forever whenever

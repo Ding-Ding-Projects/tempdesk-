@@ -102,6 +102,43 @@ function serverDeploy(root, app, nameField) {
     btn(t('media.zipKit'), () => td.invoke['file:reveal'](lastMedia.zip), 'btn-ghost'),
     lastMedia.iso ? btn(t('media.iso'), () => td.invoke['file:reveal'](lastMedia.iso), 'btn-ghost') : null]) : null,
     h('p', { class: 'small muted', style: { marginTop: '12px' }, text: t('media.howTo') })]));
+  // Step 1b: let the app create and start a VMware Workstation virtual machine for the install.
+  if (!draft.vm) draft.vm = { name: '', windowsIso: '', folder: '', cpus: '2', memoryMb: '4096', diskGb: '60', network: 'bridged', showWindow: true };
+  const vm = draft.vm;
+  const setV = (k, label) => (v) => { vm[k] = v; saveDraft(t('hist.setField', [label, v]), 'vm.' + k); };
+  const isoField = text(t('vm.iso'), vm.windowsIso, setV('windowsIso', t('vm.iso')), { mono: true, help: t('vm.isoHelp') });
+  const isoInput = isoField.querySelector('input');
+  // "Upload" the ISO: drop the file on this area or browse for it. Only its path is kept; the file is not copied.
+  const useIso = (p) => { if (!/[.]iso$/i.test(p || '')) { toast(t('vm.notIso'), 'error'); return; } isoInput.value = p; setV('windowsIso', t('vm.iso'))(p); toast(t('vm.isoSet', [p.split('/').pop().split(String.fromCharCode(92)).pop()]), 'success'); };
+  const drop = h('div', { class: 'notice', role: 'button', tabindex: '0', 'data-vm-drop': '1', 'aria-label': t('vm.drop'), style: { borderStyle: 'dashed', textAlign: 'center', cursor: 'pointer' } }, [h('strong', { text: t('vm.drop') }), h('div', { class: 'small muted', text: t('vm.dropHelp') })]);
+  const pick = async () => { const p = await td.invoke['file:pickIso'](); if (p) useIso(p); };
+  drop.addEventListener('click', pick);
+  drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+  drop.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); drop.classList.add('ok'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('ok'));
+  drop.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); drop.classList.remove('ok'); const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) useIso(td.pathForFile(f)); });
+  const showWin = h('input', { type: 'checkbox', class: 'switch', checked: vm.showWindow !== false });
+  showWin.addEventListener('change', () => { vm.showWindow = showWin.checked; saveDraft(t('hist.setField', [t('vm.show'), String(showWin.checked)])); });
+  const vmRun = progressPanel({
+    kicker: t('vm.kicker'), title: t('vm.runTitle'), phase: 'Vm', logName: 'tempdesk-vm-' + draft.name, startLabel: t('vm.create'),
+    config: () => Object.assign({}, draft, { server: Object.assign({}, draft.server), vm: Object.assign({}, draft.vm) }),
+    before: async () => { if (!String(vm.windowsIso || '').trim()) { toast(t('vm.needIso'), 'error'); return false; } await saveDraft(t('hist.saveDep', [draft.name])); return true; },
+    onDone: (data) => { if (data) toast(t('vm.done', [data.name]), 'success'); }
+  });
+  root.appendChild(h('div', { class: 'card' }, [
+    h('h2', { text: t('vm.title') }), h('p', { class: 'muted', text: t('vm.lead') }),
+    h('div', { class: 'notice ok', text: t('vm.safe') }),
+    drop, isoField, h('div', { class: 'row' }, [btn(t('vm.browse'), pick, 'btn-ghost btn-sm')]),
+    h('div', { class: 'fields2' }, [
+      text(t('vm.name'), vm.name, setV('name', t('vm.name')), { help: t('vm.nameHelp') }),
+      text(t('vm.folder'), vm.folder, setV('folder', t('vm.folder')), { mono: true, help: t('vm.folderHelp') }),
+      text(t('vm.cpus'), String(vm.cpus), setV('cpus', t('vm.cpus')), { numeric: true }),
+      text(t('vm.memory'), String(vm.memoryMb), setV('memoryMb', t('vm.memory')), { numeric: true }),
+      text(t('vm.disk'), String(vm.diskGb), setV('diskGb', t('vm.disk')), { numeric: true }),
+      field({ label: t('vm.network'), control: select([['bridged', t('opt.vmnet.bridged')], ['nat', t('opt.vmnet.nat')], ['hostonly', t('opt.vmnet.hostonly')]], vm.network, setV('network', t('vm.network'))) })
+    ]),
+    h('label', { class: 'check' }, [showWin, h('span', { text: t('vm.show') })]),
+    vmRun]));
   // Step 2: monitor (or advanced deploy)
   const adv = h('input', { type: 'checkbox', class: 'switch', checked: !!s.advanced });
   adv.addEventListener('change', () => { s.advanced = adv.checked; saveDraft(t(adv.checked ? 'hist.advOn' : 'hist.advOff')); app.render(); });

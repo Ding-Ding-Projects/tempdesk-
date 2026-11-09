@@ -88,6 +88,19 @@ s('media.runTitle', 'Build the media', '建立媒體'); s('media.build', 'Build 
 s('media.invalid', 'Fix these fields first: {0}', '請先修正以下欄位：{0}'); s('media.done', 'Media ready in {0}', '媒體已在 {0} 準備好')
 s('media.openFolder', 'Show folder', '顯示資料夾'); s('media.zipKit', 'Show answer file kit (.zip)', '顯示應答檔套件（.zip）'); s('media.iso', 'Show ISO', '顯示 ISO')
 s('media.howTo', 'Virtual machines: attach TempDesk-answer.iso as a second CD next to the Windows ISO. Bare metal: copy the folder contents (autounattend.xml and TempDesk) to the root of the Windows installer USB stick.', '虛擬機：把 TempDesk-answer.iso 作為第二張光碟連同 Windows ISO 掛載。實體機：把資料夾內容（autounattend.xml 及 TempDesk）複製到 Windows 安裝 USB 手指的根目錄。')
+s('vm.title', 'Step 1b: VMware virtual machine (optional)', '第 1b 步：VMware 虛擬機（可選）'); s('vm.kicker', 'VMware Workstation', 'VMware Workstation')
+s('vm.lead', 'Let TempDesk create a VMware Workstation virtual machine on this PC, attach the Windows ISO and the answer ISO, start it and boot the installer. Windows then installs with no clicks.', '讓 TempDesk 在這部電腦建立 VMware Workstation 虛擬機，掛上 Windows ISO 及應答 ISO，啟動並由安裝程式開機。之後 Windows 會全自動安裝，毋須點按。')
+s('vm.runTitle', 'Create and start the virtual machine', '建立並啟動虛擬機'); s('vm.create', 'Create the virtual machine and start the install', '建立虛擬機並開始安裝')
+s('vm.iso', 'Windows Server ISO file', 'Windows Server ISO 檔案'); s('vm.isoHelp', 'The full path of the Windows Server 2025 ISO on this PC.', '這部電腦上 Windows Server 2025 ISO 的完整路徑。'); s('vm.browse', 'Browse', '瀏覽')
+s('vm.name', 'Virtual machine name', '虛擬機名稱'); s('vm.nameHelp', 'Leave empty to use TempDesk and the computer name.', '留空會使用「TempDesk」加電腦名稱。')
+s('vm.folder', 'Folder for virtual machines', '虛擬機資料夾'); s('vm.folderHelp', 'Leave empty to use Virtual Machines in your Documents folder.', '留空會使用「文件」內的 Virtual Machines 資料夾。')
+s('vm.cpus', 'Processors', '處理器數目'); s('vm.memory', 'Memory (MB)', '記憶體（MB）'); s('vm.disk', 'Disk size (GB)', '磁碟大小（GB）'); s('vm.network', 'Network', '網絡')
+s('opt.vmnet.bridged', 'Bridged: on your LAN, matching the answer file', '橋接：接到你的區域網絡，配合應答檔'); s('opt.vmnet.nat', 'NAT: the VMware private network', 'NAT：VMware 私人網絡'); s('opt.vmnet.hostonly', 'Host-only: this PC only', '僅主機：只限這部電腦')
+s('vm.show', 'Show the VMware window', '顯示 VMware 視窗'); s('vm.needIso', 'Choose the Windows Server ISO file first.', '請先選擇 Windows Server ISO 檔案。')
+s('vm.drop', 'Drop the Windows Server ISO here, or click to choose it', '把 Windows Server ISO 拖放到這裡，或點按選擇'); s('vm.dropHelp', 'The file stays where it is: only its location is saved.', '檔案會留在原位，只會記住它的位置。')
+s('vm.notIso', 'That is not an .iso file.', '這不是 .iso 檔案。'); s('vm.isoSet', 'Using {0}', '已選用 {0}')
+s('vm.done', 'Virtual machine {0} is installing Windows. Watch the install below.', '虛擬機 {0} 正在安裝 Windows。可在下方監察安裝。')
+s('vm.safe', 'Only the new virtual machine and its empty disk are used. No existing virtual machine is changed.', '只會使用新建的虛擬機及其空白磁碟，不會改動任何現有虛擬機。')
 s('server.kicker', 'Step 2', '第 2 步'); s('server.monTitle', 'Setting up {0}', '正在設定 {0}'); s('server.advTitle', 'Deploying to {0}', '正在部署到 {0}')
 s('server.watch', 'Watch setup', '監察安裝'); s('server.deploy', 'Deploy to this server', '部署到此伺服器')
 s('server.advanced', 'Advanced: deploy to an existing server', '進階：部署到現有伺服器')
@@ -135,6 +148,10 @@ STEPS = [('folder', 'Write autounattend.xml and the TempDesk folder', '寫入 au
          ('stage-portals', 'Portals', '入口網站', '', ''), ('stage-ready', 'Ready', '已就緒', '', ''),
          ('keys', 'Fetch agent keys', '取得代理程式金鑰', 'Make sure C:\\ProgramData\\TempDesk\\agent.json exists on the server.', '請確認伺服器上存在 C:\\ProgramData\\TempDesk\\agent.json。'),
          ('envs', 'Write portal settings', '寫入入口網站設定', '', ''),
+         ('vmware', 'Find VMware Workstation', '尋找 VMware Workstation', 'Install VMware Workstation Pro on this PC, then try again.', '請先在這部電腦安裝 VMware Workstation Pro，然後再試。'),
+         ('vmmedia', 'Check the Windows ISO and the answer ISO', '檢查 Windows ISO 及應答 ISO', 'Choose the Windows Server ISO file, and build the install media first so the answer ISO exists.', '請選擇 Windows Server ISO 檔案，並先建立安裝媒體，才會有應答 ISO。'),
+         ('vmcreate', 'Create the virtual machine', '建立虛擬機', 'Choose another virtual machine name, or delete the old virtual machine in VMware first.', '請改用另一個虛擬機名稱，或先在 VMware 刪除舊的虛擬機。'),
+         ('vmstart', 'Start it and boot the Windows installer', '啟動並由 Windows 安裝程式開機', 'Open the virtual machine in VMware Workstation, power it on and press a key when it says "Press any key to boot from CD or DVD".', '請在 VMware Workstation 開啟虛擬機並開機，見到「Press any key to boot from CD or DVD」時按任何鍵。'),
          ('copy', 'Copy TempDesk files', '複製 TempDesk 檔案', 'Check free space on C: and that the account is a local administrator.', '請檢查 C: 的可用空間，以及帳戶是本機系統管理員。'),
          ('forest', 'Create the forest', '建立樹系', 'Read C:\\ProgramData\\TempDesk\\logs\\install-forest-*.log on the server.', '請查看伺服器上的 C:\\ProgramData\\TempDesk\\logs\\install-forest-*.log。'),
          ('adws', 'Wait for Active Directory after the restart', '重新開機後等待 Active Directory', 'Active Directory Web Services can take several minutes after the first restart.', '首次重新開機後，Active Directory Web Services 可能需要數分鐘。'),

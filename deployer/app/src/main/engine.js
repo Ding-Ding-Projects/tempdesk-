@@ -10,7 +10,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const SECRET_NAME = /^[A-Z][A-Z0-9_]{1,40}$/;
-const PHASES = new Set(['Media', 'Server', 'Lite', 'Portals', 'Health', 'Trust', 'Uninstall']);
+const PHASES = new Set(['Media', 'Vm', 'Server', 'Lite', 'Portals', 'Health', 'Trust', 'Uninstall']);
 
 // Splits a stream of chunks into lines and parses each one. Non-JSON lines become log events.
 function createLineParser(onEvent) {

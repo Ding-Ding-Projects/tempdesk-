@@ -10,6 +10,7 @@ td.on['engine:event']((ev) => { const r = running.get(ev.run); if (r) r.onEvent(
 
 export const PHASE_STEPS = {
   Media: ['folder', 'zip', 'iso'],
+  Vm: ['vmware', 'vmmedia', 'vmcreate', 'vmstart'],
   ServerMonitor: ['trust', 'reach', 'stage-copy', 'stage-network', 'stage-forest', 'stage-adws', 'stage-domain', 'stage-agent', 'stage-portals', 'stage-ready', 'keys', 'envs'],
   ServerAdvanced: ['trust', 'reach', 'copy', 'forest', 'adws', 'domain', 'agent', 'keys', 'envs'],
   ServerUpdate: ['trust', 'reach', 'copy', 'domain', 'agent', 'keys', 'envs'],

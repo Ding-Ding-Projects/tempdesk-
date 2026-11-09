@@ -6,6 +6,9 @@
 .DESCRIPTION
     Phases:
       Media     Build the TempDesk server install media: folder, zip kit and (Windows) ISO.
+      Vm        Create a VMware Workstation virtual machine with the Windows ISO and the answer ISO,
+                start it and boot the Windows installer. Config "vm": windowsIso, name, cpus,
+                memoryMb, diskGb, network (bridged, nat or hostonly), showWindow.
       Server    Watch the unattended install over WinRM and collect the agent keys (default),
                 or with config "server.advanced": true deploy to an existing server step by step.
       Lite      Deploy TempDesk Lite (Samba domain controller container) over SSH.
@@ -26,7 +29,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string] $Config,
-    [Parameter(Mandatory)][ValidateSet('Media', 'Server', 'Lite', 'Portals', 'Health', 'Trust', 'Uninstall')][string] $Phase,
+    [Parameter(Mandatory)][ValidateSet('Media', 'Vm', 'Server', 'Lite', 'Portals', 'Health', 'Trust', 'Uninstall')][string] $Phase,
     [string] $PayloadRoot = '',
     [string] $OutDir = '',
     [switch] $Reset,
@@ -34,7 +37,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $here = $PSScriptRoot
-foreach ($m in @('TempDesk.Common', 'AnswerFile', 'ServerDeploy', 'LiteDeploy', 'Portals')) {
+foreach ($m in @('TempDesk.Common', 'AnswerFile', 'ServerDeploy', 'LiteDeploy', 'Portals', 'VmDeploy')) {
     Import-Module (Join-Path $here "$m.psm1") -Force -DisableNameChecking
 }
 try { [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false) } catch { }
@@ -85,6 +88,10 @@ try {
             }
             Write-TdLog -Level warn -Text 'The media contains the DSRM password in plain text and the Administrator password in Windows unattend encoding. Detach or erase it after the install.'
             Write-TdResult $true ([ordered]@{ folder = $folder; zip = (Join-Path $OutDir 'TempDesk-answer-kit.zip'); iso = $(if ($NoIso) { '' } else { Join-Path $OutDir 'TempDesk-answer.iso' }) })
+        }
+        'Vm' {
+            $made = Invoke-TdVmDeploy -Config $cfg -Directory $dir
+            Write-TdResult $true ([ordered]@{ vmx = $made.Vmx; name = $made.Name; folder = $made.Folder })
         }
         'Trust' {
             Set-TdTrustedHost -Address ([string]$cfg.server.ipAddress)

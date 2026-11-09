@@ -289,6 +289,7 @@ function registerIpc() {
     return { path: f, name: path.basename(f), size: st.size, bytes: new Uint8Array(fs.readFileSync(f)) };
   });
   handle('file:pickFolder', async () => { const r = await dialog.showOpenDialog(win, { properties: ['openDirectory', 'createDirectory'] }); return r.canceled ? null : r.filePaths[0]; });
+  handle('file:pickIso', async () => { const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: 'ISO', extensions: ['iso'] }] }); return r.canceled ? null : r.filePaths[0]; });
   handle('file:reveal', (p) => { if (typeof p === 'string' && fs.existsSync(p)) shell.showItemInFolder(p); });
   handle('file:zip', async (opts) => {
     const r = await dialog.showSaveDialog(win, { defaultPath: opts.name, filters: [{ name: 'Zip', extensions: ['zip'] }] });
