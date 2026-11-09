@@ -45,7 +45,9 @@ const DEFAULT_LITE = () => ({ name: 'lite', kind: 'lite', ssh: { user: 'ubuntu',
 
 let draft = null;
 async function saveDraft(label, key) {
-  try { draft = await td.invoke['dep:save'](draft, label); window.TempDeskApp.refreshUndo(); } catch (e) { if (!key) toast(e.message, 'error'); }
+  // Keep the same draft object: the form on screen holds references into it (draft.server, draft.vm).
+  // Replacing it with the saved copy made every edit after the first one go into a stale object and get lost.
+  try { const saved = await td.invoke['dep:save'](draft, label); if (saved && saved.updated) draft.updated = saved.updated; window.TempDeskApp.refreshUndo(); } catch (e) { if (!key) toast(e.message, 'error'); }
 }
 function deployPage(root, app) {
   if (!draft) draft = (app.settings.onboarding && app.settings.onboarding.path === 'lite') ? DEFAULT_LITE() : DEFAULT_SERVER();
@@ -96,13 +98,20 @@ function serverDeploy(root, app, nameField) {
       await saveDraft(t('hist.saveDep', [draft.name]));
       return superConfirm({ title: t('warn.wipeTitle'), danger: t('warn.wipe'), text: t('warn.wipeConfirm', [draft.server.computerName]), word: 'WIPE', action: t('warn.wipeHold') });
     },
-    onDone: (data) => { if (data) { lastMedia = data; toast(t('media.done', [data.folder]), 'success'); app.render(); } }
+    // Show the result buttons without drawing the page again, so the finished steps and the log stay on screen.
+    onDone: (data) => { if (data) { lastMedia = data; toast(t('media.done', [data.folder]), 'success'); showMediaLinks(); } }
   });
   root.appendChild(media);
-  root.appendChild(h('div', { class: 'card' }, [mediaRun, lastMedia ? h('div', { class: 'row', style: { marginTop: '12px' } }, [
-    btn(t('media.openFolder'), () => td.invoke['file:reveal'](lastMedia.folder), 'btn-ghost'),
-    btn(t('media.zipKit'), () => td.invoke['file:reveal'](lastMedia.zip), 'btn-ghost'),
-    lastMedia.iso ? btn(t('media.iso'), () => td.invoke['file:reveal'](lastMedia.iso), 'btn-ghost') : null]) : null,
+  const mediaLinks = h('div', { class: 'row', style: { marginTop: '12px' } });
+  function showMediaLinks() {
+    mediaLinks.hidden = !lastMedia;
+    mediaLinks.replaceChildren(...(lastMedia ? [
+      btn(t('media.openFolder'), () => td.invoke['file:reveal'](lastMedia.folder), 'btn-ghost'),
+      btn(t('media.zipKit'), () => td.invoke['file:reveal'](lastMedia.zip), 'btn-ghost'),
+      lastMedia.iso ? btn(t('media.iso'), () => td.invoke['file:reveal'](lastMedia.iso), 'btn-ghost') : null].filter(Boolean) : []));
+  }
+  showMediaLinks();
+  root.appendChild(h('div', { class: 'card' }, [mediaRun, mediaLinks,
     h('p', { class: 'small muted', style: { marginTop: '12px' }, text: t('media.howTo') })]));
   // Step 1b: let the app create and start a VMware Workstation virtual machine for the install.
   if (!draft.vm) draft.vm = { name: '', windowsIso: '', folder: '', cpus: '2', memoryMb: '4096', diskGb: '60', network: 'bridged', showWindow: true };
@@ -125,7 +134,7 @@ function serverDeploy(root, app, nameField) {
     kicker: t('vm.kicker'), title: t('vm.runTitle'), phase: 'Vm', logName: 'tempdesk-vm-' + draft.name, startLabel: t('vm.create'),
     config: () => Object.assign({}, draft, { server: Object.assign({}, draft.server), vm: Object.assign({}, draft.vm) }),
     before: async () => { if (!String(vm.windowsIso || '').trim()) { toast(t('vm.needIso'), 'error'); return false; } await saveDraft(t('hist.saveDep', [draft.name])); return true; },
-    onDone: (data) => { if (data) toast(t('vm.done', [data.name]), 'success'); }
+    onDone: (data) => { if (data) toast(t('vm.done', [data.name]), 'success'); refreshVms(); }
   });
   root.appendChild(h('div', { class: 'card' }, [
     h('h2', { text: t('vm.title') }), h('p', { class: 'muted', text: t('vm.lead') }),
@@ -141,6 +150,41 @@ function serverDeploy(root, app, nameField) {
     ]),
     h('label', { class: 'check' }, [showWin, h('span', { text: t('vm.show') })]),
     vmRun]));
+  // Manage the VMware machines TempDesk created: state, start, power off, open, screen, delete.
+  const vmList = h('div', { class: 'stack', 'data-vm-list': '1', 'aria-live': 'polite' });
+  const vmErr = (r) => toast(t('vmm.failed', [r.error === 'running' ? t('err.vmRunning') : r.error === 'notManaged' ? t('err.vmNotManaged') : r.error === 'noScreenshot' ? t('vmm.noScreen') : String(r.error || '')]), 'error');
+  async function refreshVms() {
+    let r;
+    try { r = await td.invoke['vm:list'](); } catch (e) { r = { installed: false, machines: [] }; }
+    if (!r.installed) { vmList.replaceChildren(h('p', { class: 'muted', text: t('vmm.noVmware') })); return; }
+    if (!r.machines.length) { vmList.replaceChildren(h('p', { class: 'muted', text: t('vmm.none') })); return; }
+    vmList.replaceChildren(...r.machines.map((m) => {
+      const act = async (what, opts, okMsg) => { const x = await td.invoke['vm:action'](Object.assign({ vmx: m.vmx, what }, opts || {})); if (x.ok) { if (okMsg) toast(t(okMsg, [m.name]), 'success'); } else vmErr(x); await refreshVms(); return x; };
+      const netLabel = ['bridged', 'nat', 'hostonly'].includes(m.network) ? t('opt.vmnet.' + m.network).split(':')[0] : m.network;
+      return h('div', { class: 'card', 'data-vm': m.name, style: { padding: '14px 16px' } }, [
+        h('div', { class: 'row between' }, [
+          h('div', null, [h('strong', { text: m.name }), h('span', { class: 'small', style: { marginLeft: '10px', color: m.running ? 'var(--primary)' : 'var(--muted)' }, text: m.running ? t('vmm.running') : t('vmm.stopped') }),
+            h('div', { class: 'small muted', text: t('vmm.detail', [String(m.cpus), String(m.memoryMb), m.firmware.toUpperCase(), netLabel]) })]),
+          h('div', { class: 'row' }, [
+            m.running ? null : btn(t('vmm.start'), () => act('start', { show: vm.showWindow !== false }, 'vmm.started'), 'btn-ghost btn-sm'),
+            m.running ? btn(t('vmm.stop'), async () => { if (await confirmDialog(t('vmm.stopTitle', [m.name]), t('vmm.stopText'), t('vmm.stop'))) act('stop', null, 'vmm.stoppedToast'); }, 'btn-ghost btn-sm') : null,
+            m.running && r.canScreenshot ? btn(t('vmm.screen'), async () => {
+              const x = await td.invoke['vm:action']({ vmx: m.vmx, what: 'screenshot' });
+              if (!x.ok) { vmErr(x); return; }
+              dialog(t('vmm.screenOf', [m.name]), () => [h('img', { src: 'data:image/png;base64,' + x.png, alt: t('vmm.screenOf', [m.name]), style: { maxWidth: '100%', borderRadius: '12px' } })]);
+            }, 'btn-ghost btn-sm') : null,
+            btn(t('vmm.open'), () => act('open'), 'btn-ghost btn-sm'),
+            m.running ? null : btn(t('vmm.delete'), async () => {
+              const ok = await superConfirm({ title: t('vmm.delete') + ': ' + m.name, danger: t('danger.vmDelete'), text: t('confirm.vmDelete', [m.name]), word: 'DELETE', action: t('confirm.vmDeleteHold') });
+              if (ok) act('delete', { confirm: m.name }, 'vmm.deleted');
+            }, 'btn-ghost btn-sm')
+          ].filter(Boolean))])]);
+    }));
+  }
+  root.appendChild(h('div', { class: 'card' }, [
+    h('div', { class: 'row between' }, [h('h2', { text: t('vmm.title') }), btn(t('vmm.refresh'), () => refreshVms(), 'btn-ghost btn-sm')]),
+    h('p', { class: 'muted', text: t('vmm.lead') }), vmList]));
+  refreshVms();
   // Step 2: monitor (or advanced deploy)
   const adv = h('input', { type: 'checkbox', class: 'switch', checked: !!s.advanced });
   adv.addEventListener('change', () => { s.advanced = adv.checked; saveDraft(t(adv.checked ? 'hist.advOn' : 'hist.advOff')); app.render(); });

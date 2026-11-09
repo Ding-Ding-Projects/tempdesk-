@@ -66,6 +66,8 @@ function New-TdVmwareVmx {
     & $add 'config.version' '8'
     & $add 'virtualHW.version' '19'
     & $add 'displayName' $Name
+    # Marks the machine as made by TempDesk: the desktop app only lists and manages marked machines.
+    & $add 'tempdesk.managed' 'TRUE'
     & $add 'guestOS' 'windows2019srvnext-64'
     & $add 'firmware' $(if ($Firmware -eq 'bios') { 'bios' } else { 'efi' })
     & $add 'numvcpus' $Cpus

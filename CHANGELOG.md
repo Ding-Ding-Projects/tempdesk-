@@ -11,9 +11,17 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
   and the app creates a VMware Workstation virtual machine with an empty disk, attaches the Windows
   ISO and the answer ISO, starts it and presses the key for the "Press any key to boot from CD or DVD"
   prompt, so the unattended install starts with no clicks. Engine phase `Vm`.
+- Deployer: **Your TempDesk virtual machines** list on the Deploy page: state, start, power off, open in
+  VMware, show the screen and delete (with confirmation). Only machines TempDesk created are listed.
 
 ### Fixed
 
+- Deployer: edits on the Deploy page are all kept. After the first saved change every later change was
+  written to a stale copy and lost, so the media and the deployment used the old values.
+- Deployer: passwords typed after renaming the deployment are accepted, and the NetBIOS box follows the
+  domain name on screen.
+- Deployer: the finished steps and the log stay on screen after the media is built.
+- Deployer: information lines in the live log are readable (they were drawn as tiny round buttons).
 - Windows agent: guest sign-ins can be created. The random number helper looped forever whenever
   the range divided 2^32 exactly, which the 8-character digit alphabet always did, so password
   generation never finished. The PowerShell host also starts now (it was created with a null host).

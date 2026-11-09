@@ -134,8 +134,9 @@ input[type=range] { width: 100%; accent-color: var(--primary); min-height: var(-
 .iconbtn { width: var(--tap); height: var(--tap); border-radius: 50%; border: 0; background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; }
 .iconbtn:hover { background: var(--s3); color: var(--text); }
 .iconbtn:disabled { opacity: .4; cursor: not-allowed; }
-.info { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--outline2); background: transparent; color: var(--muted); font: 700 .75rem/1 var(--font); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; padding: 0; }
-.info:hover, .info[aria-expanded="true"] { border-color: var(--primary); color: var(--primary); }
+/* The round "i" button. Scoped to buttons: log lines also carry the class "info" for their level. */
+button.info { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--outline2); background: transparent; color: var(--muted); font: 700 .75rem/1 var(--font); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; padding: 0; }
+button.info:hover, button.info[aria-expanded="true"] { border-color: var(--primary); color: var(--primary); }
 .hold { overflow: hidden; }
 .hold .fill { position: absolute; inset: 0; background: rgba(255, 255, 255, .22); transform-origin: left; transform: scaleX(0); pointer-events: none; }
 

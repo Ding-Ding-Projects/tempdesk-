@@ -10,7 +10,7 @@ const INVOKE = [
   'school:get', 'school:enable', 'school:disable',
   'wording:get', 'wording:apply', 'wording:pick', 'wording:clear', 'sound:get',
   'dep:list', 'dep:get', 'dep:save', 'dep:delete', 'dep:openFolder', 'dep:envFiles', 'tabs:get', 'tabs:set',
-  'engine:start', 'engine:cancel', 'engine:trust', 'engine:sshConsole', 'engine:sshKey', 'engine:prereqs', 'engine:health',
+  'vm:list', 'vm:action', 'engine:start', 'engine:cancel', 'engine:trust', 'engine:sshConsole', 'engine:sshKey', 'engine:prereqs', 'engine:health',
   'file:save', 'file:open', 'file:pickFolder', 'file:pickIso', 'file:reveal', 'file:zip', 'docs:list', 'docs:read', 'shell:open', 'clipboard:write', 'clipboard:read',
   'media:writeKit', 'media:kitPayload', 'media:iso', 'disks:list',
   'ws:info', 'ws:save', 'ws:get', 'ws:flush', 'ws:undo', 'ws:redo', 'ws:restore', 'ws:log', 'ws:diff', 'ws:filesAt', 'ws:snapshot', 'ws:setRemote', 'ws:push',

@@ -14,6 +14,7 @@ const school = require('./school.js');
 const { Updater } = require('./updater.js');
 const { Job, outputPath, sniff } = require('./base64files.js');
 const { makeZip, readZip } = require('./zipfile.js');
+const vmware = require('./vmware.js');
 const Core = require('../shared/core.js');
 const Wording = require('../vendor/wording.js');
 
@@ -195,6 +196,10 @@ function registerIpc() {
   });
 
   // Deployments
+  // VMware machines made by TempDesk: the default folder plus every folder a deployment names.
+  const vmFolders = () => vmware.searchFolders(store.deployments().map((d) => d && d.vm && d.vm.folder).filter(Boolean), app.getPath('documents'));
+  handle('vm:list', () => vmware.list(vmFolders()));
+  handle('vm:action', (o) => vmware.action(vmFolders(), o && o.vmx, o && o.what, o || {}));
   handle('dep:list', () => store.deployments().map((d) => Object.assign({}, d, { agent: store.agentInfo(d.name) })));
   handle('dep:get', (name) => store.deployment(name));
   handle('dep:save', async (d, label) => {
