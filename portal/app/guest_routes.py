@@ -16,6 +16,7 @@ router = APIRouter()
 USERNAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,20}$")
 RDP_TARGET = re.compile(r"[A-Za-z0-9][A-Za-z0-9.-]{0,252}(?::[0-9]{1,5})?")
 RDP_USER = re.compile(r"[A-Za-z0-9._@\\-]{1,320}")
+COMMONS_EDITION_LABELS = {"gui": "Windows Server with GUI", "core": "Windows Server without GUI"}
 NO_STORE = {"Cache-Control": "no-store, max-age=0", "Pragma": "no-cache", "Expires": "0"}
 
 
@@ -39,6 +40,7 @@ async def public_settings(request: Request) -> dict:
     request.state.public = data
     request.state.org_name = data.get("orgName") or "TempDesk"
     data["commonsEditions"] = list(_commons_targets(request))
+    data["commonsEditionLabels"] = COMMONS_EDITION_LABELS
     data["commonsExpiryChoices"] = [choice for choice in choices if int(choice.get("minutes") or 0) > 0]
     data["commonsEnabled"] = bool(data["commonsEditions"] and data["commonsExpiryChoices"])
     return data
@@ -137,7 +139,9 @@ async def created(request: Request):
                        "prompt for credentials:i:1\r\nauthentication level:i:2\r\nenablecredsspsupport:i:1\r\n")
             rdp = base64.b64encode(profile.encode("utf-16")).decode("ascii")
     resp = await render(request, "guest/created.html",
-                        {"pub": pub, "c": creds, "netbios": netbios, "rdp": rdp, "rdp_unavailable": commons_checkout and not rdp}, headers=NO_STORE)
+                        {"pub": pub, "c": creds, "netbios": netbios, "rdp": rdp,
+                         "rdp_edition_label": COMMONS_EDITION_LABELS.get(edition) if rdp else None,
+                         "rdp_unavailable": commons_checkout and not rdp}, headers=NO_STORE)
     resp.delete_cookie(ONCE_COOKIE, path="/")
     return resp
 

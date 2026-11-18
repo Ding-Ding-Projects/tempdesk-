@@ -202,9 +202,13 @@ def test_commons_editions_route_only_to_the_selected_destination(tmp_path, monke
         "COMMONS_RDP_CORE": "core.example.test:3390",
     })
     monkeypatch.setattr(guest_routes.secrets, "randbelow", lambda upper: upper - 1)
-    for edition, address in [("gui", "desktop.example.test"), ("core", "core.example.test:3390")]:
+    for edition, address, label in [
+        ("gui", "desktop.example.test", "Windows Server with GUI"),
+        ("core", "core.example.test:3390", "Windows Server without GUI"),
+    ]:
         assert portal.post("/create", {"expiryId": "1h", "checkout": "commons", "edition": edition}).status_code == 303
         page = portal.client.get("/created")
+        assert f"<strong>{label}</strong>" in page.text
         payload = re.search(r"data:application/x-rdp;base64,([A-Za-z0-9+/=]+)", page.text)
         assert payload
         profile = base64.b64decode(payload[1]).decode("utf-16")

@@ -56,7 +56,7 @@
     <fieldset>
       <legend>{{ t('Server edition') }}</legend>
       <div class="choice-grid">
-        {% for value, label in [('gui', 'Windows Server with GUI'), ('core', 'Windows Server without GUI')] %}
+        {% for value, label in pub.commonsEditionLabels.items() %}
         <label class="choice"><input type="radio" name="edition" value="{{ value }}" {% if value in pub.commonsEditions %}required{% if values.get('commons') and values.get('edition') == value %} checked{% endif %}{% else %}disabled{% endif %}> {{ t(label) }}{% if value not in pub.commonsEditions %} ({{ t('Unavailable') }}){% endif %}</label>
         {% endfor %}
       </div>
