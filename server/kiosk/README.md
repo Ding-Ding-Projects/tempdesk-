@@ -64,3 +64,10 @@ Each new workstation has its own credential-free second DVD, labelled **TDKIOSK*
 5. Join the machine to the lab domain through the operator's approved credential flow. Apply the watcher and scoped workstation policies, provision the broker certificate and protected credential, then follow **Enroll the seat broker** using the returned entrypoint. Enabling a listener, accepting an RDP connection, and assigning a directory account are separate operational decisions. The workstation becomes selectable only after the authenticated broker reports it ready.
 
 The automatic settings use the documented [Windows Setup removable-media search](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-setup-automation-overview?view=windows-11), [NLA setting](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/microsoft-windows-terminalservices-rdp-winstationextensions-userauthentication) and [VirtualBox firmware commands](https://docs.oracle.com/en/virtualization/virtualbox/7.2/user/vboxmanage.html).
+### Inspect the next enrollment step
+
+From the protected installation, run the following inside the intended VM. The report checks domain membership, RSAT, the watcher and RDP transport, private storage permissions, presence of the credential and state files, and whether the configured port has a local listener. It does not read the bearer credential. A check the caller lacks permission to perform remains unverified. Authenticated readiness is always verified separately through the portal.
+
+```powershell
+.\kiosk\Get-CommonsEnrollmentSteps.ps1 -ComputerName LAB-KIOSK01 -DomainDns lab.example -BrokerPort 9443
+```
