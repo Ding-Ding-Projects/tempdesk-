@@ -30,12 +30,20 @@
         {
           "title": "Choices offered",
           "body": "Expiry choices come from the settings document (1 hour, 4 hours, 1 day, 1 week, and optionally permanent until deleted). Administrators can also create guests with any duration and extend them from the admin console."
+        },
+        {
+          "title": "Connect from another computer",
+          "body": "Virtual Commons lets a guest choose a configured server edition and a finite checkout duration. Open the downloaded Remote Desktop file and enter the password shown on the one-time confirmation page. One in a hundred valid attempts shows a dim sum dish and offers a retry without creating an account."
         }
       ],
       "links": [
         [
           "API: guest routes",
           "docs/api.html#guest-routes-guest-key"
+        ],
+        [
+          "Use and configure Virtual Commons",
+          "docs/virtual-commons.html"
         ]
       ]
     },
