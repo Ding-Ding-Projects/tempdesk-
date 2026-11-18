@@ -1,5 +1,11 @@
 # TempDesk verification handoff
 
+## Documentation source handoff
+
+The README now has a quick entry point, a deployment workflow diagram and collapsible walkthroughs. The [operator guides](docs/features/README.md) index the existing articles, and the prepared wiki links to [Postman diagnostics](docs/features/http-api/README.md). The README count comes from the published v1.0.89 release. A classified count, human estimate and current product recording remain open. Postman execution, site rebuild and updated offline-reader verification were deferred.
+
+## Earlier verification receipts
+
 The guest and management containers were rebuilt from `3a18b69c04ceace56d70d694b5d8181de63ec9b3`. Both returned HTTP 200 from the test network. The guest walkthrough exercised a one-hour account with the real Samba backend, checked its active status, and deleted it using the kiosk. The PNG hashes and capture settings are in the [capture inventory](docs/evidence/guest-sign-in-inventory.json).
 
 Server Core answered for its intended Active Directory domain and reported a synchronized directory with a ready global catalog. Its TempDesk agent returned a healthy Windows backend response. The lab kiosk currently uses Samba. A Windows-backed account-creation run requires a kiosk configured with the Windows agent's approved certificate and guest access.

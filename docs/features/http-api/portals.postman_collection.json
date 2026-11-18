@@ -1,0 +1,61 @@
+{
+  "info": {
+    "name": "TempDesk Portals",
+    "description": "Read-only TempDesk diagnostics. Configure the intended targets and credentials locally. See the HTTP API operator guide.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Read guest portal health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{GUEST_PORTAL_URL}}/healthz"
+      }
+    },
+    {
+      "name": "Open guest portal",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{GUEST_PORTAL_URL}}/"
+      }
+    },
+    {
+      "name": "Read management portal health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{MANAGEMENT_PORTAL_URL}}/healthz"
+      }
+    },
+    {
+      "name": "Read management console pulse",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{MANAGEMENT_PORTAL_URL}}/api/console/pulse"
+      }
+    },
+    {
+      "name": "Read directory root children",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{MANAGEMENT_PORTAL_URL}}/api/dir/children"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "GUEST_PORTAL_URL",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "MANAGEMENT_PORTAL_URL",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

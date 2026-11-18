@@ -27,6 +27,13 @@ Guidance for coding agents working in this repository.
 - Respect `prefers-reduced-motion` and the in-app Motion setting for every animation.
 - Run the tests before committing: `python -m pytest portal samba streaming`, `node --test site/tests answerfile/tests`, and parse-check every `.ps1`.
 
+## Sanitized shared workflow summary
+
+- Keep production behavior, security boundaries, and existing data compatible unless a scoped request changes them.
+- Preserve ownership of unrelated changes. Record the source revision, verification performed, and evidence gaps in the delivery records.
+- Keep operator guides, roadmap, handoff, and the prepared wiki in step with changes. Verify published and installed outcomes independently before marking them complete.
+- Scan any text bound for a public surface against the private vocabulary before publishing it.
+
 ## Agent conversation vocabulary
 
 Agents working in this repository use the shared private conversation vocabulary defined in
@@ -41,3 +48,7 @@ discussions, release notes, published sites, logs, and every other file in this 
 Published writing uses ordinary professional English, and exact technical identifiers always
 keep their literal spelling. The single documented public-safe exception is named in those
 canonical instructions; do not infer any other.
+
+Scan any text bound for a public surface against that vocabulary before publishing it. A
+reviewer cannot tell a correct release note from a leaking one by reading it, so the scan is
+a step, not a habit.

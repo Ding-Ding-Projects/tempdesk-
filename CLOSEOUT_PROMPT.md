@@ -1,5 +1,8 @@
 # Continue TempDesk lab verification
 
+```text
+The documentation source updates are described in [HANDOFF.md](HANDOFF.md#documentation-source-handoff). Exercise the Postman diagnostics in an isolated directory deployment and check the updated guides and prepared wiki in the generated site and offline reader before calling delivery verified. Keep the historical evidence receipts and record the current source revision separately.
+
 Use the [walkthrough](README.md#guest-sign-in-walkthrough), [capture inventory](docs/evidence/guest-sign-in-inventory.json), and [roadmap](ROADMAP.md) as the current evidence. Preserve the Samba-backed kiosk and verify a separate kiosk configured for the native Windows directory. Finish supported guest setup, confirm Windows 11 domain membership, and verify an actual desktop sign-in using a synthetic temporary account. For each supported remote session destination, verify the downloaded connection file, successful sign-in, and enforced session end at expiry. Update the documentation with inspected captures that show no credentials or deployment details.
 
 The [offline reader](docs/OFFLINE-GUIDE.md) passed from the downloaded v1.0.75 executable at source revision `3f6133e972f5c892f520fc4558d0079278a4c9c7`. The [guided checkout walkthrough](README.md#guided-checkout-walkthrough) records the four images. Use the [feature verification inventory](docs/FEATURE-INVENTORY.md) to continue implementation and verification per surface. The [isolated checkout receipt](docs/evidence/virtual-commons-checkout.json) records both connection files from a real Samba fixture. Finish native Windows account creation, actual domain sign-in and session expiry in the lab.
@@ -29,3 +32,4 @@ The [management notification walkthrough](README.md#management-notification-walk
 Use the [checkout verification checklist](docs/VIRTUAL-COMMONS.md#verify-a-checkout) for the updated Session Watcher. Include expiry during a test-directory outage and account removal while the original session is open. Verify that the original session disappears, followed by rejection of a fresh sign-in. The first-run setup and Remote Desktop connection on the dedicated host remain prerequisites.
 
 The bundled watcher compiled with Windows PowerShell 5.1 and read current-session metadata. The 25 focused watcher and App Host tests passed, and two isolated negative variants failed at the intended checks. The documentation and Answer File suites passed all 223 tests. The broader Python result remains 395 passes and two Windows file-mode failures recorded on the baseline. The Core directory is synchronized and its global catalog is ready. The dedicated session host still needs setup and verified directory access.
+```
