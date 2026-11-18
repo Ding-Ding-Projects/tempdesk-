@@ -86,7 +86,21 @@ if ($agentPin) {
     $guestEnv.AGENT_CERT_SHA256 = $agentPin
     $adminEnv.AGENT_CERT_SHA256 = $agentPin
 }
-Write-Env (Join-Path $dataDir 'guest.env') $guestEnv
+$guestEnvPath = Join-Path $dataDir 'guest.env'
+$priorTargets = @{}
+if (Test-Path -LiteralPath $guestEnvPath -PathType Leaf) {
+    foreach ($line in Get-Content -LiteralPath $guestEnvPath) {
+        if ($line -cmatch '^\s*(COMMONS_RDP_(?:GUI|CORE|TARGET))\s*=\s*(.*?)\s*$') {
+            $priorTargets[$Matches[1]] = $Matches[2]
+        }
+    }
+}
+foreach ($key in $priorTargets.Keys) {
+    if ($priorTargets[$key] -cmatch '^[A-Za-z0-9][A-Za-z0-9.-]{0,252}(?::[0-9]{1,5})?$') {
+        $guestEnv[$key] = $priorTargets[$key]
+    }
+}
+Write-Env $guestEnvPath $guestEnv
 Write-Env (Join-Path $dataDir 'admin.env') $adminEnv
 
 # --- Runner script and startup tasks --------------------------------------------------------
