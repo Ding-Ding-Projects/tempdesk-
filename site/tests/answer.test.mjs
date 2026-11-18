@@ -18,6 +18,17 @@ const W = require('../assets/wording.js');
 const B64 = require('../assets/base64.js');
 const H = require('../assets/history.js');
 
+test('new history keeps literal at-sign values and old label references still render', async () => {
+  const history = new H.History({ store: H.memoryStore(), initial: {}, coalesceMs: 0 });
+  await history.load();
+  history.change({ value: '@f.name' }, { key: 'hist.setField', args: [{ catalogKey: 'f.name' }, '@f.name'] });
+  await history.settle();
+  const translate = (key, args) => key === 'f.name' ? 'Name' : 'Set ' + args[0] + ' to ' + args[1];
+  const entry = JSON.parse(history.exportJson()).entries.at(-1);
+  assert.equal(H.renderMessage(entry.msg, translate), 'Set Name to @f.name');
+  assert.equal(H.renderMessage({ key: 'hist.setField', args: ['@f.name', 'Example'] }, translate), 'Set Name to Example');
+});
+
 function filledModel() {
   const m = A.defaultModel();
   Object.assign(m.server, { adminPassword: 'Admin#Pass12345', dsrmPassword: 'Dsrm#Pass12345', productKey: '', functionalLevel: 'Win2025', portalsMode: 'native', agentTls: true });

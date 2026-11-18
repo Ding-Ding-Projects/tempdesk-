@@ -1,7 +1,7 @@
 // Progress UI for every long engine step: step list (done checks, pulsing current step, pending
 // outlines), progress bar, live log, cancel, resume from the failed step, recovery hint, and a
 // success celebration. Mirrors design/project/Deployer.dc.html.
-import { h, t, btn, toast, play, announce, state, contextMenu, listFilter } from './ui.js';
+import { h, t, originalText, btn, toast, play, announce, state, contextMenu, listFilter, chooseExportFormat } from './ui.js';
 
 const td = window.td;
 const Core = window.TempDeskCore;
@@ -19,10 +19,12 @@ export const PHASE_STEPS = {
   Uninstall: ['uninstall']
 };
 
-// opts: { kicker, title, phase, stepsKey, config, secrets(), noIso, onDone(result), logName }
+// opts: { kicker, titleKey, titleArgs, phase, stepsKey, config, secrets(), noIso, onDone(result), logName }
 // Names of deployments with a run in progress (their tabs are protected from bulk close).
 export function busyNames() { return [...running.values()].map((r) => r.name).filter(Boolean); }
 export function progressPanel(opts) {
+  const title = t(opts.titleKey, opts.titleArgs);
+  const originalTitle = originalText(opts.titleKey, opts.titleArgs);
   const stepIds = (PHASE_STEPS[opts.stepsKey || opts.phase] || []).filter((id) => opts.filterStep ? opts.filterStep(id) : true);
   const steps = new Map();
   const list = h('ol', { class: 'steps', 'aria-label': t('run.steps') });
@@ -47,8 +49,8 @@ export function progressPanel(opts) {
     const hint = h('span', { class: 'hint', hidden: true });
     const sr = h('span', { class: 'sr-only' });
     const li = h('li', { class: 'step', 'data-state': 'pending', 'data-id': id, tabindex: '-1' }, [mark, h('span', { style: { minWidth: 0 } }, [label, sr, hint]), when]);
-    const st = { li, mark, label, when, hint, sr, state: 'pending', t0: 0 };
-    contextMenu(li, () => [{ label: t('run.copyStep'), run: () => td.invoke['clipboard:write'](label.textContent + ': ' + t('state.' + st.state)) }, { label: t('run.resume'), run: () => start(false), disabled: !!runId }]);
+    const st = { li, mark, label, when, hint, sr, state: 'pending', t0: 0, originalTitle: title || originalText('step.' + id) };
+    contextMenu(li, () => [{ label: t('run.copyStep'), run: () => td.invoke['clipboard:write'](st.originalTitle + ': ' + originalText('state.' + st.state)) }, { label: t('run.resume'), run: () => start(false), disabled: !!runId }]);
     steps.set(id, st);
     list.appendChild(li);
     setState(id, 'pending');
@@ -56,7 +58,10 @@ export function progressPanel(opts) {
   }
   function setState(id, s, info) {
     const st = steps.get(id) || addStep(id, info && info.title);
-    if (info && info.title && !t('step.' + id).startsWith('step.') === false) st.label.textContent = info.title;
+    if (info && info.title && originalText('step.' + id) === 'step.' + id) {
+      st.label.textContent = info.title;
+      st.originalTitle = info.title;
+    }
     st.state = s;
     st.li.dataset.state = s;
     st.mark.textContent = s === 'done' || s === 'skipped' ? '✓' : s === 'failed' ? '!' : '';
@@ -80,12 +85,15 @@ export function progressPanel(opts) {
     barWrap.setAttribute('aria-valuenow', String(pct));
   }
   function dur(ms) { const s = Math.round(ms / 1000); return s < 60 ? t('run.secs', [s]) : t('run.mins', [Math.round(s / 60)]); }
-  function addLog(level, text) {
+  function addLog(level, text, recordedText = text) {
     const time = new Date().toTimeString().slice(0, 8);
-    logLines.push({ time: new Date().toISOString(), level, text });
+    logLines.push({ time: new Date().toISOString(), level, text: recordedText });
     log.appendChild(h('div', { class: level }, [time + ' ' + text]));
     while (log.childNodes.length > 2000) log.removeChild(log.firstChild);
     log.scrollTop = log.scrollHeight;
+  }
+  function addMessage(level, key, args, recordedArgs = args) {
+    addLog(level, t(key, args), originalText(key, recordedArgs));
   }
   function onEvent(ev) {
     if (ev.type === 'log') addLog(ev.level || 'info', ev.text);
@@ -107,9 +115,9 @@ export function progressPanel(opts) {
     startBtn.hidden = true; resumeBtn.hidden = true; restartBtn.hidden = true; cancelBtn.hidden = false;
     status.textContent = t('run.running');
     timer = setInterval(() => { status.textContent = t('run.elapsed', [dur(Date.now() - started)]); }, 1000);
-    addLog('info', t('run.started', [opts.title]));
+    addMessage('info', 'run.started', [title], [originalTitle]);
   }
-  async function cancel() { if (runId) { await td.invoke['engine:cancel'](runId); addLog('warn', t('run.cancelling')); } }
+  async function cancel() { if (runId) { await td.invoke['engine:cancel'](runId); addMessage('warn', 'run.cancelling'); } }
   async function finish(ev) {
     clearInterval(timer);
     running.delete(runId); runId = null;
@@ -120,34 +128,33 @@ export function progressPanel(opts) {
       startBtn.hidden = false; restartBtn.hidden = false;
       wrap.classList.remove('success-burst'); void wrap.offsetWidth; if (!state.motionOff) wrap.classList.add('success-burst');
       play('done');
-      toast(t('run.success', [opts.title]), 'success');
+      toast(t('run.success', [title]), 'success');
       if (opts.onDone) opts.onDone(lastResult && lastResult.data);
     } else {
       // Trust failed: ask for the Windows consent prompt (never bypassed), then resume.
       const trust = steps.get('trust');
       if (trust && trust.state === 'failed' && opts.trustAddress && !ev.cancelled) {
-        addLog('info', t('trust.asking'));
+        addMessage('info', 'trust.asking');
         const r = await td.invoke['engine:trust'](opts.trustAddress());
-        if (r.ok) { addLog('info', t('trust.ok')); setState('trust', 'pending'); start(false); return; }
-        if (r.cancelled) { addLog('warn', t('trust.cancelled')); trust.hint.textContent = t('trust.incomplete'); hintBox.replaceChildren(h('strong', { text: t('trust.incomplete') })); setState('trust', 'failed', { hint: t('trust.incomplete') }); }
-        else addLog('error', r.error || t('trust.failed'));
+        if (r.ok) { addMessage('info', 'trust.ok'); setState('trust', 'pending'); start(false); return; }
+        if (r.cancelled) { addMessage('warn', 'trust.cancelled'); trust.hint.textContent = t('trust.incomplete'); hintBox.replaceChildren(h('strong', { text: t('trust.incomplete') })); setState('trust', 'failed', { hint: t('trust.incomplete') }); }
+        else if (r.error) addLog('error', r.error);
+        else addMessage('error', 'trust.failed');
       }
       status.textContent = ev.cancelled ? t('run.cancelled') : t('run.failed');
       const anyDone = [...steps.values()].some((s) => s.state === 'done');
       resumeBtn.hidden = !anyDone; startBtn.hidden = anyDone; restartBtn.hidden = !anyDone;
-      if (!ev.cancelled) { play('error'); toast(t('run.failedToast', [opts.title]), 'error'); }
+      if (!ev.cancelled) { play('error'); toast(t('run.failedToast', [title]), 'error'); }
     }
   }
   async function exportLog() {
-    const fmt = await new Promise((res) => {
-      import('./ui.js').then(({ dialog }) => dialog(t('export.title'), (close) => [h('p', { text: t('export.logHelp') }), h('div', { class: 'row' }, ['json', 'csv', 'html', 'txt'].map((f) => btn(f.toUpperCase(), () => { close(); res(f); }, 'btn-ghost')))], { onClose: () => res(null) }));
-    });
+    const fmt = await chooseExportFormat(['json', 'csv', 'html', 'txt'], 'export.logHelp');
     if (!fmt) return;
     const name = (opts.logName || 'tempdesk-log') + '.' + fmt;
     let text;
-    if (fmt === 'json') text = JSON.stringify({ title: opts.title, exported: new Date().toISOString(), steps: [...steps].map(([id, s]) => ({ id, title: s.label.textContent, state: s.state })), log: logLines }, null, 2) + '\n';
+    if (fmt === 'json') text = JSON.stringify({ title: originalTitle, exported: new Date().toISOString(), steps: [...steps].map(([id, s]) => ({ id, title: s.originalTitle, state: s.state })), log: logLines }, null, 2) + '\n';
     else if (fmt === 'csv') text = Core.toCsv(logLines, ['time', 'level', 'text']);
-    else if (fmt === 'html') text = Core.toHtml(opts.title, logLines, ['time', 'level', 'text']);
+    else if (fmt === 'html') text = Core.toHtml(originalTitle, logLines, ['time', 'level', 'text']);
     else text = logLines.map((l) => l.time + ' ' + l.level.toUpperCase() + ' ' + l.text).join('\r\n') + '\r\n';
     const r = await td.invoke['file:save']({ name, text, filters: [{ name: fmt.toUpperCase(), extensions: [fmt] }] });
     if (r.ok) toast(t('export.saved', [r.path]), 'success');
@@ -155,7 +162,7 @@ export function progressPanel(opts) {
   stepIds.forEach((id) => addStep(id));
   const wrap = h('div', { class: 'progress-wrap' }, [
     h('div', { class: 'steps-col' }, [
-      h('div', null, [opts.kicker ? h('div', { class: 'kicker', text: opts.kicker }) : null, h('h2', { style: { fontSize: '1.5rem', margin: '4px 0 0' }, text: opts.title })]),
+      h('div', null, [opts.kicker ? h('div', { class: 'kicker', text: opts.kicker }) : null, h('h2', { style: { fontSize: '1.5rem', margin: '4px 0 0' }, text: title })]),
       listFilter(list, 'run-steps', t('run.steps')), hintBox, h('div', { style: { marginTop: 'auto' } }, [barWrap]), status,
       h('div', { class: 'row' }, [startBtn, resumeBtn, restartBtn, cancelBtn])]),
     h('div', { class: 'log-col' }, [h('div', { class: 'row between' }, [h('h3', { style: { margin: 0 }, text: t('run.log') }), exportBtn]), listFilter(log, 'run-log', t('run.log'))])

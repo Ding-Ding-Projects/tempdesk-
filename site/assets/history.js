@@ -141,7 +141,8 @@
     return this.writes;
   };
   History.prototype._append = function (kind, state, msg, back, fwd, extra) {
-    var e = { id: this.entries.length ? this.head().id + 1 : 0, t: this.now(), kind: kind, msg: msg, state: this.redact(clone(state)), back: back, fwd: fwd };
+    var message = msg && typeof msg === 'object' ? Object.assign({}, msg, { literalArgs: true }) : msg;
+    var e = { id: this.entries.length ? this.head().id + 1 : 0, t: this.now(), kind: kind, msg: message, state: this.redact(clone(state)), back: back, fwd: fwd };
     if (extra) for (var k in extra) e[k] = extra[k];
     this.entries.push(e);
     this.state = clone(state);
@@ -149,7 +150,7 @@
     this.onChange(e);
     return e;
   };
-  // Record a change. msg: { key, args } (rendered by the page) or a plain string.
+  // Record a change. Use { catalogKey } for labels in message arguments. Strings are data.
   // coalesceKey: entries with the same key within coalesceMs merge into one (typing).
   History.prototype.change = function (state, msg, coalesceKey) {
     var self = this;
@@ -215,7 +216,20 @@
     return JSON.stringify({ schema: 'tempdesk-history', version: 1, exported: new Date(this.now()).toISOString(), meta: meta || {}, entries: this.entries }, null, 2) + '\n';
   };
 
-  var api = { History: History, memoryStore: memoryStore, localStore: localStore, idbStore: idbStore, openStore: openStore };
+  function renderMessage(msg, translate) {
+    if (!msg) return '';
+    if (typeof msg === 'string') return msg;
+    var args = (msg.args || []).map(function (value) {
+      if (value && typeof value.catalogKey === 'string') return translate(value.catalogKey);
+      // Older entries used an at-sign prefix to reference the catalogue.
+      if (!msg.literalArgs && typeof value === 'string' && value[0] === '@') return translate(value.slice(1));
+      if (typeof value === 'number' && value > 1e12) return new Date(value).toLocaleString();
+      return value;
+    });
+    return translate(msg.key, args);
+  }
+
+  var api = { History: History, memoryStore: memoryStore, localStore: localStore, idbStore: idbStore, openStore: openStore, renderMessage: renderMessage };
   root.TempDeskHistory = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

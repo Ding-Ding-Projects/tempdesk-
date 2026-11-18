@@ -83,7 +83,7 @@ export function mountDisk(root, ctx) {
     const layout = ctx.get();
     root.replaceChildren();
     const presetSel = h('select', { 'aria-label': t('disk.preset') }, [h('option', { value: '', text: t('disk.preset') })].concat(Object.keys(PRESETS).map((k) => h('option', { value: k, text: t('disk.preset.' + k) }))));
-    presetSel.addEventListener('change', () => { if (presetSel.value) { sel = { disk: 0, part: 0 }; commit(PRESETS[presetSel.value](), 'hist.diskPreset', [t('disk.preset.' + presetSel.value)]); } });
+    presetSel.addEventListener('change', () => { if (presetSel.value) { sel = { disk: 0, part: 0 }; commit(PRESETS[presetSel.value](), 'hist.diskPreset', [{ catalogKey: 'disk.preset.' + presetSel.value }]); } });
     const tools = h('div', { class: 'cv-tools' }, [presetSel,
       h('button', { type: 'button', class: 'btn btn-ghost btn-sm', text: t('disk.addDisk'), onclick: () => { const l = L(); const id = l.disks.length ? Math.max(...l.disks.map((d) => parseInt(d.diskId, 10) || 0)) + 1 : 0; l.disks.push({ diskId: String(id), sizeMB: '256000', wipe: true, partitions: [{ type: 'Primary', sizeMB: '0', extend: true, format: 'NTFS', label: 'Data' }] }); commit(l, 'hist.addDisk', [id]); } }),
       layout ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm', text: t('disk.useMode'), onclick: () => commit(null, 'hist.diskMode', []) }) : null
@@ -150,7 +150,7 @@ export function mountDisk(root, ctx) {
     if (p) {
       const ed = h('div', { class: 'b-sec', style: { marginTop: '8px' } }, [h('header', null, [h('h2', { text: t('disk.partTitle', [d.diskId, sel.part + 1]) })])]);
       const g = h('div', { class: 'grid2' });
-      const upd = (k, v, co) => { const l = L(); l.disks[sel.disk].partitions[sel.part][k] = v; commit(l, 'hist.partField', [sel.part + 1, t('disk.f.' + k), String(v)], co); };
+      const upd = (k, v, co) => { const l = L(); l.disks[sel.disk].partitions[sel.part][k] = v; commit(l, 'hist.partField', [sel.part + 1, { catalogKey: 'disk.f.' + k }, String(v)], co); };
       // Partition detail sheet: the same rich field cards as the settings editors.
       const SP = 'Microsoft-Windows-Setup|DiskConfiguration/Disk/';
       const diskMB = parseInt(d.sizeMB, 10) || 0;

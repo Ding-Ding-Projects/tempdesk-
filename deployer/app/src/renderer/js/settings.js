@@ -2,7 +2,7 @@
 // rows (plain or regex). Includes the appearance editor (accent wheel, hex, contrast check,
 // radius, density, text scale, theme, logo), language, funny level, personal wording, school
 // mode, sounds, updates, Git remote, import/export and backup.
-import { h, t, state, btn, toast, dialog, superConfirm, promptDialog, info, searchBox, select, play, listFilter } from './ui.js';
+import { h, t, originalText, state, btn, toast, dialog, superConfirm, promptDialog, info, searchBox, select, play, listFilter } from './ui.js';
 
 const td = window.td;
 const Core = window.TempDeskCore;
@@ -19,7 +19,7 @@ function sw(checked, onchange, label) { const s = h('input', { type: 'checkbox',
 export async function settingsPage(root, app) {
   const s = app.settings;
   const school = state.school;
-  const set = (patch, labelKey, v) => app.applySettings(patch, t('hist.setField', [t(labelKey), String(v)]));
+  const set = (patch, labelKey, v) => app.applySettings(patch, originalText('hist.setField', [originalText(labelKey), String(v)]));
   const sections = [];
   const sec = (key, rows) => { sections.push(h('section', { class: 'card', 'aria-labelledby': 'sec-' + key, 'data-sec': key }, [h('h2', { id: 'sec-' + key, text: t('set.sec.' + key) })].concat(rows))); };
 
@@ -128,7 +128,7 @@ export async function settingsPage(root, app) {
         if (!pin) return;
         const pin2 = await promptDialog(t('school.enable'), t('school.repeatPin'), '', { password: true, numeric: true });
         if (pin !== pin2) { toast(t('school.pinMismatch'), 'error'); return; }
-        state.school = await td.invoke['school:enable'](pin, name.trim()); await app.applySettings({ schoolName: name.trim() }, t('hist.setField', [t('set.school'), 'on']));
+        state.school = await td.invoke['school:enable'](pin, name.trim()); await app.applySettings({ schoolName: name.trim() }, originalText('hist.setField', [originalText('set.school'), 'on']));
         toast(t('school.on', [name.trim()]), 'success');
       }, 'btn-ghost btn-sm')]), 'classroom lock pin')]);
 
@@ -160,7 +160,7 @@ export async function settingsPage(root, app) {
       if (!r.ok) { play('invalid'); toast(t('backup.restoreBad', [t('err.' + r.error)]), 'error'); return; }
       toast(t('backup.restored', [r.count]), 'success'); app.settings = await td.invoke['settings:get'](); app.applySettings();
     }, 'btn-ghost btn-sm')]), 'zip restore'),
-    row('onboarding', t('set.onboarding'), t('set.onboardingHelp'), btn(t('set.onboardingRun'), () => app.applySettings({ onboarded: false, onboarding: { step: 0, path: s.onboarding.path, skipped: [] } }, t('hist.onboarding')).then(() => import('./onboarding.js').then((m) => m.runOnboarding(app))), 'btn-ghost btn-sm'))
+    row('onboarding', t('set.onboarding'), t('set.onboardingHelp'), btn(t('set.onboardingRun'), () => app.applySettings({ onboarded: false, onboarding: { step: 0, path: s.onboarding.path, skipped: [] } }, originalText('hist.onboarding')).then(() => import('./onboarding.js').then((m) => m.runOnboarding(app))), 'btn-ghost btn-sm'))
   ]);
 
   // About and provenance

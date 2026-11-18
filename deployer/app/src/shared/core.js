@@ -140,13 +140,15 @@
       if (v === undefined) return key;
       return format(wording && !plain ? wording(v) : v, args);
     }
-    function t(key, args) {
+    function render(key, args, plain) {
       if (mode === 'bilingual') {
-        var a = one('en', key, args), b = one('zh-HK', key, args);
+        var a = one('en', key, args, plain), b = one('zh-HK', key, args, plain);
         return a === b ? a : a + ' / ' + b;
       }
-      return one(mode === 'zh-HK' ? 'zh-HK' : 'en', key, args);
+      return one(mode === 'zh-HK' ? 'zh-HK' : 'en', key, args, plain);
     }
+    function t(key, args) { return render(key, args, false); }
+    t.original = function (key, args) { return render(key, args, true); };
     t.raw = function (key, args) { return one(mode === 'zh-HK' ? 'zh-HK' : 'en', key, args, true); };
     t.has = function (key) { return !!(cats.en && key in cats.en); };
     t.mode = mode;

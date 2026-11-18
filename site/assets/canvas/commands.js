@@ -61,41 +61,41 @@ export function mountCommands(root, ctx) {
         handle.addEventListener('pointerdown', (e) => startDrag(e, { ghostFrom: card, data: { from: def.id, i }, targets: () => {
           const out = [];
           laneEls.forEach((le) => {
-            [...le.querySelectorAll('.cmd-card[data-i]')].forEach((ce) => out.push({ el: ce, accept: () => true, drop: (d) => commit(moveCommand(C(), d.from, d.i, le.dataset.list, Number(ce.dataset.i) - (d.from === le.dataset.list && d.i < Number(ce.dataset.i) ? 1 : 0)), 'hist.cmdMove', [t('cmd.' + le.dataset.list)]) }));
-            out.push({ el: le, accept: () => true, drop: (d) => commit(moveCommand(C(), d.from, d.i, le.dataset.list, 9999), 'hist.cmdMove', [t('cmd.' + le.dataset.list)]) });
+            [...le.querySelectorAll('.cmd-card[data-i]')].forEach((ce) => out.push({ el: ce, accept: () => true, drop: (d) => commit(moveCommand(C(), d.from, d.i, le.dataset.list, Number(ce.dataset.i) - (d.from === le.dataset.list && d.i < Number(ce.dataset.i) ? 1 : 0)), 'hist.cmdMove', [{ catalogKey: 'cmd.' + le.dataset.list }]) }));
+            out.push({ el: le, accept: () => true, drop: (d) => commit(moveCommand(C(), d.from, d.i, le.dataset.list, 9999), 'hist.cmdMove', [{ catalogKey: 'cmd.' + le.dataset.list }]) });
           });
           return out;
         } }));
         handle.addEventListener('keydown', (e) => {
-          if (e.key === 'ArrowUp' && i > 0) { e.preventDefault(); commit(moveCommand(C(), def.id, i, def.id, i - 1), 'hist.cmdMove', [t('cmd.' + def.id)]); }
-          if (e.key === 'ArrowDown' && i < cmds[def.id].length - 1) { e.preventDefault(); commit(moveCommand(C(), def.id, i, def.id, i + 1), 'hist.cmdMove', [t('cmd.' + def.id)]); }
+          if (e.key === 'ArrowUp' && i > 0) { e.preventDefault(); commit(moveCommand(C(), def.id, i, def.id, i - 1), 'hist.cmdMove', [{ catalogKey: 'cmd.' + def.id }]); }
+          if (e.key === 'ArrowDown' && i < cmds[def.id].length - 1) { e.preventDefault(); commit(moveCommand(C(), def.id, i, def.id, i + 1), 'hist.cmdMove', [{ catalogKey: 'cmd.' + def.id }]); }
         });
         const cmdId = `cmd-${def.id}-${i}`;
         const hk = HINT[def.id];
         const cmdF = quickField({ id: cmdId, label: t('cmd.command'), hintKey: hk + CMD[def.id], hint: { widget: 'command-line' }, value: it.command || '', t, noUnset: true,
-          onChange: (v) => { const c = C(); c[def.id][i].command = v || ''; commit(c, 'hist.cmdText', [t('cmd.' + def.id), i + 1], cmdId); } });
+          onChange: (v) => { const c = C(); c[def.id][i].command = v || ''; commit(c, 'hist.cmdText', [{ catalogKey: 'cmd.' + def.id }, i + 1], cmdId); } });
         const descF = quickField({ id: cmdId + '-d', label: t('cmd.description'), hintKey: hk + 'Description', hint: { widget: 'text' }, value: it.description || '', t, noUnset: true,
-          onChange: (v) => { const c = C(); c[def.id][i].description = v || ''; commit(c, 'hist.cmdDesc', [t('cmd.' + def.id), i + 1], cmdId + '-d'); } });
+          onChange: (v) => { const c = C(); c[def.id][i].description = v || ''; commit(c, 'hist.cmdDesc', [{ catalogKey: 'cmd.' + def.id }, i + 1], cmdId + '-d'); } });
         cmdF.input.addEventListener('blur', () => setTimeout(() => { if (!root.contains(document.activeElement) || !card.contains(document.activeElement)) draw(); }, 0));
         const err = !String(it.command || '').trim() && !it.disabled ? h('div', { class: 'err', role: 'alert', text: t('err.command') }) : null;
         card.appendChild(h('div', { class: 'inline', style: { alignItems: 'center', justifyContent: 'space-between' } }, [
           h('b', { text: '#' + (i + 1) }), handle,
           h('div', { class: 'row-tools', style: { display: 'flex', gap: '4px' } }, [
-            iconButton('up', t('list.up'), () => commit(moveCommand(C(), def.id, i, def.id, i - 1), 'hist.cmdMove', [t('cmd.' + def.id)]), { disabled: i === 0 || undefined }),
-            iconButton('down', t('list.down'), () => commit(moveCommand(C(), def.id, i, def.id, i + 1), 'hist.cmdMove', [t('cmd.' + def.id)]), { disabled: i === cmds[def.id].length - 1 || undefined }),
-            iconButton('dup', t('cmd.duplicate'), () => { const c = C(); c[def.id].splice(i + 1, 0, clone(it)); commit(c, 'hist.cmdDup', [t('cmd.' + def.id), i + 1]); }),
-            iconButton('del', t('list.remove'), () => { const c = C(); c[def.id].splice(i, 1); commit(c, 'hist.cmdRemove', [t('cmd.' + def.id), i + 1]); })
+            iconButton('up', t('list.up'), () => commit(moveCommand(C(), def.id, i, def.id, i - 1), 'hist.cmdMove', [{ catalogKey: 'cmd.' + def.id }]), { disabled: i === 0 || undefined }),
+            iconButton('down', t('list.down'), () => commit(moveCommand(C(), def.id, i, def.id, i + 1), 'hist.cmdMove', [{ catalogKey: 'cmd.' + def.id }]), { disabled: i === cmds[def.id].length - 1 || undefined }),
+            iconButton('dup', t('cmd.duplicate'), () => { const c = C(); c[def.id].splice(i + 1, 0, clone(it)); commit(c, 'hist.cmdDup', [{ catalogKey: 'cmd.' + def.id }, i + 1]); }),
+            iconButton('del', t('list.remove'), () => { const c = C(); c[def.id].splice(i, 1); commit(c, 'hist.cmdRemove', [{ catalogKey: 'cmd.' + def.id }, i + 1]); })
           ])
         ]));
         card.appendChild(cmdF.el);
         if (err) card.appendChild(err);
         card.appendChild(descF.el);
         const disF = quickField({ id: cmdId + '-off', label: t('cmd.disabled'), hint: { widget: 'toggle', description: t('cmd.disabledHelp', null, 'A turned-off command stays in the studio but is not written to the answer file.'), valueHelp: { true: t('cmd.offMeaning', null, 'Turned off: not written to the answer file.'), false: t('cmd.onMeaning', null, 'Written to the answer file and runs.') } }, value: it.disabled ? 'true' : 'false', t, noUnset: true,
-          onChange: (v) => { const c = C(); c[def.id][i].disabled = v === 'true'; commit(c, v === 'true' ? 'hist.cmdDisable' : 'hist.cmdEnable', [t('cmd.' + def.id), i + 1]); } });
+          onChange: (v) => { const c = C(); c[def.id][i].disabled = v === 'true'; commit(c, v === 'true' ? 'hist.cmdDisable' : 'hist.cmdEnable', [{ catalogKey: 'cmd.' + def.id }, i + 1]); } });
         const row = h('div', { class: 'grid2' }, [disF.el]);
         if (def.reboot) {
           row.appendChild(quickField({ id: cmdId + '-rb', label: t('cmd.willReboot'), hintKey: hk + 'WillReboot', hint: { widget: 'segmented', values: ['Never', 'Always', 'OnRequest'].map((v) => ({ value: v, label: t('cmd.reboot.' + v) })) }, value: it.willReboot || 'Never', t, noUnset: true,
-            onChange: (v) => { const c = C(); c[def.id][i].willReboot = v || 'Never'; commit(c, 'hist.cmdReboot', [t('cmd.' + def.id), i + 1, v || 'Never']); } }).el);
+            onChange: (v) => { const c = C(); c[def.id][i].willReboot = v || 'Never'; commit(c, 'hist.cmdReboot', [{ catalogKey: 'cmd.' + def.id }, i + 1, v || 'Never']); } }).el);
         }
         card.appendChild(row);
         if (def.creds) {
@@ -104,7 +104,7 @@ export function mountCommands(root, ctx) {
           [['domain', 'Domain', 'text'], ['username', 'Username', 'text'], ['password', 'Password', 'password']].forEach(([f, leaf, w]) => {
             const id = `${cmdId}-c-${f}`;
             g.appendChild(quickField({ id, label: t('cmd.cred.' + f), hintKey: hk + 'Credentials/' + leaf, hint: { widget: w, storage: f === 'password' ? 'plain' : undefined }, value: (it.credentials && it.credentials[f]) || '', t, noUnset: true,
-              onChange: (v) => { const c = C(); c[def.id][i].credentials = Object.assign({ domain: '', username: '', password: '' }, c[def.id][i].credentials, { [f]: v || '' }); commit(c, f === 'password' ? 'hist.setSecret' : 'hist.cmdCred', [t('cmd.' + def.id) + ' #' + (i + 1)], id); } }).el);
+              onChange: (v) => { const c = C(); c[def.id][i].credentials = Object.assign({ domain: '', username: '', password: '' }, c[def.id][i].credentials, { [f]: v || '' }); commit(c, f === 'password' ? 'hist.setSecret' : 'hist.cmdCred', [t.original('cmd.' + def.id) + ' #' + (i + 1)], id); } }).el);
           });
           det.appendChild(g);
           det.appendChild(h('p', { class: 'notice warn', text: t('cmd.credWarn') }));
@@ -113,7 +113,7 @@ export function mountCommands(root, ctx) {
         if (def.reboot && it.willReboot && it.willReboot !== 'Never') card.appendChild(h('span', { class: 'reboot', text: t('cmd.rebootMarker', [t('cmd.reboot.' + it.willReboot)]) }));
         lane.appendChild(card);
       });
-      lane.appendChild(h('button', { type: 'button', class: 'btn btn-ghost btn-sm', text: t('cmd.add'), onclick: () => { const c = C(); c[def.id].push({ command: '', description: '', willReboot: 'Never', disabled: false }); commit(c, 'hist.cmdAdd', [t('cmd.' + def.id)]); const f = root.querySelector(`#cmd-${def.id}-${c[def.id].length - 1}`); if (f) f.focus(); } }));
+      lane.appendChild(h('button', { type: 'button', class: 'btn btn-ghost btn-sm', text: t('cmd.add'), onclick: () => { const c = C(); c[def.id].push({ command: '', description: '', willReboot: 'Never', disabled: false }); commit(c, 'hist.cmdAdd', [{ catalogKey: 'cmd.' + def.id }]); const f = root.querySelector(`#cmd-${def.id}-${c[def.id].length - 1}`); if (f) f.focus(); } }));
       laneEls.push(lane);
       lanes.appendChild(lane);
     });

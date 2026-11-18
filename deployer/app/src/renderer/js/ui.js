@@ -24,6 +24,7 @@ export function h(tag, attrs, kids) {
   return e;
 }
 export const t = (k, a) => state.t(k, a);
+export const originalText = (key, args) => state.t.original(key, args);
 const SVG = (d, extra) => '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' + (extra || '') + '>' + d + '</svg>';
 export const ICON = {
   deploy: SVG('<path d="M12 3v12M7 10l5 5 5-5M4 19h16"/>'), answers: SVG('<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>'),
@@ -118,6 +119,12 @@ export function confirmDialog(title, text, okLabel) {
       btn(t('common.cancel'), () => close(), 'btn-ghost'), btn(okLabel || t('common.ok'), () => { done = true; close(); resolve(true); }, 'btn-primary')])],
     { onClose: () => { if (!done) resolve(false); } });
   });
+}
+export function chooseExportFormat(formats, helpKey) {
+  return new Promise((resolve) => dialog(t('export.title'), (close) => [
+    h('p', { text: t(helpKey) }),
+    h('div', { class: 'row' }, formats.map((format) => btn(format.toUpperCase(), () => close(format), 'btn-ghost')))
+  ], { onClose: resolve }));
 }
 export function promptDialog(title, label, value, opts) {
   opts = opts || {};

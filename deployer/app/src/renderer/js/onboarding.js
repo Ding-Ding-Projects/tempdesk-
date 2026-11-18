@@ -1,7 +1,7 @@
 // First-run onboarding: pick a path (Server Core or Lite), check real prerequisites (PowerShell,
 // OpenSSH client, Docker, network, Git), choose language and look, then open the workspace.
 // Back/Next, progress dots, skip for optional steps, and the step is saved so it resumes.
-import { h, t, btn, state, select, toast, listFilter } from './ui.js';
+import { h, t, originalText, btn, state, select, toast, listFilter } from './ui.js';
 
 const td = window.td;
 
@@ -14,7 +14,7 @@ export function runOnboarding(app) {
   let prereqs = null;
   async function save() { await td.invoke['settings:set']({ onboarding: { step: ob.step, path: ob.path, skipped: ob.skipped } }, null); }
   async function finish() {
-    await app.applySettings({ onboarded: true, onboarding: { step: STEPS.length - 1, path: ob.path, skipped: ob.skipped } }, t('hist.onboardDone'));
+    await app.applySettings({ onboarded: true, onboarding: { step: STEPS.length - 1, path: ob.path, skipped: ob.skipped } }, originalText('hist.onboardDone'));
     wrap.remove();
     app.go('deploy');
     if (prev && prev.focus) prev.focus();
@@ -33,9 +33,9 @@ export function runOnboarding(app) {
     }
     if (id === 'look') {
       body.append(h('p', { class: 'muted', text: t('onb.lookLead') }),
-        h('div', { class: 'field' }, [h('label', { for: 'onb-lang', text: t('set.language') }), Object.assign(select([['en', t('lang.en')], ['zh-HK', t('lang.zh-HK')], ['bilingual', t('lang.bilingual')]], s.language, (v) => app.applySettings({ language: v }, t('hist.setField', [t('set.language'), v])).then(draw)), { id: 'onb-lang', disabled: state.school.enabled })]),
-        h('div', { class: 'field' }, [h('label', { for: 'onb-theme', text: t('set.theme') }), Object.assign(select([['dark', t('opt.dark')], ['light', t('opt.light')], ['system', t('opt.system')]], s.theme, (v) => app.applySettings({ theme: v }, t('hist.setField', [t('set.theme'), v])).then(draw)), { id: 'onb-theme' })]),
-        h('div', { class: 'field' }, [h('label', { for: 'onb-motion', text: t('set.motion') }), Object.assign(select([['system', t('opt.motionSystem')], ['on', t('opt.on')], ['off', t('opt.off')]], s.motion, (v) => app.applySettings({ motion: v }, t('hist.setField', [t('set.motion'), v])).then(draw)), { id: 'onb-motion' })]));
+        h('div', { class: 'field' }, [h('label', { for: 'onb-lang', text: t('set.language') }), Object.assign(select([['en', t('lang.en')], ['zh-HK', t('lang.zh-HK')], ['bilingual', t('lang.bilingual')]], s.language, (v) => app.applySettings({ language: v }, originalText('hist.setField', [originalText('set.language'), v])).then(draw)), { id: 'onb-lang', disabled: state.school.enabled })]),
+        h('div', { class: 'field' }, [h('label', { for: 'onb-theme', text: t('set.theme') }), Object.assign(select([['dark', t('opt.dark')], ['light', t('opt.light')], ['system', t('opt.system')]], s.theme, (v) => app.applySettings({ theme: v }, originalText('hist.setField', [originalText('set.theme'), v])).then(draw)), { id: 'onb-theme' })]),
+        h('div', { class: 'field' }, [h('label', { for: 'onb-motion', text: t('set.motion') }), Object.assign(select([['system', t('opt.motionSystem')], ['on', t('opt.on')], ['off', t('opt.off')]], s.motion, (v) => app.applySettings({ motion: v }, originalText('hist.setField', [originalText('set.motion'), v])).then(draw)), { id: 'onb-motion' })]));
     }
     if (id === 'done') body.append(h('p', { text: t('onb.doneBody.' + ob.path) }));
     const optional = id === 'look' || id === 'prereqs';

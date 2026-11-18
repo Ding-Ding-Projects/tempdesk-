@@ -55,6 +55,11 @@ test('translator: language modes, funny levels, serious keys and personal wordin
   assert.strictEqual(t('b.c'), 'The machine');
   assert.strictEqual(t('a.hello', ['computer-01']), 'Hello computer-01');
   assert.strictEqual(t.raw('b.c'), 'The computer');
+  assert.strictEqual(t.original('b.c'), 'The computer');
+  t = Core.makeTranslator({ catalogs, mode: 'bilingual', funny: 0, wording });
+  assert.strictEqual(t('b.c'), 'The machine / 電腦');
+  assert.strictEqual(t.original('b.c'), 'The computer / 電腦');
+  assert.strictEqual(t.original('a.hello', ['computer-01']), 'Hello computer-01 / 你好 computer-01');
   assert.strictEqual(t('missing.key'), 'missing.key');
 });
 

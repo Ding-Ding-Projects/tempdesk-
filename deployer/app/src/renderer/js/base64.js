@@ -2,7 +2,7 @@
 // Files of any size are streamed in the main process (constant memory, progress, pause, resume,
 // cancel, SHA-256 round-trip verification, atomic output). Every conversion is a history entry
 // committed to the workspace; payloads are stored only when the user opts in.
-import { h, t, btn, toast, dialog, superConfirm, searchBox, field, select, contextMenu, play, fmtBytes, fmtTime } from './ui.js';
+import { h, t, originalText, btn, toast, dialog, superConfirm, searchBox, field, select, contextMenu, play, fmtBytes, fmtTime } from './ui.js';
 
 const td = window.td;
 const B = window.TempDeskBase64;
@@ -17,7 +17,7 @@ async function record(action, meta) {
   if (st.keepPayloads) { entry.input = st.input.slice(0, 100000); entry.output = st.output.slice(0, 100000); }
   const cur = (await td.invoke['ws:get']('tools/base64.json')) || { schema: 'tempdesk-base64-history', entries: [] };
   cur.entries = [entry].concat(cur.entries || []).slice(0, 1000);
-  await td.invoke['ws:save']('tools/base64.json', cur, t('b64.hist.' + action, [entry.inputLength]));
+  await td.invoke['ws:save']('tools/base64.json', cur, originalText('b64.hist.' + action, [entry.inputLength]));
   window.TempDeskApp.refreshUndo();
 }
 

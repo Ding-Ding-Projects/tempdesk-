@@ -30,11 +30,12 @@
   loadSync('en'); loadSync('zh-HK');
   var translator = (host.wording && host.wording()) || function (x) { return x; };
   function fmt(v, args) { return String(v).replace(/\{(\d+)\}/g, function (m, i) { return args && args[i] !== undefined ? args[i] : m; }); }
-  function t(key, args, fallback) {
+  function catalogText(key, fallback) {
     var lang = prefs.lang === 'zh-HK' ? 'zh-HK' : 'en';
-    var v = (dict[lang] && dict[lang][key]) || dict.en[key] || fallback || key;
-    return fmt(translator(v), args);
+    return (dict[lang] && dict[lang][key]) || dict.en[key] || fallback || key;
   }
+  function t(key, args, fallback) { return fmt(translator(catalogText(key, fallback)), args); }
+  t.original = function (key, args, fallback) { return fmt(catalogText(key, fallback), args); };
   function tz(key, args) { return dict['zh-HK'][key] ? fmt(translator(dict['zh-HK'][key]), args) : ''; }
   function render(el) {
     var key = el.getAttribute('data-i18n');

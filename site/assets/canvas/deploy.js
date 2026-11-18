@@ -94,7 +94,7 @@ export function mountDeploy(root, ctx) {
     card.el.setAttribute('data-palette-field', label); card.el.setAttribute('data-palette-group', t('tab.map'));
     return card.el;
   }
-  function edit(f, label) { return (v, id) => { ctx.setModel(applyMapEdit(ctx.getModel(), f, v), { key: 'hist.mapSet', args: [label, v] }, id); }; }
+  function edit(f, labelKey) { return (v, id) => { ctx.setModel(applyMapEdit(ctx.getModel(), f, v), { key: 'hist.mapSet', args: [{ catalogKey: labelKey }, v] }, id); }; }
   function draw() {
     const m = ctx.getModel(), s = m.server, g = m.guest, d = m.deploy;
     const native = s.portalsMode === 'native';
@@ -102,28 +102,28 @@ export function mountDeploy(root, ctx) {
     const nodes = [];
     nodes.push(h('div', { class: 'node net', id: 'map-net' }, [h('h3', { text: t('map.network') }),
       h('div', { class: 'ports' }, [h('span', { text: cidrFrom(s.ipAddress, s.prefixLength) || '?' })]),
-      field('map-prefix', t('f.prefixLength'), s.prefixLength, edit('net.prefix', t('f.prefixLength'))),
-      field('map-gw', t('f.gateway'), s.gateway, edit('net.gateway', t('f.gateway'))),
-      field('map-dns', t('f.dnsServers'), s.dnsServers, edit('net.dns', t('f.dnsServers')))]));
+      field('map-prefix', t('f.prefixLength'), s.prefixLength, edit('net.prefix', 'f.prefixLength')),
+      field('map-gw', t('f.gateway'), s.gateway, edit('net.gateway', 'f.gateway')),
+      field('map-dns', t('f.dnsServers'), s.dnsServers, edit('net.dns', 'f.dnsServers'))]));
     nodes.push(h('div', { class: 'node', id: 'map-dc' }, [h('h3', { text: t('map.dc') }),
       h('div', { class: 'ports' }, [h('span', { text: 'DNS 53' }), h('span', { text: 'LDAP 389' }), h('span', { text: 'Kerberos 88' }), h('span', { text: 'SMB 445' }), h('span', { text: 'WinRM 5985' }), h('span', { text: (s.agentTls ? 'HTTPS ' : 'HTTP ') + agentPort + ' agent' })].concat(native ? [h('span', { text: '8081 guest' }), h('span', { text: '8082 admin' })] : [])),
-      field('map-dc-name', t('f.computerName'), s.computerName, edit('dc.name', t('f.computerName'))),
-      field('map-dc-ip', t('f.ipAddress'), s.ipAddress, edit('dc.ip', t('f.ipAddress'))),
-      field('map-dc-domain', t('f.domainName'), s.domainName, edit('dc.domain', t('f.domainName'))),
-      field('map-tls', t('f.agentTls'), s.agentTls ? 'on' : 'off', (v) => ctx.setModel(applyMapEdit(ctx.getModel(), 'agent.tls', v === 'on'), { key: 'hist.mapSet', args: [t('f.agentTls'), v] }), { options: [['off', t('map.tlsOff')], ['on', t('map.tlsOn')]] })]));
+      field('map-dc-name', t('f.computerName'), s.computerName, edit('dc.name', 'f.computerName')),
+      field('map-dc-ip', t('f.ipAddress'), s.ipAddress, edit('dc.ip', 'f.ipAddress')),
+      field('map-dc-domain', t('f.domainName'), s.domainName, edit('dc.domain', 'f.domainName')),
+      field('map-tls', t('f.agentTls'), s.agentTls ? 'on' : 'off', (v) => ctx.setModel(applyMapEdit(ctx.getModel(), 'agent.tls', v === 'on'), { key: 'hist.mapSet', args: [{ catalogKey: 'f.agentTls' }, v] }), { options: [['off', t('map.tlsOff')], ['on', t('map.tlsOn')]] })]));
     nodes.push(h('div', { class: 'node', id: 'map-portals' }, [h('h3', { text: t('map.portals') }),
-      field('map-portals-mode', t('f.portalsMode'), s.portalsMode, (v) => { ctx.setModel(applyMapEdit(ctx.getModel(), 'portals.mode', v), { key: 'hist.mapSet', args: [t('f.portalsMode'), v] }); draw(); }, { options: [['none', t('opt.portals.none')], ['native', t('opt.portals.native')]] }),
-      native ? h('p', { class: 'help', text: t('map.portalsNative', [s.ipAddress]) }) : field('map-portals-ip', t('map.hostIp'), d.portalsHost.ip, edit('portalsHost.ip', t('map.portals'))),
-      native ? null : field('map-portals-name', t('map.hostName'), d.portalsHost.name, edit('portalsHost.name', t('map.portals'))),
+      field('map-portals-mode', t('f.portalsMode'), s.portalsMode, (v) => { ctx.setModel(applyMapEdit(ctx.getModel(), 'portals.mode', v), { key: 'hist.mapSet', args: [{ catalogKey: 'f.portalsMode' }, v] }); draw(); }, { options: [['none', t('opt.portals.none')], ['native', t('opt.portals.native')]] }),
+      native ? h('p', { class: 'help', text: t('map.portalsNative', [s.ipAddress]) }) : field('map-portals-ip', t('map.hostIp'), d.portalsHost.ip, edit('portalsHost.ip', 'map.portals')),
+      native ? null : field('map-portals-name', t('map.hostName'), d.portalsHost.name, edit('portalsHost.name', 'map.portals')),
       h('div', { class: 'ports' }, [h('span', { text: ':' + d.portalsHost.guestPort + ' guest' }), h('span', { text: ':' + d.portalsHost.adminPort + ' admin' })])]));
     nodes.push(h('div', { class: 'node', id: 'map-apphost' }, [h('h3', { text: t('map.appHost') }),
       h('p', { class: 'help', text: t('map.appHostHelp') }),
-      field('map-app-name', t('map.hostName'), d.appHost.name, edit('appHost.name', t('map.appHost'))),
-      field('map-app-ip', t('map.hostIp'), d.appHost.ip, edit('appHost.ip', t('map.appHost'))),
+      field('map-app-name', t('map.hostName'), d.appHost.name, edit('appHost.name', 'map.appHost')),
+      field('map-app-ip', t('map.hostIp'), d.appHost.ip, edit('appHost.ip', 'map.appHost')),
       h('div', { class: 'ports' }, [h('span', { text: 'RDP 3389' })])]));
     nodes.push(h('div', { class: 'node', id: 'map-guest' }, [h('h3', { text: t('map.guestPc') }),
-      field('map-guest-dns', t('f.dnsServer'), g.dnsServer, edit('guest.dns', t('f.dnsServer'))),
-      field('map-guest-ou', t('f.ou'), g.ou, edit('guest.ou', t('f.ou'))),
+      field('map-guest-dns', t('f.dnsServer'), g.dnsServer, edit('guest.dns', 'f.dnsServer')),
+      field('map-guest-ou', t('f.ou'), g.ou, edit('guest.ou', 'f.ou')),
       h('p', { class: 'help', text: t('map.guestJoins', [g.domainName || s.domainName, g.ou || ('OU=Computers,OU=TempDesk,' + String(g.domainName || s.domainName).split('.').map((x) => 'DC=' + x).join(','))]) })]));
     const map = h('div', { class: 'map' }, nodes);
     const warn = mapWarnings(m).map((k) => h('p', { class: 'notice warn', role: 'alert', text: t(k) }));

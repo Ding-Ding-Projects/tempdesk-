@@ -10,8 +10,7 @@
   var host = P.TempDeskHost || {};
   var original = HI.openStore;
   function describe(e) {
-    var m = e.msg;
-    var text = typeof m === 'string' ? m : (m && m.key ? window.TempDeskSite.t(m.key, (m.args || []).map(function (a) { return typeof a === 'string' && a.charAt(0) === '@' ? window.TempDeskSite.t(a.slice(1)) : a; })) : e.kind);
+    var text = HI.renderMessage(e.msg, window.TempDeskSite.t.original) || e.kind;
     if (e.kind === 'undo') return 'Undo: ' + text;
     if (e.kind === 'redo') return 'Redo: ' + text;
     return String(text || 'Edit answer file').slice(0, 200);

@@ -19,6 +19,9 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
 
 ### Fixed
 
+- Keep personal wording out of newly written workspace action labels, Studio history arguments, and Deployer exports and copied progress steps.
+- Carry the chosen deployment, inventory or log export format through to the save dialog.
+
 - Virtual Commons serves RDP files as browser attachments and keeps confirmations and downloads scoped to each checkout.
 - The Virtual Commons checkout button wraps its full label on narrow screens and at larger text sizes.
 - The Virtual Commons edition picker applies a local mapping for the full operating-system name and retains eligible wording access after checkout validation.

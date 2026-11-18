@@ -31,13 +31,14 @@
       .then(function (j) { dict[lang] = j; return j; }).catch(function () { dict[lang] = {}; return {}; });
   }
   function fmt(s, args) { return String(s).replace(/\{(\d+)\}/g, function (m, i) { return args && args[i] !== undefined ? args[i] : m; }); }
-  // t(key) returns the string in the current language (English in bilingual mode).
-  function t(key, args, fallback) {
+  function catalogText(key, fallback) {
     var lang = prefs.lang === 'zh-HK' ? 'zh-HK' : 'en';
-    var s = (dict[lang] && dict[lang][key]) || (dict.en && dict.en[key]) || fallback || key;
-    return translator(fmt(s, args));
+    return (dict[lang] && dict[lang][key]) || (dict.en && dict.en[key]) || fallback || key;
   }
-  function tz(key, args) { return dict['zh-HK'] && dict['zh-HK'][key] ? translator(fmt(dict['zh-HK'][key], args)) : ''; }
+  // In bilingual mode, t returns English and tz supplies the Cantonese copy.
+  function t(key, args, fallback) { return fmt(translator(catalogText(key, fallback)), args); }
+  t.original = function (key, args, fallback) { return fmt(catalogText(key, fallback), args); };
+  function tz(key, args) { return dict['zh-HK'] && dict['zh-HK'][key] ? fmt(translator(dict['zh-HK'][key]), args) : ''; }
   function render(el) {
     var key = el.getAttribute('data-i18n');
     if (!el.hasAttribute('data-i18n-orig')) el.setAttribute('data-i18n-orig', el.textContent);

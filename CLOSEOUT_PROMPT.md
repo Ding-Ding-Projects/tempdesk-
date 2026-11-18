@@ -15,3 +15,5 @@ Complete initial setup on the dedicated Desktop Experience host, apply the inten
 Continue the remaining personal-wording surfaces from the browser-local management loader and the [portal guide](portal/README.md#browser-local-personal-wording). Use synthetic test files and signed-in test profiles to verify local state and original-wording restoration. Preserve existing operator data and the native lab boundaries.
 
 The rebuilt bilingual setup action fit its Settings card at 360 px before, during and after an import. The same browser separately verified original wording and local file removal when the session expired. See the four inspected v1.0.80 images in the [personal wording walkthrough](README.md#personal-wording-walkthrough). Verify the remaining dynamic wording and sound surfaces separately.
+
+Verify durable wording boundaries through the Deployer Settings, workspace history, Studio history, and the deployment, inventory and log exports. Use a dedicated test workspace and a synthetic wording file. Keep old workspace records intact and distinguish the notification drawer from saved records.

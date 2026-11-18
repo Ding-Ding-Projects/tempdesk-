@@ -14,6 +14,7 @@ import { registerHints, hintAt, hintCount, fieldCard, quickField, meaningOf, hin
 
 const A = window.TempDeskAnswer, Z = window.TempDeskZip, HI = window.TempDeskHistory, S = window.TempDeskSite;
 const t = (k, args, fb) => S.t(k, args, fb);
+t.original = (k, args, fb) => S.t.original(k, args, fb);
 const LS = S.LS;
 const ROOT = S.ROOT;
 const isPhone = () => window.matchMedia('(max-width: 760px)').matches;
@@ -304,7 +305,7 @@ function openTab(id, opts) {
   if (!opts.noFocus) { const tb = document.getElementById('tab-' + cssId(id)); if (tb) tb.focus({ preventScroll: true }); }
 }
 const setView = (id, opts) => {
-  if (MODE_TABS.includes(id)) { if (model.mode !== id) { model.mode = id; commit({ key: 'hist.mode', args: ['@tab.' + id] }); } return openTab('template', opts); }
+  if (MODE_TABS.includes(id)) { if (model.mode !== id) { model.mode = id; commit({ key: 'hist.mode', args: [{ catalogKey: 'tab.' + id }] }); } return openTab('template', opts); }
   return openTab(id, opts);
 };
 function closeTab(id) {
@@ -881,11 +882,11 @@ function renderField(id, mode, errors) {
     const e = fieldErrors();
     err.textContent = e[id] || '';
     inp.setAttribute('aria-invalid', String(!!e[id]));
-    commit({ key: def.type === 'password' ? 'hist.setSecret' : 'hist.setField', args: ['@f.' + id.replace(/^x\./, 'x_'), def.type === 'password' ? '' : String(value).slice(0, 60)] }, mode + ':' + id);
+    commit({ key: def.type === 'password' ? 'hist.setSecret' : 'hist.setField', args: [{ catalogKey: 'f.' + id.replace(/^x\./, 'x_') }, def.type === 'password' ? '' : String(value).slice(0, 60)] }, mode + ':' + id);
   };
-  const selectChange = (value, shown) => {
+  const selectChange = (value) => {
     setVal(id, value);
-    commit({ key: 'hist.setField', args: ['@f.' + id.replace(/^x\./, 'x_'), shown || String(value)] });
+    commit({ key: 'hist.setField', args: [{ catalogKey: 'f.' + id.replace(/^x\./, 'x_') }, String(value)] });
     renderView();
   };
   if (def.type === 'check') {
@@ -895,7 +896,7 @@ function renderField(id, mode, errors) {
     if (!hint.description) hint.description = lab;
     const card = fieldCard({ id: domId, isChanged, label: lab, hint, value: v ? 'true' : 'false', t, compact: true, noUnset: true, onRelated: (k) => goRelated(k, ''),
       relatedName: (k) => t('w.writes', [k.replace('Microsoft-Windows-', '').replace('|', ' / ')], 'Writes {0}'),
-      onChange: (nv) => { const on = nv === 'true'; setVal(id, on); commit({ key: on ? 'hist.on' : 'hist.off', args: ['@f.' + id.replace(/^x\./, 'x_')] }); renderView(); } });
+      onChange: (nv) => { const on = nv === 'true'; setVal(id, on); commit({ key: on ? 'hist.on' : 'hist.off', args: [{ catalogKey: 'f.' + id.replace(/^x\./, 'x_') }] }); renderView(); } });
     wrap.classList.add('field-rich');
     wrap.appendChild(card.el);
   } else {
@@ -904,13 +905,13 @@ function renderField(id, mode, errors) {
       const hint = guidedHint(id);
       const card = fieldCard({ id: domId, isChanged, label: lab, hint, value: v, t, A, compact: true, noUnset: true, lang: document.documentElement.lang,
         onRelated: (k) => goRelated(k, ''), relatedName: (k) => t('w.writes', [k.replace('Microsoft-Windows-', '').replace('|', ' / ')], 'Writes {0}'),
-        onChange: (nv) => { setVal(id, nv === undefined ? '' : nv); const e = fieldErrors(); err.textContent = e[id] || ''; commit({ key: 'hist.setField', args: ['@f.' + id, String(nv || '')] }); updateStatus(); } });
+        onChange: (nv) => { setVal(id, nv === undefined ? '' : nv); const e = fieldErrors(); err.textContent = e[id] || ''; commit({ key: 'hist.setField', args: [{ catalogKey: 'f.' + id }, String(nv || '')] }); updateStatus(); } });
       wrap.classList.add('field-rich');
       wrap.replaceChildren(card.el);
     } else if (id === 'timeZone' || def.type === 'datalist') {
       const opts = id === 'timeZone' ? TZ_OPTS().map(([v, l]) => [v, l]) : (def.list === 'dl-keyboards' ? A.KEYBOARDS.map(([v, l]) => [v, v + ' (' + l + ')']) : A.LOCALES.map((l) => [l, l]));
       const cb = combobox({ id: domId, options: opts, value: v === undefined ? '' : String(v), allowCustom: id !== 'timeZone', mono: true, emptyText: t('palette.empty'), openLabel: t('combo.open'), describedby: described,
-        onChange: (val, shown) => { setVal(id, val); const e = fieldErrors(); err.textContent = e[id] || ''; cb.input.setAttribute('aria-invalid', String(!!e[id])); commit({ key: 'hist.setField', args: ['@f.' + id, shown] }); updateStatus(); } });
+        onChange: (val) => { setVal(id, val); const e = fieldErrors(); err.textContent = e[id] || ''; cb.input.setAttribute('aria-invalid', String(!!e[id])); commit({ key: 'hist.setField', args: [{ catalogKey: 'f.' + id }, String(val)] }); updateStatus(); } });
       wrap.appendChild(cb.el);
     } else if ((def.type === 'select' || def.type === 'edition') && hintCount()) {
       // Choices become radio cards (with what each option means) or segmented buttons.
@@ -929,7 +930,7 @@ function renderField(id, mode, errors) {
       if (def.type === 'edition') wrap.appendChild(h('button', { type: 'button', class: 'btn btn-ghost btn-sm', text: t('opt.otherIndex'), onclick: () => { const n = window.prompt(t('opt.otherIndexPrompt'), String(v || '1')); if (n && /^\d{1,2}$/.test(n)) selectChange(n); } }));
     } else if (def.type === 'password' && hintCount()) {
       const card = fieldCard({ id: domId, isChanged, label: lab, hint: { widget: 'password', storage: def.plain ? 'plain' : undefined, description: help || lab, valueHelp: {}, risk: { level: 'none' }, related: [] }, value: v, t, A, announce, compact: true, noUnset: true,
-        onChange: (nv, meta) => { setVal(id, nv || ''); const e = fieldErrors(); err.textContent = e[id] || ''; commit({ key: 'hist.setSecret', args: ['@f.' + id.replace(/^x\./, 'x_'), ''] }, meta && meta.generated ? null : mode + ':' + id); if (meta && meta.generated && history) history.flush(); } });
+        onChange: (nv, meta) => { setVal(id, nv || ''); const e = fieldErrors(); err.textContent = e[id] || ''; commit({ key: 'hist.setSecret', args: [{ catalogKey: 'f.' + id.replace(/^x\./, 'x_') }, ''] }, meta && meta.generated ? null : mode + ':' + id); if (meta && meta.generated && history) history.flush(); } });
       wrap.classList.add('field-rich');
       wrap.replaceChildren(card.el);
       if (def.plain) wrap.appendChild(h('p', { class: 'notice warn', text: t('warn.plainJoin') }));
@@ -973,7 +974,7 @@ function renderField(id, mode, errors) {
       const box = h('div', { class: 'grid2', role: 'group', 'aria-label': lab });
       Object.keys(A.APP_IDS).forEach((app) => {
         const cb = h('input', { type: 'checkbox', checked: cur.has(app) });
-        cb.addEventListener('change', () => { if (cb.checked) cur.add(app); else cur.delete(app); setVal(id, [...cur].join(', ')); commit({ key: cb.checked ? 'hist.on' : 'hist.off', args: ['@app.' + app] }); });
+        cb.addEventListener('change', () => { if (cb.checked) cur.add(app); else cur.delete(app); setVal(id, [...cur].join(', ')); commit({ key: cb.checked ? 'hist.on' : 'hist.off', args: [{ catalogKey: 'app.' + app }] }); });
         box.appendChild(h('label', { class: 'check' }, [cb, h('span', { text: t('app.' + app) })]));
       });
       wrap.appendChild(box);
@@ -988,7 +989,7 @@ function renderField(id, mode, errors) {
           }
           setVal(id, nv === undefined ? '' : nv);
           const e = fieldErrors(); err.textContent = e[id] || '';
-          commit({ key: 'hist.setField', args: ['@f.' + id.replace(/^x\./, 'x_'), String(nv || '').slice(0, 60)] }, mode + ':' + id);
+          commit({ key: 'hist.setField', args: [{ catalogKey: 'f.' + id.replace(/^x\./, 'x_') }, String(nv || '').slice(0, 60)] }, mode + ':' + id);
           updateStatus();
         } });
       wrap.classList.add('field-rich');
@@ -1026,21 +1027,21 @@ function accountsEditor(mode) {
     const mk = (k, type) => {
       const id = `acc-${i}-${k}`;
       const inp = h('input', { type, id, value: a[k] || '', autocomplete: type === 'password' ? 'new-password' : 'off', spellcheck: 'false' });
-      inp.addEventListener('input', () => { a[k] = inp.value; commit({ key: k === 'password' ? 'hist.setSecret' : 'hist.setField', args: [t('f.account') + ' ' + (i + 1) + ' ' + t('f.acc_' + k), k === 'password' ? '' : inp.value] }, 'acc' + i + k); });
+      inp.addEventListener('input', () => { a[k] = inp.value; commit({ key: k === 'password' ? 'hist.setSecret' : 'hist.setField', args: [t.original('f.account') + ' ' + (i + 1) + ' ' + t.original('f.acc_' + k), k === 'password' ? '' : inp.value] }, 'acc' + i + k); });
       const fe = fieldErrors()['accounts.' + i + '.' + k];
-      return h('div', { class: 'field' }, [h('label', { for: id, text: t('f.acc_' + k) }), k === 'password' ? h('div', { class: 'inline' }, [inp, iconButton('dice', t('pw.generate'), () => { inp.value = A.generatePassword(16); inp.type = 'text'; a.password = inp.value; commit({ key: 'hist.setSecret', args: [t('f.account') + ' ' + (i + 1)] }); })]) : inp, h('div', { class: 'err', text: fe || '' })]);
+      return h('div', { class: 'field' }, [h('label', { for: id, text: t('f.acc_' + k) }), k === 'password' ? h('div', { class: 'inline' }, [inp, iconButton('dice', t('pw.generate'), () => { inp.value = A.generatePassword(16); inp.type = 'text'; a.password = inp.value; commit({ key: 'hist.setSecret', args: [t.original('f.account') + ' ' + (i + 1)] }); })]) : inp, h('div', { class: 'err', text: fe || '' })]);
     };
     const grp = h('select', { id: `acc-${i}-group` }, [h('option', { value: 'Administrators', text: t('opt.group.admins') }), h('option', { value: 'Users', text: t('opt.group.users') })]);
     grp.value = a.group || 'Administrators';
-    grp.addEventListener('change', () => { a.group = grp.value; commit({ key: 'hist.setField', args: [t('f.account') + ' ' + (i + 1) + ' ' + t('f.acc_group'), grp.value] }); });
+    grp.addEventListener('change', () => { a.group = grp.value; commit({ key: 'hist.setField', args: [t.original('f.account') + ' ' + (i + 1) + ' ' + t.original('f.acc_group'), grp.value] }); });
     row.append(mk('name', 'text'), mk('displayName', 'text'), h('div', { class: 'field' }, [h('label', { for: `acc-${i}-group`, text: t('f.acc_group') }), grp]), mk('password', 'password'),
       h('div', { class: 'row-tools' }, [
-        iconButton('up', t('list.up'), () => { [list[i - 1], list[i]] = [list[i], list[i - 1]]; commit({ key: 'hist.reorder', args: ['@f.accounts'] }); renderView(); }, { disabled: i === 0 || undefined }),
-        iconButton('down', t('list.down'), () => { [list[i + 1], list[i]] = [list[i], list[i + 1]]; commit({ key: 'hist.reorder', args: ['@f.accounts'] }); renderView(); }, { disabled: i === list.length - 1 || undefined }),
-        iconButton('del', t('list.remove'), () => { list.splice(i, 1); commit({ key: 'hist.removeItem', args: ['@f.accounts'] }); renderView(); })]));
+        iconButton('up', t('list.up'), () => { [list[i - 1], list[i]] = [list[i], list[i - 1]]; commit({ key: 'hist.reorder', args: [{ catalogKey: 'f.accounts' }] }); renderView(); }, { disabled: i === 0 || undefined }),
+        iconButton('down', t('list.down'), () => { [list[i + 1], list[i]] = [list[i], list[i + 1]]; commit({ key: 'hist.reorder', args: [{ catalogKey: 'f.accounts' }] }); renderView(); }, { disabled: i === list.length - 1 || undefined }),
+        iconButton('del', t('list.remove'), () => { list.splice(i, 1); commit({ key: 'hist.removeItem', args: [{ catalogKey: 'f.accounts' }] }); renderView(); })]));
     box.appendChild(row);
   });
-  box.appendChild(btn('list.addAccount', () => { list.push({ name: '', displayName: '', group: 'Users', password: '' }); commit({ key: 'hist.addItem', args: ['@f.accounts'] }); renderView(); }, 'btn-ghost btn-sm'));
+  box.appendChild(btn('list.addAccount', () => { list.push({ name: '', displayName: '', group: 'Users', password: '' }); commit({ key: 'hist.addItem', args: [{ catalogKey: 'f.accounts' }] }); renderView(); }, 'btn-ghost btn-sm'));
   return box;
 }
 function sectionStatus(sec, mode, errors) {
@@ -1346,7 +1347,7 @@ const STUDIO_CMDS = () => [
   ['studio.validate', () => $('#st-validate').click()], ['studio.buildKit', downloadZip], ['tb.downloadXml', downloadXml], ['tb.import', () => $('#b-import-file').click()], ['tb.export', openExport], ['tb.save', saveVersion],
   ['studio.newFromTemplate', () => openTab('new')], ['studio.shortcuts', openShortcuts], ['studio.toggleSplit', () => { layout.split = !layout.split; applyLayout(); renderView(); }],
   ...['flow', 'disk', 'commands', 'map', 'all', 'simulate', 'compare', 'snippets', 'secrets', 'plan', 'history', 'xml'].map((id) => ['tab.' + id, () => openTab(id)]),
-  ...Object.keys(A.SNIPPETS).map((id) => ['snip.' + id, () => { model = A.applySnippet(model, id); commit({ key: 'hist.snippet', args: ['@snip.' + id] }); refreshAround(); if (view === 'template') renderEditorOnly(); S.toast(t('snip.inserted', [t('snip.' + id)])); }])
+  ...Object.keys(A.SNIPPETS).map((id) => ['snip.' + id, () => { model = A.applySnippet(model, id); commit({ key: 'hist.snippet', args: [{ catalogKey: 'snip.' + id }] }); refreshAround(); if (view === 'template') renderEditorOnly(); S.toast(t('snip.inserted', [t('snip.' + id)])); }])
 ];
 function renderGlobalResults() {
   const res = runGlobalSearch();
@@ -1517,14 +1518,7 @@ function printChecklist() {
 // History panel
 // ------------------------------------------------------------------------------------------------
 function msgText(msg) {
-  if (!msg) return '';
-  if (typeof msg === 'string') return msg;
-  const args = (msg.args || []).map((a) => {
-    if (typeof a === 'string' && a[0] === '@') return t(a.slice(1));
-    if (typeof a === 'number' && a > 1e12) return new Date(a).toLocaleString();
-    return a;
-  });
-  return t(msg.key, args);
+  return HI.renderMessage(msg, t);
 }
 function xmlOf(state) { try { const r = A.normalizeModel(state); return r.ok ? safeXml(r.model) : ''; } catch (e) { return ''; } }
 function diffView(a, b) {
@@ -1615,7 +1609,7 @@ function clearHistory() {
   document.body.appendChild(dlg); S.trap(dlg); S.openSheet(dlg, '#clr-in');
 }
 function saveVersion() {
-  const name = window.prompt(t('ver.prompt'), t('ver.default', [new Date().toLocaleString()]));
+  const name = window.prompt(t('ver.prompt'), t.original('ver.default', [new Date().toLocaleString()]));
   if (name === null) return;
   history.mark('save', name.slice(0, 80));
   S.toast(t('ver.saved'));
@@ -1756,7 +1750,7 @@ function importXmlText(text) {
   if (!check.ok) { report([t('imp.badModel', [check.error])], false); return; }
   model = check.model;
   view = r.mode;
-  commit({ key: 'hist.importXml', args: ['@tab.' + r.mode] });
+  commit({ key: 'hist.importXml', args: [{ catalogKey: 'tab.' + r.mode }] });
   renderView();
   const lines = [t('imp.xmlOk', [t('tab.' + r.mode)])];
   const cmdN = Object.values(r.commands).reduce((n, l) => n + l.length, 0);
@@ -1852,7 +1846,7 @@ function setMode(next) {
     const keepDirect = model.direct;
     model = mergeSecrets(r.model, model);
     model.direct = keepDirect;
-    commit({ key: 'hist.toGuided', args: ['@tab.' + model.mode] });
+    commit({ key: 'hist.toGuided', args: [{ catalogKey: 'tab.' + model.mode }] });
     LS.set('td.studio.mode', 'guided');
     tabs = ['template'].concat(tabs.filter((x) => x !== 'template' && !x.startsWith('comp:')));
     view = 'template'; saveTabs(); renderView();
@@ -2042,7 +2036,7 @@ function renderDirectNew() {
   grid.appendChild(h('button', { type: 'button', class: 'st-card on', onclick: newBlankDirect }, [h('b', { text: t('direct.blank') }), h('span', { text: t('direct.blankHelp') })]));
   grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => { importIntoDirect = true; $('#b-import-file').click(); } }, [h('b', { text: t('direct.openExisting') }), h('span', { text: t('direct.openExistingHelp') })]));
   MODE_TABS.forEach((m) => grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => {
-    const dm = A.defaultModel(); dm.mode = m; model = dm; commit({ key: 'hist.mode', args: ['@tab.' + m] }); LS.set('td.studio.mode', 'guided'); tabs = ['template', 'flow']; view = 'template'; saveTabs(); renderView();
+    const dm = A.defaultModel(); dm.mode = m; model = dm; commit({ key: 'hist.mode', args: [{ catalogKey: 'tab.' + m }] }); LS.set('td.studio.mode', 'guided'); tabs = ['template', 'flow']; view = 'template'; saveTabs(); renderView();
   } }, [h('b', { text: t('tab.' + m) + ' (' + t('direct.guided') + ')' }), h('span', { text: t('mode.' + m + '.intro') })])));
   sec.appendChild(withFilter(grid, 'new-gallery-direct', 'studio.newTitle'));
   mainEl.appendChild(sec);
@@ -2086,7 +2080,7 @@ function renderNew() {
   grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: newBlankDirect }, [h('b', { text: t('direct.blank') }), h('span', { text: t('direct.blankHelp') })]));
   grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => { importIntoDirect = true; $('#b-import-file').click(); } }, [h('b', { text: t('direct.openExisting') }), h('span', { text: t('direct.openExistingHelp') })]));
   MODE_TABS.forEach((m) => grid.appendChild(h('button', { type: 'button', class: 'st-card' + (model.mode === m ? ' on' : ''), onclick: () => {
-    if (model.mode !== m) { model.mode = m; commit({ key: 'hist.mode', args: ['@tab.' + m] }); }
+    if (model.mode !== m) { model.mode = m; commit({ key: 'hist.mode', args: [{ catalogKey: 'tab.' + m }] }); }
     tabs = tabs.filter((x) => x !== 'new'); openTab('template');
   } }, [h('b', { text: t('tab.' + m) }), h('span', { text: t('mode.' + m + '.intro') }), model.mode === m ? h('small', { class: 'setmark', text: t('studio.current') }) : null])));
   grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => { if (window.confirm(t('studio.blankConfirm'))) { const keepMode = model.mode; model = A.defaultModel(); model.mode = keepMode; commit({ key: 'hist.blank', args: [] }); tabs = ['template']; view = 'template'; saveTabs(); renderView(); } } }, [h('b', { text: t('studio.blank') }), h('span', { text: t('studio.blankHelp') })]));
@@ -2337,7 +2331,7 @@ function renderSnippets() {
   const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'snip-h', text: t('tab.snippets') })]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('snip.help') })]);
   const grid = h('div', { class: 'st-gallery' });
   Object.keys(A.SNIPPETS).forEach((id) => grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => {
-    model = A.applySnippet(model, id); commit({ key: 'hist.snippet', args: ['@snip.' + id] }); output(t('hist.snippet', [t('snip.' + id)])); S.toast(t('snip.inserted', [t('snip.' + id)])); refreshAround();
+    model = A.applySnippet(model, id); commit({ key: 'hist.snippet', args: [{ catalogKey: 'snip.' + id }] }); output(t('hist.snippet', [t('snip.' + id)])); S.toast(t('snip.inserted', [t('snip.' + id)])); refreshAround();
   } }, [h('b', { text: t('snip.' + id) }), h('span', { text: t('snip.' + id + '.d') })])));
   sec.appendChild(withFilter(grid, 'snippets-gallery', 'tab.snippets'));
   mainEl.appendChild(sec);
