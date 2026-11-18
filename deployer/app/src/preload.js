@@ -5,7 +5,7 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 const INVOKE = [
-  'app:info', 'win:minimize', 'win:maximize', 'win:close', 'win:title',
+  'hub:status', 'app:info', 'win:minimize', 'win:maximize', 'win:close', 'win:title',
   'settings:get', 'settings:set', 'settings:export', 'settings:import',
   'school:get', 'school:enable', 'school:disable',
   'wording:get', 'wording:apply', 'wording:pick', 'wording:clear', 'sound:get',

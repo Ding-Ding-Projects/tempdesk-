@@ -127,7 +127,10 @@ function handle(channel, fn) {
   });
 }
 
+const statusHub = require('./status-hub');
+
 function registerIpc() {
+  handle('hub:status', statusHub.snapshot);
   handle('app:info', async () => ({
     build: BUILD, platform: process.platform, versions: { electron: process.versions.electron, node: process.versions.node, chrome: process.versions.chrome },
     animations: animationsEnabled(), highContrast: nativeTheme.shouldUseHighContrastColors, dark: nativeTheme.shouldUseDarkColors,
@@ -606,10 +609,11 @@ if (!process.squirrelEvent) {
     hardenSession();
     registerIpc();
     createWindow();
+    void statusHub.start(app.getVersion());
     nativeTheme.on('updated', () => send('theme:system', { dark: nativeTheme.shouldUseDarkColors, highContrast: nativeTheme.shouldUseHighContrastColors }));
     updater.on((s) => send('update:state', s));
     if (store.settings().updates) setTimeout(() => updater.check().catch(() => {}), 15000);
   });
-  app.on('window-all-closed', async () => { try { if (workspace) await workspace.flush(); } catch (e) { /* ignore */ } app.quit(); });
+  app.on('window-all-closed', async () => { await statusHub.finish().catch(() => {}); try { if (workspace) await workspace.flush(); } catch (e) { /* ignore */ } app.quit(); });
 }
 Menu.setApplicationMenu(null);
