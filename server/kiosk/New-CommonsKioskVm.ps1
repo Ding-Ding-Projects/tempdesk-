@@ -16,10 +16,37 @@ param(
     [ValidatePattern('^[A-Za-z0-9_-]{1,48}$')][string]$PrivateNetwork = 'CommonsLab'
 )
 $ErrorActionPreference = 'Stop'
-if (-not (Get-Command Get-TdVmwareTools -ErrorAction SilentlyContinue)) {
-    $engine = Join-Path $PSScriptRoot '../../deployer/engine'
-    foreach ($module in 'TempDesk.Common','VmDeploy','AnswerFile') { Import-Module (Join-Path $engine "$module.psm1") -DisableNameChecking }
+# Resolve the engine beside this source or packaged payload. A function left
+# over from another checkout does not prove its sibling modules are available.
+$sourceEngine = Join-Path $PSScriptRoot '../../deployer/engine'
+$packagedEngine = Join-Path $PSScriptRoot '../../../engine'
+$engine = if (Test-Path -LiteralPath $sourceEngine -PathType Container) { $sourceEngine } else { $packagedEngine }
+$required = [ordered]@{
+    'TempDesk.Common' = @('Write-TdUtf8File')
+    'AnswerFile' = @('New-TdIso')
+    'LiteDeploy' = @('ConvertTo-TdWindowsArg')
+    'VmDeploy' = @('Get-TdVmwareTools','New-TdVmwareVmx','Invoke-TdVmTool')
 }
+foreach ($nameOfModule in $required.Keys) {
+    $pathOfModule = (Get-Item -LiteralPath (Join-Path $engine "$nameOfModule.psm1") -ErrorAction Stop).FullName
+    $moduleInfo = Import-Module -Name $pathOfModule -Scope Local -DisableNameChecking -PassThru -ErrorAction Stop
+    foreach ($functionName in $required[$nameOfModule]) {
+        $command = Get-Command -Name $functionName -CommandType Function -ListImported -ErrorAction Stop
+        if ($command.Module.Path -ine $pathOfModule) { throw "Unexpected engine implementation for $functionName." }
+    }
+}
+# Invoke-TdVmTool resolves its argument encoder in the VmDeploy module's
+# session state. Make that dependency explicit there as well as at this entrypoint.
+$encoderPath = (Get-Item -LiteralPath (Join-Path $engine 'LiteDeploy.psm1')).FullName
+& $moduleInfo {
+    param($expectedPath)
+    $encoder = Get-Command ConvertTo-TdWindowsArg -CommandType Function -ListImported -ErrorAction SilentlyContinue
+    if (-not $encoder -or $encoder.Module.Path -ine $expectedPath) {
+        Import-Module -Name $expectedPath -Function ConvertTo-TdWindowsArg -Scope Script -DisableNameChecking -ErrorAction Stop
+    }
+    $encoder = Get-Command ConvertTo-TdWindowsArg -CommandType Function -ListImported -ErrorAction Stop
+    if ($encoder.Module.Path -ine $expectedPath) { throw 'The VM argument encoder is unavailable in the VM engine.' }
+} $encoderPath
 if ($Name -ieq $env:COMPUTERNAME) { throw 'Choose a name different from the host.' }
 $iso = Get-Item -LiteralPath $WindowsIso
 if ($iso.PSIsContainer -or $iso.Length -le 0 -or $iso.Extension -ine '.iso') { throw 'Select Windows 11 ISO media.' }
