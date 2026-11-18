@@ -40,6 +40,7 @@ set "CSC_IDENTITY_AUTO_DISCOVERY=false"
 
 set "CMD=call "%ROOT%download-dependencies.bat" /s"
 call :step "Downloading build tools" || goto :fail
+if exist "%ROOT%.tools\git\cmd\git.exe" set "PATH=%ROOT%.tools\git\cmd;%PATH%"
 if exist "%ROOT%.tools\node\node.exe" set "PATH=%ROOT%.tools\node;%PATH%"
 where node >nul 2>&1 || (echo ERROR: Node.js was not found after download.& exit /b 3)
 

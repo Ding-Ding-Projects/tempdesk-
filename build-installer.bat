@@ -21,6 +21,7 @@ goto :installerargs
 :build
 call "%ROOT%build.bat" %QUIET% %SKIPTESTS%
 if errorlevel 1 exit /b %ERRORLEVEL%
+if exist "%ROOT%.tools\git\cmd\git.exe" set "PATH=%ROOT%.tools\git\cmd;%PATH%"
 if exist "%ROOT%.tools\node\node.exe" set "PATH=%ROOT%.tools\node;%PATH%"
 set "CSC_LINK=" & set "WIN_CSC_LINK=" & set "CSC_KEY_PASSWORD=" & set "WIN_CSC_KEY_PASSWORD="
 set "CSC_IDENTITY_AUTO_DISCOVERY=false"

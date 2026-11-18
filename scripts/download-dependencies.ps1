@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     Downloads, verifies by SHA-256 and unpacks:
-      * Node.js LTS (portable zip) when node.exe is not on PATH or is older than 20
+      * Node.js LTS (portable zip) when node.exe is not on PATH or is older than 22.12
       * nuget.exe 6.11.1 from dist.nuget.org
       * Squirrel.Windows 2.0.1 release tools (Squirrel.exe, Setup.exe, StubExecutable.exe,
         WriteZipToSetup.exe, SyncReleases.exe, 7-Zip, WiX helpers) from the official
@@ -31,78 +31,60 @@ New-Item -ItemType Directory -Force -Path $tools | Out-Null
 
 function Say([string] $m) { if (-not $Silent) { Write-Host $m } }
 
-$Pins = @{
-    NodeVersion  = 'v24.22.1'
-    NodeZipSha   = 'd2046d28c2c3dcd211ac5145c0bf30e2047ef9dfb306693c8c6e2eccd8b95fa5'
-    NuGetUrl     = 'https://dist.nuget.org/win-x86-commandline/v6.11.1/nuget.exe'
-    NuGetSha     = 'c0ddc9cb0633c4607da7e8028eb4f91248c8b74e45a68b0c79fcfa7d78c2a481'
-    SquirrelUrl  = 'https://api.nuget.org/v3-flatcontainer/squirrel.windows/2.0.1/squirrel.windows.2.0.1.nupkg'
-    SquirrelSha  = '923e18abb4fd50b5a4878a39dbcd042ed3f7eb68fc0f82c0955cd5380c921ac7'
-    SquirrelTools = @{
-        'Setup.exe'          = '1e47eb606dad4c5c1568cfb8f4e970e1051ba5806aedb1ff3256284a8280d83b'
-        'Squirrel.exe'       = '76359cd4b0349a83337b941332ad042c90351c2bb0a4628307740324c97984cc'
-        'StubExecutable.exe' = 'd823e6d954f7e445fbbb5c04e40a39cf248a3621f9eccbafdf3f0f1e7acb11dd'
-        'WriteZipToSetup.exe' = '9278fe28ac434fde0be3a10788dc13ad92a28940ed70a52f86d9d69435599349'
-        'SyncReleases.exe'   = 'c2a2c78e0912a6576517fc69ffd32793134f1a5b2b066279de3757c76c501548'
-        '7z.exe'             = 'c7245e21a7553d9e52d434002a401c77a7ca7d0f245f2311b0ddf16f8f946c6f'
-        '7z.dll'             = '9ed007aa82e440ceb39a6e105bb1d602a9bc59a4946267ba8de2f220aa15bc06'
-        'rcedit.exe'         = 'e2df7b664db830f159d0dc6b3da8a95442cca175b9577f2d19952646d37ac32f'
-    }
-}
+$Pins = Import-PowerShellDataFile -LiteralPath (Join-Path $PSScriptRoot 'build-tools.psd1')
 
 function Get-Verified([string] $Url, [string] $Out, [string] $Sha) {
-    if ((Test-Path -LiteralPath $Out) -and ((Get-FileHash -LiteralPath $Out -Algorithm SHA256).Hash -eq $Sha.ToUpperInvariant())) { Say "  cached $(Split-Path -Leaf $Out)"; return }
-    Say "  downloading $Url"
-    $tmp = "$Out.part"
-    Invoke-WebRequest -Uri $Url -OutFile $tmp -UseBasicParsing
-    $got = (Get-FileHash -LiteralPath $tmp -Algorithm SHA256).Hash
-    if ($got -ne $Sha.ToUpperInvariant()) { Remove-Item -LiteralPath $tmp -Force; throw "SHA-256 mismatch for $Url`n expected $Sha`n got      $got" }
-    Move-Item -LiteralPath $tmp -Destination $Out -Force
-}
-
-# ---- Node.js ---------------------------------------------------------------------------------
-$needNode = $true
-$node = Get-Command node -ErrorAction SilentlyContinue
-if ($node) {
-    $v = (& $node.Source --version) -replace '^v', ''
-    if ([version]($v.Split('-')[0]) -ge [version]'20.0.0') { $needNode = $false; Say "Node.js $v found on PATH." }
-}
-if ($needNode) {
-    Say "Node.js $($Pins.NodeVersion) (portable)"
-    $zip = Join-Path $tools "node-$($Pins.NodeVersion)-win-x64.zip"
-    Get-Verified "https://nodejs.org/dist/$($Pins.NodeVersion)/node-$($Pins.NodeVersion)-win-x64.zip" $zip $Pins.NodeZipSha
-    $dest = Join-Path $tools 'node'
-    if (-not (Test-Path (Join-Path $dest 'node.exe'))) {
-        Expand-Archive -LiteralPath $zip -DestinationPath $tools -Force
-        if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
-        Rename-Item (Join-Path $tools "node-$($Pins.NodeVersion)-win-x64") 'node'
+    if (Test-Path -LiteralPath $Out) {
+        $file = Get-Item -LiteralPath $Out -Force
+        if ($file.PSIsContainer -or ($file.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Unexpected build-cache path.' }
+        if ((Get-FileHash -LiteralPath $Out -Algorithm SHA256).Hash -ieq $Sha) { Say "  cached $($file.Name)"; return }
     }
+    Say "  downloading $Url"
+    $tmp = "$Out.$([guid]::NewGuid().ToString('N')).part"
+    try {
+        Invoke-WebRequest -Uri $Url -OutFile $tmp -UseBasicParsing
+        if ((Get-FileHash -LiteralPath $tmp -Algorithm SHA256).Hash -ine $Sha) { throw "SHA-256 mismatch for $Url" }
+        if ([IO.File]::Exists($Out)) { [IO.File]::Replace($tmp,$Out,[NullString]::Value) }
+        else { [IO.File]::Move($tmp,$Out) }
+    } finally { if ([IO.File]::Exists($tmp)) { [IO.File]::Delete($tmp) } }
 }
 
-# ---- nuget.exe ------------------------------------------------------------------------------
-Say 'nuget.exe 6.11.1'
-Get-Verified $Pins.NuGetUrl (Join-Path $tools 'nuget.exe') $Pins.NuGetSha
-
-# ---- Squirrel.Windows 2.0.1 tools -> .tools\squirrel (vendor folder for the packager) -------
-Say 'Squirrel.Windows 2.0.1'
-$pkg = Join-Path $tools 'squirrel.windows.2.0.1.nupkg'
-Get-Verified $Pins.SquirrelUrl $pkg $Pins.SquirrelSha
-$sq = Join-Path $tools 'squirrel'
-if (Test-Path $sq) { Remove-Item $sq -Recurse -Force }
-$x = Join-Path $tools 'squirrel-pkg'
-if (Test-Path $x) { Remove-Item $x -Recurse -Force }
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-[IO.Compression.ZipFile]::ExtractToDirectory($pkg, $x)
-Copy-Item -Path (Join-Path $x 'tools') -Destination $sq -Recurse
-Remove-Item $x -Recurse -Force
-foreach ($k in $Pins.SquirrelTools.Keys) {
-    $h = (Get-FileHash -LiteralPath (Join-Path $sq $k) -Algorithm SHA256).Hash
-    if ($h -ne $Pins.SquirrelTools[$k].ToUpperInvariant()) { throw "SHA-256 mismatch for Squirrel tool $k" }
+# All staging and activation happen under this root. An interrupted directory
+# switch is recovered before the next activation; existing files are never
+# removed in order to make a checksum failure look successful.
+if ((Get-Item -LiteralPath $tools -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+    throw 'The build tool root cannot be a redirected directory.'
 }
-# Code signing is prohibited by the owner: the signing tool is removed from the vendor folder.
-Remove-Item -LiteralPath (Join-Path $sq 'signtool.exe') -Force -ErrorAction SilentlyContinue
-# The packager picks 7-Zip by host architecture and runs nuget.exe from the vendor folder.
-Copy-Item (Join-Path $sq '7z.exe') (Join-Path $sq '7z-x64.exe') -Force
-Copy-Item (Join-Path $sq '7z.dll') (Join-Path $sq '7z-x64.dll') -Force
-Copy-Item (Join-Path $tools 'nuget.exe') (Join-Path $sq 'nuget.exe') -Force
-Say "Build tools ready in $tools"
+$lock = [IO.File]::Open((Join-Path $tools 'build-tools.lock'),[IO.FileMode]::OpenOrCreate,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
+try {
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    . (Join-Path $PSScriptRoot 'portable-build-tools.ps1')
+    $node = Get-Command node.exe -ErrorAction SilentlyContinue
+    $haveNode = $false
+    if ($node -and (Get-Command npm.cmd -ErrorAction SilentlyContinue)) {
+        $version = (& $node.Source --version) -replace '^v',''
+        $haveNode = $LASTEXITCODE -eq 0 -and [version]($version.Split('-')[0]) -ge [version]'22.12.0'
+    }
+    if (-not $haveNode -or (Test-Path -LiteralPath (Join-Path $tools 'node'))) {
+        $version = $Pins.NodeVersion
+        $zip = Join-Path $tools "node-$version-win-x64.zip"
+        Get-Verified "https://nodejs.org/dist/$version/node-$version-win-x64.zip" $zip $Pins.NodeZipSha
+        Sync-PortableTool -Name node -Archive $zip -Prefix "node-$version-win-x64/"
+        $actualNode = & (Join-Path $tools 'node/node.exe') --version
+        if ($LASTEXITCODE -ne 0 -or $actualNode -ne $version) { throw 'Portable Node version verification failed.' }
+    }
+    if (-not (Get-Command git.exe -ErrorAction SilentlyContinue) -or (Test-Path -LiteralPath (Join-Path $tools 'git'))) {
+        $pin = Get-Content -LiteralPath (Join-Path $root 'deployer/build-companion/git-tool.json') -Raw | ConvertFrom-Json
+        $zip = Join-Path $tools $pin.file
+        Get-Verified $pin.url $zip $pin.sha256
+        Sync-PortableTool -Name git -Archive $zip
+        $actualGit = & (Join-Path $tools 'git/cmd/git.exe') --version
+        if ($LASTEXITCODE -ne 0 -or $actualGit -notmatch '^git version 2\.56\.1\.windows\.1$') { throw 'Portable Git version verification failed.' }
+    }
+    $nuget = Join-Path $tools 'nuget.exe'
+    Get-Verified $Pins.NuGetUrl $nuget $Pins.NuGetSha
+    $package = Join-Path $tools 'squirrel.windows.2.0.1.nupkg'
+    Get-Verified $Pins.SquirrelUrl $package $Pins.SquirrelSha
+    Sync-PortableTool -Name squirrel -Archive $package -Prefix 'tools/' -NuGet $nuget
+    Say "Build tools ready in $tools"
+} finally { $lock.Dispose() }
