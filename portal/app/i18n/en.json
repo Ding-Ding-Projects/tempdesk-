@@ -1,5 +1,9 @@
 {
  "strings": {
+  "Server edition": "Server edition",
+  "Choose an available server edition.": "Choose an available server edition.",
+  "Windows Server with GUI": "Windows Server with GUI",
+  "Windows Server without GUI": "Windows Server without GUI",
   "Virtual Commons: Check out a computer": "Virtual Commons: Check out a computer",
   "Download Remote Desktop file": "Download Remote Desktop file",
   "Open the downloaded file and enter the password shown here.": "Open the downloaded file and enter the password shown here.",

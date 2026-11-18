@@ -26,6 +26,17 @@
       </div>
     </fieldset>
     <button type="submit" class="btn filled lg block">{{ t('Create my sign-in') }}</button>
+    {% if pub.commonsEnabled and 'legacy' not in pub.commonsEditions %}
+    <div class="field">
+      <label for="commons-edition">{{ t('Server edition') }}</label>
+      <select id="commons-edition" name="edition">
+        <option value="">{{ t('Choose an available server edition.') }}</option>
+        {% for value, label in [('gui', 'Windows Server with GUI'), ('core', 'Windows Server without GUI')] %}
+        <option value="{{ value }}" {% if value not in pub.commonsEditions %}disabled{% endif %} {% if values.get('edition') == value %}selected{% endif %}>{{ t(label) }}{% if value not in pub.commonsEditions %} ({{ t('Unavailable') }}){% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
     {% if pub.commonsEnabled %}<button type="submit" name="checkout" value="commons" class="btn lg block">{{ t('Virtual Commons: Check out a computer') }}</button>{% endif %}
     {% else %}
     <p class="alert warn">{{ t('Creating sign-ins is not available right now. Please ask a member of staff.') }}</p>

@@ -191,3 +191,36 @@ def test_virtual_commons_dim_sum_does_not_allocate_an_account(tmp_path, monkeypa
     assert "No session was checked out" in result.text
     assert not portal.state.guests
     assert "no-store" in result.headers["cache-control"]
+
+
+def test_commons_editions_route_only_to_the_selected_destination(tmp_path, monkeypatch):
+    import base64
+    from app import guest_routes
+
+    portal = Portal("guest", tmp_path, extra_env={
+        "COMMONS_RDP_GUI": "desktop.example.test",
+        "COMMONS_RDP_CORE": "core.example.test:3390",
+    })
+    monkeypatch.setattr(guest_routes.secrets, "randbelow", lambda upper: upper - 1)
+    for edition, address in [("gui", "desktop.example.test"), ("core", "core.example.test:3390")]:
+        assert portal.post("/create", {"expiryId": "1h", "checkout": "commons", "edition": edition}).status_code == 303
+        page = portal.client.get("/created")
+        payload = re.search(r"data:application/x-rdp;base64,([A-Za-z0-9+/=]+)", page.text)
+        assert payload
+        profile = base64.b64decode(payload[1]).decode("utf-16")
+        assert profile.splitlines()[0] == f"full address:s:{address}"
+
+
+def test_unavailable_commons_edition_stops_before_the_draw(tmp_path, monkeypatch):
+    from app import guest_routes
+
+    portal = Portal("guest", tmp_path, extra_env={
+        "COMMONS_RDP_GUI": "desktop.example.test",
+        "COMMONS_RDP_TARGET": "legacy.example.test",
+    })
+    def unexpected_draw(upper):
+        raise AssertionError("Unavailable edition reached the draw")
+    monkeypatch.setattr(guest_routes.secrets, "randbelow", unexpected_draw)
+    result = portal.post("/create", {"expiryId": "1h", "checkout": "commons", "edition": "core"})
+    assert result.status_code == 400
+    assert not portal.state.guests

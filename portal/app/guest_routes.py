@@ -19,6 +19,16 @@ RDP_USER = re.compile(r"[A-Za-z0-9._@\\-]{1,320}")
 NO_STORE = {"Cache-Control": "no-store, max-age=0", "Pragma": "no-cache", "Expires": "0"}
 
 
+def _commons_targets(request: Request) -> dict[str, str]:
+    settings = request.app.state.settings
+    targets = {"gui": settings.commons_rdp_gui, "core": settings.commons_rdp_core}
+    if not any(targets.values()):
+        targets = {"legacy": settings.commons_rdp_target}
+    return {edition: target for edition, target in targets.items()
+            if RDP_TARGET.fullmatch(target)
+            and (":" not in target or 1 <= int(target.rsplit(":", 1)[1]) <= 65535)}
+
+
 async def public_settings(request: Request) -> dict:
     data = await request.app.state.agent.get("/public/settings")
     data = data if isinstance(data, dict) else {}
@@ -28,12 +38,9 @@ async def public_settings(request: Request) -> dict:
     data["expiryChoices"] = choices
     request.state.public = data
     request.state.org_name = data.get("orgName") or "TempDesk"
-    target = request.app.state.settings.commons_rdp_target
-    _, separator, port = target.partition(":")
-    data["commonsEnabled"] = (
-        bool(RDP_TARGET.fullmatch(target))
-        and (not separator or 1 <= int(port) <= 65535)
-        and any(int(choice.get("minutes") or 0) > 0 for choice in choices)
+    data["commonsEditions"] = list(_commons_targets(request))
+    data["commonsEnabled"] = bool(data["commonsEditions"]) and any(
+        int(choice.get("minutes") or 0) > 0 for choice in choices
     )
     return data
 
@@ -63,12 +70,17 @@ async def create(request: Request):
     commons = form.get("checkout") == "commons"
     if commons and not pub["commonsEnabled"]:
         raise HTTPException(status_code=404)
-    values = {"displayName": display, "expiryId": expiry}
+    targets = _commons_targets(request) if commons else {}
+    edition = form.get("edition") or ("legacy" if "legacy" in targets else "")
+    target = targets.get(edition) if isinstance(edition, str) else None
+    values = {"displayName": display, "expiryId": expiry, "edition": edition}
     ids = {c.get("id") for c in pub["expiryChoices"]}
     error = None
     if commons:
         ids = {c.get("id") for c in pub["expiryChoices"] if int(c.get("minutes") or 0) > 0}
-    if expiry not in ids:
+    if commons and not target:
+        error = "Choose an available server edition."
+    elif expiry not in ids:
         error = "Choose how long you need the sign-in for."
     elif len(display) > 64 or any(ord(c) < 32 or c in '"/\\[]:;|=,+*?<>@' for c in display):
         error = "The display name can be up to 64 characters and cannot contain special symbols."
@@ -90,7 +102,7 @@ async def create(request: Request):
                                 status=exc.status if exc.status < 500 else 502)
         raise
     # Keep the credentials server side; the browser only gets a random id.
-    once_id = request.app.state.once.put({"credentials": created, "commons": commons})
+    once_id = request.app.state.once.put({"credentials": created, "rdpTarget": target})
     resp = redirect(request, "/created")
     set_cookie(request, resp, ONCE_COOKIE, once_id, max_age=600)
     return resp
@@ -108,10 +120,10 @@ async def created(request: Request):
     domain = creds.get("domain") or ""
     netbios = domain.split(".")[0].upper() if domain else ""
     rdp = None
-    if result.get("commons") and pub["commonsEnabled"]:
+    target = result.get("rdpTarget")
+    if target in _commons_targets(request).values():
         username = creds.get("upn") or (f"{netbios}\\{creds['username']}" if netbios else creds["username"])
         if RDP_USER.fullmatch(username):
-            target = request.app.state.settings.commons_rdp_target
             profile = (f"full address:s:{target}\r\nusername:s:{username}\r\n"
                        "prompt for credentials:i:1\r\nauthentication level:i:2\r\nenablecredsspsupport:i:1\r\n")
             rdp = base64.b64encode(profile.encode("utf-16")).decode("ascii")

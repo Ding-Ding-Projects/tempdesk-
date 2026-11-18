@@ -59,6 +59,8 @@ class Settings:
     data_dir: str = "/data"
     state_dir: str = ""
     commons_rdp_target: str = ""
+    commons_rdp_gui: str = ""
+    commons_rdp_core: str = ""
 
     @property
     def agent_plain_http(self) -> bool:
@@ -122,6 +124,8 @@ class Settings:
             health_cache_seconds=_int(env, "HEALTH_CACHE_SECONDS", 30),
             tls_cert_file=(env.get("TLS_CERT_FILE") or "").strip() or None,
             tls_key_file=(env.get("TLS_KEY_FILE") or "").strip() or None,
+            commons_rdp_gui=(env.get("COMMONS_RDP_GUI") or "").strip(),
+            commons_rdp_core=(env.get("COMMONS_RDP_CORE") or "").strip(),
             commons_rdp_target=(env.get("COMMONS_RDP_TARGET") or "").strip(),
             data_dir=(env.get("PORTAL_DATA_DIR") or "/data").strip(),
             state_dir=(env.get("PORTAL_STATE_DIR") or env.get("PORTAL_DATA_DIR") or "/data").strip(),

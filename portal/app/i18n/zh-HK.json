@@ -1,5 +1,9 @@
 {
  "strings": {
+  "Server edition": "伺服器版本",
+  "Choose an available server edition.": "請選擇可用嘅伺服器版本。",
+  "Windows Server with GUI": "有圖形介面嘅 Windows Server",
+  "Windows Server without GUI": "冇圖形介面嘅 Windows Server",
   "Virtual Commons: Check out a computer": "共享電腦：借用一部電腦",
   "Download Remote Desktop file": "下載遠端桌面檔案",
   "Open the downloaded file and enter the password shown here.": "開啟下載咗嘅檔案，再輸入呢度顯示嘅密碼。",
