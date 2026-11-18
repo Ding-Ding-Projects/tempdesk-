@@ -518,6 +518,22 @@ These images come from the running management portal at `c4cf03ed5ae7b0cd42e2f24
 
    ![School mode silences sounds and keeps the Action sounds box checked](docs/evidence/management-sounds-c4cf03e/03-school-pauses-cues.png)
 
+## Management notification walkthrough
+
+The signed-in management portal at `d986ca134da5c7833f165e7e16fdfba0a0505a8c` was tested with a separate sample directory. The [capture and interaction receipt](docs/evidence/management-notifications.json) records the image hashes, source revision and 48 measured language, theme, width and scale combinations.
+
+1. Open the **Notifications** bell and search for **Saved in this browser**. The matching entry remains in history after the toast is dismissed.
+
+   ![Notification search finds the dismissed settings message](docs/evidence/management-notifications-d986ca1/01-search-history.png)
+
+2. Open **Actions**, focus a matching row and press **Space** to select it. At 360 px, the panel keeps the selection count and the matching row in view. Use **Export matches** when you want a JSON copy of the current filter.
+
+   ![The selected notification and bulk actions at 360 pixels](docs/evidence/management-notifications-d986ca1/02-select-a-match.png)
+
+3. Choose **Delete selected** and review the affected row. Check both acknowledgements, move confirmation to 100 percent, then choose **Delete** to finish. With only the first box checked, the slider and Delete stay disabled. Press **Escape** to cancel and return focus to **Delete selected**.
+
+   ![One checked review control leaves the slider and Delete button disabled](docs/evidence/management-notifications-d986ca1/03-review-confirmation.png)
+
 ## Standalone offline documentation
 
 Open **TempDesk Docs** to browse the guides, search the documentation and read the operator wiki offline. The [portable executable in v1.0.73](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.73) ran from an otherwise empty folder. Searching for **Configure the destinations** opened the Virtual Commons guide, and the sidebar opened the prepared wiki.

@@ -480,7 +480,17 @@
     },
     {
       "id": "bulk-actions",
-      "scope": "interfaces"
+      "scope": "interfaces",
+      "progress": {
+        "management": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "d986ca134da5c7833f165e7e16fdfba0a0505a8c",
+          "reference": "docs/evidence/management-notifications.json",
+          "observation": "The notification centre verified keyboard range selection, scoped JSON export, and explicit local deletion after two acknowledgements and a slider confirmation.",
+          "remaining": "Verify the other management bulk workflows and their applicable export formats."
+        }
+      }
     },
     {
       "id": "changelog",
@@ -522,7 +532,17 @@
     },
     {
       "id": "notifications",
-      "scope": "interfaces"
+      "scope": "interfaces",
+      "progress": {
+        "management": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "d986ca134da5c7833f165e7e16fdfba0a0505a8c",
+          "reference": "docs/evidence/management-notifications.json",
+          "observation": "The running portal verified account-scoped history, warning and error persistence, dismissal, and updates to open search results on applying or clearing local wording. Forty-eight layouts were measured.",
+          "remaining": "Verify the remaining management notification producers and actual screen-reader announcements."
+        }
+      }
     },
     {
       "id": "file-converter",
