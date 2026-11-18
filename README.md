@@ -407,6 +407,10 @@ The management sign-in (1440 × 900) and guest kiosk (360 × 900) below were cap
 | --- | --- |
 | ![Desktop management sign-in with empty fields](docs/evidence/portal-ae447bf/management.png) | ![Guest kiosk at 360 pixels wide](docs/evidence/portal-ae447bf/kiosk.png) |
 
+The kiosk below shows the Virtual Commons unavailable message alongside ordinary guest sign-in. Isolated headless Chromium captured the running portal at 360 × 900 on November 18, 2026, at 04:40:47 EST, with dark theme, reduced motion, and device scale 1. Source revision `e097ba72ae64966003612fd9faa5309d38411109` built image `sha256:1480193678dbb4787ea4c830a0a1ea87ff4f605bf370e1f9fcbd65b63a6220cd`. The capture shows no guest data or credentials. PNG SHA-256 `a233cbed419c73e9326005e6171eb11c92529224fc0f8fd8e68a05a7717473ce`.
+
+![Narrow guest kiosk showing the Virtual Commons unavailable notice](docs/evidence/portal-e097ba7/kiosk-commons-unavailable.png)
+
 ## Fresh VMware lab provisioning
 
 These captures show the fresh Server 2025 Core and Windows 11 client during unattended setup for source revision `5fb4e0235d1d0a8fe2d428e0af1cdd4ad34677f5`. Both were captured from their VMware consoles at 1024 × 768. Domain enrollment, management portal and kiosk operation remain pending.
