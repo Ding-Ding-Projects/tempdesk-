@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import base64
+from datetime import datetime
 import re
 import secrets
+import time
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from itsdangerous import BadSignature, URLSafeTimedSerializer
 
 from .agent_client import AgentError
 from .security import ONCE_COOKIE, client_ip
@@ -18,6 +21,24 @@ RDP_TARGET = re.compile(r"[A-Za-z0-9][A-Za-z0-9.-]{0,252}(?::[0-9]{1,5})?")
 RDP_USER = re.compile(r"[A-Za-z0-9._@\\-]{1,320}")
 COMMONS_EDITION_LABELS = {"gui": "Windows Server with GUI", "core": "Windows Server without GUI"}
 NO_STORE = {"Cache-Control": "no-store, max-age=0", "Pragma": "no-cache", "Expires": "0"}
+WORDING_COOKIE = "td_guest_wording"
+WORDING_MAX_AGE = 15 * 60
+
+
+def _wording_signer(request: Request) -> URLSafeTimedSerializer:
+    return URLSafeTimedSerializer(request.app.state.settings.session_secret, salt="tempdesk-guest-wording")
+
+
+def _wording_seconds(request: Request) -> int:
+    cookie = request.cookies.get(WORDING_COOKIE)
+    if cookie:
+        try:
+            deadline = _wording_signer(request).loads(cookie, max_age=WORDING_MAX_AGE)
+        except BadSignature:
+            return 0
+        if type(deadline) is int:
+            return max(0, min(WORDING_MAX_AGE, int(deadline - time.time())))
+    return 0
 
 
 def _commons_targets(request: Request) -> dict[str, str]:
@@ -64,7 +85,10 @@ async def home(request: Request):
     values = {}
     if edition and expiry and edition in pub["commonsEditions"] and expiry in {choice.get("id") for choice in pub["commonsExpiryChoices"]}:
         values = {"commons": True, "edition": edition, "expiryId": expiry}
-    return await render(request, "guest/home.html", {"pub": pub, "error": None, "values": values})
+    seconds = _wording_seconds(request) if pub["commonsEnabled"] else 0
+    return await render(request, "guest/home.html",
+                        {"pub": pub, "error": None, "values": values, "wording_seconds": seconds},
+                        headers=NO_STORE if seconds else None)
 
 
 @router.post("/create", dependencies=[Depends(csrf_protect)])
@@ -181,7 +205,20 @@ async def check(request: Request):
         if exc.code in ("unauthorized", "not_found", "forbidden"):
             return await render(request, "guest/check.html", {"pub": pub, "result": None, "error_key": "That username and password did not match a guest sign-in."}, status=400, headers=NO_STORE)
         raise
-    return await render(request, "guest/check.html", {"pub": pub, "result": result}, headers=NO_STORE)
+    response = await render(request, "guest/check.html", {"pub": pub, "result": result}, headers=NO_STORE)
+    if pub["commonsEnabled"] and result.get("enabled"):
+        now = int(time.time())
+        deadline = now + WORDING_MAX_AGE
+        if expiry := result.get("expiresAt"):
+            try:
+                expires = datetime.fromisoformat(expiry.replace("Z", "+00:00"))
+                deadline = min(deadline, int(expires.timestamp())) if expires.tzinfo else now
+            except (AttributeError, ValueError, OverflowError, OSError):
+                deadline = now
+        if deadline > now:
+            grant = _wording_signer(request).dumps(deadline)
+            set_cookie(request, response, WORDING_COOKIE, grant, max_age=deadline - now)
+    return response
 
 
 @router.get("/delete")

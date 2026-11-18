@@ -178,6 +178,32 @@ def test_virtual_commons_download_has_no_password(tmp_path, monkeypatch):
     assert portal.client.get("/created").status_code == 410
 
 
+def test_virtual_commons_wording_requires_a_verified_active_guest(tmp_path):
+    from app.guest_routes import WORDING_COOKIE
+
+    portal = Portal("guest", tmp_path, extra_env={"COMMONS_RDP_GUI": "desktop.example.test"})
+    assert 'id="picker-wording"' not in portal.client.get("/").text
+    assert portal.post("/create", {"expiryId": "1h"}).status_code == 303
+    account = next(iter(portal.state.guests.values()))
+    credentials = {"username": account["username"], "password": account["password"]}
+    invalid = portal.post("/check", dict(credentials, password="wrong"), page="/check")
+    assert invalid.status_code == 400 and WORDING_COOKIE not in invalid.cookies
+
+    original_expiry = account["expiresAt"]
+    account["expiresAt"] = "2000-01-01T00:00:00Z"
+    expired = portal.post("/check", credentials, page="/check")
+    assert WORDING_COOKIE not in expired.cookies
+    account["expiresAt"] = original_expiry
+    verified = portal.post("/check", credentials, page="/check")
+    assert verified.status_code == 200 and WORDING_COOKIE in verified.cookies
+    assert "HttpOnly" in verified.headers["set-cookie"]
+    home = portal.client.get("/")
+    assert 'id="picker-wording"' in home.text
+    assert "no-store" in home.headers["cache-control"]
+    portal.client.cookies.set(WORDING_COOKIE, "invalid")
+    assert 'id="picker-wording"' not in portal.client.get("/").text
+
+
 def test_virtual_commons_dim_sum_does_not_allocate_an_account(tmp_path, monkeypatch):
     from html import unescape
 

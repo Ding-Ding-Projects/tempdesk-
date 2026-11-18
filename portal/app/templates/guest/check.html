@@ -19,6 +19,7 @@
         <dt>{{ t('Status') }}</dt><dd>{% if result.enabled %}<span class="chip ok">{{ t('Active') }}</span>{% else %}<span class="chip bad">{{ t('Disabled') }}</span>{% endif %}</dd>
         <dt>{{ t('Ends') }}</dt><dd>{{ local_time(result.expiresAt, 'No expiry') }}</dd>
       </dl>
+      {% if result.enabled and pub.commonsEnabled %}<a class="btn" href="/#virtual-commons">Virtual Commons</a>{% endif %}
     </section>
     {% endif %}
   </div>
