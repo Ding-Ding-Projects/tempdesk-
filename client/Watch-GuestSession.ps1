@@ -41,7 +41,7 @@ if (-not ('TempDesk.Wts' -as [type])) {
 public static extern bool WTSEnumerateSessions(IntPtr hServer, int Reserved, int Version, out IntPtr ppSessionInfo, out int pCount);
 [DllImport("wtsapi32.dll")]
 public static extern void WTSFreeMemory(IntPtr pMemory);
-[DllImport("wtsapi32.dll", SetLastError = true)]
+[DllImport("wtsapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
 public static extern bool WTSQuerySessionInformation(IntPtr hServer, int sessionId, int wtsInfoClass, out IntPtr ppBuffer, out int pBytesReturned);
 [DllImport("wtsapi32.dll", SetLastError = true)]
 public static extern bool WTSLogoffSession(IntPtr hServer, int sessionId, bool bWait);
@@ -111,15 +111,21 @@ foreach ($id in [TempDesk.Wts]::Sessions()) {
                     $msg = "Your temporary sign-in ends at {0:t}. Save your work now: you will be signed out automatically and this account and its files will be removed." -f $expires.ToLocalTime()
                     $title = 'TempDesk'
                     $resp = 0
-                    [void][TempDesk.Wts]::WTSSendMessage([IntPtr]::Zero, $id, $title, $title.Length * 2, $msg, $msg.Length * 2, 0x40, 60, [ref]$resp, $false)
-                    New-ItemProperty -Path $warnedKey -Name $tag -Value 1 -Force | Out-Null
-                    Log "Warned $user (session $id), expires $expires UTC"
+                    if ([TempDesk.Wts]::WTSSendMessage([IntPtr]::Zero, $id, $title, $title.Length * 2, $msg, $msg.Length * 2, 0x40, 60, [ref]$resp, $false)) {
+                        New-ItemProperty -Path $warnedKey -Name $tag -Value 1 -Force | Out-Null
+                        Log "Submitted expiry warning for $user (session $id), expires $expires UTC"
+                    } else {
+                        Log "Could not submit expiry warning for $user (session $id)"
+                    }
                 }
             }
         }
     }
     if ($reason) {
-        Log "Signing out $user (session $id): account $reason"
-        [void][TempDesk.Wts]::WTSLogoffSession([IntPtr]::Zero, $id, $false)
+        if ([TempDesk.Wts]::WTSLogoffSession([IntPtr]::Zero, $id, $false)) {
+            Log "Requested sign-out for $user (session $id): account $reason"
+        } else {
+            Log "Could not request sign-out for $user (session $id): account $reason"
+        }
     }
 }
