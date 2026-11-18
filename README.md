@@ -405,12 +405,7 @@ See `AGENTS.md` for repository rules. License: MIT.
 
    ![Guest kiosk with the one-hour duration selected](docs/evidence/guest-sign-in-3a18b69/01-choose-duration.png)
 
-   <details>
-   <summary>See the duration picker at 360 pixels wide</summary>
-
    ![Guest kiosk with the one-hour duration selected at 360 pixels wide](docs/evidence/guest-sign-in-3a18b69/01-choose-duration-narrow.png)
-
-   </details>
 
 2. Read the one-time confirmation and note the expiry. The images show the confirmation heading and timer outside the credential panel.
 
