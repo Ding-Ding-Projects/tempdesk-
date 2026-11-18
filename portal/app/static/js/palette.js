@@ -87,15 +87,20 @@
   function go(r) {
     if (!r) return;
     var it = r.it;
+    var here = window.location.pathname;
+    var hash = it.href.indexOf('#');
+    var target = !it.action && hash >= 0 && it.href.slice(0, hash) === here
+      ? doc.getElementById(it.href.slice(hash + 1)) : null;
+    var targetControl = target && target.querySelector('input, select, textarea, button');
+    if (targetControl) lastFocus = null;
     dlg.close();
     if (it.action === 'theme' && window.TD) { window.TD.toggleTheme(); return; }
     if (it.action === 'print') { window.print(); return; }
     if (it.action === 'logout') { var f = doc.querySelector('[data-logout-form]'); if (f) f.submit(); return; }
-    var here = window.location.pathname;
     window.location.href = it.href;
-    if (it.href.split('#')[0] === here && it.href.indexOf('#') >= 0) {
-      var target = doc.getElementById(it.href.split('#')[1]);
-      if (target) { target.scrollIntoView(); var f2 = target.querySelector('input, select, textarea, button'); if (f2) f2.focus(); }
+    if (target) {
+      target.scrollIntoView();
+      if (targetControl) targetControl.focus();
     }
   }
   function open() {
