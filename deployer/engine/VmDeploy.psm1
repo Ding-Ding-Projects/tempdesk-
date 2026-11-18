@@ -12,6 +12,9 @@
 #>
 Set-StrictMode -Version 3
 
+# Load the native argument quoting helper in the VM module scope.
+Import-Module -Name (Join-Path $PSScriptRoot 'LiteDeploy.psm1') -Function ConvertTo-TdWindowsArg -Scope Local -DisableNameChecking -ErrorAction Stop
+
 function Get-TdVmwareTools {
     <# Returns @{ Root; Vmrun; DiskManager; Vmcli } or throws when VMware Workstation is not installed. #>
     $roots = @()

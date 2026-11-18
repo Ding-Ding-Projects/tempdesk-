@@ -24,7 +24,6 @@ $engine = if (Test-Path -LiteralPath $sourceEngine -PathType Container) { $sourc
 $required = [ordered]@{
     'TempDesk.Common' = @('Write-TdUtf8File')
     'AnswerFile' = @('New-TdIso')
-    'LiteDeploy' = @('ConvertTo-TdWindowsArg')
     'VmDeploy' = @('Get-TdVmwareTools','New-TdVmwareVmx','Invoke-TdVmTool')
 }
 foreach ($nameOfModule in $required.Keys) {
@@ -40,10 +39,6 @@ foreach ($nameOfModule in $required.Keys) {
 $encoderPath = (Get-Item -LiteralPath (Join-Path $engine 'LiteDeploy.psm1')).FullName
 & $moduleInfo {
     param($expectedPath)
-    $encoder = Get-Command ConvertTo-TdWindowsArg -CommandType Function -ListImported -ErrorAction SilentlyContinue
-    if (-not $encoder -or $encoder.Module.Path -ine $expectedPath) {
-        Import-Module -Name $expectedPath -Function ConvertTo-TdWindowsArg -Scope Script -DisableNameChecking -ErrorAction Stop
-    }
     $encoder = Get-Command ConvertTo-TdWindowsArg -CommandType Function -ListImported -ErrorAction Stop
     if ($encoder.Module.Path -ine $expectedPath) { throw 'The VM argument encoder is unavailable in the VM engine.' }
 } $encoderPath
