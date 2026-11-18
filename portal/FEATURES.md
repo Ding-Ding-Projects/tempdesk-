@@ -29,7 +29,7 @@ Status values: implemented, partial (with what is missing), not done (with the r
 
 | Surface and workflow | Status | Evidence or next acceptance check |
 | --- | --- | --- |
-| Guest portal: server edition, finite checkout, and one-time RDP download | partial | Guest suite covers both destinations, disabled editions, legacy configuration, and an address swap between checkout and download. Verify browser download, real sign-in to each edition, and expiry in the lab. |
+| Guest portal: server edition, finite checkout, and one-time RDP download | partial | Guest suite covers both destinations, disabled editions, legacy configuration, and an address swap between checkout and download. Headless Chromium verified keyboard selection and automatic downloads using the packaged portal at source revision `f30e46e` and a simulated account service, with Desktop Experience at 360 px and Server Core at 1440 px. Both files contained the expected destination and no embedded password field. Real sign-in to each edition and expiry in the lab remain unverified. |
 | Guest portal: dim sum result | partial | Guest suite verifies that the 1% outcome creates no account. Verify the retry path and responsive layout in the running portal. |
 | Guest portal: local personal wording for edition choices | not done | Existing personal wording is limited to the authenticated admin console. Verify local application and reset on an authorized picker surface. |
 | Admin console: hosted lab access | not done | Verify a real deployment, authenticated management sign-in, and the management address from the intended client network. |
