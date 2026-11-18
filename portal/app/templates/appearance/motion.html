@@ -23,3 +23,29 @@
   </div>
   <p class="hint" data-motion-status role="status"></p>
 </section>
+{% set appearance_targets = [('card', 'Cards'), ('button', 'Buttons'), ('input', 'Fields'), ('dialog', 'Dialogs'), ('menu', 'Menus'), ('notice', 'Notifications')] %}
+<section class="card" data-style-editor data-setting-section data-setting="{{ ta('Appearance editor') }}">
+  <h2>{{ t('Appearance editor') }}</h2>
+  <div class="form-grid">
+    <label class="field" data-setting="{{ ta('Element') }}">{{ t('Element') }}
+      <select data-style-target>
+        {% for value, label in appearance_targets %}<option value="{{ value }}">{{ ta(label) }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="field" data-setting="{{ ta('Corner roundness') }}">{{ t('Corner roundness') }}
+      <input type="range" min="0" max="48" step="1" data-style-radius>
+      <output data-style-radius-value></output>
+    </label>
+    <label class="field" data-setting="{{ ta('Border width') }}">{{ t('Border width') }}
+      <input type="range" min="0" max="8" step="1" data-style-width>
+      <output data-style-width-value></output>
+    </label>
+    <label class="field" data-setting="{{ ta('Border color') }}">{{ t('Border color') }}
+      <input type="color" data-style-color>
+    </label>
+  </div>
+  <div class="cluster">
+    <button type="button" class="btn" data-style-reset>{{ t('Reset selected element') }}</button>
+  </div>
+  <span role="status" data-style-status data-storage-unavailable="{{ ta('Storage unavailable. Changes apply only on this page.') }}"></span>
+</section>
