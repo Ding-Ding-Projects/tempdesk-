@@ -279,7 +279,14 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
   // 4. docs
   const docs = await docSources();
   const inventory = await readInventory(new URL('../', import.meta.url));
-  await copyFile(path.join(REPO, inventoryPath), path.join(OUT, inventoryPath));
+  const localAttachments = new Set([
+    inventoryPath,
+    'docs/evidence/virtual-commons-checkout.json',
+    'docs/evidence/virtual-commons-picker-wording.json',
+  ]);
+  for (const attachment of localAttachments) {
+    await copyFile(path.join(REPO, attachment), path.join(OUT, attachment));
+  }
   const byFile = new Map(docs.map((d) => [d.file.toLowerCase(), d]));
   const docImages = new Set((await walk(path.join(REPO, 'docs'),
     (rel, entry) => entry.isDirectory() || (entry.isFile() && /\.(png|jpe?g|webp|gif)$/i.test(rel))))
@@ -298,7 +305,7 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
       if (/^(https?:|#|mailto:)/.test(href)) return href;
       const [p, hash] = href.split('#');
       const target = path.posix.normalize(path.posix.join(dir, p)).replace(/^\.\//, '');
-      if (target === inventoryPath) return path.posix.basename(target);
+      if (localAttachments.has(target)) return path.posix.relative('docs', target);
       const hit = byFile.get(target.toLowerCase()) || byFile.get((target + '/README.md').toLowerCase());
       if (hit) return hit.name + '.html' + (hash ? '#' + hash : '');
       return sourceBase + target + (hash ? '#' + hash : '');
@@ -320,7 +327,8 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
   for (const image of usedImages) await copyFile(path.join(REPO, image), path.join(OUT, image));
   for (const { d, r, md } of docPages) {
     const toc = r.headings.filter((x) => x.level === 2).map((x) => `<a class="hit" href="#${x.id}">${escapeHtml(x.text)}</a>`).join('');
-    const body = `<div class="docs-layout">${nav(d.name)}<div class="docs-main"><article class="content">
+    const language = d.file.endsWith('.zh-HK.md') ? ' lang="yue-HK"' : '';
+    const body = `<div class="docs-layout">${nav(d.name)}<div class="docs-main"><article class="content"${language}>
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../" data-i18n="nav.home">Home</a><span aria-hidden="true">/</span><a href="index.html" data-i18n="nav.docs">Docs</a></nav>
 ${toc ? `<details style="margin:12px 0"><summary style="min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700" data-i18n="docs.toc">On this page</summary><div class="hits" data-search-surface="docs-toc" data-search-label="docs.toc">${toc}</div></details>` : ''}
 ${r.html}

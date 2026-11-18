@@ -222,11 +222,11 @@
         },
         "guest": {
           "state": "partial",
-          "method": "source",
-          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
-          "reference": "docs/VIRTUAL-COMMONS.md",
-          "observation": "Verified guest sign-in can unlock local edition wording.",
-          "remaining": "Verify live upload and clear against a real directory and a configured guest checkout."
+          "method": "runtime",
+          "revision": "101eada160c0efc2757f957f93853301be4ca611",
+          "reference": "docs/evidence/virtual-commons-picker-wording.json",
+          "observation": "A real guest verified its sign-in, applied both edition labels and cleared the local file. The wording actions generated zero write requests.",
+          "remaining": "Verify remaining guest wording surfaces and repeat on the configured kiosk."
         },
         "kiosk": {
           "state": "partial",
@@ -650,7 +650,17 @@
     },
     {
       "id": "vocabulary-unlock-boundary",
-      "scope": "authentication"
+      "scope": "authentication",
+      "progress": {
+        "guest": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "101eada160c0efc2757f957f93853301be4ca611",
+          "reference": "docs/evidence/virtual-commons-picker-wording.json",
+          "observation": "The actual guest picker exposed the uploader after verification and kept access on a validation response. The anonymous picker retained the shipped wording.",
+          "remaining": "Verify the wording boundary across all guest routes, languages and modes."
+        }
+      }
     },
     {
       "id": "documentation-companion",

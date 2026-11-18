@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "101eada160c0efc2757f957f93853301be4ca611",
+  "sourceTree": "e5a6dde2c1114e27a443a2e0fc6fca0409a60544",
+  "portalImage": "sha256:3c56fb1d354f3a877d067feb970f4406461a1aa20bd7b6283704c04de16e5f85",
+  "directoryImage": "sha256:8d894d23212b15e19f3618d0b36dd0a2c383ac52032af472d6f71827d0c4bd31",
+  "completedAt": "2026-11-18T13:27:21.304Z",
+  "method": "Isolated Microsoft Edge 157.0.4341.46 on an off-screen desktop, with an exact page target and a loopback portal using a real Samba test directory.",
+  "viewportWidths": [1440, 360],
+  "checks": {
+    "publicLabelsAndUploadBoundaryVerified": true,
+    "syntheticValidFileApplied": true,
+    "invalidFilePreservedPriorWording": true,
+    "replacementAndClearRestoredLabels": true,
+    "existingFileChangedBothLabels": true,
+    "reloadRestoredOriginalLabels": true,
+    "validationResponseRetainedEligibleUpload": true,
+    "writeRequestsDuringWording": 0,
+    "otherOriginsObserved": 0,
+    "syntheticAccountRemoved": true,
+    "isolatedBrowserProfileRemoved": true
+  },
+  "remaining": "Replay the wording flow on the configured live kiosk and verify a real sign-in and expiry on the session hosts."
+}
