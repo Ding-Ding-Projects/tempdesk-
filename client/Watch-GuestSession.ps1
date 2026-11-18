@@ -68,6 +68,8 @@ foreach ($id in [TempDesk.Wts]::Sessions()) {
     if ($id -eq 0) { continue }
     $user = [TempDesk.Wts]::Query($id, $WTSUserName)
     if (-not $user) { continue }
+    $sessionDomain = [TempDesk.Wts]::Query($id, $WTSDomainName)
+    if (-not $sessionDomain -or $sessionDomain -ieq $env:COMPUTERNAME) { continue }
     try { $r = Find-Guest $user } catch { Log "AD lookup failed for $user (domain unreachable?): $($_.Exception.Message)"; continue }
 
     $reason = $null; $expires = $null
