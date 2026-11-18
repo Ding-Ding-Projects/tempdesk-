@@ -1,6 +1,6 @@
 # Use Virtual Commons
 
-Choose a server edition and a finite checkout duration on the guest portal. Desktop Experience opens a graphical desktop. Server Core opens a command-line session. An edition is unavailable until its destination is configured.
+Choose an available server edition and a finite checkout duration on the guest portal. The portal downloads a connection file for the destination configured by the operator. An edition is unavailable until its destination is configured.
 
 Open the downloaded Virtual-Commons.rdp file and enter the password shown on the one-time confirmation page. Use the download button on that page if your browser suppresses the automatic download. Save your work outside the temporary account before it expires.
 
@@ -8,7 +8,9 @@ One in a hundred valid checkout attempts shows a dim sum dish and offers a retry
 
 ## Configure the destinations
 
-Set COMMONS_RDP_GUI and COMMONS_RDP_CORE in the guest portal environment. Use a host reachable from the Remote Desktop client, optionally followed by its port. Configure the session hosts to accept the temporary domain users over Remote Desktop. Keep session hosts separate from the domain controller.
+Set `COMMONS_RDP_GUI` to a Desktop Experience session host configured to accept temporary domain users. Use a host reachable from the Remote Desktop client, optionally followed by its port. Keep session hosts separate from the domain controller.
+
+Windows Server Core supports Remote Desktop for administration. Microsoft does not include the RD Session Host role in Server Core, and the TempDesk App Host installer requires Desktop Experience. Leave `COMMONS_RDP_CORE` unset unless you have validated a supported configuration that provides the intended temporary guest sessions. An open RDP port or an administrator sign-in does not verify guest checkout. See [Microsoft's Server Core role list](https://learn.microsoft.com/en-us/windows-server/administration/server-core/server-core-roles-and-services).
 
 Existing single-target installations can continue using COMMONS_RDP_TARGET. When either edition setting is supplied, the edition settings determine availability.
 
