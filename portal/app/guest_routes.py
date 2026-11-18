@@ -39,9 +39,8 @@ async def public_settings(request: Request) -> dict:
     request.state.public = data
     request.state.org_name = data.get("orgName") or "TempDesk"
     data["commonsEditions"] = list(_commons_targets(request))
-    data["commonsEnabled"] = bool(data["commonsEditions"]) and any(
-        int(choice.get("minutes") or 0) > 0 for choice in choices
-    )
+    data["commonsExpiryChoices"] = [choice for choice in choices if int(choice.get("minutes") or 0) > 0]
+    data["commonsEnabled"] = bool(data["commonsEditions"] and data["commonsExpiryChoices"])
     return data
 
 
@@ -73,11 +72,11 @@ async def create(request: Request):
     targets = _commons_targets(request) if commons else {}
     edition = form.get("edition") or ("legacy" if "legacy" in targets else "")
     target = targets.get(edition) if isinstance(edition, str) else None
-    values = {"displayName": display, "expiryId": expiry, "edition": edition}
+    values = {"displayName": display, "expiryId": expiry, "edition": edition, "commons": commons}
     ids = {c.get("id") for c in pub["expiryChoices"]}
     error = None
     if commons:
-        ids = {c.get("id") for c in pub["expiryChoices"] if int(c.get("minutes") or 0) > 0}
+        ids = {c.get("id") for c in pub["commonsExpiryChoices"]}
     if commons and not target:
         error = "Choose an available server edition."
     elif expiry not in ids:

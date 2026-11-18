@@ -7,10 +7,11 @@
     <h1 class="hero rise">{{ t('Need a computer?') }}</h1>
     <p class="lead rise" style="--i:1">{{ pub.welcomeText or ta('Create a temporary sign-in. It is yours alone, and it is removed automatically when it expires.') }}</p>
   </div>
+  <div class="grow stack">
   <form class="grow card lg stack rise" style="--i:2;gap:22px" method="post" action="/create" novalidate>
     {{ csrf() }}
-    {% if error_key %}<p class="alert error" role="alert">{{ tr.html(error_key, serious=True) }}</p>{% endif %}
-    {% if error_text %}<p class="alert error" role="alert">{{ error_text }}</p>{% endif %}
+    {% if error_key and not values.get("commons") %}<p class="alert error" role="alert">{{ tr.html(error_key, serious=True) }}</p>{% endif %}
+    {% if error_text and not values.get("commons") %}<p class="alert error" role="alert">{{ error_text }}</p>{% endif %}
     <div class="field">
       <label for="dn">{{ t('Your name') }} <span class="optional">({{ t('optional') }})</span></label>
       <input id="dn" type="text" name="displayName" maxlength="64" autocomplete="name" value="{{ values.get('displayName', '') }}" placeholder="{{ ta('Shown on the sign-in screen') }}">
@@ -26,6 +27,30 @@
       </div>
     </fieldset>
     <button type="submit" class="btn filled lg block">{{ t('Create my sign-in') }}</button>
+    {% else %}
+    <p class="alert warn">{{ t('Creating sign-ins is not available right now. Please ask a member of staff.') }}</p>
+    {% endif %}
+    <p class="subtle" style="margin:0">{{ t('Already have one?') }} <a href="/check">{{ t('Check my sign-in') }}</a>{% if pub.allowSelfDelete %} · <a href="/delete">{{ t('Delete my sign-in') }}</a>{% endif %}</p>
+  </form>
+  {% if pub.commonsEnabled %}
+  <form class="card lg stack rise" method="post" action="/create">
+    {{ csrf() }}
+    <h2>Virtual Commons</h2>
+    <input type="hidden" name="checkout" value="commons">
+    {% if error_key and values.get("commons") %}<p class="alert error" role="alert">{{ tr.html(error_key, serious=True) }}</p>{% endif %}
+    {% if error_text and values.get("commons") %}<p class="alert error" role="alert">{{ error_text }}</p>{% endif %}
+    <div class="field">
+      <label for="commons-name">{{ t('Your name') }} <span class="optional">({{ t('optional') }})</span></label>
+      <input id="commons-name" name="displayName" maxlength="64" autocomplete="name" value="{{ values.get('displayName', '') if values.get('commons') else '' }}">
+    </div>
+    <fieldset>
+      <legend>{{ t('How long do you need it?') }}</legend>
+      <div class="choice-grid">
+        {% for c in pub.commonsExpiryChoices %}
+        <label class="choice"><input type="radio" name="expiryId" value="{{ c.id }}" {% if values.get('expiryId') == c.id %}checked{% endif %} required> {{ c.label }}</label>
+        {% endfor %}
+      </div>
+    </fieldset>
     {% if pub.commonsEnabled and 'legacy' not in pub.commonsEditions %}
     <fieldset>
       <legend>{{ t('Server edition') }}</legend>
@@ -36,11 +61,9 @@
       </div>
     </fieldset>
     {% endif %}
-    {% if pub.commonsEnabled %}<button type="submit" name="checkout" value="commons" class="btn lg block">{{ t('Virtual Commons: Check out a computer') }}</button>{% endif %}
-    {% else %}
-    <p class="alert warn">{{ t('Creating sign-ins is not available right now. Please ask a member of staff.') }}</p>
-    {% endif %}
-    <p class="subtle" style="margin:0">{{ t('Already have one?') }} <a href="/check">{{ t('Check my sign-in') }}</a>{% if pub.allowSelfDelete %} · <a href="/delete">{{ t('Delete my sign-in') }}</a>{% endif %}</p>
+    <button type="submit" class="btn filled lg block">{{ t('Virtual Commons: Check out a computer') }}</button>
   </form>
+  {% endif %}
+  </div>
 </div>
 {% endblock %}
