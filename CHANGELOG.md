@@ -21,6 +21,8 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
 
 ### Fixed
 
+- The guest Session Watcher enforces the last verified deadline for the same Windows sign-in while its directory is unreachable.
+
 - Refresh Deployer and Studio notices from message keys when personal wording changes, including inside an open notification search.
 - Play the wording success and invalid-input cues through the existing sound and volume settings. Preserve the current wording after a read or save error.
 

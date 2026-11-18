@@ -79,6 +79,8 @@ Apply the setup with the RD license server for your deployment.
 
 The installer grants Remote Desktop access to the configured domain security group by SID after it verifies the enabled watcher, its upcoming run and the installed Session Host role. If the role installer needs a restart, finish the restart and repeat this command. Use a short-lived guest account to verify sign-in, expiry of the open session and a rejected reconnect before setting `COMMONS_RDP_GUI`. Follow [Verify a checkout](../../docs/VIRTUAL-COMMONS.md#verify-a-checkout) for the acceptance steps. Use the RemoteApp setup commands above when you also need to publish applications.
 
+Once the watcher observes a finite deadline, it keeps that deadline for the same Windows sign-in through a directory outage. The watcher log records its sign-out requests. Check that the original session disappears to verify the result.
+
 ## How apps appear in the portal
 
 The app list lives in the TempDesk settings under `"apps"` (edited in the admin portal). Each signed-in guest sees the enabled apps whose `groups` list contains one of their groups, or every enabled app when `groups` is empty. Each app has two buttons: **Open in browser** (Guacamole) and **Download .rdp**. Run this script again after you add or change apps so the app host allow list matches.

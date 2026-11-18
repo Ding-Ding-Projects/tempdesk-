@@ -28,6 +28,10 @@ Open elevated PowerShell on the dedicated host and preview the setup with `Insta
 
 The installer checks the configuration that will enforce expiry. Complete the live checkout check below before adding the host to the guest portal.
 
+The watcher keeps the last verified deadline for each observed sign-in on that host. It looks up the Windows account identifier (SID), so changing or reusing an account name does not transfer its deadline. If a directory lookup is interrupted, the next watcher run at or after the recorded deadline still requests sign-out for that same sign-in. A directory extension takes effect after the watcher observes it.
+
+A new sign-in needs a successful directory lookup to establish its deadline and guest identity. If the account disappears before that first observation, a matching name alone does not establish that the open session belongs to a removed guest.
+
 ## Apply the settings
 
 - **Docker Compose:** edit `portal/.env.guest` in the deployment directory, then recreate only the guest service with `docker compose up -d --force-recreate tempdesk-guest` from the `portal` directory. Recreating it is necessary because a container restart keeps its existing environment.
@@ -40,3 +44,4 @@ Open the guest portal after applying the settings. Confirm that the expected edi
 1. On each session host, confirm that the TempDesk Session Watcher scheduled task is installed and can look up guest accounts in the domain. The watcher ends existing sessions. Account expiry alone blocks new sign-ins.
 2. Open the file for each configured edition on a test client. Confirm that it points to the intended host and that the temporary user can sign in. The file carries the address and username. The password is shown separately on the one-time confirmation page.
 3. Keep the test session connected through the expiry time. Verify that the watcher signs it out, then verify that the same account cannot sign in again. Record the two results separately for each edition.
+4. On the dedicated test host, repeat with a separate account. Wait for the expiry warning, then interrupt access to the test directory and verify that the original session disappears after the deadline. Restore directory access before checking a fresh sign-in. For removal, start another test session and let the watcher observe it before deleting its account while connected. Verify that the original session disappears and a fresh sign-in fails.

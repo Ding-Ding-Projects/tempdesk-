@@ -13,7 +13,9 @@
 - [ ] Exercise edition wording on the configured live kiosk alongside a verified checkout session.
 - [ ] Connect a kiosk to the native Windows agent through an authenticated configuration and prove temporary account creation there.
 - [ ] Join the Windows 11 test client to the intended domain and prove desktop sign-in with a temporary account.
+- [x] Verify the Session Watcher's outage, deadline, and account-identity decisions in isolated fixtures. Compile the bundled watcher and read current-session metadata on Windows PowerShell.
 - [ ] Complete setup on the Desktop Experience session host. Verify the App Host watcher's connection to the joined domain, checkout and sign-in, then observe session termination at expiry and a rejected reconnect.
+- [ ] On the dedicated session host, verify that an observed expiry still ends the open session when the test directory is unreachable. In a separate session, verify sign-out after account removal.
 - [ ] Validate a supported guest-session route for Server Core. Its administrative Remote Desktop capability is insufficient for guest sessions.
 
 ## Documentation and delivery

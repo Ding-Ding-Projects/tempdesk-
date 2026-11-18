@@ -434,6 +434,8 @@ A separate one-hour kiosk account had a configured expiry of 11:47:52 UTC on Nov
 
 Windows 11 domain membership and desktop sign-in, temporary account creation through the native Windows backend, and Remote Desktop checkout to a session host remain unverified. See [Verify a checkout](docs/VIRTUAL-COMMONS.md#verify-a-checkout).
 
+The checklist also covers two ways to verify that an open session ends. Leave the session connected through its known expiry with the test directory briefly unavailable, or remove the account while its session is open. In either case, confirm that the original session disappears.
+
 ## Guided checkout walkthrough
 
 Open [the documentation guide](https://ding-ding-projects.github.io/tempdesk-/docs/#guided-workflows) or choose **Docs** in TempDesk Docs. These images were taken in the offline reader built from `9b4329b14b328b6b88301fd296bd0b3100994940`, in bilingual mode. The checklists record your own progress. See [Lab verification](#lab-verification) for the current status of the actual kiosk, directory and session hosts.
