@@ -1,0 +1,14 @@
+# TempDesk operator wiki
+
+Start here to deploy shared computers, set up temporary sign-ins, and verify remote checkout.
+
+## Deploy and operate
+
+- [TempDesk overview and setup](../../../README.md) explains the main components and deployment choices.
+- [Server management](../../SERVER.md) explains the server console, supported routes, and operational limits.
+- [Security](../../SECURITY.md) describes the permissions and credential boundaries.
+- [Agent API](../../API.md) documents the service endpoints and authentication model.
+
+## Verify Virtual Commons
+
+Read [Use Virtual Commons](../../VIRTUAL-COMMONS.md) to choose a server edition, configure reachable destinations, and check expiry. Before sharing the portal URL, verify that both expected editions are available from the client network. Open a downloaded file for each edition and confirm that the temporary sign-in reaches the correct session host.
