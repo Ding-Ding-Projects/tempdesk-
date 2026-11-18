@@ -129,6 +129,7 @@ try {
         usernamePrefix     = $settings.usernamePrefix
         logoffWarningMinutes = $settings.logoffWarningMinutes
         domainDns          = $dns
+        domainNetbios      = $netbios
     } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $sysvolTd 'client\client.json') -Encoding utf8
 
     $uncTd = "\\$dns\SYSVOL\$dns\TempDesk"

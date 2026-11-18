@@ -17,6 +17,24 @@ $logFile = Join-Path $local 'watcher.log'
 if ((Test-Path $logFile) -and (Get-Item $logFile).Length -gt 1MB) { Remove-Item $logFile -Force }
 function Log([string] $m) { Add-Content -LiteralPath $logFile -Value ("{0:u} {1}" -f (Get-Date), $m) }
 
+$domainNetbios = [string]$cfg.domainNetbios
+if (-not $domainNetbios) {
+    # Older client configurations only contain the DNS name. Read its NetBIOS name from AD.
+    try {
+        $root = [ADSI]"LDAP://$($cfg.domainDns)/RootDSE"
+        $domainDn = [Security.SecurityElement]::Escape([string]$root.defaultNamingContext.Value)
+        $partitions = [ADSI]"LDAP://$($cfg.domainDns)/CN=Partitions,$($root.configurationNamingContext.Value)"
+        $query = [DirectoryServices.DirectorySearcher]::new($partitions)
+        try {
+            $query.Filter = "(&(objectClass=crossRef)(nCName=$domainDn))"
+            [void]$query.PropertiesToLoad.Add('nETBIOSName')
+            $match = $query.FindOne()
+            if ($match) { $domainNetbios = [string]$match.Properties['netbiosname'][0] }
+        } finally { $query.Dispose(); $partitions.Dispose(); $root.Dispose() }
+    } catch { Log 'Could not resolve the configured guest domain'; return }
+}
+if (-not $domainNetbios) { Log 'The configured guest domain has no NetBIOS name'; return }
+
 if (-not ('TempDesk.Wts' -as [type])) {
     Add-Type -Namespace TempDesk -Name Wts -MemberDefinition @'
 [DllImport("wtsapi32.dll", SetLastError = true)]
@@ -69,7 +87,7 @@ foreach ($id in [TempDesk.Wts]::Sessions()) {
     $user = [TempDesk.Wts]::Query($id, $WTSUserName)
     if (-not $user) { continue }
     $sessionDomain = [TempDesk.Wts]::Query($id, $WTSDomainName)
-    if (-not $sessionDomain -or $sessionDomain -ieq $env:COMPUTERNAME) { continue }
+    if ($sessionDomain -ine $domainNetbios -or $sessionDomain -ieq $env:COMPUTERNAME) { continue }
     try { $r = Find-Guest $user } catch { Log "AD lookup failed for $user (domain unreachable?): $($_.Exception.Message)"; continue }
 
     $reason = $null; $expires = $null
