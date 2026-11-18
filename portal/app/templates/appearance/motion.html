@@ -45,7 +45,13 @@
     </label>
   </div>
   <div class="cluster">
+    <button type="button" class="btn" data-style-undo disabled>{{ t('Undo') }}</button>
+    <button type="button" class="btn" data-style-redo disabled>{{ t('Redo') }}</button>
+    <button type="button" class="btn" data-style-export>{{ t('Export appearance') }}</button>
     <button type="button" class="btn" data-style-reset>{{ t('Reset selected element') }}</button>
   </div>
-  <span role="status" data-style-status data-storage-unavailable="{{ ta('Storage unavailable. Changes apply only on this page.') }}"></span>
+  <label class="field" data-setting="{{ ta('Import appearance') }}">{{ t('Import appearance') }}
+    <input type="file" accept="application/json,.json" data-style-import>
+  </label>
+  <span role="status" data-invalid="{{ ta('Invalid appearance file. Your settings are unchanged.') }}" data-style-status data-storage-unavailable="{{ ta('Storage unavailable. Changes apply only on this page.') }}"></span>
 </section>

@@ -7,23 +7,29 @@
   };
   const editor = document.querySelector('[data-style-editor]');
 
+  const validators = {
+    radius: n => Number.isInteger(n) && n >= 0 && n <= 48,
+    width: n => Number.isInteger(n) && n >= 0 && n <= 8,
+    color: n => typeof n === 'string' && /^#[0-9a-f]{6}$/i.test(n)
+  };
+  function validate(source) {
+    if (!source || typeof source !== 'object' || Array.isArray(source)) throw new Error('Invalid appearance');
+    for (const [target, item] of Object.entries(source)) {
+      if (!Object.hasOwn(selectors, target) || !item || typeof item !== 'object' || Array.isArray(item)) {
+        throw new Error('Invalid element');
+      }
+      for (const [prop, value] of Object.entries(item)) {
+        if (!Object.hasOwn(validators, prop) || !validators[prop](value)) throw new Error('Invalid property');
+      }
+    }
+    return source;
+  }
   function read() {
     try {
       const text = localStorage.getItem(key);
-      if (!text || text.length > 4096) return {};
-      const source = JSON.parse(text);
-      const settings = {};
-      for (const target of Object.keys(selectors)) {
-        const item = source[target];
-        if (!item || typeof item !== 'object') continue;
-        const safe = {};
-        if (Number.isInteger(item.radius) && item.radius >= 0 && item.radius <= 48) safe.radius = item.radius;
-        if (Number.isInteger(item.width) && item.width >= 0 && item.width <= 8) safe.width = item.width;
-        if (typeof item.color === 'string' && /^#[0-9a-f]{6}$/i.test(item.color)) safe.color = item.color;
-        if (Object.keys(safe).length) settings[target] = safe;
-      }
-      return settings;
-    } catch { return {}; }
+      if (text && text.length <= 4096) return validate(JSON.parse(text));
+    } catch { /* Inaccessible or invalid storage uses the built-in appearance. */ }
+    return {};
   }
 
   let settings = read();
@@ -44,9 +50,17 @@
 
   if (editor) {
     const target = editor.querySelector('[data-style-target]');
+    const undo = [];
+    const redo = [];
+    const undoButton = editor.querySelector('[data-style-undo]');
+    const redoButton = editor.querySelector('[data-style-redo]');
+    const status = editor.querySelector('[data-style-status]');
+    let lastSaved = JSON.stringify(settings);
     const controls = Object.fromEntries(['radius', 'width', 'color'].map(name =>
       [name, editor.querySelector('[data-style-' + name + ']')]));
     function refresh() {
+      undoButton.disabled = !undo.length;
+      redoButton.disabled = !redo.length;
       const item = settings[target.value] || {};
       const example = document.querySelector(selectors[target.value]);
       const style = example && getComputedStyle(example);
@@ -59,13 +73,55 @@
           name in item ? item[name] + ' px' : '—';
       }
     }
-    function persist() {
+    function persist(remember = true) {
+      const next = JSON.stringify(settings);
+      if (remember && next !== lastSaved) {
+        undo.push(lastSaved);
+        if (undo.length > 100) undo.shift();
+        redo.length = 0;
+      }
+      lastSaved = next;
       draw();
       refresh();
-      const status = editor.querySelector('[data-style-status]');
       try { localStorage.setItem(key, JSON.stringify(settings)); status.textContent = ''; }
       catch { status.textContent = status.dataset.storageUnavailable; }
     }
+    function restore(from, to) {
+      if (!from.length) return;
+      to.push(lastSaved);
+      settings = JSON.parse(from.pop());
+      persist(false);
+    }
+    undoButton.addEventListener('click', () => restore(undo, redo));
+    redoButton.addEventListener('click', () => restore(redo, undo));
+    editor.querySelector('[data-style-export]').addEventListener('click', () => {
+      const file = new Blob([JSON.stringify({ version: 1, elements: settings }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'tempdesk-appearance.json';
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+    const upload = editor.querySelector('[data-style-import]');
+    let readGeneration = 0;
+    upload.addEventListener('change', async () => {
+      const generation = ++readGeneration;
+      const file = upload.files[0];
+      if (!file) return;
+      try {
+        if (file.size > 8192) throw new Error('Oversize');
+        const profile = JSON.parse(await file.text());
+        if (generation !== readGeneration) return;
+        if (profile.version !== 1) throw new Error('Unknown version');
+        settings = validate(profile.elements);
+        persist();
+      } catch {
+        if (generation === readGeneration) status.textContent = status.dataset.invalid;
+      } finally {
+        if (generation === readGeneration) upload.value = '';
+      }
+    });
     target.addEventListener('change', refresh);
     for (const [name, control] of Object.entries(controls)) {
       control.addEventListener('input', () => {
@@ -79,7 +135,14 @@
     });
     refresh();
     window.addEventListener('storage', event => {
-      if (event.key === key || event.key === null) { settings = read(); draw(); refresh(); }
+      if (event.key === key || event.key === null) {
+        settings = read();
+        lastSaved = JSON.stringify(settings);
+        undo.length = redo.length = 0;
+        readGeneration++;
+        draw();
+        refresh();
+      }
     });
   } else {
     window.addEventListener('storage', event => {
