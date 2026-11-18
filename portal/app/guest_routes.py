@@ -64,8 +64,10 @@ async def home(request: Request):
 async def create(request: Request):
     pub = await public_settings(request)
     form = await request.form()
-    display = (form.get("displayName") or "").strip()
-    expiry = (form.get("expiryId") or "").strip()
+    raw_display = form.get("displayName", "")
+    raw_expiry = form.get("expiryId", "")
+    display = raw_display.strip() if isinstance(raw_display, str) else ""
+    expiry = raw_expiry.strip() if isinstance(raw_expiry, str) else ""
     commons = form.get("checkout") == "commons"
     if commons and not pub["commonsEnabled"]:
         raise HTTPException(status_code=404)
@@ -81,7 +83,7 @@ async def create(request: Request):
         error = "Choose an available server edition."
     elif expiry not in ids:
         error = "Choose how long you need the sign-in for."
-    elif len(display) > 64 or any(ord(c) < 32 or c in '"/\\[]:;|=,+*?<>@' for c in display):
+    elif not isinstance(raw_display, str) or len(display) > 64 or any(ord(c) < 32 or c in '"/\\[]:;|=,+*?<>@' for c in display):
         error = "The display name can be up to 64 characters and cannot contain special symbols."
     if error:
         return await render(request, "guest/home.html", {"pub": pub, "error_key": error, "values": values}, status=400)
