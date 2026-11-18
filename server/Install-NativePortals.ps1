@@ -64,7 +64,12 @@ for ($try = 1; ; $try++) {
 
 # --- Configuration from the agent's keys ----------------------------------------------------
 $agent = Get-Content -LiteralPath (Join-Path $env:ProgramData 'TempDesk\agent.json') -Raw | ConvertFrom-Json
-$agentUrl = 'http://127.0.0.1:{0}' -f ($(if ($agent.port) { $agent.port } else { 8080 }))
+$agentScheme = if ($agent.tls) { 'https' } else { 'http' }
+$agentPort = if ($agent.port) { $agent.port } elseif ($agent.tls) { 8443 } else { 8080 }
+$agentUrl = '{0}://127.0.0.1:{1}' -f $agentScheme, $agentPort
+$agentPin = if ($agent.tls) {
+    (Get-FileHash -LiteralPath (Join-Path $env:ProgramData 'TempDesk\agent-cert.cer') -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
+}
 $secretBytes = New-Object byte[] 32
 [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($secretBytes)
 $sessionSecret = [Convert]::ToBase64String($secretBytes)
@@ -75,8 +80,14 @@ function Write-Env([string] $Path, [hashtable] $Values) {
     # SYSTEM and Administrators full control, NETWORK SERVICE (the portals' account) read only.
     & icacls.exe $Path /inheritance:r /grant:r '*S-1-5-18:F' '*S-1-5-32-544:F' '*S-1-5-20:R' | Out-Null
 }
-Write-Env (Join-Path $dataDir 'guest.env') @{ PORTAL_MODE = 'guest'; AGENT_URL = $agentUrl; AGENT_KEY = $agent.guestKey; PORT = $GuestPort; PORTAL_DATA_DIR = $dataDir }
-Write-Env (Join-Path $dataDir 'admin.env') @{ PORTAL_MODE = 'admin'; AGENT_URL = $agentUrl; AGENT_KEY = $agent.adminKey; PORT = $AdminPort; SESSION_SECRET = $sessionSecret; PORTAL_DATA_DIR = $dataDir }
+$guestEnv = @{ PORTAL_MODE = 'guest'; AGENT_URL = $agentUrl; AGENT_KEY = $agent.guestKey; PORT = $GuestPort; PORTAL_DATA_DIR = $dataDir }
+$adminEnv = @{ PORTAL_MODE = 'admin'; AGENT_URL = $agentUrl; AGENT_KEY = $agent.adminKey; PORT = $AdminPort; SESSION_SECRET = $sessionSecret; PORTAL_DATA_DIR = $dataDir }
+if ($agentPin) {
+    $guestEnv.AGENT_CERT_SHA256 = $agentPin
+    $adminEnv.AGENT_CERT_SHA256 = $agentPin
+}
+Write-Env (Join-Path $dataDir 'guest.env') $guestEnv
+Write-Env (Join-Path $dataDir 'admin.env') $adminEnv
 
 # --- Runner script and startup tasks --------------------------------------------------------
 $runner = Join-Path $installDir 'Start-Portal.ps1'
