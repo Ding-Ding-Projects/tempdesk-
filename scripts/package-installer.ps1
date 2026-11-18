@@ -6,6 +6,8 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $app = Join-Path $root 'deployer/app'
 $output = Join-Path $root 'deployer/output'
+$nodeExe = (Get-Command node.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+if (-not (Test-Path -LiteralPath $nodeExe -PathType Leaf)) { throw 'Node.js did not resolve to an executable file.' }
 $version = $env:TEMPDESK_VERSION
 if (-not $version) { $version=(Get-Content -LiteralPath (Join-Path $app 'package.json') -Raw | ConvertFrom-Json).version }
 if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Expected a numeric three-part installer version.' }
@@ -28,7 +30,7 @@ try {
     }
     Push-Location -LiteralPath $app
     try {
-        & (Get-Command node.exe -CommandType Application -ErrorAction Stop).Source @arguments
+        & $nodeExe @arguments
         $code=$LASTEXITCODE
     } finally { Pop-Location }
     if ($code -ne 0) { exit $code }
