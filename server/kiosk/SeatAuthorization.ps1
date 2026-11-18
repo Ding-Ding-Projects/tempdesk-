@@ -88,7 +88,7 @@ function Resolve-SeatAccount([string]$Username,[datetimeoffset]$Expiry) {
     # The AD module is an operator-installed RSAT prerequisite. Pin queries to
     # one writable controller so revocation and authorization read the same replica.
     $dc = @( (Get-ADDomainController -Discover -DomainName $script:SeatDomain -Writable -ErrorAction Stop).HostName )[0]
-    $users = @(Get-ADUser -Server $dc -SearchBase $config.guestOuDn -SearchScope OneLevel -LDAPFilter "(sAMAccountName=$sam)" -Properties accountExpirationDate,tokenGroups -ErrorAction Stop)
+    $users = @(Get-ADUser -Server $dc -SearchBase $config.guestOuDn -SearchScope OneLevel -LDAPFilter "(sAMAccountName=$sam)" -Properties accountExpirationDate -ErrorAction Stop)
     if ($users.Count -ne 1) { throw 'Could not resolve one guest in the approved OU.' }
     $user = $users[0]
     if (-not $user.Enabled -or $user.SamAccountName -ine $sam -or $user.UserPrincipalName -ine $Username -or -not $user.AccountExpirationDate) { throw 'Guest is unavailable.' }
@@ -97,7 +97,7 @@ function Resolve-SeatAccount([string]$Username,[datetimeoffset]$Expiry) {
     $domainSid = $user.SID.AccountDomainSid.Value
     $guestGroup = Resolve-TdVirtualCommonsGuestSid -DomainDns $script:SeatDomain -GroupName $config.guestGroup
     $allowed = @("$domainSid-513", $guestGroup)
-    $groups = @($user.tokenGroups | ForEach-Object { [Security.Principal.SecurityIdentifier]::new([byte[]]$_,0).Value })
+    $groups = @(Get-ADAccountAuthorizationGroup -Identity $user -Server $dc -ErrorAction Stop | ForEach-Object { $_.SID.Value })
     if ($guestGroup -notin $groups -or @($groups | Where-Object { $_ -notin $allowed }).Count) { throw 'Guest has unexpected security group memberships.' }
     # Restrict local privilege paths as well as directory-side memberships.
     $candidateSids = @($user.SID.Value) + $groups + @('S-1-1-0','S-1-5-11','S-1-5-4','S-1-5-14')
