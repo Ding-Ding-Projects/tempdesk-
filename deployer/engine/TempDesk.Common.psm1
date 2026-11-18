@@ -371,7 +371,24 @@ function Get-TdCertSha256 {
 
 function Save-TdPortalEnv {
     param([Parameter(Mandatory)][hashtable] $Env, [Parameter(Mandatory)][string] $Directory)
-    Write-TdUtf8File -Path (Join-Path $Directory 'portal\.env.guest') -Text $Env.guest
+    $guestPath = Join-Path $Directory 'portal\.env.guest'
+    $guestText = $Env.guest
+    if (Test-Path -LiteralPath $guestPath -PathType Leaf) {
+        $priorTargets = @{}
+        foreach ($line in Get-Content -LiteralPath $guestPath) {
+            if ($line -cmatch '^\s*(COMMONS_RDP_(?:GUI|CORE|TARGET))\s*=\s*(.*?)\s*$') {
+                $priorTargets[$Matches[1]] = $Matches[2]
+            }
+        }
+        foreach ($key in 'COMMONS_RDP_GUI', 'COMMONS_RDP_CORE', 'COMMONS_RDP_TARGET') {
+            if (-not $priorTargets.ContainsKey($key) -or $guestText -match "(?m)^$key=") { continue }
+            $target = $priorTargets[$key]
+            if ($target -cmatch '^[A-Za-z0-9][A-Za-z0-9.-]{0,252}(?::[0-9]{1,5})?$') {
+                $guestText = $guestText.TrimEnd() + "`n$key=$target`n"
+            }
+        }
+    }
+    Write-TdUtf8File -Path $guestPath -Text $guestText
     Write-TdUtf8File -Path (Join-Path $Directory 'portal\.env.admin') -Text $Env.admin
     Write-TdUtf8File -Path (Join-Path $Directory 'streaming\.env') -Text $Env.streaming
 }
