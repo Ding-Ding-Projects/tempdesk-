@@ -517,11 +517,13 @@ function registerIpc() {
   handle('b64:stat', (p) => { const st = fs.statSync(p); return { path: p, name: path.basename(p), size: st.size, head: sniff(p, 65536) }; });
   handle('b64:start', async (o) => {
     const id = 'b64-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const dest = o.dest || outputPath(o.source, o.mode, o.outDir, o.name);
-    const job = new Job(Object.assign({}, o, { dest }));
+    const numberedOutput = o.numberedOutput === true && !o.dest;
+    const dest = o.dest || outputPath(o.source, o.mode, o.outDir, o.name, numberedOutput);
+    if (!numberedOutput && !o.overwrite && fs.existsSync(dest)) return { exists: true, dest };
+    const job = new Job(o);
     job.on((ev) => send('b64:event', Object.assign({ job: id }, ev)));
     jobs.set(id, job);
-    job.start().catch(() => {}).finally(() => jobs.delete(id));
+    setImmediate(() => job.start().catch(() => {}).finally(() => jobs.delete(id)));
     return { id, dest };
   });
   handle('b64:pause', (id) => { const j = jobs.get(id); if (j) j.pause(); });

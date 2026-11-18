@@ -1,7 +1,7 @@
 // Streaming Base64 conversion of files of any size in constant memory, with progress, pause,
 // resume, cancel and SHA-256 round-trip verification. Uses the shared codec (site/assets/base64.js
 // copied into src/shared/base64.js at build time). Output is written to a temporary file next to
-// the destination and linked into place after verification. Existing files are always preserved.
+// the destination and linked into place after verification. Replacement requires explicit overwrite permission.
 'use strict';
 
 const fs = require('fs');
@@ -13,9 +13,13 @@ const B64 = require('../vendor/base64.js');
 const ENCODE_CHUNK = B64.ENCODE_CHUNK || 3 * 256 * 1024; // multiple of 3
 const DECODE_CHUNK = B64.DECODE_CHUNK || 4 * 256 * 1024; // multiple of 4
 
-function outputPath(src, mode, outDir, name) {
+function outputPath(src, mode, outDir, name, numberedOutput = false) {
   const dir = outDir || path.dirname(src);
   const filename = path.basename(src);
+  if (!numberedOutput) {
+    const base = name || (mode === 'encode' ? filename + '.b64' : filename.replace(/\.(b64|base64|txt)$/i, '') || 'decoded.bin');
+    return path.join(dir, base);
+  }
   const restored = filename.replace(/(?:\.base64\.txt|\.b64|\.base64|\.txt)$/i, '');
   const base = name || (mode === 'encode' ? filename + '.base64.txt'
     : restored && restored !== filename ? restored : filename + '.bin');
@@ -34,7 +38,7 @@ function availablePath(file) {
 }
 
 // Publish the complete verified file without replacing a concurrently created destination.
-async function publishVerified(temp, file) {
+async function publishVerified(temp, file, numberedOutput) {
   let candidate = file;
   for (let n = 1; ; n++) {
     try {
@@ -45,9 +49,18 @@ async function publishVerified(temp, file) {
         throw new Error('This destination does not permit hard links. Choose a folder that supports hard links to publish without replacing an existing file.');
       }
       if (err.code !== 'EEXIST') throw err;
+      if (!numberedOutput) throw collision(file);
       candidate = numberedPath(file, n);
     }
   }
+}
+
+function collision(file) {
+  return Object.assign(new Error('The output file already exists.'), { code: 'exists', path: file });
+}
+
+function sameFile(a, b) {
+  return a.dev === b.dev && a.ino === b.ino;
 }
 
 class Job {
@@ -66,10 +79,29 @@ class Job {
   cancel() { this.cancelled = true; if (this.stream) this.stream.destroy(new Error('cancelled')); }
 
   async start() {
+    try {
+      return await this.convert();
+    } catch (e) {
+      const err = this.cancelled ? Object.assign(new Error('Cancelled'), { code: 'cancelled' }) : e;
+      this.emit({ type: 'error', code: err.code || 'error', message: err.message, offset: err.offset });
+      this.reject(err);
+      throw err;
+    }
+  }
+  async convert() {
     const o = this.o;
     const src = path.resolve(o.source);
-    const dst = path.resolve(o.dest || outputPath(src, o.mode, o.outDir));
-    const total = fs.statSync(src).size;
+    const numberedOutput = o.numberedOutput === true && !o.dest;
+    const dst = path.resolve(o.dest || outputPath(src, o.mode, o.outDir, o.name, numberedOutput));
+    const source = await fs.promises.stat(src, { bigint: true });
+    const previous = await fs.promises.stat(dst, { bigint: true }).catch((e) => {
+      if (e.code !== 'ENOENT') throw e;
+      return null;
+    });
+    if (src === dst || (previous && sameFile(source, previous))) throw new Error('The output would overwrite the source file.');
+    if (o.requireExisting && !previous) throw new Error('The selected output no longer exists. Select it again.');
+    if (previous && !o.overwrite && !numberedOutput) throw collision(dst);
+    const total = Number(source.size);
     const tmp = dst + '.part-' + crypto.randomBytes(4).toString('hex');
     this.dest = dst;
     const srcHash = crypto.createHash('sha256');
@@ -112,18 +144,18 @@ class Job {
       const verified = await this.verify(tmp, srcHash.digest('hex'), o.mode === 'decode' ? outHash.digest('hex') : null);
       if (!verified.ok) throw new Error('Round-trip verification failed: the SHA-256 of the result does not match the source.');
       let published;
-      if (o.overwrite === true && o.dest) {
+      if (o.overwrite === true && previous) {
         // A selected destination may point to the input through another spelling or link.
-        const source = await fs.promises.stat(src, { bigint: true });
         const target = await fs.promises.stat(dst, { bigint: true });
-        if (!target.isFile() || (source.dev === target.dev && source.ino === target.ino)) {
-          throw new Error('Select an existing output file distinct from the source.');
+        if (sameFile(source, target)) throw new Error('The output would overwrite the source file.');
+        if (!target.isFile() || !sameFile(previous, target) || target.ctimeNs !== previous.ctimeNs) {
+          throw new Error('The selected output changed during conversion. Select and confirm it again.');
         }
         if (this.cancelled) throw new Error('cancelled');
         await fs.promises.rename(tmp, dst);
         published = dst;
       } else {
-        published = await publishVerified(tmp, dst);
+        published = await publishVerified(tmp, dst, numberedOutput);
         await fs.promises.unlink(tmp);
       }
       this.dest = published;
@@ -134,10 +166,7 @@ class Job {
     } catch (e) {
       out.destroy();
       try { fs.rmSync(tmp, { force: true }); } catch (x) { /* ignore */ }
-      const err = this.cancelled ? Object.assign(new Error('Cancelled'), { code: 'cancelled' }) : e;
-      this.emit({ type: 'error', code: err.code || 'error', message: err.message, offset: err.offset });
-      this.reject(err);
-      throw err;
+      throw e;
     }
   }
   // Encode: decode the written text again and compare SHA-256 with the source bytes.
