@@ -73,23 +73,28 @@ export async function historyPage(root, app) {
   document.addEventListener('td:history', onChange, { once: true });
 }
 
-function renderInline(parts, q) {
+function renderInline(parts, openArticle) {
   return parts.map((p) => {
     if (p.t === 'code') return h('code', { text: p.v });
     if (p.t === 'bold') return h('strong', { text: p.v });
-    if (p.t === 'link') return h('a', { href: '#', onclick: (e) => { e.preventDefault(); if (/^https?:/.test(p.href)) td.invoke['shell:open'](p.href).catch(() => toast(t('help.linkBlocked'), 'error')); } }, [p.v]);
+    if (p.t === 'link') return h('a', { href: '#', onclick: (e) => {
+      e.preventDefault();
+      if (openArticle?.(p.href)) return;
+      if (/^https?:/.test(p.href)) td.invoke['shell:open'](p.href).catch(() => toast(t('help.linkBlocked'), 'error'));
+      else toast(t('help.linkBlocked'), 'error');
+    } }, [p.v]);
     return document.createTextNode(p.v);
   });
 }
-function renderMarkdown(md) {
+function renderMarkdown(md, openArticle) {
   const out = h('div', { class: 'doc' });
   Core.parseMarkdown(md).forEach((b) => {
-    if (b.type === 'h') out.appendChild(h('h' + Math.min(4, b.level + 1), null, renderInline(b.inline)));
-    else if (b.type === 'p') out.appendChild(h('p', null, renderInline(b.inline)));
+    if (b.type === 'h') out.appendChild(h('h' + Math.min(4, b.level + 1), null, renderInline(b.inline, openArticle)));
+    else if (b.type === 'p') out.appendChild(h('p', null, renderInline(b.inline, openArticle)));
     else if (b.type === 'pre') out.appendChild(h('pre', { text: b.text }));
-    else if (b.type === 'ul' || b.type === 'ol') out.appendChild(h(b.type, null, b.items.map((i) => h('li', null, renderInline(i)))));
-    else if (b.type === 'quote') out.appendChild(h('blockquote', { class: 'notice' }, renderInline(b.inline)));
-    else if (b.type === 'table') out.appendChild(listFilter(h('table', null, [h('tbody', null, b.rows.map((r, ri) => h('tr', null, r.map((c) => h(ri === 0 ? 'th' : 'td', null, renderInline(c)))))) ]), 'help-doc-table', t('help.tab.docs'), { items: (l) => [...l.querySelectorAll('tr')].slice(1) }));
+    else if (b.type === 'ul' || b.type === 'ol') out.appendChild(h(b.type, null, b.items.map((i) => h('li', null, renderInline(i, openArticle)))));
+    else if (b.type === 'quote') out.appendChild(h('blockquote', { class: 'notice' }, renderInline(b.inline, openArticle)));
+    else if (b.type === 'table') out.appendChild(listFilter(h('table', null, [h('tbody', null, b.rows.map((r, ri) => h('tr', null, r.map((c) => h(ri === 0 ? 'th' : 'td', null, renderInline(c, openArticle)))))) ]), 'help-doc-table', t('help.tab.docs'), { items: (l) => [...l.querySelectorAll('tr')].slice(1) }));
   });
   return out;
 }
@@ -141,7 +146,22 @@ export async function helpPage(root, app) {
       const n = matcher ? Core.countMatches([texts[d.path]], matcher).matches : 0;
       return h('button', { type: 'button', class: 'item', style: { textAlign: 'left', cursor: 'pointer' }, 'aria-current': d.path === cur ? 'page' : null, onclick: () => { cur = d.path; draw(); } }, [h('div', { class: 'grow' }, [h('div', { class: 'title', text: d.title }), h('div', { class: 'sub mono', text: d.path })]), n ? h('span', { class: 'chip ok', text: String(n) }) : null]);
     }));
-    const doc = renderMarkdown(texts[cur] || '');
+    const doc = renderMarkdown(texts[cur] || '', (href) => {
+      if (!href || /^(?:[a-z][a-z0-9+.-]*:|\/)/i.test(href)) return false;
+      const origin = 'https://offline.invalid';
+      let target;
+      try {
+        target = new URL(href, origin + '/' + cur);
+      } catch {
+        return false;
+      }
+      const path = target.pathname.slice(1);
+      if (target.origin !== origin || !docs.some((article) => article.path === path)) return false;
+      cur = path;
+      draw();
+      body.querySelector('h2, h3, h4')?.scrollIntoView({ block: 'start' });
+      return true;
+    });
     body.replaceChildren(doc);
     if (matcher) { const n = highlight(doc, matcher); const m = doc.querySelector('mark'); if (m) m.scrollIntoView({ block: 'center' }); announce(n); }
   }
