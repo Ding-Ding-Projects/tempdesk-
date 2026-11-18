@@ -9,9 +9,12 @@ export function runOnboarding(app) {
   const s = app.settings;
   const ob = Object.assign({ step: 0, path: 'server', skipped: [] }, s.onboarding);
   const STEPS = ['welcome', 'path', 'prereqs', 'look', 'done'];
+  if (!Number.isInteger(ob.step) || ob.step < 0 || ob.step >= STEPS.length) ob.step = 0;
+  if (!['server', 'lite'].includes(ob.path)) ob.path = 'server';
+  ob.skipped = Array.isArray(ob.skipped) ? ob.skipped.filter(id => id === 'look' || id === 'prereqs') : [];
   const wrap = h('div', { class: 'onb', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'onb-h' });
   const prev = document.activeElement;
-  let prereqs = null;
+  let checkSequence = 0;
   async function save() { await td.invoke['settings:set']({ onboarding: { step: ob.step, path: ob.path, skipped: ob.skipped } }, null); }
   async function finish() {
     await app.applySettings({ onboarded: true, onboarding: { step: STEPS.length - 1, path: ob.path, skipped: ob.skipped } }, originalText('hist.onboardDone'));
@@ -53,7 +56,17 @@ export function runOnboarding(app) {
   }
   async function check(listEl) {
     listEl.replaceChildren(h('p', { class: 'muted', text: t('onb.checking') }));
-    prereqs = await td.invoke['engine:prereqs']();
+    const sequence = ++checkSequence;
+    let prereqs;
+    try {
+      prereqs = await td.invoke['engine:prereqs']();
+    } catch (error) {
+      if (sequence === checkSequence && listEl.isConnected) {
+        listEl.replaceChildren(h('p', { role: 'alert', text: String(error.message || error) }));
+      }
+      return;
+    }
+    if (sequence !== checkSequence || !listEl.isConnected) return;
     const need = { powershell: true, openssh: ob.path === 'lite', docker: false, git: false };
     const rows = [['powershell', prereqs.powershell], ['openssh', prereqs.openssh], ['docker', prereqs.docker], ['git', prereqs.git], ['network', prereqs.network && prereqs.network.length ? prereqs.network.join(', ') : null]];
     listEl.replaceChildren(...rows.map(([k, v]) => h('div', { class: 'prereq' }, [
@@ -61,7 +74,19 @@ export function runOnboarding(app) {
       h('div', { style: { flex: '1', minWidth: '200px' } }, [h('div', { style: { fontWeight: '700' }, text: t('onb.pr.' + k) }), h('div', { class: 'small muted', text: v ? String(v) : t('onb.pr.' + k + '.fix') })])])));
     if (!prereqs.powershell) toast(notice('onb.psMissing'), 'error');
   }
-  wrap.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); toast(notice('onb.escHint')); } });
+  wrap.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); toast(notice('onb.escHint')); }
+    if (e.key !== 'Tab' || e.defaultPrevented) return;
+    const controls = [...wrap.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),a[href],[tabindex="0"]')]
+      .filter(el => el.getClientRects().length);
+    if (!controls.length) return;
+    const first = controls[0], last = controls[controls.length - 1];
+    if (e.shiftKey && (document.activeElement === first || !controls.includes(document.activeElement))) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus();
+    }
+  });
   document.body.appendChild(wrap);
   draw();
 }
