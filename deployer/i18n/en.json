@@ -1,4 +1,7 @@
 {
+ "kioskVm.inputDigest": "Publisher SHA-256 for this ISO (optional)",
+ "kioskVm.previewPin": "Creation will copy {0} bytes of installation media into the new VM directory and verify SHA-256 {1}. Compare this value with the publisher before creating the VM.",
+ "kioskVm.revealReceipt": "Show guest media receipt in folder",
  "kioskVm.title": "Windows 11 kiosk for Virtual Commons",
  "kioskVm.lead": "Prepare one powered-off Windows 11 Pro, Enterprise or Education workstation for a single RDP booking. Choose licensed installation media and a storage directory.",
  "kioskVm.provider": "Virtualization platform",

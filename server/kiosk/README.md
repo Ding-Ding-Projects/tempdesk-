@@ -2,7 +2,7 @@
 
 Create one Windows 11 desktop for one Virtual Commons booking on a dedicated VMware Workstation host, with VirtualBox 7 or later as fallback. The host needs firmware and virtual TPM support, capacity for two virtual CPUs and 4 GB of memory per running workstation, and approved Windows installation media and licensing. Put the domain controller and the authorized remote desktop gateway on the same isolated lab network, or provide a separately managed private route. VMware uses its host-only network. VirtualBox uses the specified internal network. Attach the gateway to that isolated network.
 
-1. On the hypervisor, run the command below with the operator's chosen name and paths. Review with `-WhatIf`, then remove it to confirm creation. On partial provisioning failure, inspect the exact VM and storage path. A retry never replaces existing resources.
+1. On the hypervisor, run the command below with the operator's chosen name and paths. Review with `-WhatIf`, then compare the reported SHA-256 against the genuine publisher value for your exact installation image. To create, remove `-WhatIf` and supply that digest with `-ExpectedWindowsIsoSha256`. Creation uses extra local storage equal to the installer ISO in addition to the virtual disk. On partial provisioning failure, inspect the exact VM and storage path. A retry never replaces existing resources.
 2. The VM is created powered off. In Workstation, open its VMX, enable encryption with an operator-controlled password and add a TPM 2.0 device. For VirtualBox, the creation path configures a virtual TPM, initializes the new VM firmware, enrolls the Microsoft signatures and Oracle platform key, and enables Secure Boot. Check those settings in the newly created VM before boot. Verify Secure Boot and TPM 2.0, boot the VM and complete the installation on its console. Choose Windows 11 Pro, Enterprise or Education, assign a unique machine name, join the lab domain and apply the existing TempDesk watcher policy. Keep emergency administrative credentials separate from guest credentials. Do not use automatic sign-in.
 3. Apply the organization's workstation policy to enable NLA-protected RDP only through the authorized lab gateway or source addresses. Check the effective firewall and routing at the destination before registering it. The scripts do not open inbound access.
 4. Inside the guest, inspect the watcher and machine identity and preview the redirection restrictions. Apply them using the workstation administrator's credentials. A domain policy may override local settings. Check effective redirection through a new guest session.
@@ -18,7 +18,7 @@ This profile provides a restricted remote workstation. Windows single-app Assign
 
 The deployment engine accepts the same settings in a dedicated section. Run
 `Invoke-TempDeskDeploy.ps1 -Config lab.json -Phase KioskVmPreview` on the virtualization host.
-For an actual creation, add `"confirmCreate": "LAB-KIOSK01"` inside the section
+For an actual creation, add the verified `windowsIsoSha256` and `"confirmCreate": "LAB-KIOSK01"` inside the section
 and invoke the separate `KioskVmCreate` phase. Server deployment media and
 answer files are never attached to this VM.
 
@@ -48,7 +48,7 @@ On this dedicated VM only, configure the effective **Allow log on through Remote
 Microsoft documents the console sign-in requirement for single-app Assigned Access and the built-in identity groups returned by the directory authorization query. See [Assigned Access requirements](https://learn.microsoft.com/en-us/windows/configuration/assigned-access/overview) and [Get-ADAccountAuthorizationGroup](https://learn.microsoft.com/en-us/powershell/module/activedirectory/get-adaccountauthorizationgroup).
 ## Continue from the powered-off VM
 
-Each new workstation has its own credential-free second DVD, labelled **TDKIOSK**. The creation log gives the path to the separate hypervisor-side `guest-media-receipt.json`. Retain that receipt on the trusted host.
+Each new workstation uses a read-only local copy of the selected Windows installer. The creator verifies that copy against the approved preview digest before attaching it. A matching publisher digest must be obtained separately to establish media provenance. A second, credential-free DVD is labelled **TDKIOSK**. The creation log gives the path to the separate hypervisor-side `guest-media-receipt.json`. Retain that receipt on the trusted host.
 
 1. For VMware Workstation, enable encryption and add a TPM using the native Workstation controls. For VirtualBox, inspect the new VM's virtual TPM and Secure Boot settings. Boot from the licensed Windows 11 installation ISO with both DVDs attached.
 2. Use Windows Setup to select the licensed Pro, Enterprise or Education image, accept its terms and choose the new VM disk. Complete account setup at the guest console. The second DVD supplies the approved computer name and requires TLS and network-level authentication during specialization. It supplies no account, product key, unattended logon, disk wipe, domain credential, or code-execution command. A missing answer file leaves Setup interactive. Verify the guest computer name before proceeding.

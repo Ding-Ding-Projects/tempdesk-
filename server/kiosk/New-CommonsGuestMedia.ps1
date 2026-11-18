@@ -8,7 +8,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][ValidatePattern('^(?![0-9]+$)[A-Za-z0-9][A-Za-z0-9-]{0,13}[A-Za-z0-9]$')][string]$ComputerName,
-    [Parameter(Mandatory)][string]$VmDirectory
+    [Parameter(Mandatory)][string]$VmDirectory,
+    [Parameter(Mandatory)][ValidatePattern('^[a-fA-F0-9]{64}$')][string]$InstallerSha256
 )
 $ErrorActionPreference='Stop'
 $stage=Join-Path $VmDirectory 'guest-media-source'
@@ -55,7 +56,7 @@ $bundle=[ordered]@{ schema=1; computerName=$ComputerName; files=$inventory }
 $built=New-TdIso -Folder $stage -IsoPath $iso -Label 'TDKIOSK'
 if ($built.Length -le 0) { throw 'The setup DVD was empty.' }
 $data=[ordered]@{
-    computerName=$ComputerName; isoPath=$iso; isoSha256=(Get-FileHash -LiteralPath $iso -Algorithm SHA256).Hash
+    computerName=$ComputerName; windowsIsoPath=(Join-Path $VmDirectory 'windows11-installer.iso'); windowsIsoSha256=$InstallerSha256; isoPath=$iso; isoSha256=(Get-FileHash -LiteralPath $iso -Algorithm SHA256).Hash
     installerSha256=(Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash
     manifestSha256=(Get-FileHash -LiteralPath $manifest -Algorithm SHA256).Hash
 }

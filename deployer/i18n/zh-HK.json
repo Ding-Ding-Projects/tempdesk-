@@ -1,4 +1,7 @@
 {
+ "kioskVm.inputDigest": "發行者提供的 ISO SHA-256（選填）",
+ "kioskVm.previewPin": "建立時會把 {0} 位元組的安裝媒體複製到虛擬機器專用資料夾，並核對 SHA-256 {1}。建立前請先與發行者提供的數值核對。",
+ "kioskVm.revealReceipt": "在資料夾中顯示訪客媒體核對紀錄",
  "kioskVm.title": "Virtual Commons 的 Windows 11 自助工作站",
  "kioskVm.lead": "為一個 RDP 預約準備一部關機狀態的 Windows 11 Pro、Enterprise 或 Education 工作站。請選擇已獲授權的安裝媒體及儲存資料夾。",
  "kioskVm.provider": "虛擬化平台",
