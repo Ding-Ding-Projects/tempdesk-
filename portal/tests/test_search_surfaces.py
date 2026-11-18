@@ -102,7 +102,7 @@ def _known(ids, file_rel: str):
 def test_every_container_in_templates_has_a_registered_search():
     missing = []
     for p, line, tag in _template_containers():
-        rel = str(p.relative_to(PORTAL))
+        rel = p.relative_to(PORTAL).as_posix()
         ids = _registered(tag)
         if ids is None and not _exempt(tag):
             missing.append(f"{rel}:{line}: {tag[:140]}")
@@ -117,7 +117,7 @@ def test_every_container_in_scripts_has_a_registered_search():
     for p in sorted(JS.glob("*.js")):
         if p.name in SHARED_UI:
             continue
-        rel = str(p.relative_to(PORTAL))
+        rel = p.relative_to(PORTAL).as_posix()
         for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
             if not JS_CONTAINER.search(line):
                 continue
