@@ -25,6 +25,16 @@ Status values: implemented, partial (with what is missing), not done (with the r
 | Elevation (Confirm your password) | implemented | Dialog and page, token kept server side for 10 minutes |
 | Server area hooks | implemented | `server_routes.router`, `require_admin`, `get_agent_client`, `NAV_ITEMS`, `layouts/admin.html` |
 
+## Virtual Commons
+
+| Surface and workflow | Status | Evidence or next acceptance check |
+| --- | --- | --- |
+| Guest portal: server edition, finite checkout, and one-time RDP download | partial | Guest suite covers both destinations, disabled editions, and legacy configuration. Verify browser download, real sign-in to each edition, and expiry in the lab. |
+| Guest portal: dim sum result | partial | Guest suite verifies that the 1% outcome creates no account. Verify the retry path and responsive layout in the running portal. |
+| Guest portal: local personal wording for edition choices | not done | Existing personal wording is limited to the authenticated admin console. Verify local application and reset on an authorized picker surface. |
+| Admin console and kiosk: hosted lab access | partial | Verify deployment, management sign-in, kiosk checkout, and both addresses from the intended client network. |
+| Public documentation: checkout and setup guide | partial | The guide and guest feature link are deployed. Complete the documentation and wiki inventory and verify companion delivery. |
+
 ## Phase 2 catalogue
 
 | # | Feature | Status | Notes |
