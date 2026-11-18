@@ -399,17 +399,40 @@ Read `docs/SECURITY.md` first. In short: guests are always standard users; the a
 
 See `AGENTS.md` for repository rules. License: MIT.
 
-## Running lab portals
+## Guest sign-in walkthrough
 
-The management sign-in (1440 × 900) and guest kiosk (360 × 900) below were captured on November 18, 2026 (Eastern Standard Time) in isolated headless Chromium. Both used dark theme, reduced motion, and device scale 1. The running containers used source revision `ae447bff5de5f4bd753ea0c1cc758a83a250978c` and image ID `sha256:d917d89b9563ef499c26008781a32661a9409730add6a8187de2c272c3f5b5da`. Both entry points answered from a separate container network namespace. The images show the unauthenticated entry points, with empty credential fields. Remote Desktop destinations were not configured for this capture.
+1. Open the guest kiosk. Select **1 hour** and choose **Create my sign-in**.
 
-| Management sign-in | Guest kiosk |
-| --- | --- |
-| ![Desktop management sign-in with empty fields](docs/evidence/portal-ae447bf/management.png) | ![Guest kiosk at 360 pixels wide](docs/evidence/portal-ae447bf/kiosk.png) |
+   ![Guest kiosk with the one-hour duration selected](docs/evidence/guest-sign-in-3a18b69/01-choose-duration.png)
 
-The kiosk below shows the Virtual Commons unavailable message alongside ordinary guest sign-in. Isolated headless Chromium captured the running portal at 360 × 900 on November 18, 2026, at 04:40:47 EST, with dark theme, reduced motion, and device scale 1. Source revision `e097ba72ae64966003612fd9faa5309d38411109` built image `sha256:1480193678dbb4787ea4c830a0a1ea87ff4f605bf370e1f9fcbd65b63a6220cd`. The capture shows no guest data or credentials. PNG SHA-256 `a233cbed419c73e9326005e6171eb11c92529224fc0f8fd8e68a05a7717473ce`.
+   <details>
+   <summary>See the duration picker at 360 pixels wide</summary>
 
-![Narrow guest kiosk showing the Virtual Commons unavailable notice](docs/evidence/portal-e097ba7/kiosk-commons-unavailable.png)
+   ![Guest kiosk with the one-hour duration selected at 360 pixels wide](docs/evidence/guest-sign-in-3a18b69/01-choose-duration-narrow.png)
+
+   </details>
+
+2. Read the one-time confirmation and note the expiry. The images show the confirmation heading and timer outside the credential panel.
+
+   ![Your sign-in is ready confirmation](docs/evidence/guest-sign-in-3a18b69/02-sign-in-ready.png)
+
+   ![One-hour test account expiry countdown](docs/evidence/guest-sign-in-3a18b69/03-expiry-countdown.png)
+
+3. Open **Check my sign-in** and enter the credentials from the confirmation. The example account returned **Active** with its expiry time.
+
+   ![Check my sign-in shows the test account is active](docs/evidence/guest-sign-in-3a18b69/04-active-sign-in.png)
+
+4. To end the sign-in early, open **Delete my sign-in**, enter the credentials and confirm. The kiosk showed the deletion confirmation and the lab directory lookup confirmed that the test account was gone.
+
+   ![Guest kiosk confirms deletion of the test account](docs/evidence/guest-sign-in-3a18b69/05-test-sign-in-deleted.png)
+
+The [capture inventory](docs/evidence/guest-sign-in-inventory.json) records the running container image, source revision, viewports, timestamps and file hashes. The [prior portal captures](docs/evidence/portal-history.md) retain their original provenance.
+
+### Lab verification
+
+Server Core responded as a synchronized Active Directory domain controller with a ready global catalog. Its native TempDesk agent returned a healthy response for the Windows backend. The kiosk walkthrough used the lab's Samba directory and verified temporary account creation, credential validation, one-time confirmation and self-deletion. The management sign-in page also answered from the test network.
+
+Windows 11 domain membership and desktop sign-in, temporary account creation through the native Windows backend, and Remote Desktop checkout to a session host remain unverified. See [Verify a checkout](docs/VIRTUAL-COMMONS.md#verify-a-checkout).
 
 ## Offline checkout guide
 
@@ -419,7 +442,7 @@ TempDesk Deployer [v1.0.65](https://github.com/Ding-Ding-Projects/tempdesk-/rele
 
 ## Fresh VMware lab provisioning
 
-These captures show the fresh Server 2025 Core and Windows 11 client during unattended setup for source revision `5fb4e0235d1d0a8fe2d428e0af1cdd4ad34677f5`. Both were captured from their VMware consoles at 1024 × 768. Domain enrollment, management portal and kiosk operation remain pending.
+These earlier captures show Server 2025 Core and the Windows 11 client during unattended setup for source revision `5fb4e0235d1d0a8fe2d428e0af1cdd4ad34677f5`. Both were captured from their VMware consoles at 1024 × 768. The subsequent controller and kiosk checks are recorded in [Lab verification](#lab-verification).
 
 | Server setup | Guest setup |
 | --- | --- |

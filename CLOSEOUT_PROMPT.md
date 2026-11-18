@@ -1,0 +1,3 @@
+# Continue TempDesk lab verification
+
+Use the [walkthrough](README.md#guest-sign-in-walkthrough), [capture inventory](docs/evidence/guest-sign-in-inventory.json), and [roadmap](ROADMAP.md) as the current evidence. Preserve the Samba-backed kiosk and verify a separate kiosk configured for the native Windows directory. Finish supported guest setup, confirm Windows 11 domain membership, and verify an actual desktop sign-in using a synthetic temporary account. For each supported remote session destination, verify the downloaded connection file, successful sign-in, and enforced session end at expiry. Update the documentation with inspected captures that show no credentials or deployment details.
