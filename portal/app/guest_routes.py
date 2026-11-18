@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import base64
 import re
+import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -12,6 +14,8 @@ from .web import agent_message, csrf_protect, redirect, render, set_cookie, tran
 
 router = APIRouter()
 USERNAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,20}$")
+RDP_TARGET = re.compile(r"[A-Za-z0-9][A-Za-z0-9.-]{0,252}(?::[0-9]{1,5})?")
+RDP_USER = re.compile(r"[A-Za-z0-9._@\\-]{1,320}")
 NO_STORE = {"Cache-Control": "no-store, max-age=0", "Pragma": "no-cache", "Expires": "0"}
 
 
@@ -24,6 +28,13 @@ async def public_settings(request: Request) -> dict:
     data["expiryChoices"] = choices
     request.state.public = data
     request.state.org_name = data.get("orgName") or "TempDesk"
+    target = request.app.state.settings.commons_rdp_target
+    _, separator, port = target.partition(":")
+    data["commonsEnabled"] = (
+        bool(RDP_TARGET.fullmatch(target))
+        and (not separator or 1 <= int(port) <= 65535)
+        and any(int(choice.get("minutes") or 0) > 0 for choice in choices)
+    )
     return data
 
 
@@ -49,9 +60,14 @@ async def create(request: Request):
     form = await request.form()
     display = (form.get("displayName") or "").strip()
     expiry = (form.get("expiryId") or "").strip()
+    commons = form.get("checkout") == "commons"
+    if commons and not pub["commonsEnabled"]:
+        raise HTTPException(status_code=404)
     values = {"displayName": display, "expiryId": expiry}
     ids = {c.get("id") for c in pub["expiryChoices"]}
     error = None
+    if commons:
+        ids = {c.get("id") for c in pub["expiryChoices"] if int(c.get("minutes") or 0) > 0}
     if expiry not in ids:
         error = "Choose how long you need the sign-in for."
     elif len(display) > 64 or any(ord(c) < 32 or c in '"/\\[]:;|=,+*?<>@' for c in display):
@@ -59,6 +75,9 @@ async def create(request: Request):
     if error:
         return await render(request, "guest/home.html", {"pub": pub, "error_key": error, "values": values}, status=400)
     _limit(request, request.app.state.create_limiter)
+    if commons and secrets.randbelow(100) == 0:
+        dish = secrets.choice(("Har gow", "Siu mai", "Char siu bao"))
+        return await render(request, "guest/dim-sum.html", {"pub": pub, "dish": dish}, headers=NO_STORE)
     body = {"expiryId": expiry}
     if display:
         body["displayName"] = display
@@ -71,7 +90,7 @@ async def create(request: Request):
                                 status=exc.status if exc.status < 500 else 502)
         raise
     # Keep the credentials server side; the browser only gets a random id.
-    once_id = request.app.state.once.put(created)
+    once_id = request.app.state.once.put({"credentials": created, "commons": commons})
     resp = redirect(request, "/created")
     set_cookie(request, resp, ONCE_COOKIE, once_id, max_age=600)
     return resp
@@ -80,15 +99,24 @@ async def create(request: Request):
 @router.get("/created")
 async def created(request: Request):
     pub = await public_settings(request)
-    creds = request.app.state.once.pop(request.cookies.get(ONCE_COOKIE))
-    if not creds:
+    result = request.app.state.once.pop(request.cookies.get(ONCE_COOKIE))
+    if not result:
         resp = await render(request, "guest/gone.html", {"pub": pub}, status=410, headers=NO_STORE)
         resp.delete_cookie(ONCE_COOKIE, path="/")
         return resp
+    creds = result.get("credentials", result)
     domain = creds.get("domain") or ""
     netbios = domain.split(".")[0].upper() if domain else ""
+    rdp = None
+    if result.get("commons") and pub["commonsEnabled"]:
+        username = creds.get("upn") or (f"{netbios}\\{creds['username']}" if netbios else creds["username"])
+        if RDP_USER.fullmatch(username):
+            target = request.app.state.settings.commons_rdp_target
+            profile = (f"full address:s:{target}\r\nusername:s:{username}\r\n"
+                       "prompt for credentials:i:1\r\nauthentication level:i:2\r\nenablecredsspsupport:i:1\r\n")
+            rdp = base64.b64encode(profile.encode("utf-16")).decode("ascii")
     resp = await render(request, "guest/created.html",
-                        {"pub": pub, "c": creds, "netbios": netbios}, headers=NO_STORE)
+                        {"pub": pub, "c": creds, "netbios": netbios, "rdp": rdp}, headers=NO_STORE)
     resp.delete_cookie(ONCE_COOKIE, path="/")
     return resp
 

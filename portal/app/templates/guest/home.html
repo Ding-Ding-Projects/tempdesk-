@@ -26,6 +26,7 @@
       </div>
     </fieldset>
     <button type="submit" class="btn filled lg block">{{ t('Create my sign-in') }}</button>
+    {% if pub.commonsEnabled %}<button type="submit" name="checkout" value="commons" class="btn lg block">{{ t('Virtual Commons: Check out a computer') }}</button>{% endif %}
     {% else %}
     <p class="alert warn">{{ t('Creating sign-ins is not available right now. Please ask a member of staff.') }}</p>
     {% endif %}

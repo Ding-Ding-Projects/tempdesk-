@@ -1,5 +1,13 @@
 {
  "strings": {
+  "Virtual Commons: Check out a computer": "共享電腦：借用一部電腦",
+  "Download Remote Desktop file": "下載遠端桌面檔案",
+  "Open the downloaded file and enter the password shown here.": "開啟下載咗嘅檔案，再輸入呢度顯示嘅密碼。",
+  "Dim sum break": "點心時間",
+  "No session was checked out. You can try again.": "今次冇借用電腦，你可以再試。",
+  "Har gow": "蝦餃",
+  "Siu mai": "燒賣",
+  "Char siu bao": "叉燒包",
   ".ps1 or .cmd files": ".ps1 或 .cmd 檔案",
   "0 is serious, 3 is playful. Errors and security messages always stay serious.": "0 係認真，3 係搞笑。錯誤同保安訊息永遠保持認真。",
   "0 is square corners, 100 is the default.": "0 係直角，100 係預設。",

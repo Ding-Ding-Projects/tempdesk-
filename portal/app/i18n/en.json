@@ -1,5 +1,13 @@
 {
  "strings": {
+  "Virtual Commons: Check out a computer": "Virtual Commons: Check out a computer",
+  "Download Remote Desktop file": "Download Remote Desktop file",
+  "Open the downloaded file and enter the password shown here.": "Open the downloaded file and enter the password shown here.",
+  "Dim sum break": "Dim sum break",
+  "No session was checked out. You can try again.": "No session was checked out. You can try again.",
+  "Har gow": "Har gow",
+  "Siu mai": "Siu mai",
+  "Char siu bao": "Char siu bao",
   ".ps1 or .cmd files": ".ps1 or .cmd files",
   "0 is serious, 3 is playful. Errors and security messages always stay serious.": "0 is serious, 3 is playful. Errors and security messages always stay serious.",
   "0 is square corners, 100 is the default.": "0 is square corners, 100 is the default.",

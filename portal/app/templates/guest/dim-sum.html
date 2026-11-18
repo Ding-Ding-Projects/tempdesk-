@@ -1,0 +1,10 @@
+{% extends "layouts/guest.html" %}
+{% block title %}{{ ta('Dim sum break') }}{% endblock %}
+{% block content %}
+<section class="card lg stack">
+  <h1>{{ t('Dim sum break') }}</h1>
+  <p>{{ t(dish) }}</p>
+  <p>{{ t('No session was checked out. You can try again.') }}</p>
+  <a class="btn filled" href="/">{{ t('Try again') }}</a>
+</section>
+{% endblock %}

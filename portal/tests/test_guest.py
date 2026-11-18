@@ -159,3 +159,35 @@ def test_csrf_token_signed_and_bound(guest):
     html = guest.client.get("/").text
     tok = csrf_of(html)
     assert tok.count(".") == 2  # itsdangerous timed signature
+
+def test_virtual_commons_download_has_no_password(tmp_path, monkeypatch):
+    import base64
+    from app import guest_routes
+
+    portal = Portal("guest", tmp_path, extra_env={"COMMONS_RDP_TARGET": "sessions.example.test:3390"})
+    monkeypatch.setattr(guest_routes.secrets, "randbelow", lambda upper: upper - 1)
+    checkout = portal.post("/create", {"expiryId": "1h", "checkout": "commons"})
+    assert checkout.status_code == 303
+    result = portal.client.get("/created")
+    payload = re.search(r"data:application/x-rdp;base64,([A-Za-z0-9+/=]+)", result.text)
+    assert payload
+    profile = base64.b64decode(payload[1]).decode("utf-16")
+    assert "full address:s:sessions.example.test:3390\r\n" in profile
+    account = next(iter(portal.state.guests.values()))
+    assert account["username"] in profile and account["password"] not in profile
+    assert portal.client.get("/created").status_code == 410
+
+
+def test_virtual_commons_dim_sum_does_not_allocate_an_account(tmp_path, monkeypatch):
+    from app import guest_routes
+
+    portal = Portal("guest", tmp_path, extra_env={"COMMONS_RDP_TARGET": "sessions.example.test"})
+    def dim_sum_roll(upper):
+        assert upper == 100
+        return 0
+    monkeypatch.setattr(guest_routes.secrets, "randbelow", dim_sum_roll)
+    result = portal.post("/create", {"expiryId": "1h", "checkout": "commons"})
+    assert result.status_code == 200
+    assert "No session was checked out" in result.text
+    assert not portal.state.guests
+    assert "no-store" in result.headers["cache-control"]

@@ -95,3 +95,9 @@ Every list, table, tree, panel, picker, menu and tab strip has its own search fi
 
 `search_surfaces.json` is the hand-written catalogue of these fields. The test renders every entry with a page against the fake agent and walks all templates and scripts: a new `<table>`, `<ul>`, `<ol>`, `<select>`, `<datalist>` or tree, listbox, grid, tablist, list or menu role needs `data-searchable="<id>"` (or `/* search: <id> */` in a script) with a catalogue entry, or `data-search-exempt="<reason>"`.
 
+
+## Virtual Commons
+
+Set `COMMONS_RDP_TARGET` in the guest portal configuration to a client-reachable Remote Desktop hostname or IPv4 address, with an optional port. Configure that computer to accept temporary domain users over Remote Desktop with Network Level Authentication. The portal shows a separate Virtual Commons checkout button when the target is configured. Choose a finite duration. After checkout, open the downloaded `Virtual-Commons.rdp` and enter the password shown on the one-time result page. If the browser blocks the automatic download, use the download button on that page.
+
+One percent of valid Virtual Commons checkout attempts show a dim sum dish instead. That result creates no account and offers a retry. The RDP file contains the configured address and temporary username. The password remains on the one-time result page.
