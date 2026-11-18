@@ -17,7 +17,7 @@ param(
 $ErrorActionPreference = 'Stop'
 if (-not (Get-Command Get-TdVmwareTools -ErrorAction SilentlyContinue)) {
     $engine = Join-Path $PSScriptRoot '../../deployer/engine'
-    foreach ($module in 'TempDesk.Common','VmDeploy') { Import-Module (Join-Path $engine "$module.psm1") -DisableNameChecking }
+    foreach ($module in 'TempDesk.Common','VmDeploy','AnswerFile') { Import-Module (Join-Path $engine "$module.psm1") -DisableNameChecking }
 }
 if ($Name -ieq $env:COMPUTERNAME) { throw 'Choose a name different from the host.' }
 $iso = Get-Item -LiteralPath $WindowsIso
@@ -44,6 +44,8 @@ if ($vmware) {
         if ($r.ExitCode -ne 0) { throw $r.Output }
         $r.Output
     }
+    $version = Invoke-Box @('--version')
+    if ($version -notmatch '^(\d+)\.' -or [int]$Matches[1] -lt 7) { throw 'VirtualBox 7 or later is required.' }
     $machines = Invoke-Box @('list','vms')
     if ($machines -match ('(?im)^"' + [regex]::Escape($Name) + '" ')) { throw 'The selected VM name is already registered.' }
     $config = Join-Path $folder "$Name.vbox"
@@ -54,7 +56,9 @@ if ($vmware) {
     New-Item -ItemType Directory -Path $folder | Out-Null
     $r = Invoke-TdVmTool -Exe $vmware.DiskManager -Arguments @('-c','-s','80GB','-a','nvme','-t','0',$disk) -TimeoutSec 300
     if ($r.ExitCode -ne 0) { throw $r.Output }
-    Write-TdUtf8File -Path $config -Text $vmx
+    $media = & (Join-Path $PSScriptRoot 'New-CommonsGuestMedia.ps1') -ComputerName $Name -VmDirectory $folder
+    $vmx += @('sata0:1.present = "TRUE"','sata0:1.deviceType = "cdrom-image"','sata0:1.fileName = "commons-guest.iso"') -join [Environment]::NewLine
+    Write-TdUtf8File -Path $config -Text ($vmx + [Environment]::NewLine)
     $state = 'RequiresWorkstationEncryptionAndTpm'
 } else {
     $id = [guid]::NewGuid().ToString()
@@ -64,6 +68,14 @@ if ($vmware) {
     Invoke-Box @('storagectl',$id,'--name','SATA','--add','sata','--controller','IntelAhci') | Out-Null
     Invoke-Box @('storageattach',$id,'--storagectl','SATA','--port','0','--device','0','--type','hdd','--medium',$disk) | Out-Null
     Invoke-Box @('storageattach',$id,'--storagectl','SATA','--port','1','--device','0','--type','dvddrive','--medium',$iso.FullName) | Out-Null
+    $media = & (Join-Path $PSScriptRoot 'New-CommonsGuestMedia.ps1') -ComputerName $Name -VmDirectory $folder
+    Invoke-Box @('storageattach',$id,'--storagectl','SATA','--port','2','--device','0','--type','dvddrive','--medium',$media.IsoPath) | Out-Null
+    # These operations apply only to the fresh UUID registered in this invocation.
+    foreach ($operation in 'inituefivarstore','enrollmssignatures','enrollorclpk') {
+        Invoke-Box @('modifynvram',$id,$operation) | Out-Null
+    }
+    Invoke-Box @('modifynvram',$id,'secureboot','--enable') | Out-Null
     $state = 'RequiresSecureBootVerification'
 }
-[pscustomobject]@{ Configuration = $config; Hypervisor = $provider; Name = $Name; State = $state; Enrolled = $false }
+Write-Host ("Guest setup DVD and independent verification values: {0}" -f $media.ReceiptPath)
+[pscustomobject]@{ GuestMediaReceipt = $media.ReceiptPath; Configuration = $config; Hypervisor = $provider; Name = $Name; State = $state; Enrolled = $false }
