@@ -458,7 +458,7 @@ The [capture inventory](docs/evidence/guided-docs-inventory.json) lists the exac
 
 ## Browser attachment walkthrough
 
-These picker captures came from the built kiosk at `caddfb9c4e672ad59e3a8af8e7b7fd9386d5d2f0`. The download replay used a real isolated Samba directory and configured fixture destinations. Native session sign-in and expiry are tracked in [Lab verification](#lab-verification).
+The picker captures came from the kiosk build at `caddfb9c4e672ad59e3a8af8e7b7fd9386d5d2f0`. The confirmation and retry came from build `32128b6a4731ace51ae9e26e031ce8d96bbb99b9`. The browser used an isolated Samba directory and test destinations for both editions. See [Lab verification](#lab-verification) for native session sign-in and expiry.
 
 1. In **Virtual Commons**, choose a finite duration and an available edition. The wide capture selects Desktop Experience. The 360 px capture selects Server Core and shows the wrapped checkout label.
 
@@ -466,10 +466,15 @@ These picker captures came from the built kiosk at `caddfb9c4e672ad59e3a8af8e7b7
 
    ![Virtual Commons at 360 pixels with Server Core selected and the complete checkout button label](docs/evidence/virtual-commons-picker-caddfb9/choose-server-core.png)
 
-2. Activate `Virtual Commons: Check out a computer`. The portal opens its one-time confirmation, and the browser saves `Virtual-Commons.rdp`.
-3. If you need another copy, use **Download Remote Desktop file** on the confirmation. Pressing Enter on that link returned the same bytes in both tested edition workflows.
+2. Activate `Virtual Commons: Check out a computer`. When **Your sign-in is ready** appears, look for `Virtual-Commons.rdp` in the browser downloads.
 
-The [attachment and layout receipt](docs/evidence/virtual-commons-attachments.json) records the actual file checks, image hashes, and measured viewports.
+   ![The guest kiosk confirms that the sign-in is ready after checkout](docs/evidence/virtual-commons-browser-32128b6/02-checkout-confirmation.png)
+
+3. To save another copy, focus **Download Remote Desktop file** and press Enter. Both tested editions returned exactly the same file on retry.
+
+   ![The Download Remote Desktop file button has keyboard focus](docs/evidence/virtual-commons-browser-32128b6/03-download-again.png)
+
+The [attachment and layout receipt](docs/evidence/virtual-commons-attachments.json) records both automatic downloads, keyboard retries, removed test accounts, image hashes, and measured viewports.
 
 ## Standalone offline documentation
 

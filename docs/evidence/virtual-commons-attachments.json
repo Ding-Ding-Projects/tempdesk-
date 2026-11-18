@@ -133,6 +133,62 @@
       "interactionProofId": "picker-selection",
       "interactionReceiptSha256": "15d546de7230c65aaf1a78851a9ab1389cc7cc2d47ab6748654c1e7d324f17cd",
       "inspectionStatus": "inspected"
+    },
+    {
+      "id": "02-checkout-confirmation",
+      "active": true,
+      "path": "docs/evidence/virtual-commons-browser-32128b6/02-checkout-confirmation.png",
+      "alt": "The guest kiosk confirms that the sign-in is ready after checkout",
+      "sourceCommit": "32128b6a4731ace51ae9e26e031ce8d96bbb99b9",
+      "artifactSha256": "9c8c6d611a8889cf98ddcea3e8eb10c410d862bbc4bef9866620492b96c59968",
+      "captureSha256": "7a615a3dc3d44a71dce66f42f79fe856ac364f988c3804f1f68fcba9b43b72a8",
+      "screen": "Virtual Commons sign-in confirmation",
+      "state": "confirmation",
+      "theme": "dark",
+      "viewportWidth": 960,
+      "viewportHeight": 316,
+      "scale": 1,
+      "capturedAt": "2026-11-18T14:50:16.334Z",
+      "interactionProofId": "browser-confirmation-and-manual-download",
+      "interactionReceiptSha256": "73c0a46091004cc24d6a67e948083d62dba06b4e299b9f671d1b4ca8499899e8",
+      "inspectionStatus": "inspected"
+    },
+    {
+      "id": "03-download-again",
+      "active": true,
+      "path": "docs/evidence/virtual-commons-browser-32128b6/03-download-again.png",
+      "alt": "The Download Remote Desktop file button has keyboard focus",
+      "sourceCommit": "32128b6a4731ace51ae9e26e031ce8d96bbb99b9",
+      "artifactSha256": "9c8c6d611a8889cf98ddcea3e8eb10c410d862bbc4bef9866620492b96c59968",
+      "captureSha256": "5f94d406846848688031241fde3d633c8a4da2000f9b1a36751922d4e163e494",
+      "screen": "Virtual Commons sign-in confirmation",
+      "state": "download-again",
+      "theme": "dark",
+      "viewportWidth": 960,
+      "viewportHeight": 172,
+      "scale": 1,
+      "capturedAt": "2026-11-18T14:50:29.177Z",
+      "interactionProofId": "browser-confirmation-and-manual-download",
+      "interactionReceiptSha256": "73c0a46091004cc24d6a67e948083d62dba06b4e299b9f671d1b4ca8499899e8",
+      "inspectionStatus": "inspected"
     }
-  ]
+  ],
+  "checkoutWalkthrough": {
+    "sourceCommit": "32128b6a4731ace51ae9e26e031ce8d96bbb99b9",
+    "sourceTree": "f065693a2a2b96ed03e1a50cfc1f510f0273fe2e",
+    "portalImage": "sha256:b620fc8081703880447d88e94d157981541366388f896495b0e234610816a1e2",
+    "artifactSha256": "9c8c6d611a8889cf98ddcea3e8eb10c410d862bbc4bef9866620492b96c59968",
+    "browser": "Chrome/149.0.7827.55",
+    "directory": "Isolated Samba Active Directory",
+    "completedAt": "2026-11-18T14:51:07.342Z",
+    "observedConsoleErrors": 0,
+    "observedPageExceptions": 0,
+    "automaticDownloads": 2,
+    "byteIdenticalKeyboardRetries": 2,
+    "testAccountsRemoved": 2,
+    "capturedSteps": [
+      "02-checkout-confirmation",
+      "03-download-again"
+    ]
+  }
 }
