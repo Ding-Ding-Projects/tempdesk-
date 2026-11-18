@@ -306,8 +306,18 @@ function registerIpc() {
     const out = [];
     const add = (rel) => { const f = path.join(DOCS, rel); if (fs.existsSync(f)) out.push({ path: rel, title: (fs.readFileSync(f, 'utf8').match(/^#\s+(.+)$/m) || [null, rel])[1] }); };
     add('README.md'); add('CHANGELOG.md');
-    const d = path.join(DOCS, 'docs');
-    if (fs.existsSync(d)) fs.readdirSync(d).filter((f) => f.endsWith('.md')).sort().forEach((f) => add('docs/' + f));
+    const visit = (relativeDir) => {
+      const dir = path.join(DOCS, relativeDir);
+      if (!fs.existsSync(dir)) return;
+      const entries = fs.readdirSync(dir, { withFileTypes: true })
+        .sort((left, right) => left.name.localeCompare(right.name));
+      for (const entry of entries) {
+        const rel = relativeDir + '/' + entry.name;
+        if (entry.isDirectory()) visit(rel);
+        else if (entry.isFile() && entry.name.endsWith('.md')) add(rel);
+      }
+    };
+    visit('docs');
     ['agent/README.md', 'samba/README.md', 'portal/README.md', 'streaming/README.md', 'server/apphost/README.md', 'deployer/FEATURES.md'].forEach(add);
     return out;
   });
