@@ -12,3 +12,7 @@ Start here to deploy shared computers, set up temporary sign-ins, and verify rem
 ## Verify Virtual Commons
 
 Read [Use Virtual Commons](../../VIRTUAL-COMMONS.md) to choose a server edition, configure reachable destinations, and check expiry. Before sharing the portal URL, verify that both expected editions are available from the client network. Open a downloaded file for each edition and confirm that the temporary sign-in reaches the correct session host.
+
+- [Configure the destinations](../../VIRTUAL-COMMONS.md#configure-the-destinations) to make each edition available.
+- [Apply the settings](../../VIRTUAL-COMMONS.md#apply-the-settings) using the instructions for the portal host.
+- [Verify a checkout](../../VIRTUAL-COMMONS.md#verify-a-checkout) from the client network.
