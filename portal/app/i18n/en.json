@@ -1,5 +1,7 @@
 {
  "strings": {
+    "Search animation types": "Search animation types",
+    "Search editable elements": "Search editable elements",
     "Transition duration": "Transition duration",
     "Transition curve": "Transition curve",
     "Linear": "Linear",

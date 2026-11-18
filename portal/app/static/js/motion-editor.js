@@ -96,6 +96,7 @@
     }
     editor.querySelector('[data-kind-editor]').addEventListener('change', event => {
       if (event.target === kind) { showKind(); return; }
+      if (![custom, enabled, span, delay, easing].includes(event.target)) return;
       if (!custom.checked) delete timing[kind.value];
       else {
         if (!span.value || !delay.value || !span.reportValidity() || !delay.reportValidity()) return;
