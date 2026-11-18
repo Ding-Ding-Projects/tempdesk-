@@ -90,7 +90,7 @@ $guestEnvPath = Join-Path $dataDir 'guest.env'
 $priorTargets = @{}
 if (Test-Path -LiteralPath $guestEnvPath -PathType Leaf) {
     foreach ($line in Get-Content -LiteralPath $guestEnvPath) {
-        if ($line -cmatch '^\s*(COMMONS_RDP_(?:GUI|CORE|TARGET))\s*=\s*(.*?)\s*$') {
+        if ($line -cmatch '^\s*(COMMONS_RDP_(?:GUI|CORE|TARGET|KIOSK)|COMMONS_KIOSK_BROKER_(?:URL|KEY_FILE|CA_FILE))\s*=\s*(.*?)\s*$') {
             $priorTargets[$Matches[1]] = $Matches[2]
         }
     }

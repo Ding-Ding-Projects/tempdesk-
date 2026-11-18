@@ -61,6 +61,10 @@ class Settings:
     commons_rdp_target: str = ""
     commons_rdp_gui: str = ""
     commons_rdp_core: str = ""
+    commons_rdp_kiosk: str = ""
+    commons_kiosk_broker_url: str = ""
+    commons_kiosk_broker_key_file: str = ""
+    commons_kiosk_broker_ca_file: str | None = None
 
     @property
     def agent_plain_http(self) -> bool:
@@ -127,6 +131,10 @@ class Settings:
             commons_rdp_gui=(env.get("COMMONS_RDP_GUI") or "").strip(),
             commons_rdp_core=(env.get("COMMONS_RDP_CORE") or "").strip(),
             commons_rdp_target=(env.get("COMMONS_RDP_TARGET") or "").strip(),
+            commons_rdp_kiosk=(env.get("COMMONS_RDP_KIOSK") or "").strip(),
+            commons_kiosk_broker_url=(env.get("COMMONS_KIOSK_BROKER_URL") or "").strip(),
+            commons_kiosk_broker_key_file=(env.get("COMMONS_KIOSK_BROKER_KEY_FILE") or "").strip(),
+            commons_kiosk_broker_ca_file=(env.get("COMMONS_KIOSK_BROKER_CA_FILE") or "").strip() or None,
             data_dir=(env.get("PORTAL_DATA_DIR") or "/data").strip(),
             state_dir=(env.get("PORTAL_STATE_DIR") or env.get("PORTAL_DATA_DIR") or "/data").strip(),
         )

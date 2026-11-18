@@ -64,10 +64,14 @@ function New-TdVmwareVmx {
     $add = { param($k, $v) $l.Add(('{0} = "{1}"' -f $k, (ConvertTo-TdVmxValue ([string]$v)))) }
     & $add '.encoding' 'UTF-8'
     & $add 'config.version' '8'
-    & $add 'virtualHW.version' '19'
+    & $add 'virtualHW.version' $(if ($KioskWorkstation) { '20' } else { '19' })
     & $add 'displayName' $Name
     # Marks the machine as made by TempDesk: the desktop app only lists and manages marked machines.
-    & $add 'tempdesk.managed' 'TRUE'
+    if ($KioskWorkstation) {
+        & $add 'tempdesk.role' 'commons-workstation'
+    } else {
+        & $add 'tempdesk.managed' 'TRUE'
+    }
     if ($KioskWorkstation) {
         if ($Firmware -ne 'uefi' -or $Network -ne 'hostonly' -or $KitIso) { throw 'The workstation requires isolated networking and EFI, without server media.' }
         & $add 'guestOS' 'windows11-64'

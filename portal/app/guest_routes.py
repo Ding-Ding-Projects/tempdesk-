@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+import asyncio
+from datetime import datetime, timezone
 import re
 import secrets
 import time
@@ -10,8 +11,9 @@ import time
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 
-from .agent_client import AgentError
+from .agent_client import AgentError, AgentUnavailable
 from . import commons_handoff
+from .kiosk_seat import KioskSeatBroker, KioskSeatUnavailable, parse_expiry
 from .security import ONCE_COOKIE, client_ip
 from .web import agent_message, csrf_protect, redirect, render, set_cookie, translator_for
 
@@ -20,6 +22,8 @@ USERNAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,20}$")
 RDP_TARGET = re.compile(r"[A-Za-z0-9][A-Za-z0-9.-]{0,252}(?::[0-9]{1,5})?")
 RDP_USER = re.compile(r"[A-Za-z0-9._@\\-]{1,320}")
 COMMONS_EDITION_LABELS = {"gui": "Windows Server with GUI", "core": "Windows Server without GUI"}
+KIOSK_LABEL = "Kiosk Windows 11"
+KIOSK_UNAVAILABLE = "The kiosk seat is busy or unavailable."
 NO_STORE = {"Cache-Control": "no-store, max-age=0", "Pragma": "no-cache", "Expires": "0"}
 WORDING_COOKIE = "td_guest_wording"
 WORDING_MAX_AGE = 15 * 60
@@ -46,6 +50,9 @@ def _commons_targets(request: Request) -> dict[str, str]:
     targets = {"gui": settings.commons_rdp_gui, "core": settings.commons_rdp_core}
     if not any(targets.values()):
         targets = {"legacy": settings.commons_rdp_target}
+    if (KioskSeatBroker.configured(settings) and ":" not in settings.commons_rdp_kiosk
+            and "." in settings.commons_rdp_kiosk):
+        targets["kiosk"] = settings.commons_rdp_kiosk
     return {edition: target for edition, target in targets.items()
             if RDP_TARGET.fullmatch(target)
             and (":" not in target or 1 <= int(target.rsplit(":", 1)[1]) <= 65535)}
@@ -60,8 +67,22 @@ async def public_settings(request: Request) -> dict:
     data["expiryChoices"] = choices
     request.state.public = data
     request.state.org_name = data.get("orgName") or "TempDesk"
-    data["commonsEditions"] = list(_commons_targets(request))
-    data["commonsEditionLabels"] = COMMONS_EDITION_LABELS
+    targets = _commons_targets(request)
+    available = list(targets)
+    kiosk_target = targets.get("kiosk")
+    if kiosk_target:
+        broker = KioskSeatBroker.configured(request.app.state.settings)
+        if broker is None or not await broker.ready(kiosk_target):
+            available.remove("kiosk")
+    edition_labels = dict(COMMONS_EDITION_LABELS)
+    if "legacy" in targets:
+        edition_labels = {"legacy": "Default session host"}
+    if kiosk_target:
+        edition_labels["kiosk"] = KIOSK_LABEL
+    data["commonsEditions"] = available
+    data["commonsEditionLabels"] = edition_labels
+    data["commonsPickEdition"] = any(edition != "legacy" for edition in targets)
+    data["commonsHasKiosk"] = bool(kiosk_target)
     data["commonsExpiryChoices"] = [choice for choice in choices if int(choice.get("minutes") or 0) > 0]
     data["commonsEnabled"] = bool(data["commonsEditions"] and data["commonsExpiryChoices"])
     return data
@@ -78,7 +99,7 @@ def _limit(request: Request, limiter) -> None:
 
 
 async def _render_home(request: Request, pub: dict, values: dict, *, status: int = 200, **context):
-    seconds = _wording_seconds(request) if pub["commonsEnabled"] and "legacy" not in pub["commonsEditions"] else 0
+    seconds = _wording_seconds(request) if pub["commonsEnabled"] and pub["commonsPickEdition"] else 0
     request.state.picker_wording = bool(seconds)
     return await render(request, "guest/home.html",
                         {"pub": pub, "values": values, "wording_seconds": seconds, **context},
@@ -96,6 +117,43 @@ async def home(request: Request):
     return await _render_home(request, pub, values)
 
 
+async def _cancel_unclaimed_kiosk(request: Request, broker: KioskSeatBroker, target: str, lease: str,
+                                  created: dict | None) -> None:
+    await broker.cancel(target, lease)
+    if isinstance(created, dict):
+        name, password = created.get("username"), created.get("password")
+        if isinstance(name, str) and USERNAME_RE.fullmatch(name) and isinstance(password, str) and password:
+            try:
+                await request.app.state.agent.post(f"/guest/users/{name}/delete", json={"password": password},
+                                                   client_ip=_ip(request))
+            except (AgentError, AgentUnavailable):
+                # Expiry still bounds the unusable directory record.
+                pass
+
+
+async def _create_kiosk(request: Request, body: dict, target: str) -> str:
+    broker = KioskSeatBroker.configured(request.app.state.settings)
+    if broker is None:
+        raise KioskSeatUnavailable
+    lease = commons_handoff.new_reference()
+    created = None
+    try:
+        await broker.reserve(target, lease)
+        created = await request.app.state.agent.post("/guest/users", json=body, client_ip=_ip(request))
+        if not isinstance(created, dict):
+            raise KioskSeatUnavailable
+        username, expires_at = created.get("upn"), created.get("expiresAt")
+        expiry = parse_expiry(expires_at)
+        if (not isinstance(username, str) or not RDP_USER.fullmatch(username) or "@" not in username
+                or expiry is None or expiry <= datetime.now(timezone.utc)):
+            raise KioskSeatUnavailable
+        await broker.assign(target, lease, username, expires_at)
+        return request.app.state.once.put({"credentials": created, "rdpTarget": target, "rdpEdition": "kiosk"})
+    except (Exception, asyncio.CancelledError):
+        await _cancel_unclaimed_kiosk(request, broker, target, lease, created)
+        raise
+
+
 @router.post("/create", dependencies=[Depends(csrf_protect)])
 async def create(request: Request):
     pub = await public_settings(request)
@@ -105,17 +163,21 @@ async def create(request: Request):
     display = raw_display.strip() if isinstance(raw_display, str) else ""
     expiry = raw_expiry.strip() if isinstance(raw_expiry, str) else ""
     commons = form.get("checkout") == "commons"
-    if commons and not pub["commonsEnabled"]:
-        raise HTTPException(status_code=404)
     targets = _commons_targets(request) if commons else {}
     edition = form.get("edition") or ("legacy" if "legacy" in targets else "")
     target = targets.get(edition) if isinstance(edition, str) else None
     values = {"displayName": display, "expiryId": expiry, "edition": edition, "commons": commons}
+    if commons and not pub["commonsEnabled"]:
+        if edition == "kiosk" and target:
+            return await _render_home(request, pub, values, status=409, error_key=KIOSK_UNAVAILABLE)
+        raise HTTPException(status_code=404)
     ids = {c.get("id") for c in pub["expiryChoices"]}
     error = None
     if commons:
         ids = {c.get("id") for c in pub["commonsExpiryChoices"]}
-    if commons and not target:
+    if commons and (not target or edition not in pub["commonsEditions"]):
+        if edition == "kiosk" and target:
+            return await _render_home(request, pub, values, status=409, error_key=KIOSK_UNAVAILABLE)
         error = "Choose an available server edition."
     elif expiry not in ids:
         error = "Choose how long you need the sign-in for."
@@ -132,14 +194,19 @@ async def create(request: Request):
     if display:
         body["displayName"] = display
     try:
-        created = await request.app.state.agent.post("/guest/users", json=body, client_ip=_ip(request))
+        if commons and edition == "kiosk":
+            once_id = await _create_kiosk(request, body, target)
+        else:
+            created = await request.app.state.agent.post("/guest/users", json=body, client_ip=_ip(request))
+            once_id = request.app.state.once.put({"credentials": created, "rdpTarget": target,
+                                                 "rdpEdition": edition if target else None})
+    except KioskSeatUnavailable:
+        return await _render_home(request, pub, values, status=503, error_key=KIOSK_UNAVAILABLE)
     except AgentError as exc:
         if exc.code in ("rate_limited", "conflict", "bad_request", "forbidden"):
             return await _render_home(request, pub, values, status=exc.status if exc.status < 500 else 502,
                                       error_text=agent_message(request, exc))
         raise
-    # Keep the credentials server side; the browser only gets a random id.
-    once_id = request.app.state.once.put({"credentials": created, "rdpTarget": target, "rdpEdition": edition if target else None})
     if commons:
         path = commons_handoff.confirmation_path(commons_handoff.new_reference())
         resp = redirect(request, path)
@@ -182,7 +249,8 @@ async def _render_created(request: Request, key: str | None, cookie_name: str, p
             download = {"target": target, "edition": edition, "username": username}
     resp = await render(request, "guest/created.html",
                         {"pub": pub, "c": creds, "netbios": netbios, "rdp_url": rdp_url,
-                         "rdp_edition_label": COMMONS_EDITION_LABELS.get(edition) if rdp_url else None,
+                         "rdp_edition_label": (KIOSK_LABEL if edition == "kiosk" else COMMONS_EDITION_LABELS.get(edition))
+                         if rdp_url else None,
                          "rdp_unavailable": commons_checkout and not rdp_url}, headers=NO_STORE)
     resp.delete_cookie(cookie_name, path=path)
     if download:
@@ -217,7 +285,8 @@ async def commons_download(request: Request, reference: str):
             or not isinstance(username, str) or not RDP_USER.fullmatch(username)):
         return Response(status_code=404, headers=NO_STORE)
     headers = {**NO_STORE, "Content-Disposition": f'attachment; filename="{commons_handoff.RDP_FILENAME}"'}
-    return Response(content=commons_handoff.rdp_file(target, username), media_type="application/x-rdp", headers=headers)
+    profile = commons_handoff.rdp_file(target, username, restricted=edition == "kiosk")
+    return Response(content=profile, media_type="application/x-rdp", headers=headers)
 
 
 def _username(form) -> str:

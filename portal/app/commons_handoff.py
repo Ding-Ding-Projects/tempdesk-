@@ -76,7 +76,11 @@ def read_handoff(request: Request, name: str, path: str) -> dict:
     return payload if isinstance(payload, dict) else {}
 
 
-def rdp_file(target: str, username: str) -> bytes:
+def rdp_file(target: str, username: str, *, restricted: bool = False) -> bytes:
+    authentication = 1 if restricted else 2
     profile = (f"full address:s:{target}\r\nusername:s:{username}\r\n"
-               "prompt for credentials:i:1\r\nauthentication level:i:2\r\nenablecredsspsupport:i:1\r\n")
+               f"prompt for credentials:i:1\r\nauthentication level:i:{authentication}\r\n"
+               "enablecredsspsupport:i:1\r\n")
+    if restricted:
+        profile += "redirectclipboard:i:0\r\nredirectprinters:i:0\r\ndrivestoredirect:s:\r\n"
     return profile.encode("utf-16")

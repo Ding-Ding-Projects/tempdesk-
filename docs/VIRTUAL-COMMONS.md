@@ -20,6 +20,15 @@ Windows Server Core supports Remote Desktop for administration. Microsoft does n
 
 Existing single-target installations can continue using COMMONS_RDP_TARGET. When either edition setting is supplied, the edition settings determine availability.
 
+### Add a Kiosk Windows 11 workstation
+
+Use a dedicated, supported Windows 11 virtual machine on the lab network with the restricted guest-computer policy. Windows single-app Assigned Access requires console sign-in. This Virtual Commons choice delivers a restricted standard-user desktop over Remote Desktop and reserves the workstation for one guest at a time.
+
+- Set COMMONS_RDP_KIOSK to the workstation's full DNS name. Use the default Remote Desktop port and a server certificate trusted by the client.
+- Set COMMONS_KIOSK_BROKER_URL to the private HTTPS origin of the workstation's seat broker. Set COMMONS_KIOSK_BROKER_KEY_FILE to a protected file containing that broker's credential. Optionally set COMMONS_KIOSK_BROKER_CA_FILE to the applicable trust bundle.
+- Follow the [Windows 11 preparation and broker instructions](../server/kiosk/README.md). The portal displays availability only while the configured broker identifies the workstation and reports an empty, eligible seat. The portal reserves first, creates a finite directory account and waits for the broker's exact account grant before returning the connection file.
+- The connection file requires server authentication and disables clipboard, printer and drive redirection. After account expiry or removal, verify that the watcher ends the original session and the broker confirms release before a second guest can claim the seat.
+
 ## Prepare the Desktop Experience host
 
 Use a dedicated domain member with the Remote Desktop Session Host role and a certificate the clients trust. Arrange for the TempDesk Session Watcher to be installed from the joined domain's computer policy. The existing TempDesk Guest Computers policy also manages startup scripts and profiles. Apply it only to computers intended to receive those settings.

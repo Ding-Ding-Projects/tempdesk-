@@ -52,9 +52,9 @@
         {% endfor %}
       </div>
     </fieldset>
-    {% if pub.commonsEnabled and 'legacy' not in pub.commonsEditions %}
+    {% if pub.commonsPickEdition %}
     <fieldset>
-      <legend>{{ t('Server edition') }}</legend>
+      <legend>{{ t('Computer edition' if pub.commonsHasKiosk else 'Server edition') }}</legend>
       <div class="choice-grid">
         {% for value, label in pub.commonsEditionLabels.items() %}
         <label class="choice"><input type="radio" name="edition" value="{{ value }}" {% if value in pub.commonsEditions %}required{% if values.get('commons') and values.get('edition') == value %} checked{% endif %}{% else %}disabled{% endif %}> <span data-picker-wording>{{ t(label) }}</span>{% if value not in pub.commonsEditions %} ({{ t('Unavailable') }}){% endif %}</label>
@@ -64,7 +64,7 @@
     {% endif %}
     <button type="submit" class="btn filled lg block">{{ t('Virtual Commons: Check out a computer') }}</button>
   </form>
-  {% if wording_seconds and not school and 'legacy' not in pub.commonsEditions %}
+  {% if wording_seconds and not school and pub.commonsPickEdition %}
   <section class="card lg stack" id="picker-wording" data-wording-seconds="{{ wording_seconds }}">
     <label for="picker-wording-file">{{ t('Upload personal wording file') }}</label>
     <input id="picker-wording-file" type="file" accept=".json,application/json">
