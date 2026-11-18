@@ -338,3 +338,11 @@ button.info:hover, button.info[aria-expanded="true"] { border-color: var(--prima
 .menu .rxb-filter button, .menu .rxb-filter input { width: auto; }
 .menu .rxb-filter .rxb-ib { width: 32px; min-height: 32px; padding: 0; justify-content: center; }
 .rxb-wrap { min-width: 0; }
+@media (prefers-reduced-motion: reduce) {
+  :root, :root *, :root *::before, :root *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}

@@ -310,3 +310,11 @@ label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { min-heig
 input[type="checkbox"]:not([role="switch"]):not(label > input), input[type="radio"]:not(label > input) { outline-offset: 10px; box-shadow: 0 0 0 10px transparent; }
 .switch input { width: 48px; height: 30px; }
 .switch input::after { width: 24px; height: 24px; }
+@media (prefers-reduced-motion: reduce) {
+  :root, :root *, :root *::before, :root *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}

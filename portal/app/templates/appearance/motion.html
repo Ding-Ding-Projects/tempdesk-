@@ -1,0 +1,25 @@
+<section class="card rise" id="motion-editor" data-motion-editor data-setting-section data-setting="{{ ta('Motion') }}">
+  <h2>{{ t('Motion') }}</h2>
+  <div class="form-grid">
+    <label class="field" data-setting="{{ ta('Motion') }}">
+      <span lang="en">Transition duration</span><span lang="zh-HK">過場時間</span>
+      <input type="range" min="25" max="200" step="5" value="100" data-motion-speed>
+      <output data-motion-value>100%</output>
+    </label>
+    <label class="field" data-setting="{{ ta('Motion') }}">
+      <span lang="en">Transition curve</span><span lang="zh-HK">過場曲線</span>
+      <select data-motion-curve>
+        <option value="default">Standard · 標準</option>
+        <option value="linear">Linear · 線性</option>
+        <option value="gentle">Gentle · 柔和</option>
+        <option value="spring">Spring · 彈性</option>
+      </select>
+    </label>
+  </div>
+  <div class="cluster">
+    <button type="button" class="btn tonal" data-motion-preview>Preview · 預覽</button>
+    <button type="button" class="btn" data-motion-reset>{{ t('Reset') }}</button>
+    <span aria-hidden="true" class="motion-sample"></span>
+  </div>
+  <p class="hint" data-motion-status role="status"></p>
+</section>

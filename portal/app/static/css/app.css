@@ -638,3 +638,13 @@ html[data-motion="reduced"] .rxb-pop, html[data-motion="off"] .rxb-pop { animati
 .ss-tabtools[hidden] { display: none; }
 .doc-tabs:empty + .doc-tabs-search { display: none; }
 .doc-tabs-search .ss-tabtools { flex-basis: 100%; }
+.motion-sample { width: 1rem; height: 1rem; border-radius: 50%; background: var(--primary); margin-inline-end: 2rem; }
+@media (forced-colors: active) { .motion-sample { background: Highlight; } }
+@media (prefers-reduced-motion: reduce) {
+  :root, :root *, :root *::before, :root *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
