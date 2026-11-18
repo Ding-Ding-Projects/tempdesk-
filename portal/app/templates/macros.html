@@ -98,17 +98,8 @@
 {%- endif -%}
 {%- endmacro %}
 
-{# Two-key super confirmation: type the name AND hold the button for 1.5 s.
-   The signed token is only copied into the form once the hold completes. #}
 {% macro super_confirm(name, token, label='Delete', undo_note=None) -%}
-<div class="stack tight" data-super-confirm>
-  {% if undo_note %}<p class="alert {{ 'warn' if not undo_note[0] else '' }}">{{ t(undo_note[1]) }}</p>{% endif %}
-  <label for="cn-{{ token[:8] }}">{{ t('Type {name} to confirm', name=name) }}</label>
-  <input id="cn-{{ token[:8] }}" type="text" name="confirm_name" autocomplete="off" spellcheck="false" data-expect="{{ name }}" required>
-  <input type="hidden" name="confirm_token" value="" data-token="{{ token }}">
-  <button type="submit" class="btn danger hold-btn" data-hold disabled><span class="fill" aria-hidden="true"></span><span>{{ t('Hold to confirm') }}: {{ t(label) }}</span></button>
-  <p class="hint">{{ t('Type the name, then press and hold the button for 1.5 seconds (or hold Enter or Space on it).') }}</p>
-</div>
+{% include "admin/safety_confirmation.html" %}
 {%- endmacro %}
 
 {% macro bulk_bar(actions, token=None, target_label=None) -%}

@@ -1,0 +1,15 @@
+<div class="stack tight" data-safety-confirm>
+  {% if undo_note %}<p class="alert {{ 'warn' if not undo_note[0] else '' }}">{{ t(undo_note[1]) }}</p>{% endif %}
+  <strong>{{ t(label) }} · {{ name }}</strong>
+  <label>{{ t('Type {name} to confirm', name=name) }}
+    <input type="text" name="confirm_name" autocomplete="off" spellcheck="false" data-expect="{{ name }}">
+  </label>
+  <label><input type="checkbox" data-review> {{ t('The action and target are correct') }}</label>
+  <label>{{ t('Slide to confirm') }}
+    <input type="range" min="0" max="100" step="1" value="0" disabled data-progress>
+  </label>
+  <input type="hidden" name="confirm_token" value="" data-token="{{ token }}">
+  <button type="submit" class="btn danger" data-commit disabled>{{ t(label) }}</button>
+  <button type="button" class="btn" data-exit>{{ t('Emergency exit') }}</button>
+</div>
+<script defer src="/static/js/safety-confirmation.js"></script>
