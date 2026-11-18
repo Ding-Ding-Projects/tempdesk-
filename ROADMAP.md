@@ -21,7 +21,7 @@
 - [x] Inventory the required features across the Deployer, management portal, guest portal, kiosk, public documentation, offline reader, and project delivery. [Verification inventory](docs/FEATURE-INVENTORY.md)
 - [x] Record how to select, apply, reload and clear personal wording in the built management portal. [Illustrated steps](README.md#personal-wording-walkthrough)
 - [ ] Verify local wording and outcome cues across the Deployer notification drawer, its search, and the remaining dynamic surfaces.
-- [ ] Verify the management action-sound switch and wording outcomes in the built portal, including a rejected file, a blocked save, reload and school mode.
+- [x] Verify the management action-sound switch and wording outcomes in the built portal, including a rejected file, a blocked save, browser restart and school mode. [Illustrated steps and receipt](README.md#management-action-sounds-walkthrough)
 - [ ] Complete management personal-wording verification across the remaining dynamic copy surfaces.
 - [ ] Complete the remaining feature implementation and runtime verification on every applicable surface.
 - [ ] Publish the operator wiki when its repository is available. [Prepared wiki entry point](docs/wiki/pending/Home.md)

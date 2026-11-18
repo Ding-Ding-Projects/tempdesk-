@@ -502,6 +502,22 @@ In TempDesk Deployer and Answer File Studio, personal wording changes interface 
 
 Deployer keeps notification message keys and literal values in memory. The open notification drawer updates its text and search results when personal wording is applied or cleared. A successful import plays the Windows tada cue after the wording is saved. A rejected wording drop plays the invalid-input cue and leaves the current wording in place. Both use the existing sound switch and volume.
 
+## Management action sounds walkthrough
+
+These images come from the running management portal at `c4cf03ed5ae7b0cd42e2f24cb33095d2972c4f71`, using a separate test directory. The [capture and interaction inventory](docs/evidence/management-sounds.json) records the source, image hashes, geometry and browser results.
+
+1. Open **Settings** and search for **Action sounds**. The result is under **Display and accessibility**.
+
+   ![Settings search finds Action sounds with the checkbox checked](docs/evidence/management-sounds-c4cf03e/01-find-action-sounds.png)
+
+2. Focus the checkbox and press **Space** to mute the cues. **Saved in this browser** confirms the choice. The wording result is still displayed and announced.
+
+   ![The unchecked Action sounds box has keyboard focus and a saved confirmation](docs/evidence/management-sounds-c4cf03e/02-turn-sounds-off.png)
+
+3. When school mode is active, the notice explains that sounds are paused. A checked box still shows the saved choice for when school mode ends.
+
+   ![School mode silences sounds and keeps the Action sounds box checked](docs/evidence/management-sounds-c4cf03e/03-school-pauses-cues.png)
+
 ## Standalone offline documentation
 
 Open **TempDesk Docs** to browse the guides, search the documentation and read the operator wiki offline. The [portable executable in v1.0.73](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.73) ran from an otherwise empty folder. Searching for **Configure the destinations** opened the Virtual Commons guide, and the sidebar opened the prepared wiki.

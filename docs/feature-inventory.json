@@ -240,7 +240,17 @@
     },
     {
       "id": "vocabulary-drop-apply",
-      "scope": "applications"
+      "scope": "applications",
+      "progress": {
+        "management": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "c4cf03ed5ae7b0cd42e2f24cb33095d2972c4f71",
+          "reference": "docs/evidence/management-sounds.json",
+          "observation": "The signed-in test browser applied a trusted file drop and Settings import, preserved wording on rejection and save failure, and made no non-read requests during import.",
+          "remaining": "Verify the complete dynamic wording coverage and physical audio output in the management portal."
+        }
+      }
     },
     {
       "id": "school-mode",
@@ -252,7 +262,17 @@
     },
     {
       "id": "action-sound-effects",
-      "scope": "applications"
+      "scope": "applications",
+      "progress": {
+        "management": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "c4cf03ed5ae7b0cd42e2f24cb33095d2972c4f71",
+          "reference": "docs/evidence/management-sounds.json",
+          "observation": "The built console played distinct browser cues after a valid or rejected import. Mute persisted after restart, a stale cue was canceled, and unavailable audio left the visible result intact.",
+          "remaining": "Verify audible output and the same signed-in workflow on the deployed management portal."
+        }
+      }
     },
     {
       "id": "scheduled-settings",

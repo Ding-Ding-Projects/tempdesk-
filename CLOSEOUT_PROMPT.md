@@ -22,4 +22,4 @@ Exercise the driver-path import through the generated desktop Studio bridge. The
 
 Verify the open Deployer notification drawer and search across applying, replacing and clearing local wording. Verify successful and invalid drops, local save failures, and the existing sound preferences in the built renderer.
 
-Exercise the management sound setting and its valid and rejected wording outcomes through a signed-in test browser. Confirm that browser data, the visibility of wording outcomes, and the previous valid wording survive audio or file errors. Keep browser playback evidence separate from any native sound-device proof.
+The [management sound walkthrough](README.md#management-action-sounds-walkthrough) proves the signed-in Settings switch, trusted file drops, a blocked save, Clear with audio pending and persistence after restarting the isolated browser. Continue the remaining dynamic wording and audio checks on the applicable surfaces. The figures and data for the remaining native checkout work are documented above.
