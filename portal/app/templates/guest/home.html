@@ -14,13 +14,14 @@
     {% if error_text and not values.get("commons") %}<p class="alert error" role="alert">{{ error_text }}</p>{% endif %}
     <div class="field">
       <label for="dn">{{ t('Your name') }} <span class="optional">({{ t('optional') }})</span></label>
-      <input id="dn" type="text" name="displayName" maxlength="64" autocomplete="name" value="{{ values.get('displayName', '') }}" placeholder="{{ ta('Shown on the sign-in screen') }}">
+      <input id="dn" type="text" name="displayName" maxlength="64" autocomplete="name" value="{{ values.get('displayName', '') if not values.get('commons') else '' }}" placeholder="{{ ta('Shown on the sign-in screen') }}">
     </div>
     {% if pub.expiryChoices %}
     <fieldset>
       <legend>{{ t('How long do you need it?') }}</legend>
       <div class="choice-grid">
-        {% set sel = values.get('expiryId') or (pub.expiryChoices[1].id if pub.expiryChoices|length > 1 else pub.expiryChoices[0].id) %}
+        {% set default_expiry = pub.expiryChoices[1].id if pub.expiryChoices|length > 1 else pub.expiryChoices[0].id %}
+        {% set sel = (values.get('expiryId') if not values.get('commons') else none) or default_expiry %}
         {% for c in pub.expiryChoices %}
         <label class="choice {% if loop.last and loop.length is odd %}wide{% endif %}"><input type="radio" name="expiryId" value="{{ c.id }}" {% if c.id == sel %}checked{% endif %} required> {{ c.label if c.minutes != 0 else ta('Until I delete it') }}</label>
         {% endfor %}
@@ -35,7 +36,7 @@
   {% if pub.commonsEnabled %}
   <form class="card lg stack rise" method="post" action="/create">
     {{ csrf() }}
-    <h2>Virtual Commons</h2>
+    <h2>{{ t('Virtual Commons') }}</h2>
     <input type="hidden" name="checkout" value="commons">
     {% if error_key and values.get("commons") %}<p class="alert error" role="alert">{{ tr.html(error_key, serious=True) }}</p>{% endif %}
     {% if error_text and values.get("commons") %}<p class="alert error" role="alert">{{ error_text }}</p>{% endif %}
@@ -47,7 +48,7 @@
       <legend>{{ t('How long do you need it?') }}</legend>
       <div class="choice-grid">
         {% for c in pub.commonsExpiryChoices %}
-        <label class="choice"><input type="radio" name="expiryId" value="{{ c.id }}" {% if values.get('expiryId') == c.id %}checked{% endif %} required> {{ c.label }}</label>
+        <label class="choice"><input type="radio" name="expiryId" value="{{ c.id }}" {% if values.get('commons') and values.get('expiryId') == c.id %}checked{% endif %} required> {{ c.label }}</label>
         {% endfor %}
       </div>
     </fieldset>
@@ -56,7 +57,7 @@
       <legend>{{ t('Server edition') }}</legend>
       <div class="choice-grid">
         {% for value, label in [('gui', 'Windows Server with GUI'), ('core', 'Windows Server without GUI')] %}
-        <label class="choice"><input type="radio" name="edition" value="{{ value }}" {% if value not in pub.commonsEditions %}disabled{% endif %} {% if values.get('edition') == value %}checked{% endif %}> {{ t(label) }}{% if value not in pub.commonsEditions %} ({{ t('Unavailable') }}){% endif %}</label>
+        <label class="choice"><input type="radio" name="edition" value="{{ value }}" {% if value in pub.commonsEditions %}required{% if values.get('commons') and values.get('edition') == value %} checked{% endif %}{% else %}disabled{% endif %}> {{ t(label) }}{% if value not in pub.commonsEditions %} ({{ t('Unavailable') }}){% endif %}</label>
         {% endfor %}
       </div>
     </fieldset>
