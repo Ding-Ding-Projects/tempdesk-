@@ -1,6 +1,7 @@
 // TempDesk Deployer renderer: shell (title bar, navigation rail, tabs), settings application,
 // language and wording, command palette, notifications, updates, onboarding and global shortcuts.
 import { h, t, state, btn, iconBtn, icon, toast, notice, notificationText, visibleNotifications, refreshToasts, announce, onNotify, dialog, play, refreshSoundPreferences, celebrate, dismissCelebration, pulseFocus, searchBox, contextMenu, fmtTime, rxT } from './ui.js';
+import { showTabCatalog, editTabGroup } from './tab-manager.js';
 import { busyNames } from './run.js';
 import { PAGES, registerActions, ACTIONS } from './pages.js';
 import { runOnboarding } from './onboarding.js';
@@ -237,17 +238,31 @@ function moveIndicator() {
 function renderTabs() {
   const el = document.getElementById('tabs');
   el.replaceChildren();
+  const catalog = btn(t('tabs.catalog'), () => showTabCatalog(app, NAV, openDestination, openAllDestinations), 'btn-ghost btn-sm');
+  Object.assign(catalog.style, { position: 'sticky', left: '0', zIndex: '1', flexShrink: '0', background: 'var(--surface, Canvas)' });
+  el.appendChild(catalog);
+  for (const id of app.tabs.destinations) {
+    const name = t('nav.' + id);
+    el.appendChild(h('div', { class: 'tab' }, [
+      h('button', { type: 'button', class: 'btn-ghost', role: 'tab', 'aria-selected': String(app.page === id), onclick: () => go(id), text: name }),
+      h('button', { type: 'button', class: 'tclose', 'aria-label': t('tabs.close', [name]), onclick: () => {
+        app.tabs.destinations = app.tabs.destinations.filter(page => page !== id); saveTabs(); renderTabs();
+        document.querySelector('#tabs button')?.focus();
+      } }, [icon('close')])
+    ]));
+  }
   app.tabs.open.forEach((name, i) => {
     const sel = app.page === 'deployment' && app.tabs.active === name;
-    const tab = h('div', { class: 'tab', role: 'tab', 'aria-selected': String(sel), tabindex: sel || (!app.tabs.active && i === 0) ? '0' : '-1', draggable: 'true', 'data-name': name, title: name }, [
-      h('span', { class: 'tname', text: name }),
+    const tab = h('div', { class: 'tab', role: 'tab', 'aria-selected': String(sel), tabindex: sel || (app.page !== 'deployment' && i === 0) ? '0' : '-1', draggable: 'true', 'data-name': name, title: name }, [
+      h('span', { class: 'tname', text: (app.tabs.pinned.includes(name) ? '📌 ' : '') + (Object.hasOwn(app.tabs.groups, name) ? app.tabs.groups[name] + ' / ' : '') + name }),
       h('button', { type: 'button', class: 'tclose', 'aria-label': t('tabs.close', [name]), title: t('tabs.close', [name]) + ' (Ctrl+W)', onclick: (e) => { e.stopPropagation(); closeTab(name); } }, [icon('close')])]);
     tab.addEventListener('click', () => openTab(name));
     tab.addEventListener('auxclick', (e) => { if (e.button === 1) { e.preventDefault(); closeTab(name); } });
     tab.addEventListener('keydown', (e) => {
+      if (e.target !== tab) return;
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTab(name); }
       if (e.key === 'Delete') closeTab(name);
-      const tabs = [...el.querySelectorAll('.tab')];
+      const tabs = [...el.querySelectorAll('.tab[data-name]')];
       if (e.key === 'ArrowRight') tabs[(i + 1) % tabs.length].focus();
       if (e.key === 'ArrowLeft') tabs[(i - 1 + tabs.length) % tabs.length].focus();
       if (e.ctrlKey && e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); moveTab(name, e.key === 'ArrowLeft' ? -1 : 1); }
@@ -265,11 +280,19 @@ function renderTabs() {
     });
     contextMenu(tab, () => [
       { label: t('tabs.open'), kbd: 'Enter', run: () => openTab(name) },
+      { label: t(app.tabs.pinned.includes(name) ? 'tabs.unpin' : 'tabs.pin'), run: () => {
+        app.tabs.pinned = app.tabs.pinned.includes(name) ? app.tabs.pinned.filter(n => n !== name) : [...app.tabs.pinned, name];
+        saveTabs(); renderTabs();
+      } },
+      { label: t('tabs.group'), run: () => editTabGroup(app, name, value => {
+        if (value) app.tabs.groups[name] = value; else delete app.tabs.groups[name];
+        saveTabs(); renderTabs();
+      }) },
       { label: t('tabs.moveLeft'), kbd: 'Ctrl+Shift+Left', run: () => moveTab(name, -1), disabled: i === 0 },
       { label: t('tabs.moveRight'), kbd: 'Ctrl+Shift+Right', run: () => moveTab(name, 1), disabled: i === app.tabs.open.length - 1 },
       'sep',
       { label: t('tabs.close', [name]), kbd: 'Ctrl+W', run: () => closeTab(name) },
-      { label: t('tabs.closeOthers'), run: () => { app.tabs.open = [name]; saveTabs(); renderTabs(); } }]);
+      { label: t('tabs.closeOthers'), run: () => { closeTabs(app.tabs.open.filter(n => n !== name)); } }]);
     el.appendChild(tab);
   });
   if (app.tabs.open.length) el.appendChild(tabSearchToggle());
@@ -291,9 +314,30 @@ function buildTabSearch() {
   strip.insertAdjacentElement('afterend', box);
   const holder = h('div'); box.appendChild(holder);
   tabCloser = window.TempDeskRegex.attachTabCloser(holder, { id: 'deployer-tabs', label: rxT('tabs.search'), t: rxT, mount: holder, place: 'prepend',
-    tabs: () => { const busy = busyNames(); return app.tabs.open.map((name) => ({ id: name, text: name, el: strip.querySelector('.tab[data-name="' + CSS.escape(name) + '"]'), pinned: false, dirty: busy.includes(name) })); },
+    tabs: () => { const busy = busyNames(); return app.tabs.open.map((name) => ({ id: name, text: name, el: strip.querySelector('.tab[data-name="' + CSS.escape(name) + '"]'), pinned: app.tabs.pinned.includes(name), dirty: busy.includes(name) })); },
     confirmUnsaved: () => false,
-    close: (ids) => { ids.forEach((n) => { app.tabs.open = app.tabs.open.filter((x) => x !== n); }); if (!app.tabs.open.includes(app.tabs.active)) app.tabs.active = app.tabs.open[0] || null; saveTabs(); if (app.page === 'deployment') { if (app.tabs.active) go('deployment', { name: app.tabs.active }); else go('deployments'); } else renderTabs(); } });
+    close: closeTabs });
+}
+function closeTabs(ids) {
+  const protectedNames = new Set([...busyNames(), ...app.tabs.pinned]);
+  const closing = new Set(ids.filter(name => !protectedNames.has(name)));
+  if (!closing.size) return;
+  app.tabs.open = app.tabs.open.filter(name => !closing.has(name));
+  closing.forEach(name => delete app.tabs.groups[name]);
+  if (closing.has(app.tabs.active)) app.tabs.active = app.tabs.open[0] || null;
+  saveTabs();
+  if (app.page === 'deployment') {
+    if (app.tabs.active) go('deployment', { name: app.tabs.active });
+    else go('deployments');
+  } else renderTabs();
+}
+function openDestination(id, params) {
+  if (!app.tabs.destinations.includes(id)) { app.tabs.destinations.push(id); saveTabs(); }
+  go(id, params);
+}
+function openAllDestinations() {
+  app.tabs.destinations = ORDER.slice();
+  saveTabs(); renderTabs();
 }
 function saveTabs() { td.invoke['tabs:set'](app.tabs); }
 function moveTab(name, d) { const l = app.tabs.open, i = l.indexOf(name), j = i + d; if (j < 0 || j >= l.length) return; l.splice(i, 1); l.splice(j, 0, name); saveTabs(); renderTabs(); const tb = document.querySelector('.tab[data-name="' + CSS.escape(name) + '"]'); if (tb) tb.focus(); }
@@ -304,11 +348,7 @@ export function openTab(name) {
 }
 app.openTab = openTab;
 function closeTab(name) {
-  const i = app.tabs.open.indexOf(name);
-  app.tabs.open = app.tabs.open.filter((n) => n !== name);
-  if (app.tabs.active === name) app.tabs.active = app.tabs.open[Math.min(i, app.tabs.open.length - 1)] || null;
-  saveTabs();
-  if (app.page === 'deployment') { if (app.tabs.active) go('deployment', { name: app.tabs.active }); else go('deployments'); } else renderTabs();
+  closeTabs([name]);
 }
 
 function renderBanner() {
@@ -515,6 +555,7 @@ function setupKeys() {
     const inField = e.target.matches && e.target.matches('input, textarea, select');
     if (e.ctrlKey && e.shiftKey && k === 'f') { e.preventDefault(); openPalette(); return; }
     if (e.ctrlKey && !e.shiftKey && !e.altKey && /^[1-8]$/.test(e.key)) { e.preventDefault(); go(ORDER[Number(e.key) - 1]); return; }
+    if (e.ctrlKey && k === 't') { e.preventDefault(); showTabCatalog(app, NAV, openDestination, openAllDestinations); return; }
     if (e.ctrlKey && k === 'w' && app.page === 'deployment' && app.tabs.active) { e.preventDefault(); closeTab(app.tabs.active); return; }
     if (e.ctrlKey && k === 'tab' && app.tabs.open.length) { e.preventDefault(); const l = app.tabs.open, i = l.indexOf(app.tabs.active); openTab(l[(i + (e.shiftKey ? -1 : 1) + l.length) % l.length]); return; }
     if (e.ctrlKey && !inField && ((k === 'z' && !e.shiftKey))) { e.preventDefault(); doUndo(); return; }
@@ -538,6 +579,13 @@ async function init() {
   const w = buildWording(await td.invoke['wording:get']());
   app.wording = w.fn; app.wordingMap = w.map;
   app.tabs = await td.invoke['tabs:get']();
+  app.tabs.groups = Object.assign(Object.create(null), app.tabs.groups);
+  app.tabs.pinned = Array.isArray(app.tabs.pinned) ? app.tabs.pinned : [];
+  const previous = Array.isArray(app.tabs.offered) ? app.tabs.offered : [];
+  const saved = Array.isArray(app.tabs.destinations) ? app.tabs.destinations : [];
+  app.tabs.destinations = ORDER.filter(id => saved.includes(id) || !previous.includes(id));
+  app.tabs.offered = ORDER.slice();
+  if (ORDER.some(id => !previous.includes(id))) saveTabs();
   makeT();
   applyAppearance();
   ['win-min', 'win-max', 'win-close'].forEach((id, i) => document.getElementById(id).setAttribute('aria-label', t(['win.min', 'win.max', 'win.close'][i])));

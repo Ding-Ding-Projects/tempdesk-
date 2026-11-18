@@ -8,6 +8,14 @@
  },
  "surfaces": [
   {
+   "id": "documentation-capabilities",
+   "page": "docs/capabilities.html",
+   "surface": "Search capability IDs and filtered evidence",
+   "file": "assets/capability-reader.js",
+   "consumer": "attachRegexBuilder",
+   "match": "regex.attachRegexBuilder(query"
+  },
+  {
    "id": "studio-global-search",
    "page": "answer-file.html",
    "surface": "Top bar global search",

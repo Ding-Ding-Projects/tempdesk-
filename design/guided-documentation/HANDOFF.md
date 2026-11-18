@@ -9,3 +9,7 @@ Use the TempDesk typography, surfaces, spacing, and focus colors from [the ownin
 The wide artboard opens in dark English at 1440 px. The narrow artboard opens in light bilingual mode at 360 px. Both cover the selected host, the checklist, and the next article. For product acceptance, also exercise the five paths, local persistence, keyboard navigation, and the fallback when scripts or storage are unavailable.
 
 See [render and review](REHEARSAL.md) for the checked-in frame provenance. Hosted canvas publication is pending access to the target canvas.
+
+## Capability reader
+
+From Documentation, open **Explore capabilities by task and surface**. The search and its adjacent regular-expression builder belong to this reader. Surface and evidence filters combine on the same observation. Each disclosure starts with its stable feature identity, then shows the applicable surface, original observation, revision, remaining work and the local workflow guide. Narrow layouts wrap the controls ahead of the results. This route also belongs to the bundled offline documentation.

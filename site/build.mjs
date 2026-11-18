@@ -14,6 +14,8 @@ import { fileURLToPath } from 'node:url';
 import { relatedDocumentationWorkflows, renderDocumentationWorkflows } from './docs-workflows.mjs';
 import { inventoryPath, inventorySummary, readInventory } from './feature-inventory.mjs';
 
+import { capabilityReader } from './templates/capability-reader.mjs';
+
 const SITE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(SITE, '..');
 const DEFAULT_OUT = path.join(SITE, '_site');
@@ -360,6 +362,17 @@ ${relatedDocumentationWorkflows(d.file, guideCatalogs[0], escapeHtml)}
     await fs.writeFile(path.join(OUT, 'docs', d.name + '.html'), page({ title: d.title + ' | TempDesk docs', desc: plainText(md).slice(0, 180), root: '../', url: 'docs/' + d.name + '.html', body }));
     index.pages.push({ url: 'docs/' + d.name + '.html', title: d.title, summary: 'Docs: ' + d.file, kind: 'doc', sections: r.headings.filter((x) => x.level <= 3 && x.level > 1).map((x) => ({ id: x.id, title: x.text })), text: plainText(md) });
   }
+  const readerUrl = 'docs/capabilities.html';
+  const readerTitle = guideCatalogs[0]['reader.title'];
+  await fs.writeFile(path.join(OUT, readerUrl), page({
+    title: readerTitle + ' | TempDesk', desc: guideCatalogs[0]['reader.lead'],
+    root: '../', url: readerUrl, body: capabilityReader(inventory, docs, guideCatalogs[0], escapeHtml),
+    extraHead: '<link rel="stylesheet" href="../assets/guided-docs.css">',
+    extraScripts: '<script src="../assets/capability-reader.js"></script>',
+  }));
+  index.pages.push({ url: readerUrl, title: readerTitle, kind: 'doc', summary: guideCatalogs[0]['reader.lead'],
+    text: inventory.features.map(feature => feature.id).join(' '),
+    sections: inventory.features.map(feature => ({id: 'cap-' + feature.id, title: feature.id})) });
   const docsGuides = renderDocumentationWorkflows(docPages, guideCatalogs, escapeHtml);
   const docsIndexBody = `<div class="docs-layout docs-index-layout"><div class="docs-main"><div class="content">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../" data-i18n="nav.home">Home</a><span aria-hidden="true">/</span><span data-i18n="nav.docs">Docs</span></nav>
@@ -371,6 +384,7 @@ ${relatedDocumentationWorkflows(d.file, guideCatalogs[0], escapeHtml)}
 <p class="meter-label" id="docs-count" aria-live="polite"></p>
 <div class="hits" id="docs-hits"></div>
 </section>
+<p><a class="btn" href="capabilities.html" data-i18n="reader.title">Explore capabilities by task and surface</a></p>
 ${docsGuides}
 <h2 id="all-docs" data-i18n="docs.all">All documents</h2>
 <div class="hits" data-search-surface="docs-all" data-search-label="docs.all">${docs.map((d) => `<a class="hit" href="${d.name}.html">${escapeHtml(d.title)}<small>${escapeHtml(d.file)}</small></a>`).join('')}</div>

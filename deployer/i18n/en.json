@@ -1,4 +1,12 @@
 {
+ "tabs.catalog": "Find or open a tab",
+ "tabs.pin": "Pin tab",
+ "tabs.unpin": "Unpin tab",
+ "tabs.group": "Edit tab group",
+ "tabs.groupName": "Group name (leave blank to remove)",
+ "tabs.saveGroup": "Save group",
+ "tabs.openAll": "Open every destination tab",
+ "tabs.openList": "Open tabs",
  "kioskVm.title": "Windows 11 kiosk for Virtual Commons",
  "kioskVm.lead": "Prepare one powered-off Windows 11 Pro, Enterprise or Education workstation for a single RDP booking. Choose licensed installation media and a storage directory.",
  "kioskVm.provider": "Virtualization platform",
