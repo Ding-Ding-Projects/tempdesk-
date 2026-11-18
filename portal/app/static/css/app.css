@@ -648,3 +648,23 @@ html[data-motion="reduced"] .rxb-pop, html[data-motion="off"] .rxb-pop { animati
   }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+
+/* User-defined overrides are limited to the properties explicitly changed. */
+:root[data-style-card-radius] :is(.card) { border-radius: var(--style-card-radius); }
+:root[data-style-card-width] :is(.card) { border-width: var(--style-card-width); }
+:root[data-style-card-color] :is(.card) { border-color: var(--style-card-color); }
+:root[data-style-button-radius] :is(.btn) { border-radius: var(--style-button-radius); }
+:root[data-style-button-width] :is(.btn) { border-width: var(--style-button-width); }
+:root[data-style-button-color] :is(.btn) { border-color: var(--style-button-color); }
+:root[data-style-input-radius] :is(.field input:not([type=range]):not([type=checkbox]):not([type=color]), .field select, .field textarea) { border-radius: var(--style-input-radius); }
+:root[data-style-input-width] :is(.field input:not([type=range]):not([type=checkbox]):not([type=color]), .field select, .field textarea) { border-width: var(--style-input-width); }
+:root[data-style-input-color] :is(.field input:not([type=range]):not([type=checkbox]):not([type=color]), .field select, .field textarea) { border-color: var(--style-input-color); }
+:root[data-style-dialog-radius] :is(dialog) { border-radius: var(--style-dialog-radius); }
+:root[data-style-dialog-width] :is(dialog) { border-width: var(--style-dialog-width); }
+:root[data-style-dialog-color] :is(dialog) { border-color: var(--style-dialog-color); }
+:root[data-style-menu-radius] :is(.menu-pop, .ctx-menu) { border-radius: var(--style-menu-radius); }
+:root[data-style-menu-width] :is(.menu-pop, .ctx-menu) { border-width: var(--style-menu-width); }
+:root[data-style-menu-color] :is(.menu-pop, .ctx-menu) { border-color: var(--style-menu-color); }
+:root[data-style-notice-radius] :is(.toast) { border-radius: var(--style-notice-radius); }
+:root[data-style-notice-width] :is(.toast) { border-width: var(--style-notice-width); }
+:root[data-style-notice-color] :is(.toast) { border-color: var(--style-notice-color); }

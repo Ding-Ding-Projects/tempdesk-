@@ -5,9 +5,6 @@
     card: '.card', button: '.btn', input: '.field input:not([type=range]):not([type=checkbox]):not([type=color]), .field select, .field textarea',
     dialog: 'dialog', menu: '.menu-pop, .ctx-menu', notice: '.toast'
   };
-  // This stylesheet is assembled solely from the fixed selector list and validated numeric/color values.
-  const sheet = document.createElement('style');
-  document.head.append(sheet);
   const editor = document.querySelector('[data-style-editor]');
 
   function read() {
@@ -31,13 +28,17 @@
 
   let settings = read();
   function draw() {
-    sheet.textContent = Object.entries(settings).map(([target, value]) => {
-      const properties = [];
-      if ('radius' in value) properties.push('border-radius:' + value.radius + 'px');
-      if ('width' in value) properties.push('border-width:' + value.width + 'px');
-      if ('color' in value) properties.push('border-color:' + value.color);
-      return ':root :is(' + selectors[target] + ') { ' + properties.join(';') + ' }';
-    }).join('\n');
+    const root = document.documentElement;
+    for (const target of Object.keys(selectors)) {
+      const item = settings[target] || {};
+      for (const name of ['radius', 'width', 'color']) {
+        const flag = 'data-style-' + target + '-' + name;
+        const property = '--style-' + target + '-' + name;
+        root.toggleAttribute(flag, name in item);
+        if (name in item) root.style.setProperty(property, name === 'color' ? item[name] : item[name] + 'px');
+        else root.style.removeProperty(property);
+      }
+    }
   }
   draw();
 
