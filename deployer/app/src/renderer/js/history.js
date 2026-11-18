@@ -80,7 +80,7 @@ export async function historyPage(root, app) {
   const preview = h('details');
   const summary = h('summary');
   const previewList = h('ul');
-  preview.append(summary, previewList);
+  preview.append(summary, listFilter(previewList, 'history-selection-preview', t('records.preview')));
   const save = btn(t('records.exportSelected'), () => saveRecords('tempdesk-history', {
     schema: 'tempdesk-history-index', version: 1, encoding: 'UTF-8', lineEnding: 'LF',
     range: dates.values(), records: chosen().map(({ id, t, author, message, kind }) => ({ id, t, author, message, kind }))
@@ -182,7 +182,10 @@ function renderMarkdown(md, openArticle) {
     }
     else if (b.type === 'p') out.appendChild(h('p', null, renderInline(b.inline, openArticle)));
     else if (b.type === 'pre') out.appendChild(h('pre', { text: b.text }));
-    else if (b.type === 'ul' || b.type === 'ol') out.appendChild(h(b.type, null, b.items.map((i) => h('li', null, renderInline(i, openArticle)))));
+    else if (b.type === 'ul' || b.type === 'ol') {
+      const items = h(b.type, null, b.items.map(item => h('li', null, renderInline(item, openArticle))));
+      out.appendChild(listFilter(items, 'help-markdown-list', t('help.listItems')));
+    }
     else if (b.type === 'quote') out.appendChild(h('blockquote', { class: 'notice' }, renderInline(b.inline, openArticle)));
     else if (b.type === 'table') out.appendChild(listFilter(h('table', null, [h('tbody', null, b.rows.map((r, ri) => h('tr', null, r.map((c) => h(ri === 0 ? 'th' : 'td', null, renderInline(c, openArticle)))))) ]), 'help-doc-table', t('help.tab.docs'), { items: (l) => [...l.querySelectorAll('tr')].slice(1) }));
   });
@@ -192,7 +195,10 @@ function highlight(el, matcher) {
   if (!matcher) return 0;
   let n = 0;
   const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-  const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+  const nodes = [];
+  while (walker.nextNode()) {
+    if (!walker.currentNode.parentElement?.closest('.rxb-filter')) nodes.push(walker.currentNode);
+  }
   nodes.forEach((node) => {
     const s = node.nodeValue; matcher.re.lastIndex = 0;
     let m, last = 0; const frag = document.createDocumentFragment(); let any = false, guard = 0;
@@ -250,11 +256,19 @@ export async function helpPage(root, app) {
   const texts = {};
   for (const d of docs) { try { texts[d.path] = await td.invoke['docs:read'](d.path); } catch (e) { texts[d.path] = ''; } }
   let cur = (app.params && app.params.doc) || docs[0].path, matcher = null;
+  const articleText = article => article.title + ' ' + texts[article.path];
   const nav = h('div', { class: 'list', role: 'list' });
   const body = h('div', { class: 'card' });
+  const headingLinks = h('nav', { 'aria-label': t('records.contents') });
+  const contents = h('details', null, [h('summary', { text: t('records.contents') }),
+    listFilter(headingLinks, 'help-article-contents', t('records.contents'))]);
+  const docsSearch = searchBox({ label: t('help.searchDocs'),
+    onChange: m => { matcher = m.empty ? null : m; draw(); },
+    count: m => Core.countMatches(docs.map(articleText), m)
+  });
   function draw() {
-    nav.replaceChildren(...docs.filter((d) => !matcher || Core.testMatch(d.title + ' ' + texts[d.path], matcher)).map((d) => {
-      const n = matcher ? Core.countMatches([texts[d.path]], matcher).matches : 0;
+    nav.replaceChildren(...docs.filter((d) => !matcher || matcher.ok && Core.testMatch(articleText(d), matcher)).map((d) => {
+      const n = matcher ? Core.countMatches([articleText(d)], matcher).matches : 0;
       return h('button', { type: 'button', class: 'item', style: { textAlign: 'left', cursor: 'pointer' }, 'aria-current': d.path === cur ? 'page' : null, onclick: () => { cur = d.path; draw(); } }, [h('div', { class: 'grow' }, [h('div', { class: 'title', text: d.title }), h('div', { class: 'sub mono', text: d.path })]), n ? h('span', { class: 'chip ok', text: String(n) }) : null]);
     }));
     const doc = renderMarkdown(texts[cur] || '', (href) => {
@@ -281,15 +295,14 @@ export async function helpPage(root, app) {
       return true;
     });
     const headings = [...doc.querySelectorAll('[data-doc-anchor]')];
-    const contents = h('details', null, [h('summary', { text: t('records.contents') })]);
-    if (headings.length) contents.appendChild(h('nav', { 'aria-label': t('records.contents') }, headings.map(heading =>
+    headingLinks.replaceChildren(...headings.map(heading =>
       btn(heading.textContent, () => { heading.focus(); heading.scrollIntoView({ block: 'start' }); }, 'btn-ghost btn-sm')
-    )));
+    ));
     body.replaceChildren(...(headings.length ? [contents, doc] : [doc]));
-    if (matcher) { const n = highlight(doc, matcher); const m = doc.querySelector('mark'); if (m) m.scrollIntoView({ block: 'center' }); announce(n); }
+    if (matcher?.ok && matcher.re) { const n = highlight(doc, matcher); const m = doc.querySelector('mark'); if (m) m.scrollIntoView({ block: 'center' }); announce(n); }
   }
   function announce() { /* the search box already reports counts */ }
-  root.appendChild(h('div', { class: 'card flat', style: { marginBottom: '14px' } }, [searchBox({ label: t('help.searchDocs'), onChange: (m) => { matcher = m.ok && !m.empty ? m : null; draw(); }, count: (m) => Core.countMatches(Object.values(texts), m) })]));
+  root.appendChild(h('div', { class: 'card flat', style: { marginBottom: '14px' } }, [docsSearch]));
   root.appendChild(h('div', { class: 'cols' }, [h('div', { class: 'side' }, [nav]), h('div', { class: 'grow' }, [body])]));
   draw();
 }

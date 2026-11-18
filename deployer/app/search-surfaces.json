@@ -128,6 +128,27 @@
    "consumer": "listFilter"
   },
   {
+   "id": "history-selection-preview",
+   "page": "History",
+   "surface": "Selected revision preview",
+   "file": "src/renderer/js/history.js",
+   "consumer": "listFilter"
+  },
+  {
+   "id": "help-article-contents",
+   "page": "Help",
+   "surface": "Headings in the current article",
+   "file": "src/renderer/js/history.js",
+   "consumer": "listFilter"
+  },
+  {
+   "id": "help-markdown-list",
+   "page": "Help",
+   "surface": "Each ordered or unordered list in documentation and release notes",
+   "file": "src/renderer/js/history.js",
+   "consumer": "listFilter"
+  },
+  {
    "id": "help-tabs",
    "page": "Help",
    "surface": "Help tab strip",

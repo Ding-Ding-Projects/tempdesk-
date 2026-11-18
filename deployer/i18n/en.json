@@ -276,6 +276,7 @@
  "help.noChangelog": "No changelog is bundled with this build.",
  "help.noDocs": "No documentation is bundled with this build.",
  "help.searchChangelog": "Search the changelog",
+ "help.listItems": "List items",
  "help.searchDocs": "Search the documentation",
  "help.tab.changelog": "Changelog",
  "help.tab.docs": "Docs",
