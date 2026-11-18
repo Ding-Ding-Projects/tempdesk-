@@ -331,9 +331,9 @@ function closeTabs(ids) {
     else go('deployments');
   } else renderTabs();
 }
-function openDestination(id) {
+function openDestination(id, params) {
   if (!app.tabs.destinations.includes(id)) { app.tabs.destinations.push(id); saveTabs(); }
-  go(id);
+  go(id, params);
 }
 function openAllDestinations() {
   app.tabs.destinations = ORDER.slice();

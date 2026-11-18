@@ -19,6 +19,12 @@ export function showTabCatalog(app, destinations, openDestination, openAll) {
     const records = destinations.map(([id, glyph]) => ({
       title: t('nav.' + id), glyph, group: '', open: () => openDestination(id)
     }));
+    for (const key of Object.keys(app.catalogs.en || {})) {
+      if (!key.startsWith('set.sec.')) continue;
+      const section = key.slice('set.sec.'.length);
+      records.push({ title: t(key), group: t('nav.settings'), glyph: 'settings',
+        open: () => openDestination('settings', { focus: '#sec-' + CSS.escape(section) }) });
+    }
     const seen = new Set();
     function addDeployment(name) {
       if (seen.has(name)) return;
