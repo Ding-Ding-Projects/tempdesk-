@@ -5,7 +5,7 @@
   const site = window.TempDeskSite;
   if (!site) return;
   const key = 'td.readerAppearance.v1';
-  const defaults = { accent: '', width: 78, leading: 155 };
+  const defaults = { accent: '', width: 100, leading: 165 };
   function read() {
     try {
       const saved = JSON.parse(site.LS.get(key, '{}'));
@@ -54,6 +54,7 @@
     const section = h('section', { class: 'set-group reader-settings', id: 'set-reading' });
     section.append(h('h3', {}, [label('Reading appearance', '閱讀外觀')]));
     const status = h('div', {role:'status'});
+    const unavailable = label('Storage unavailable. Changes apply only on this page.', '無法儲存。變更只會套用至此頁。');
     const fields = [
       ['accent', 'Accent colour', '強調色', { type: 'color' }],
       ['width', 'Article width', '文章闊度', { type: 'range', min: 40, max: 100 }],
@@ -73,7 +74,7 @@
       const ok = site.LS.set(key, JSON.stringify(settings));
       status.replaceChildren();
       if (!ok) {
-        status.append(label('Storage unavailable. Changes apply only on this page.', '無法儲存。變更只會套用至此頁。'));
+        status.append(unavailable);
         translate();
       }
     }

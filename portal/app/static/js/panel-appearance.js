@@ -16,9 +16,9 @@
   sizes = load();
   function identity(el) {
     // Keys contain only structural position or stable IDs, never selected records or page URLs.
-    const group = el.matches('.ctx-menu') ? 'context' : el.matches('.http-pop') ? 'help' : 'menu';
-    const peers = [...document.querySelectorAll(matches)].filter(p => p.classList.contains(el.classList.contains('ctx-menu') ? 'ctx-menu' : el.classList.contains('http-pop') ? 'http-pop' : 'menu-pop'));
-    return group + '-' + peers.indexOf(el);
+    const className = ['ctx-menu', 'http-pop', 'menu-pop'].find(name => el.classList.contains(name));
+    const peers = [...document.getElementsByClassName(className)];
+    return className + '-' + peers.indexOf(el);
   }
   function apply(el, width, height) {
     if (!roomy.matches) { el.style.removeProperty('width'); el.style.removeProperty('height'); return; }
