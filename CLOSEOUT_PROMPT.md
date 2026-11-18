@@ -17,3 +17,5 @@ Continue the remaining personal-wording surfaces from the browser-local manageme
 The rebuilt bilingual setup action fit its Settings card at 360 px before, during and after an import. The same browser separately verified original wording and local file removal when the session expired. See the four inspected v1.0.80 images in the [personal wording walkthrough](README.md#personal-wording-walkthrough). Verify the remaining dynamic wording and sound surfaces separately.
 
 Verify durable wording boundaries through the Deployer Settings, workspace history, Studio history, and the deployment, inventory and log exports. Use a dedicated test workspace and a synthetic wording file. Keep old workspace records intact and distinguish the notification drawer from saved records.
+
+Exercise the driver-path import through the generated desktop Studio bridge. The new history entry should use the original field label and preserve the supplied path.

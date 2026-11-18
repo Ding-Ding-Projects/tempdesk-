@@ -55,7 +55,7 @@ function main() {
       'window.TempDeskBuilderHost = {',
       "  getModel: () => { try { return model; } catch (e) { return null; } },",
       "  getHistory: () => { try { return history; } catch (e) { return null; } },",
-      "  addDriverPath: (p) => { try { const f = model.custom; const lines = String(f.driversPE || '').split(/\\r?\\n/).filter(Boolean); if (lines.includes(p)) return 'exists'; lines.push(p); f.driversPE = lines.join('\\n'); commit({ key: 'hist.set', args: ['@f.driversPE', p] }); renderView(); return 'ok'; } catch (e) { return 'unsupported'; } },",
+      "  addDriverPath: (p) => { try { const f = model.custom; const lines = String(f.driversPE || '').split(/\\r?\\n/).filter(Boolean); if (lines.includes(p)) return 'exists'; lines.push(p); f.driversPE = lines.join('\\n'); commit({ key: 'hist.set', args: [{ catalogKey: 'f.driversPE' }, p] }); renderView(); return 'ok'; } catch (e) { return 'unsupported'; } },",
       "  importText: (text, name) => { try { if (typeof importFile === 'function') { importFile(new File([text], name || 'autounattend.xml', { type: 'application/xml' })); return true; } } catch (e) { /* fall through */ } return false; }",
       '};', ''].join('\n'));
   }
