@@ -185,6 +185,7 @@ async function docSources() {
   if (existsSync(path.join(REPO, 'README.md'))) add('README.md', 'overview', 'Overview');
   for (const f of await walk(path.join(REPO, 'docs'), (rel, e) => e.isDirectory() || /\.md$/i.test(rel))) add('docs/' + f, f.replace(/\.md$/i, '').toLowerCase().replace(/[^a-z0-9]+/g, '-'), null);
   const readmes = await walk(REPO, (rel, e) => {
+    if (rel === 'deployer/output') return false; // Packaged copies are not documentation sources.
     const parts = rel.split('/');
     if (parts.some((p) => p.startsWith('.') || ['node_modules', '__pycache__', 'tests', 'site', 'docs', '_site', 'bin', 'obj'].includes(p))) return false;
     return e.isDirectory() || /(^|\/)README\.md$/i.test(rel);
