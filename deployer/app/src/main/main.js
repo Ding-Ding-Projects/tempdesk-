@@ -237,7 +237,10 @@ function registerIpc() {
     run.on((ev) => send('engine:event', Object.assign({ run: id }, ev)));
     run.start();
     runs.set(id, run);
-    run.done.then(() => runs.delete(id));
+    run.done.then((result) => {
+      runs.delete(id);
+      void statusHub.recordResult(result);
+    });
     return id;
   });
   handle('engine:cancel', (id) => { const r = runs.get(id); if (r) r.cancel(); });

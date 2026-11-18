@@ -15,6 +15,7 @@ keywords: extra words the palette and settings search match on.
 from __future__ import annotations
 
 NAV_ITEMS: list[dict] = [
+    {"id": "status-hub", "label": "Status Hub", "href": "/status-hub", "icon": "history", "capability": None, "group": "General"},
     {"id": "dashboard", "label": "Dashboard", "href": "/", "icon": "home", "capability": None, "group": "General", "primary": True},
     {"id": "guests", "label": "Guests", "href": "/guests", "icon": "person", "capability": "guest", "group": "General", "primary": True},
     {"id": "directory", "label": "Directory", "href": "/directory", "icon": "tree", "capability": "directory", "group": "Directory", "primary": True},

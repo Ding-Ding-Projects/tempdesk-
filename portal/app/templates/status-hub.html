@@ -1,0 +1,10 @@
+{% extends "layouts/admin.html" %}
+{% block content %}
+<h1>{{ t('Status Hub') }}</h1>
+<p>{{ t('Project') }}: <strong>TempDesk</strong></p>
+{% if project_url %}
+<a class="btn" href="{{ project_url }}" target="_blank" rel="noopener noreferrer">{{ t('Open project evidence and session history') }}</a>
+{% else %}
+<p>{{ t('Configure a secure project record address on the portal host to open its status history.') }}</p>
+{% endif %}
+{% endblock %}

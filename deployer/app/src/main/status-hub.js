@@ -40,8 +40,15 @@ function snapshot() {
   };
 }
 
+async function recordResult(result) {
+  if (!client || !result) return;
+  const verdict = result.cancelled ? 'cancelled' : result.ok ? 'completed' : 'failed';
+  const code = Number.isInteger(result.code) ? String(result.code) : 'unavailable';
+  await client.update({ summary: 'Last deployment operation ' + verdict + '. Exit code: ' + code });
+}
+
 async function finish() {
   if (client) await client.finish('landed', { summary: 'The desktop session ended.' });
 }
 
-module.exports = { start, snapshot, finish };
+module.exports = { start, snapshot, recordResult, finish };
