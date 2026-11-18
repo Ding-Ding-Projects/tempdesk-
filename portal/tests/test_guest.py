@@ -179,18 +179,32 @@ def test_virtual_commons_download_has_no_password(tmp_path, monkeypatch):
 
 
 def test_virtual_commons_dim_sum_does_not_allocate_an_account(tmp_path, monkeypatch):
+    from html import unescape
+
     from app import guest_routes
 
-    portal = Portal("guest", tmp_path, extra_env={"COMMONS_RDP_TARGET": "sessions.example.test"})
+    portal = Portal("guest", tmp_path, extra_env={"COMMONS_RDP_GUI": "sessions.example.test"})
     def dim_sum_roll(upper):
         assert upper == 100
         return 0
     monkeypatch.setattr(guest_routes.secrets, "randbelow", dim_sum_roll)
-    result = portal.post("/create", {"expiryId": "1h", "checkout": "commons"})
+    result = portal.post("/create", {
+        "expiryId": "1h", "checkout": "commons", "edition": "gui", "displayName": "Retry Guest",
+    })
     assert result.status_code == 200
     assert "No session was checked out" in result.text
     assert not portal.state.guests
     assert "no-store" in result.headers["cache-control"]
+    retry_link = re.search(r'href="([^"]+)"[^>]*>Try again', result.text)
+    assert retry_link
+    retry_url = unescape(retry_link[1])
+    assert retry_url == "/?edition=gui&duration=1h#virtual-commons"
+    retry_page = portal.client.get(retry_url)
+    checkout = retry_page.text.split('id="virtual-commons"', 1)[1]
+    assert re.search(r'name="edition" value="gui"[^>]*checked', checkout)
+    assert re.search(r'name="expiryId" value="1h"[^>]*checked', checkout)
+    assert "Retry Guest" not in retry_page.text
+    assert not portal.state.guests
 
 
 def test_commons_editions_route_only_to_the_selected_destination(tmp_path, monkeypatch):

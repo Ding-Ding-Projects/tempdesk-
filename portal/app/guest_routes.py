@@ -62,7 +62,7 @@ async def home(request: Request):
     edition = request.query_params.get("edition")
     expiry = request.query_params.get("duration")
     values = {}
-    if edition in pub["commonsEditions"] and expiry in {choice["id"] for choice in pub["commonsExpiryChoices"]}:
+    if edition and expiry and edition in pub["commonsEditions"] and expiry in {choice.get("id") for choice in pub["commonsExpiryChoices"]}:
         values = {"commons": True, "edition": edition, "expiryId": expiry}
     return await render(request, "guest/home.html", {"pub": pub, "error": None, "values": values})
 
