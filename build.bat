@@ -53,32 +53,32 @@ if not defined DOCSONLY (
 
 pushd "%ROOT%deployer\app"
 set "CMD=cmd /c npm ci --no-audit --no-fund"
-call :step "Installing packages (npm ci)" || (popd & goto :fail)
+call :step "Installing packages (npm ci)" || goto :fail-in-app
 if defined BUILDCOMPANION goto :package-build-companion
 if defined DOCSONLY goto :package-docs
 set "CMD=cmd /c node scripts\prepare-bundle.js"
-call :step "Bundling shared modules" || (popd & goto :fail)
+call :step "Bundling shared modules" || goto :fail-in-app
 set "CMD=cmd /c node scripts\check-syntax.js"
-call :step "Checking JavaScript syntax" || (popd & goto :fail)
+call :step "Checking JavaScript syntax" || goto :fail-in-app
 set "VEROPT="
 if defined TEMPDESK_VERSION set "VEROPT= -c.extraMetadata.version=%TEMPDESK_VERSION%"
 set "CMD=cmd /c npx electron-builder --win dir portable --x64 --publish never -c.directories.output=..\bin%VEROPT%"
-call :step "Packaging (unpacked + portable)" || (popd & goto :fail)
+call :step "Packaging (unpacked + portable)" || goto :fail-in-app
 :package-docs
 set "CMD=cmd /c node scripts\build-docs-companion.js"
-call :step "Packaging the portable documentation" || (popd & goto :fail)
+call :step "Packaging the portable documentation" || goto :fail-in-app
 if defined DOCSONLY goto :finished
 if defined SKIPTESTS goto :finished
 set "CMD=cmd /c node --test test/*.test.js"
-call :step "Running unit tests after packaging" || (popd & goto :fail)
+call :step "Running unit tests after packaging" || goto :fail-in-app
 goto :finished
 :package-build-companion
 set "CMD=cmd /c node "%ROOT%scripts\build-companion.cjs""
-call :step "Packaging the portable build companion" || (popd & goto :fail)
+call :step "Packaging the portable build companion" || goto :fail-in-app
 :finished
 if defined RUNAPP (
   node "%ROOT%scripts\launch-built.cjs"
-  if errorlevel 1 (popd & exit /b 1)
+  if errorlevel 1 goto :fail-in-app
 )
 popd
 if not defined QUIET echo Build finished: %ROOT%deployer\bin
@@ -94,9 +94,14 @@ if defined QUIET (
 )
 exit /b %ERRORLEVEL%
 
+:fail-in-app
+set "CODE=%ERRORLEVEL%"
+popd
+goto :report-failure
 :fail
 set "CODE=%ERRORLEVEL%"
+:report-failure
 if "%CODE%"=="0" set "CODE=1"
 echo ERROR: build failed with exit code %CODE%. See the output above or %LOG%.
-if defined QUIET if exist "%LOG%" powershell -NoProfile -Command "Get-Content -LiteralPath '%LOG%' -Tail 40"
+if defined QUIET if exist "%LOG%" powershell -NoProfile -Command "Get-Content -LiteralPath $env:LOG -Tail 40"
 exit /b %CODE%
