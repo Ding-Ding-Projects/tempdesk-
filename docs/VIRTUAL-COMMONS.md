@@ -4,6 +4,8 @@ Choose an available server edition and a finite checkout duration on the guest p
 
 Open the downloaded Virtual-Commons.rdp file and enter the password shown on the one-time confirmation page. Use the download button on that page if your browser suppresses the automatic download. Save your work outside the temporary account before it expires.
 
+The download is an attachment from the guest portal. The browser that opened the confirmation can download it again for up to ten minutes, capped by the account's expiry. Each confirmation has its own download, so switching tabs keeps the selected destination with its checkout. The connection file carries the destination and username. Use the one-time confirmation to read the password.
+
 One in a hundred valid checkout attempts shows a dim sum dish and offers a retry. That outcome creates no account.
 
 To use personal wording for the edition labels, verify an active guest sign-in under **Check my sign-in**, then return to **Virtual Commons**. Upload a wording JSON file or use **Clear personal wording** to restore the shipped labels. The file is processed in the current page and is never uploaded to the server. Wording clears when you leave the page or when the temporary wording access expires, whichever comes first.

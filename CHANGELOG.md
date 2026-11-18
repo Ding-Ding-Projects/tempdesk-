@@ -19,6 +19,7 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
 
 ### Fixed
 
+- Virtual Commons serves RDP files as browser attachments and keeps confirmations and downloads scoped to each checkout.
 - The Virtual Commons edition picker applies a local mapping for the full operating-system name and retains eligible wording access after checkout validation.
 - The documentation sidebar contains its search field, so articles keep their reading column on wide screens.
 - Deployer: edits on the Deploy page are all kept. After the first saved change every later change was

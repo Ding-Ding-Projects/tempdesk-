@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-import base64
 from datetime import datetime
 import re
 import secrets
 import time
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 
 from .agent_client import AgentError
+from . import commons_handoff
 from .security import ONCE_COOKIE, client_ip
 from .web import agent_message, csrf_protect, redirect, render, set_cookie, translator_for
 
@@ -140,23 +140,30 @@ async def create(request: Request):
         raise
     # Keep the credentials server side; the browser only gets a random id.
     once_id = request.app.state.once.put({"credentials": created, "rdpTarget": target, "rdpEdition": edition if target else None})
+    if commons:
+        path = commons_handoff.confirmation_path(commons_handoff.new_reference())
+        resp = redirect(request, path)
+        commons_handoff.set_handoff(request, resp, commons_handoff.CONFIRM_COOKIE, path, {"key": once_id},
+                                    int(time.time()) + commons_handoff.HANDOFF_SECONDS)
+        return resp
     resp = redirect(request, "/created")
     set_cookie(request, resp, ONCE_COOKIE, once_id, max_age=600)
     return resp
 
 
-@router.get("/created")
-async def created(request: Request):
+async def _render_created(request: Request, key: str | None, cookie_name: str, path: str,
+                          reference: str | None = None):
     pub = await public_settings(request)
-    result = request.app.state.once.pop(request.cookies.get(ONCE_COOKIE))
+    result = request.app.state.once.pop(key)
     if not result:
         resp = await render(request, "guest/gone.html", {"pub": pub}, status=410, headers=NO_STORE)
-        resp.delete_cookie(ONCE_COOKIE, path="/")
+        resp.delete_cookie(cookie_name, path=path)
         return resp
     creds = result.get("credentials", result)
     domain = creds.get("domain") or ""
     netbios = domain.split(".")[0].upper() if domain else ""
-    rdp = None
+    download = None
+    rdp_url = None
     targets = _commons_targets(request)
     target = result.get("rdpTarget")
     commons_checkout = bool(target) or result.get("commons") is True
@@ -168,16 +175,49 @@ async def created(request: Request):
             target = targets.get(edition)
     if target and targets.get(edition) == target:
         username = creds.get("upn") or (f"{netbios}\\{creds['username']}" if netbios else creds["username"])
-        if RDP_USER.fullmatch(username):
-            profile = (f"full address:s:{target}\r\nusername:s:{username}\r\n"
-                       "prompt for credentials:i:1\r\nauthentication level:i:2\r\nenablecredsspsupport:i:1\r\n")
-            rdp = base64.b64encode(profile.encode("utf-16")).decode("ascii")
+        expires_at = creds.get("expiresAt")
+        deadline = commons_handoff.download_deadline(expires_at) if expires_at is not None or reference is None else 0
+        if RDP_USER.fullmatch(username) and deadline > time.time():
+            rdp_url = commons_handoff.download_path(reference or commons_handoff.new_reference())
+            download = {"target": target, "edition": edition, "username": username}
     resp = await render(request, "guest/created.html",
-                        {"pub": pub, "c": creds, "netbios": netbios, "rdp": rdp,
-                         "rdp_edition_label": COMMONS_EDITION_LABELS.get(edition) if rdp else None,
-                         "rdp_unavailable": commons_checkout and not rdp}, headers=NO_STORE)
-    resp.delete_cookie(ONCE_COOKIE, path="/")
+                        {"pub": pub, "c": creds, "netbios": netbios, "rdp_url": rdp_url,
+                         "rdp_edition_label": COMMONS_EDITION_LABELS.get(edition) if rdp_url else None,
+                         "rdp_unavailable": commons_checkout and not rdp_url}, headers=NO_STORE)
+    resp.delete_cookie(cookie_name, path=path)
+    if download:
+        commons_handoff.set_handoff(request, resp, commons_handoff.DOWNLOAD_COOKIE, rdp_url, download, deadline)
     return resp
+
+
+@router.get("/created")
+async def created(request: Request):
+    return await _render_created(request, request.cookies.get(ONCE_COOKIE), ONCE_COOKIE, "/")
+
+
+@router.get("/created/{reference}")
+async def commons_created(request: Request, reference: str):
+    if not commons_handoff.REFERENCE.fullmatch(reference):
+        return Response(status_code=404, headers=NO_STORE)
+    path = commons_handoff.confirmation_path(reference)
+    grant = commons_handoff.read_handoff(request, commons_handoff.CONFIRM_COOKIE, path)
+    key = grant.get("key")
+    return await _render_created(request, key if isinstance(key, str) else None,
+                                 commons_handoff.CONFIRM_COOKIE, path, reference)
+
+
+@router.get("/created/{reference}/virtual-commons.rdp")
+async def commons_download(request: Request, reference: str):
+    if not commons_handoff.REFERENCE.fullmatch(reference):
+        return Response(status_code=404, headers=NO_STORE)
+    path = commons_handoff.download_path(reference)
+    grant = commons_handoff.read_handoff(request, commons_handoff.DOWNLOAD_COOKIE, path)
+    edition, target, username = grant.get("edition"), grant.get("target"), grant.get("username")
+    if (not isinstance(edition, str) or not isinstance(target, str) or _commons_targets(request).get(edition) != target
+            or not isinstance(username, str) or not RDP_USER.fullmatch(username)):
+        return Response(status_code=404, headers=NO_STORE)
+    headers = {**NO_STORE, "Content-Disposition": f'attachment; filename="{commons_handoff.RDP_FILENAME}"'}
+    return Response(content=commons_handoff.rdp_file(target, username), media_type="application/x-rdp", headers=headers)
 
 
 def _username(form) -> str:

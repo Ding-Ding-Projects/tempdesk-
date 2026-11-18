@@ -114,12 +114,10 @@ class OneTimeStore:
             return None
         self._purge()
         rid = self.kind + ":" + key
-        with self.db._lock:
-            row = self.db._db.execute("SELECT blob, created FROM once WHERE id = ?", (rid,)).fetchone()
-            self.db._db.execute("DELETE FROM once WHERE id = ?", (rid,))
-        if not row or row[1] < time.time() - self.ttl:
+        rows = self.db.execute("DELETE FROM once WHERE id = ? RETURNING blob, created", (rid,))
+        if not rows or rows[0][1] < time.time() - self.ttl:
             return None
-        raw = self.db.open(row[0], (self.kind + key).encode())
+        raw = self.db.open(rows[0][0], (self.kind + key).encode())
         return json.loads(raw) if raw else None
 
     def __len__(self) -> int:

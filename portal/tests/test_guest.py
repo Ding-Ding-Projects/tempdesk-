@@ -1,4 +1,11 @@
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta, timezone
+from threading import Barrier
+
+import pytest
+from fastapi.testclient import TestClient
 
 from tests.conftest import Portal, csrf_of
 
@@ -160,22 +167,98 @@ def test_csrf_token_signed_and_bound(guest):
     tok = csrf_of(html)
     assert tok.count(".") == 2  # itsdangerous timed signature
 
+def rdp_link(page):
+    match = re.search(r'href="(/created/[A-Za-z0-9_-]{24}/virtual-commons\.rdp)"[^>]*id="commons-rdp"', page.text)
+    assert match
+    return match[1]
+
+
 def test_virtual_commons_download_has_no_password(tmp_path, monkeypatch):
-    import base64
     from app import guest_routes
 
     portal = Portal("guest", tmp_path, extra_env={"COMMONS_RDP_TARGET": "sessions.example.test:3390"})
     monkeypatch.setattr(guest_routes.secrets, "randbelow", lambda upper: upper - 1)
     checkout = portal.post("/create", {"expiryId": "1h", "checkout": "commons"})
     assert checkout.status_code == 303
-    result = portal.client.get("/created")
-    payload = re.search(r"data:application/x-rdp;base64,([A-Za-z0-9+/=]+)", result.text)
-    assert payload
-    profile = base64.b64decode(payload[1]).decode("utf-16")
+    confirmation = checkout.headers["location"]
+    assert confirmation.startswith("/created/") and "?" not in confirmation
+    assert "HttpOnly" in checkout.headers["set-cookie"] and f"Path={confirmation}" in checkout.headers["set-cookie"]
+    result = portal.client.get(confirmation)
+    link = rdp_link(result)
+    cookie = next(value for value in result.headers.get_list("set-cookie") if value.startswith("td_commons_download="))
+    assert "HttpOnly" in cookie and "SameSite=strict" in cookie and f"Path={link}" in cookie
+    download = portal.client.get(link)
+    assert download.status_code == 200
+    assert download.headers["content-type"] == "application/x-rdp"
+    assert download.headers["content-disposition"] == 'attachment; filename="Virtual-Commons.rdp"'
+    assert "no-store" in download.headers["cache-control"]
+    assert download.headers["x-content-type-options"] == "nosniff"
+    profile = download.content.decode("utf-16")
     assert "full address:s:sessions.example.test:3390\r\n" in profile
     account = next(iter(portal.state.guests.values()))
     assert account["username"] in profile and account["password"] not in profile
-    assert portal.client.get("/created").status_code == 410
+    assert account["password"] not in confirmation + link + cookie
+    assert portal.client.get(confirmation).status_code == 410
+    assert portal.client.get(link).content == download.content
+    anonymous = TestClient(portal.app, base_url="http://portal.test")
+    rejected = anonymous.get(link)
+    assert rejected.status_code == 404 and "no-store" in rejected.headers["cache-control"]
+
+
+def test_download_grant_survives_portal_restart_and_expires(tmp_path, monkeypatch):
+    from app import commons_handoff, guest_routes
+
+    env = {"COMMONS_RDP_GUI": "desktop.example.test"}
+    portal = Portal("guest", tmp_path, extra_env=env)
+    monkeypatch.setattr(guest_routes.secrets, "randbelow", lambda upper: upper - 1)
+    checkout = portal.post("/create", {"expiryId": "1h", "checkout": "commons", "edition": "gui"})
+    link = rdp_link(portal.client.get(checkout.headers["location"]))
+    issued = portal.client.get(link)
+    assert issued.status_code == 200
+    cookies = list(portal.client.cookies.jar)
+    portal.app.state.db.close()
+
+    restarted = Portal("guest", tmp_path, extra_env=env)
+    for cookie in cookies:
+        restarted.client.cookies.jar.set_cookie(cookie)
+    assert restarted.client.get(link).content == issued.content
+    now = time.time()
+    monkeypatch.setattr(commons_handoff.time, "time", lambda: now + commons_handoff.HANDOFF_SECONDS + 1)
+    assert restarted.client.get(link).status_code == 404
+
+
+def test_download_deadline_is_capped_by_the_account_expiry(monkeypatch):
+    from app import commons_handoff
+
+    now = datetime(2030, 1, 1, tzinfo=timezone.utc)
+    end = now + timedelta(seconds=40)
+    monkeypatch.setattr(commons_handoff.time, "time", lambda: now.timestamp())
+    assert commons_handoff.download_deadline(end.isoformat()) == int(end.timestamp())
+    assert commons_handoff.download_deadline((now + timedelta(hours=1)).isoformat()) == int(now.timestamp()) + 600
+    assert commons_handoff.download_deadline("bad timestamp") == 0
+
+
+def test_confirmation_can_be_claimed_by_only_one_database_connection(tmp_path):
+    from app.store import OneTimeStore, StateDB
+
+    first = StateDB(tmp_path, None, "guest")
+    second = StateDB(tmp_path, None, "guest")
+    stores = [OneTimeStore(first), OneTimeStore(second)]
+    record = {"account": "test record"}
+    key = stores[0].put(record)
+    start = Barrier(2)
+
+    def claim(store):
+        start.wait(timeout=5)
+        return store.pop(key)
+
+    try:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            outcomes = list(pool.map(claim, stores))
+        assert outcomes.count(record) == 1 and outcomes.count(None) == 1
+    finally:
+        first.close()
+        second.close()
 
 
 def test_virtual_commons_wording_requires_a_verified_active_guest(tmp_path):
@@ -242,7 +325,6 @@ def test_virtual_commons_dim_sum_does_not_allocate_an_account(tmp_path, monkeypa
 
 
 def test_commons_editions_route_only_to_the_selected_destination(tmp_path, monkeypatch):
-    import base64
     from app import guest_routes
 
     portal = Portal("guest", tmp_path, extra_env={
@@ -250,17 +332,26 @@ def test_commons_editions_route_only_to_the_selected_destination(tmp_path, monke
         "COMMONS_RDP_CORE": "core.example.test:3390",
     })
     monkeypatch.setattr(guest_routes.secrets, "randbelow", lambda upper: upper - 1)
-    for edition, address, label in [
+    expected = [
         ("gui", "desktop.example.test", "Windows Server with GUI"),
         ("core", "core.example.test:3390", "Windows Server without GUI"),
-    ]:
-        assert portal.post("/create", {"expiryId": "1h", "checkout": "commons", "edition": edition}).status_code == 303
-        page = portal.client.get("/created")
+    ]
+    confirmations = []
+    for edition, _, _ in expected:
+        checkout = portal.post("/create", {"expiryId": "1h", "checkout": "commons", "edition": edition})
+        assert checkout.status_code == 303
+        confirmations.append(checkout.headers["location"])
+    assert len(set(confirmations)) == len(expected)
+
+    links = []
+    for (_, address, label), confirmation in reversed(list(zip(expected, confirmations))):
+        page = portal.client.get(confirmation)
         assert f"<strong>{label}</strong>" in page.text
-        payload = re.search(r"data:application/x-rdp;base64,([A-Za-z0-9+/=]+)", page.text)
-        assert payload
-        profile = base64.b64decode(payload[1]).decode("utf-16")
-        assert profile.splitlines()[0] == f"full address:s:{address}"
+        links.append((address, rdp_link(page)))
+    for address, link in reversed(links):
+        download = portal.client.get(link)
+        assert download.status_code == 200
+        assert download.content.decode("utf-16").splitlines()[0] == f"full address:s:{address}"
 
 
 def test_unavailable_commons_edition_stops_before_the_draw(tmp_path, monkeypatch):
@@ -278,18 +369,22 @@ def test_unavailable_commons_edition_stops_before_the_draw(tmp_path, monkeypatch
     assert not portal.state.guests
 
 
-def test_pending_legacy_commons_checkout_survives_upgrade(tmp_path):
+@pytest.mark.parametrize("pending_format", ["flat", "wrapped"])
+def test_pending_legacy_commons_checkout_survives_upgrade(tmp_path, pending_format):
     from app.security import ONCE_COOKIE
 
     portal = Portal("guest", tmp_path, extra_env={"COMMONS_RDP_TARGET": "legacy.example.test"})
-    checkout = portal.app.state.once.put({
-        "credentials": {"username": "guest1", "password": "example-password", "domain": "corp.test"},
-        "commons": True,
-    })
+    credentials = {"username": "guest1", "password": "example-password", "domain": "corp.test"}
+    if pending_format == "flat":
+        pending = {**credentials, "commons": True}
+    else:
+        pending = {"credentials": credentials, "commons": True}
+    checkout = portal.app.state.once.put(pending)
     portal.client.cookies.set(ONCE_COOKIE, checkout, domain="portal.test", path="/")
     result = portal.client.get("/created")
     assert result.status_code == 200
-    assert 'download="Virtual-Commons.rdp"' in result.text
+    download = portal.client.get(rdp_link(result))
+    assert "full address:s:legacy.example.test" in download.content.decode("utf-16")
     assert portal.client.get("/created").status_code == 410
 
 
@@ -305,8 +400,21 @@ def test_commons_download_cannot_follow_a_target_to_another_edition(tmp_path, mo
     assert checkout.status_code == 303
     portal.settings.commons_rdp_gui = "core.example.test"
     portal.settings.commons_rdp_core = "desktop.example.test"
-    result = portal.client.get("/created")
+    confirmation = checkout.headers["location"]
+    result = portal.client.get(confirmation)
     assert result.status_code == 200
     assert "The Remote Desktop file is unavailable." in result.text
     assert 'download="Virtual-Commons.rdp"' not in result.text
-    assert portal.client.get("/created").status_code == 410
+    assert portal.client.get(confirmation).status_code == 410
+
+
+def test_attachment_still_requires_the_confirmed_destination(tmp_path, monkeypatch):
+    from app import guest_routes
+
+    portal = Portal("guest", tmp_path, extra_env={"COMMONS_RDP_GUI": "desktop.example.test"})
+    monkeypatch.setattr(guest_routes.secrets, "randbelow", lambda upper: upper - 1)
+    checkout = portal.post("/create", {"expiryId": "1h", "checkout": "commons", "edition": "gui"})
+    link = rdp_link(portal.client.get(checkout.headers["location"]))
+    assert portal.client.get(link).status_code == 200
+    portal.settings.commons_rdp_gui = "different.example.test"
+    assert portal.client.get(link).status_code == 404

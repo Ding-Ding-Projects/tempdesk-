@@ -247,11 +247,11 @@ async def render(request: Request, name: str, ctx: dict | None = None, status: i
 
 
 def set_cookie(request: Request, resp: Response, name: str, value: str, max_age: int | None = None,
-               httponly: bool = True) -> None:
+               httponly: bool = True, *, path: str = "/") -> None:
     settings = request.app.state.settings
     secure = is_https(request, settings.trusted_proxies, settings.cookie_secure)
     resp.set_cookie(name, value, max_age=max_age, httponly=httponly, secure=secure,
-                    samesite="strict", path="/")
+                    samesite="strict", path=path)
 
 
 def redirect(request: Request, url: str, flash: tuple[str, str] | None = None) -> RedirectResponse:
