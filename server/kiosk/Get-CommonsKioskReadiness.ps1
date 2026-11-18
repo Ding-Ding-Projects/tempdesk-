@@ -16,6 +16,13 @@ $os = Get-CimInstance Win32_OperatingSystem
 if ($hostInfo.Name -ine $ComputerName -or -not $hostInfo.PartOfDomain -or $hostInfo.Domain -ine $DomainDns) {
     throw 'Destination identity or domain membership did not match.'
 }
+$vmwareGuest = $hostInfo.Manufacturer -match '^VMware' -and $hostInfo.Model -match '^VMware'
+$virtualBoxGuest = $hostInfo.Manufacturer -in @('innotek GmbH','Oracle Corporation') -and $hostInfo.Model -eq 'VirtualBox'
+if (-not ($vmwareGuest -or $virtualBoxGuest)) { throw 'This profile is restricted to a dedicated VMware or VirtualBox guest.' }
+if (-not (Confirm-SecureBootUEFI -ErrorAction Stop)) { throw 'Secure Boot must be active in the guest.' }
+$tpm = Get-Tpm -ErrorAction Stop
+$tpmDetails = Get-CimInstance -Namespace root/cimv2/security/microsofttpm -ClassName Win32_Tpm -ErrorAction Stop
+if (-not $tpm.TpmReady -or $tpmDetails.SpecVersion -notmatch '^2\.0(?:,|$)') { throw 'A ready TPM 2.0 device is required.' }
 $edition = (Get-ItemProperty 'HKLM:/SOFTWARE/Microsoft/Windows NT/CurrentVersion').EditionID
 if ($os.ProductType -ne 1 -or [int]$os.BuildNumber -lt 22000 -or $edition -notin @('Professional','Enterprise','Education')) {
     throw 'A Windows 11 Pro, Enterprise or Education workstation is required.'

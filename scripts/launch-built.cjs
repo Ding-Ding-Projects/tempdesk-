@@ -4,7 +4,6 @@ const { execFileSync, spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const { createRequire } = require('node:module');
-const { pathToFileURL } = require('node:url');
 
 async function launch() {
   const root = path.resolve(__dirname, '..');
@@ -12,7 +11,7 @@ async function launch() {
   const directory = path.join(root, 'deployer', 'bin', 'win-unpacked');
   const executable = path.join(directory, 'TempDeskDeployer.exe');
   const localRequire = createRequire(path.join(app, 'package.json'));
-  const asar = await import(pathToFileURL(localRequire.resolve('@electron/asar')).href);
+  const asar = localRequire('@electron/asar');
   const archive = path.join(directory, 'resources', 'app.asar');
   const metadata = JSON.parse(asar.extractFile(archive, 'src/vendor/build-info.json').toString('utf8'));
   const readGit = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
