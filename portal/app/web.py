@@ -73,6 +73,20 @@ JS_STRINGS = [
     "Select all", "selected", "Loading", "Expand", "Collapse", "Command palette", "Open", "Theme switched",
     "Start", "Resume", "Pause", "Preview", "Done", "Encode", "Decode", "Open a file", "Paste from clipboard",
     "Make data: URL", "Parse data: URL", "Save as file", "Undo", "Redo",
+    "Warning", "Error", "Information", "Success", "Progress", "Dismissed", "Unread", "Marked as read",
+    "Select notification", "{count} selected", "{count} active toasts selected",
+    "No matching notifications.", "Selected toasts dismissed.", "Notifications marked read.",
+    "{count} notifications deleted.", "This browser could not update notification history.",
+    "{count} notifications exported.", "{count} entries with unclassified or literal details were excluded.",
+    "Review {count} notifications for deletion", "Delete {count} notifications", "Confirmation {value}%",
+    "Review 1 notification for deletion", "Delete 1 notification", "1 notification deleted.",
+    "The notifications changed. Review the updated list before deleting.",
+    "The agent reported an error.", "Your session has ended. Please sign in again.",
+    "The agent refused this action.", "That item was not found.", "That conflicts with something that already exists.",
+    "Too many requests. Please wait a little and try again.", "The agent did not accept the request.",
+    "The agent reported an internal error.", "Expiry updated for {name}.", "Saved {name}.",
+    "Created {name}.", "Deleted {name}.", "{done} done.", "Organization logo saved.", "Settings saved.",
+    "Enter the custom expiry as a whole number of minutes.", "Choose an expiry.", "Select at least one row first.",
 ]
 
 # Strings used by the control room scripts (console.js, guests.js, directory-studio.js, gpo-editor.js).
@@ -177,6 +191,19 @@ def has_cap(request: Request, cap: str | None) -> bool:
     return not cap or bool(caps and cap in caps)
 
 
+def notification_history_scope(settings, session: Session) -> str:
+    # A stable, opaque account namespace. It is independent of the sign-in and wording lifetime.
+    for field in ("sid", "dn", "sam"):
+        value = session.user.get(field)
+        if isinstance(value, str) and value.strip():
+            identity = (field, value.strip().casefold())
+            break
+    else:
+        identity = ("session", session.sid)
+    value = json.dumps([settings.agent_url, *identity], ensure_ascii=False)
+    return hmac.digest(settings.session_secret.encode(), f"tempdesk-notification-history:{value}".encode(), "sha256").hex()
+
+
 async def base_context(request: Request) -> dict:
     settings = request.app.state.settings
     tr = translator_for(request)
@@ -227,6 +254,7 @@ async def base_context(request: Request) -> dict:
         "school": school,
         "fun": tr.fun,
         "session": sess,
+        "notification_scope": notification_history_scope(settings, sess) if sess and request.url.path != "/login" else None,
         "user": sess.user if sess else None,
         "nav_items": items,
         "palette_json": Markup(json.dumps(palette, ensure_ascii=False).replace("<", "\\u003c")),
@@ -268,10 +296,11 @@ def set_cookie(request: Request, resp: Response, name: str, value: str, max_age:
                     samesite="strict", path=path)
 
 
-def redirect(request: Request, url: str, flash: tuple[str, str] | None = None) -> RedirectResponse:
+def redirect(request: Request, url: str, flash: tuple[str, str] | None = None, *,
+             notice: dict | None = None) -> RedirectResponse:
     resp = RedirectResponse(url, status_code=303)
     if flash:
-        set_cookie(request, resp, FLASH_COOKIE, request.app.state.flash.dumps(*flash), max_age=300)
+        set_cookie(request, resp, FLASH_COOKIE, request.app.state.flash.dumps(*flash, notice=notice), max_age=300)
     return resp
 
 
@@ -279,8 +308,14 @@ def flash_text(request: Request, key: str, **args) -> str:
     return translator_for(request).plain(key, **args)
 
 
-def agent_message(request: Request, exc: AgentError) -> str:
-    tr = translator_for(request)
+def notice_copy(key: str, **args) -> dict | None:
+    if key not in JS_STRINGS:
+        return None
+    return {"key": key, "args": {name: value if isinstance(value, (bool, int, float)) else str(value)
+                                  for name, value in args.items()}}
+
+
+def agent_notice(request: Request, exc: AgentError) -> dict:
     friendly = {
         "unauthorized": "Your session has ended. Please sign in again.",
         "forbidden": "The agent refused this action.",
@@ -290,9 +325,16 @@ def agent_message(request: Request, exc: AgentError) -> str:
         "bad_request": "The agent did not accept the request.",
         "internal": "The agent reported an internal error.",
     }
-    base = tr.plain(friendly.get(exc.code, "The agent reported an error."), serious=True)
+    key = friendly.get(exc.code, "The agent reported an error.")
+    base = translator_for(request).plain(key, serious=True)
     detail = (exc.message or "").strip()
-    return f"{base} {detail}" if detail and detail.lower() not in base.lower() else base
+    return {"key": key, "detail": detail if detail.lower() not in base.lower() else ""}
+
+
+def agent_message(request: Request, exc: AgentError) -> str:
+    notice = agent_notice(request, exc)
+    base = translator_for(request).plain(notice["key"], serious=True)
+    return f"{base} {notice['detail']}" if notice["detail"] else base
 
 
 async def error_page(request: Request, status: int, title_key: str, body_key: str, **extra) -> Response:

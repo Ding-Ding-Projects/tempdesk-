@@ -14,15 +14,23 @@
   function svg(tag, attrs) { var e = doc.createElementNS(SVGNS, tag); Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, attrs[k]); }); return e; }
 
   // ---------------------------------------------------------- fetch helpers (shared with page scripts)
+  function notification(result) { return TD.notifications?.fromResponse(result) || result?.message; }
+  function responseError(status, body) {
+    var error = new Error(body?.message || String(status));
+    error.status = status;
+    error.body = body;
+    error.notification = notification(body);
+    return error;
+  }
   function getJSON(url) {
     return fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } }).then(function (r) {
-      return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) { var e = new Error((j && j.message) || String(r.status)); e.status = r.status; e.body = j; throw e; } return j; });
+      return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw responseError(r.status, j); return j; });
     });
   }
   function postJSON(url, body) {
     return fetch(url, { method: 'POST', credentials: 'same-origin', body: JSON.stringify(body || {}),
       headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token': csrf(), 'X-Requested-With': 'fetch' } })
-      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.ok === false) { var e = new Error((j && j.message) || String(r.status)); e.status = r.status; throw e; } return j; }); });
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.ok === false) throw responseError(r.status, j); return j; }); });
   }
   function postForm(url, fields) {
     var fd = new FormData(); fd.append('csrf_token', csrf());
@@ -31,21 +39,21 @@
       .then(function (r) {
         var ct = r.headers.get('content-type') || '';
         if (ct.indexOf('json') < 0) { if (r.ok || r.redirected) return { ok: true, message: '' }; throw new Error(String(r.status)); }
-        return r.json().then(function (j) { if (!r.ok || j.ok === false) throw new Error(j.message || String(r.status)); return j; });
+        return r.json().then(function (j) { if (!r.ok || j.ok === false) throw responseError(r.status, j); return j; });
       });
   }
   function undoById(id) {
     var fd = new FormData(); fd.append('csrf_token', csrf()); fd.append('id', id); fd.append('back', location.pathname);
     return fetch('/undo', { method: 'POST', body: fd, credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch', Accept: 'application/json' } })
-      .then(function (r) { return r.json(); }).then(function (j) { TD.toast && TD.toast(j.message, j.ok ? 'success' : 'error'); return j; });
+      .then(function (r) { return r.json(); }).then(function (j) { TD.toast && TD.toast(notification(j), j.ok ? 'success' : 'error'); return j; });
   }
   // A toast with an inline Undo button for actions that went into the journal.
   function toastUndo(text, id, after) {
-    TD.toast && TD.toast(text, 'success');
-    if (!id) return;
-    var box = $('[data-toasts]'); var last = box && box.lastElementChild; if (!last) return;
-    var b = el('button', 'btn sm tonal', t('Undo')); b.type = 'button';
-    b.addEventListener('click', function () { undoById(id).then(function () { if (after) after(); }); last.remove(); });
+    var last = TD.toast && TD.toast(text, 'success');
+    if (!id || !last) return;
+    var b = el('button', 'btn sm tonal', TD.wordingText?.(t('Undo')) || t('Undo'));
+    b.type = 'button'; b.dataset.noticeLabel = 'Undo';
+    b.addEventListener('click', function () { undoById(id).then(function () { if (after) after(); }); last.querySelector('.toast-close').click(); });
     last.insertBefore(b, last.lastElementChild);
   }
   function rel(ms) {
@@ -134,7 +142,7 @@
       var who = m[1], mm = minutesOf(m[2] || '1h');
       if (mm === null) mm = 60;
       out.push({ icon: '↻', label: t('Extend {name} by {time}', { name: who, time: words(mm) }), desc: t('You can undo this afterwards.'),
-        run: function () { postForm('/guests/' + encodeURIComponent(who) + '/extend', { minutes: String(mm) }).then(function (j) { TD.toast(j.message || t('Saved'), 'success'); if (window.TDGuests) window.TDGuests.refresh(); else if (window.TDHome) window.TDHome.refresh(); }, function (e) { TD.toast(e.message, 'error'); }); } });
+        run: function () { postForm('/guests/' + encodeURIComponent(who) + '/extend', { minutes: String(mm) }).then(function (j) { TD.toast(notification(j) || { key: 'Saved' }, 'success'); if (window.TDGuests) window.TDGuests.refresh(); else if (window.TDHome) window.TDHome.refresh(); }, function (e) { TD.toast(e.notification || e.message, 'error'); }); } });
       return out;
     }
     if ((m = /^(?:reset\s+password|password)\s+(\S+)$/i.exec(s))) {
@@ -146,19 +154,19 @@
     if ((m = /^unlock\s+(\S+)$/i.exec(s))) {
       var u2 = m[1];
       out.push({ icon: '✓', label: t('Unlock {name}', { name: u2 }), desc: t('Clears the lockout so the account can sign in again'),
-        run: function () { resolveUser(u2, function (dn) { postJSON('/api/dir/user', { dn: dn, action: 'unlock' }).then(function (j) { TD.toast(t('Account unlocked.') + ' ' + dn, 'success'); }, function (e) { TD.toast(e.message, 'error'); }); }); } });
+        run: function () { resolveUser(u2, function (dn) { postJSON('/api/dir/user', { dn: dn, action: 'unlock' }).then(function (j) { TD.toast({ key: 'Account unlocked.', detail: dn }, 'success'); }, function (e) { TD.toast(e.notification || e.message, 'error'); }); }); } });
       return out;
     }
     if ((m = /^(?:disable|enable)\s+(\S+)$/i.exec(s))) {
       var en = /^enable/i.test(s), u3 = m[1];
       out.push({ icon: en ? '✓' : '×', label: (en ? t('Enable') : t('Disable')) + ' ' + u3, desc: t('You can undo this afterwards.'),
-        run: function () { resolveUser(u3, function (dn) { postJSON('/api/dir/user', { dn: dn, action: en ? 'enable' : 'disable' }).then(function (j) { toastUndo(t('Saved.') + ' ' + dn, j.undoId); }, function (e) { TD.toast(e.message, 'error'); }); }); } });
+        run: function () { resolveUser(u3, function (dn) { postJSON('/api/dir/user', { dn: dn, action: en ? 'enable' : 'disable' }).then(function (j) { toastUndo({ key: 'Saved {name}.', args: { name: dn } }, j.undoId); }, function (e) { TD.toast(e.notification || e.message, 'error'); }); }); } });
       return out;
     }
     if ((m = /^open\s+(?:gpo|policy|group\s+policy)\s+(.+)$/i.exec(s))) {
       var g = m[1].trim();
       out.push({ icon: '◆', label: t('Open the Group Policy object {name}', { name: g }), desc: t('Opens the editor'),
-        run: function () { getJSON('/api/console/find?q=' + encodeURIComponent(g)).then(function (r) { var hit = (r.gpos || [])[0]; if (hit) location.href = '/gpo/' + encodeURIComponent(hit.id) + '/edit'; else TD.toast(t('No matches') + ': ' + g, 'error'); }); } });
+        run: function () { getJSON('/api/console/find?q=' + encodeURIComponent(g)).then(function (r) { var hit = (r.gpos || [])[0]; if (hit) location.href = '/gpo/' + encodeURIComponent(hit.id) + '/edit'; else TD.toast({ key: 'No matches', detail: g }, 'error'); }); } });
       return out;
     }
     if ((m = /^(?:find|search)\s+(.+)$/i.exec(s))) {
@@ -172,9 +180,9 @@
   function resolveUser(name, cb) {
     postJSON('/api/console/resolve', { name: name }).then(function (r) {
       var m = r.matches || [];
-      if (!m.length) { TD.toast(t('No account named {name} was found.', { name: name }), 'error'); return; }
+      if (!m.length) { TD.toast({ key: 'No account named {name} was found.', args: { name: name } }, 'error'); return; }
       cb(m[0].dn);
-    }, function (e) { TD.toast(e.message, 'error'); });
+    }, function (e) { TD.toast(e.notification || e.message, 'error'); });
   }
   var TEMPLATES = [
     ['new guest 4h', 'Create a guest sign-in'], ['extend ', 'Extend a guest, for example: extend guest-ab12cd 1h'],
@@ -345,7 +353,7 @@
   function extendAll(list) {
     if (!list.length) return;
     Promise.all(list.map(function (g) { return postForm('/guests/' + encodeURIComponent(g.username) + '/extend', { minutes: '60' }); }))
-      .then(function () { TD.toast(t('Extended {count} guests by 1 hour.', { count: list.length }), 'success'); window.TDHome && window.TDHome.refresh(); }, function (e) { TD.toast(e.message, 'error'); });
+      .then(function () { TD.toast({ key: 'Extended {count} guests by 1 hour.', args: { count: list.length } }, 'success'); window.TDHome && window.TDHome.refresh(); }, function (e) { TD.toast(e.notification || e.message, 'error'); });
   }
   function paintEnding(host, soon) {
     host.textContent = '';
@@ -358,7 +366,7 @@
       tx.appendChild(el('div', 'subtle', g.displayName || t('No name'))); card.appendChild(tx);
       var b = el('button', 'c-chip primary', '+1 h'); b.type = 'button'; b.style.minHeight = '44px';
       b.setAttribute('aria-label', t('Extend {name} by {time}', { name: g.username, time: words(60) }));
-      b.addEventListener('click', function () { postForm('/guests/' + encodeURIComponent(g.username) + '/extend', { minutes: '60' }).then(function (j) { TD.toast(j.message, 'success'); window.TDHome.refresh(); }, function (e) { TD.toast(e.message, 'error'); }); });
+      b.addEventListener('click', function () { postForm('/guests/' + encodeURIComponent(g.username) + '/extend', { minutes: '60' }).then(function (j) { TD.toast(notification(j), 'success'); window.TDHome.refresh(); }, function (e) { TD.toast(e.notification || e.message, 'error'); }); });
       card.appendChild(b); host.appendChild(card);
     });
   }

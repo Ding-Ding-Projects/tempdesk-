@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ tr.html_lang }}" data-mode="{{ mode }}"{% if wording_session %} data-wording-scope="{{ wording_session.scope }}" data-wording-issued="{{ wording_session.issued }}" data-wording-expires="{{ wording_session.expires }}"{% elif mode == 'admin' and (not session or path == '/login') %} data-wording-reset{% endif %}>
+<html lang="{{ tr.html_lang }}" data-mode="{{ mode }}"{% if notification_scope %} data-notice-scope="{{ notification_scope }}"{% endif %}{% if wording_session %} data-wording-scope="{{ wording_session.scope }}" data-wording-issued="{{ wording_session.issued }}" data-wording-expires="{{ wording_session.expires }}"{% elif mode == 'admin' and (not session or path == '/login') %} data-wording-reset{% endif %}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,10 +16,13 @@
 <body>
 <a class="skip-link" href="#main">{{ t('Skip to content') }}</a>
 {% block body %}{% endblock %}
-<div class="toasts" aria-live="polite" aria-atomic="false" data-toasts></div>
+<div class="toasts" data-toasts></div>
+<div class="sr-only" role="status" data-notice-live></div>
+<div class="sr-only" role="alert" data-notice-urgent></div>
 <script type="application/json" id="td-palette">{{ palette_json }}</script>
 <script type="application/json" id="td-strings">{{ js_strings }}</script>
 <script src="/static/js/app.js" defer></script>
+<script src="/static/js/notifications.js" defer></script>
 {% if mode == 'admin' and session %}<script src="/static/js/action-sounds.js" defer></script>{% endif %}
 {% if wording_session %}<script src="/static/js/wording.js" defer></script>{% endif %}
 {% if wording_session or (mode == 'admin' and (not session or path == '/login')) %}
@@ -27,6 +30,7 @@
 {% endif %}
 <script src="/static/js/regex-builder.js" defer></script>
 <script src="/static/js/search-surfaces.js" defer></script>
+{% if mode == "admin" and session %}<script src="/static/js/notification-centre.js" defer></script>{% endif %}
 <script src="/static/js/palette.js" defer></script>
 {% if mode == "admin" and session %}<script src="/static/js/admin.js" defer></script>
 <script src="/static/js/console.js" defer></script>{% endif %}

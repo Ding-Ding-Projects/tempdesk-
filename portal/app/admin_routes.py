@@ -25,9 +25,11 @@ from .tables import table
 from .undo_routes import check_spec, gpo_snapshot, http_inv, track
 from .web import (
     agent_message,
+    agent_notice,
     csrf_protect,
     current_session,
     flash_text,
+    notice_copy,
     redirect,
     render,
     require_admin,
@@ -79,16 +81,24 @@ def is_fetch(request: Request) -> bool:
 
 def ok(request: Request, url: str, key: str, **args):
     text = flash_text(request, key, **args)
+    notice = notice_copy(key, **args)
     if is_fetch(request):
-        return JSONResponse({"ok": True, "message": text, "url": url})
-    return redirect(request, url, ("success", text))
+        value = {"ok": True, "message": text, "url": url}
+        if notice:
+            value["notice"] = notice
+        return JSONResponse(value)
+    return redirect(request, url, ("success", text), notice=notice if len(text) <= 400 else None)
 
 
 def fail(request: Request, url: str, exc: AgentError | str):
     text = agent_message(request, exc) if isinstance(exc, AgentError) else flash_text(request, exc)
+    notice = agent_notice(request, exc) if isinstance(exc, AgentError) else notice_copy(exc)
     if is_fetch(request):
-        return JSONResponse({"ok": False, "message": text, "url": url}, status_code=400)
-    return redirect(request, url, ("error", text))
+        value = {"ok": False, "message": text, "url": url}
+        if notice:
+            value["notice"] = notice
+        return JSONResponse(value, status_code=400)
+    return redirect(request, url, ("error", text), notice=notice if len(text) <= 400 else None)
 
 
 def lines(value: str | None) -> list[str]:

@@ -72,11 +72,11 @@
 
   function extend(username, minutes, card) {
     return C.postForm('/guests/' + encodeURIComponent(username) + '/extend', { minutes: String(minutes) }).then(function (j) {
-      TD.toast(j.message || t('Saved'), 'success');
+      TD.toast(TD.notifications.fromResponse(j) || { key: 'Saved' }, 'success');
       var exp = minutes === 0 ? '' : new Date(Date.now() + minutes * 60000).toISOString().replace(/\.\d+Z$/, 'Z');
       if (card) { card.setAttribute('data-expires', exp); if (!card.getAttribute('data-created')) card.setAttribute('data-created', new Date().toISOString()); }
       paintRings(); applyFilter(); if (current && current === card) fill(card);
-    }, function (e) { TD.toast(e.message, 'error'); });
+    }, function (e) { TD.toast(e.notification || e.message, 'error'); });
   }
   root.addEventListener('click', function (e) {
     var q1 = e.target.closest('[data-quick-extend]');

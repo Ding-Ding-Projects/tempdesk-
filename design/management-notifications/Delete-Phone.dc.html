@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Management notification deletion confirmation</title>
+  <link rel="stylesheet" href="../../portal/app/static/css/tokens.css">
+  <link rel="stylesheet" href="../../portal/app/static/css/app.css">
+  <link rel="stylesheet" href="../../portal/app/static/css/console.css">
+  <style>
+    main[data-accent^="#"] { --primary: var(--reference-accent); }
+    main[data-motion="off"] * { animation: none; transition: none; }
+  </style>
+</head>
+<body>
+<x-dc>
+  <main data-motion="{{motionMode}}" data-accent="{{accentColor}}" style="--reference-accent:{{accentColor}}">
+    <dialog class="notice-delete" open aria-labelledby="delete-heading">
+      <div class="stack">
+        <h2 id="delete-heading">Review 1 notification for deletion</h2>
+        <p>Deleting this notification removes its local history. This cannot be undone.</p>
+        <div class="field notice-search"><label for="preview-search">Search affected notifications</label><input id="preview-search" type="search" placeholder="Search"></div>
+        <ul class="notice-preview"><li>Copied</li></ul>
+        <label class="check"><input type="checkbox" checked> <span>I reviewed the notifications listed above.</span></label>
+        <label class="check"><input type="checkbox"> <span>I understand the deletion cannot be undone.</span></label>
+        <div class="field"><label for="confirmation-range">Move confirmation to 100%</label>
+          <input id="confirmation-range" type="range" min="0" max="100" value="0" disabled><progress max="100" value="0"></progress></div>
+        <div class="form-actions"><button class="btn">Cancel</button><button class="btn danger" disabled>Delete 1 notification</button></div>
+      </div>
+    </dialog>
+  </main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":360,"height":900},"accentColor":{"type":"color","default":"#7CF3E6","editor":"color","label":"Accent colour"},"motion":{"type":"boolean","default":true,"editor":"toggle","label":"Motion"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {accentColor: this.props?.accentColor ?? "#7CF3E6", motionMode: this.props?.motion === false ? "off" : "full"};
+  }
+}
+</script>
+</body>
+</html>

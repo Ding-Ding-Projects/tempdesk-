@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Management notification history</title>
+  <link rel="stylesheet" href="../../portal/app/static/css/tokens.css">
+  <link rel="stylesheet" href="../../portal/app/static/css/app.css">
+  <link rel="stylesheet" href="../../portal/app/static/css/console.css">
+  <style>
+    main[data-accent^="#"] { --primary: var(--reference-accent); }
+    main[data-motion="off"] * { animation: none; transition: none; }
+  </style>
+</head>
+<body>
+<x-dc>
+  <main data-motion="{{motionMode}}" data-accent="{{accentColor}}" style="--reference-accent:{{accentColor}}">
+    <section class="notif-panel card raised stack" aria-labelledby="history-heading">
+      <div class="cluster"><h2 id="history-heading">Notifications</h2><span class="spacer"></span><button class="btn text">Close</button></div>
+      <div class="field notice-search"><label for="history-search">Search notifications</label><input id="history-search" type="search" value="Copied"></div>
+      <details class="notice-actions" open>
+        <summary>Actions</summary>
+        <div class="cluster">
+          <button class="btn text">Select all matches</button><button class="btn text">Invert matches</button>
+          <button class="btn text">Export matches</button><button class="btn text">Delete selected</button>
+        </div>
+      </details>
+      <p class="hint">1 selected · 0 active toasts selected</p>
+      <ul>
+        <li class="unread"><label class="notice-row"><input type="checkbox" checked><span class="notice-record"><span class="notice-record-copy">Copied</span><span class="subtle">Success · 18:21 · Unread · Dismissed</span></span></label></li>
+      </ul>
+    </section>
+  </main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1080,"height":880},"accentColor":{"type":"color","default":"#7CF3E6","editor":"color","label":"Accent colour"},"motion":{"type":"boolean","default":true,"editor":"toggle","label":"Motion"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {accentColor: this.props?.accentColor ?? "#7CF3E6", motionMode: this.props?.motion === false ? "off" : "full"};
+  }
+}
+</script>
+</body>
+</html>

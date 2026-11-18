@@ -26,6 +26,14 @@
    "kind": "list"
   },
   {
+   "id": "notification-delete-review",
+   "template": "app/templates/layouts/admin.html",
+   "selector": "[data-search-surface=\"notification-delete-review\"]",
+   "consumer": "Deletion preview [data-notif-preview] highlights matching rows without changing the reviewed scope",
+   "page": "/",
+   "kind": "custom"
+  },
+  {
    "id": "avatar-menu",
    "template": "app/templates/layouts/admin.html",
    "selector": "[data-search-surface=\"avatar-menu\"]",

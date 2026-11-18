@@ -76,7 +76,7 @@
     if (!navigator.clipboard || !navigator.clipboard.readText) { showError(new Error('Clipboard reading is not available here. Paste with Ctrl+V instead.')); inp.focus(); return; }
     navigator.clipboard.readText().then(function (s) { inp.value = s; snapshot(t('Paste from clipboard')); }, function () { showError(new Error('Clipboard access was refused. Paste with Ctrl+V instead.')); });
   });
-  btn('copy').addEventListener('click', function () { TD.copyText(out.value).then(function () { TD.toast(t('Copied'), 'success'); }, function () { TD.toast(t('Copy failed'), 'error'); }); });
+  btn('copy').addEventListener('click', function () { TD.copyText(out.value).then(function () { TD.toast({ key: 'Copied' }, 'success'); }, function () { TD.toast({ key: 'Copy failed' }, 'error'); }); });
   function saveBlob(blob, name) { var a = doc.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; doc.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
   btn('save').addEventListener('click', function () {
     if (dir() === 'decode' && lastBytes) saveBlob(new Blob([lastBytes], { type: 'application/octet-stream' }), 'decoded.bin');

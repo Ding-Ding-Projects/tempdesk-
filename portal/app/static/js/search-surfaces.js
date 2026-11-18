@@ -300,7 +300,7 @@
   };
   Surface.prototype.closeTabs = function (containing) {
     var self = this, plan = this.tabPlan(containing);
-    if (!this.active()) { TD.toast && TD.toast(t('Type text to search the tabs first.'), 'error'); return; }
+    if (!this.active()) { TD.toast && TD.toast({ key: 'Type text to search the tabs first.' }, 'error'); return; }
     if (!plan.close.length) return;
     var d = doc.createElement('dialog'); d.className = 'ss-dlg'; d.setAttribute('aria-labelledby', 'ss-dlg-h');
     var h = doc.createElement('h2'); h.id = 'ss-dlg-h'; h.textContent = t(containing ? 'Close tabs containing text' : 'Close tabs not containing text'); d.appendChild(h);

@@ -45,7 +45,7 @@
   function parentOf(dn) { var i = String(dn).indexOf(','); return i > 0 ? dn.slice(i + 1) : ''; }
   function isContainer(c) { var k = kindOf(c); return k === 'dom' || k === 'ou' || k === 'ct'; }
   function toast(m, k) { TD.toast && TD.toast(m, k); }
-  function fail(e) { toast(e && e.message ? e.message : String(e), 'error'); }
+  function fail(e) { toast(e?.notification || e?.message || String(e), 'error'); }
   function storeGet(k) { try { return JSON.parse(sessionStorage.getItem(k) || 'null'); } catch (e) { return null; } }
   function storeSet(k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* ignore */ } }
 
@@ -187,7 +187,7 @@
       if (isContainer(n.objectClass)) { items.push([t('Create object here'), function () { location.href = '/directory/create?parent=' + encodeURIComponent(dn); }]); items.push([t('Bulk edit children'), function () { bulkFromContainer(dn); }]); items.push([t('Import users here'), function () { location.href = '/import?ou=' + encodeURIComponent(dn); }]); }
       items.push([t('Move'), function () { moveDialog([dn]); }]);
       items.push([t('Show on the map'), function () { openTab({ id: 'map', kind: 'map', title: t('Map') }); }]);
-      items.push([t('Copy distinguished name'), function () { C && TD.copyText(dn).then(function () { toast(t('Copied'), 'success'); }); }]);
+      items.push([t('Copy distinguished name'), function () { C && TD.copyText(dn).then(function () { toast({ key: 'Copied' }, 'success'); }); }]);
       items.push([t('Delete'), function () { location.href = '/directory/object?dn=' + encodeURIComponent(dn) + '#delete'; }, 'Del']);
     } else {
       items.push([t('Bulk edit {count} objects', { count: selected.length }), function () { openBulk(selected.slice()); }]);
@@ -279,8 +279,8 @@
     body.appendChild(el('p', 'hint', t('A password reset cannot be undone: the old password is never stored.')));
     ask(t('Reset password'), body, t('Reset password')).then(function (ok) {
       if (!ok) return;
-      if (p1.value.length < 8) { toast(t('The new password must be at least 8 characters.'), 'error'); return; }
-      C.postForm('/directory/user/password', { dn: dn, password: p1.value, mustChange: mc.checked ? 'on' : '' }).then(function (j) { toast(j.message || t('Password reset.'), 'success'); loadHistory(); }, fail);
+      if (p1.value.length < 8) { toast({ key: 'The new password must be at least 8 characters.' }, 'error'); return; }
+      C.postForm('/directory/user/password', { dn: dn, password: p1.value, mustChange: mc.checked ? 'on' : '' }).then(function (j) { toast(TD.notifications.fromResponse(j) || { key: 'Password reset.' }, 'success'); loadHistory(); }, fail);
     });
   }
   function userAction(dn, action) {
@@ -454,7 +454,7 @@
     });
     Object.keys(extra || {}).forEach(function (k) { setv[k] = extra[k]; });
     Object.keys(ft).forEach(function (k) { if (!ft[k]) { delete ft[k]; setv[k] = ['0']; } });
-    if (!Object.keys(setv).length && !clear.length && !Object.keys(ft).length) { toast(t('Nothing was changed.'), 'info'); return Promise.resolve(); }
+    if (!Object.keys(setv).length && !clear.length && !Object.keys(ft).length) { toast({ key: 'Nothing was changed.' }, 'info'); return Promise.resolve(); }
     return post('/api/dir/patch', { dn: o.dn, set: setv, clear: clear, filetime: ft }).then(function (j) {
       C.toastUndo(j.message, j.undoId, function () { delete objCache[o.dn]; renderActive(); });
       delete objCache[o.dn]; renderActive(); loadHistory();
@@ -994,7 +994,7 @@
       var ch = changes(), dns = Object.keys(ch), done = 0, errs = []; applyB.disabled = true;
       var seq = Promise.resolve();
       dns.forEach(function (d) { seq = seq.then(function () { return post('/api/dir/patch', { dn: d, set: ch[d].set, clear: ch[d].clear }).then(function () { done++; info.textContent = t('{done} of {total} saved', { done: done, total: dns.length }); delete objCache[d]; }, function (e) { errs.push(rdnName(d) + ': ' + e.message); }); }); });
-      seq.then(function () { toast(t('{done} of {total} saved', { done: done, total: dns.length }) + (errs.length ? '. ' + errs.join(' ') : ''), errs.length ? 'error' : 'success'); tb.data = null; tb.dirty = {}; renderBulk(ed, tb); loadHistory(); });
+      seq.then(function () { toast({ key: '{done} of {total} saved', args: { done: done, total: dns.length }, detail: errs.join(' ') }, errs.length ? 'error' : 'success'); tb.data = null; tb.dirty = {}; renderBulk(ed, tb); loadHistory(); });
     }
   }
 
@@ -1090,7 +1090,7 @@
   });
   $('[data-st-undo]').addEventListener('click', function () {
     var fd = new FormData(); fd.append('csrf_token', C.csrf()); fd.append('back', '/directory');
-    fetch('/undo', { method: 'POST', body: fd, credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch', Accept: 'application/json' } }).then(function (r) { return r.json(); }).then(function (j) { toast(j.message, j.ok ? 'success' : 'error'); reloadAll(); });
+    fetch('/undo', { method: 'POST', body: fd, credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch', Accept: 'application/json' } }).then(function (r) { return r.json(); }).then(function (j) { toast(TD.notifications.fromResponse(j), j.ok ? 'success' : 'error'); reloadAll(); });
   });
   var nb = $('[data-st-new]'), nm = $('[data-st-newmenu]');
   nb.addEventListener('click', function (e) { e.stopPropagation(); nm.hidden = !nm.hidden; nb.setAttribute('aria-expanded', nm.hidden ? 'false' : 'true'); if (!nm.hidden) { var p = selected[0] && nodes[selected[0]] && isContainer(nodes[selected[0]].objectClass) ? selected[0] : (selected[0] ? parentOf(selected[0]) : rootDn); $$('a[data-new]', nm).forEach(function (a) { a.href = '/directory/create?parent=' + encodeURIComponent(p) + '&class=' + a.getAttribute('data-new'); }); var f = nm.querySelector('a'); if (f) f.focus(); } });

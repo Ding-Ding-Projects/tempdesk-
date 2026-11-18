@@ -55,6 +55,10 @@ An empty card shows the original wording state. An invalid file leaves the last 
 
 The adjacent first-run setup action uses the same label wrapping when bilingual text grows. Keep the action within its card and retain the existing button style.
 
+### Management notification centre
+
+The [history](management-notifications/History.dc.html) and [phone deletion review](management-notifications/Delete-Phone.dc.html) use the console's existing cards, buttons, search, and form tokens. Keep the filter and its adjacent regex builder above a single stable list. The Actions disclosure keeps the compact view usable. The deletion review shows the exact affected rows, two independent keys, the confirmation slider, and a separate Delete action. Escape and Cancel return focus to the action that opened it. Both design frames declare the accent and motion controls.
+
 The [action-sound detail](management-sounds/Settings-Sounds.dc.html) uses the same form grid, checkbox and helper text as the display preferences. Keep the sound control in the basic view, after the focus preference in the expanded view. The label is at least 48 px high and the help wraps within its field. In school mode, show the suppression message alongside the saved choice and keep the control editable. The checked-in canvas records both states and its accent and motion controls.
 
 ### Deployer notification wording

@@ -437,9 +437,13 @@ dialog h2 { margin-top: 0; }
 .ctx-menu a:hover, .ctx-menu a:focus, .ctx-menu button:hover, .ctx-menu button:focus { background: var(--surface-selected); }
 .ctx-menu kbd { margin-left: auto; color: var(--text-subtle); font-family: inherit; font-size: .8rem; }
 
-.toasts { position: fixed; z-index: 90; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; max-width: min(420px, calc(100vw - 32px)); }
+.toasts { position: fixed; z-index: 90; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; max-width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 160px); overflow-y: auto; }
 @media (max-width: 900px) { .toasts { bottom: 96px; left: 16px; right: 16px; max-width: none; } }
 .toast { padding: 14px 16px; border-radius: var(--r-md); background: var(--surface-4); color: var(--text); border: 1px solid var(--outline-strong); box-shadow: var(--shadow); display: flex; gap: 10px; align-items: flex-start; animation: toast-in var(--dur) var(--ease-spring) both; }
+.toast-message { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.toast .toast-close, .notice-actions button, .notice-actions summary, .notice-delete .check,
+.notice-delete .btn, .notif-panel [data-notif-close] { min-height: 48px; }
+.toast.warning { border-color: var(--coral); }
 .toast.error { border-color: var(--danger); }
 .toast.success { border-color: var(--primary); }
 .toast.leaving { animation: toast-out var(--dur) var(--ease) both; }
@@ -447,10 +451,37 @@ dialog h2 { margin-top: 0; }
 @keyframes toast-out { to { opacity: 0; transform: translateX(40px); } }
 .bell { position: relative; }
 .bell .badge { position: absolute; top: 4px; right: 4px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--coral); color: var(--on-coral); font-size: .7rem; font-weight: 800; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
-.notif-panel { position: fixed; z-index: 85; top: 90px; right: 16px; width: min(380px, calc(100vw - 32px)); max-height: 70vh; overflow-y: auto; }
+.notif-panel { position: fixed; z-index: 85; top: 90px; right: 16px; width: min(440px, calc(100% - 32px)); max-height: min(70vh, calc(100dvh - 120px)); overflow-y: auto; }
 .notif-panel ul { list-style: none; margin: 0; padding: 0; }
 .notif-panel li { padding: 10px 0; border-top: 1px solid var(--divider); }
 .notif-panel li.unread { font-weight: 700; }
+.notif-panel h2, .notif-panel p, .notice-delete p { margin: 0; }
+.notice-actions summary { cursor: pointer; align-content: center; }
+.notice-actions button { white-space: normal; }
+.notice-actions [aria-disabled="true"] { opacity: .55; cursor: default; }
+.notice-row { display: flex; align-items: center; gap: 12px; min-height: 48px; cursor: pointer; }
+.notice-record { min-width: 0; overflow-wrap: anywhere; }
+.notice-record-copy, .notice-record .subtle { display: block; }
+.notice-delete { width: min(560px, calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; }
+.notice-search .ss, .notice-search .ss input { min-height: 48px; }
+.notice-search .ss button.rxb-ib { width: 48px; height: 48px; min-width: 48px; min-height: 48px; }
+.notice-preview { max-height: 28vh; overflow: auto; overflow-wrap: anywhere; margin: 0; padding-inline-start: 24px; }
+.notice-delete .form-actions .btn {
+  display: inline-block;
+  min-width: 0;
+  max-width: 100%;
+  padding-block: 6px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.notice-delete input[type="range"] { width: 100%; min-height: 48px; margin: 0; }
+.notice-delete progress { width: 100%; height: 8px; accent-color: var(--coral); }
+.notice-delete progress::-webkit-progress-value { transition: width var(--dur) var(--ease); }
+.notice-delete[data-notice-armed] [data-notif-confirm-delete] { animation: toast-in var(--dur) var(--ease-spring); }
+@media (max-width: 480px) {
+  .notif-panel { top: 112px; max-height: calc(100dvh - 206px); }
+  .notice-actions .cluster > .btn { flex: 1 1 120px; }
+}
 
 .popover { position: absolute; z-index: 70; max-width: min(320px, calc(100vw - 32px)); padding: 12px 14px; border-radius: var(--r-md); background: var(--surface-4); border: 1px solid var(--outline-strong); box-shadow: var(--shadow); font-size: .9rem; font-weight: 400; color: var(--text); }
 .info-btn { width: 28px; height: 28px; min-height: 28px; border-radius: 14px; border: 1px solid var(--outline-strong); background: transparent; color: var(--text-muted); font-weight: 800; font-size: .8rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; position: relative; }

@@ -119,19 +119,6 @@
     else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); var g = $('[data-redo-form]'); if (g) g.submit(); }
   });
 
-  // ---------------------------------------------------------- notifications panel
-  var bell = $('[data-bell]'), panel = $('[data-notif-panel]');
-  function loadN() { try { return JSON.parse(store.get('td.notifications') || '[]'); } catch (e) { return []; } }
-  if (bell && panel) {
-    bell.addEventListener('click', function () {
-      var open = panel.hidden; panel.hidden = !open; bell.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (open) { var b = panel.querySelector('button'); if (b) b.focus(); }
-    });
-    doc.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) { panel.hidden = true; bell.setAttribute('aria-expanded', 'false'); bell.focus(); } });
-    $('[data-notif-read]').addEventListener('click', function () { var l = loadN(); l.forEach(function (n) { n.read = true; }); store.set('td.notifications', JSON.stringify(l)); location.reload(); });
-    $('[data-notif-clear]').addEventListener('click', function () { store.del('td.notifications'); location.reload(); });
-  }
-
   // ---------------------------------------------------------- elevation dialog
   var elevDlg = $('[data-elevate-dialog]');
   doc.addEventListener('click', function (e) {

@@ -64,7 +64,7 @@
           <button type="submit" class="btn icon" aria-label="{{ ta('Redo') }} (Ctrl+Y)" title="{{ ta('Redo') }} (Ctrl+Y)" aria-keyshortcuts="Control+Y" data-redo>{{ icon('redo') }}</button>
         </form>
       </div>
-      <button type="button" class="btn icon bell" data-bell {{ wording_attr('aria-label', ta('Notifications')) }} aria-expanded="false">{{ icon('bell') }}<span class="badge" data-bell-count hidden>0</span></button>
+      <button type="button" class="btn icon bell" data-bell {{ wording_attr('aria-label', ta('Notifications')) }} aria-expanded="false" aria-controls="notification-centre">{{ icon('bell') }}<span class="badge" data-bell-count hidden>0</span></button>
       <div class="pill-wrap">
         <button type="button" class="avatar-btn" aria-haspopup="true" aria-expanded="false" aria-controls="me-menu" data-me
                 aria-label="{{ ta('Signed in as {name}', name=user.displayName or user.sam) }}">{{ ((user.displayName or user.sam or '?')|trim)[:1]|upper }}</button>
@@ -110,12 +110,49 @@
   {% endfor %}{% endfor %}
   <a href="/more" {% if path == '/more' %}aria-current="page"{% endif %}><span class="ind">{{ icon('more', 20) }}</span><span>{{ t('More') }}</span></a>
 </nav>
-<div class="notif-panel card raised" data-notif-panel hidden role="dialog" {{ wording_attr('aria-label', ta('Notifications')) }}>
-  <div class="cluster"><h2 style="margin:0">{{ t('Notifications') }}</h2><span class="spacer"></span>
-  <button type="button" class="btn sm text" data-notif-read>{{ t('Mark all read') }}</button><button type="button" class="btn sm text" data-notif-clear>{{ t('Clear all') }}</button></div>
-  <div class="ss-host" data-search-surface="notifications" data-search-kind="list" data-search-target="[data-notif-list]" data-search-compact {{ wording_attr('data-search-label', ta('Search notifications')) }}></div>
+<div id="notification-centre" class="notif-panel card raised stack no-print" data-notif-panel hidden role="dialog" aria-labelledby="notification-heading">
+  <div class="cluster"><h2 id="notification-heading" tabindex="-1">{{ t('Notifications') }}</h2><span class="spacer"></span>
+    <button type="button" class="btn text" data-notif-close>{{ t('Close') }}</button></div>
+  <div class="field notice-search"><label for="notification-search">{{ t('Search notifications') }}</label>
+    <input id="notification-search" type="search" data-search-surface="notifications" data-search-kind="list" data-search-target="[data-notif-list]" data-search-items="[data-notice-id]" {{ wording_attr('data-search-label', ta('Search notifications')) }} {{ wording_attr('placeholder', ta('Search')) }}></div>
+  <details class="notice-actions">
+    <summary>{{ t('Actions') }}</summary>
+    <div class="cluster">
+      <button type="button" class="btn text" data-notif-action="select">{{ t('Select all matches') }}</button>
+      <button type="button" class="btn text" data-notif-action="invert">{{ t('Invert matches') }}</button>
+      <button type="button" class="btn text" data-notif-action="read" data-notif-read>{{ t('Mark all read') }}</button>
+      <button type="button" class="btn text" data-notif-action="dismiss">{{ t('Dismiss selected toasts') }}</button>
+      <button type="button" class="btn text" data-notif-action="export">{{ t('Export matches') }}</button>
+      <button type="button" class="btn text" data-notif-action="remove">{{ t('Delete selected') }}</button>
+      <button type="button" class="btn text" data-notif-action="clear" data-notif-clear>{{ t('Clear all history') }}</button>
+    </div>
+  </details>
+  <p class="hint" data-notif-selection role="status"></p>
+  <p class="hint" data-notif-status role="status"></p>
+  <p class="hint" data-notif-legacy hidden>{{ t('Older unassigned notification history remains in this browser.') }}</p>
+  <p class="muted" data-notif-empty>{{ t('No notifications yet') }}</p>
   <ul data-notif-list data-searchable="notifications"></ul>
 </div>
+<dialog class="notice-delete" data-notif-confirm aria-labelledby="notification-delete-heading" aria-describedby="notification-delete-description">
+  <div class="stack">
+    <h2 id="notification-delete-heading" tabindex="-1">{{ t('Review notifications for deletion') }}</h2>
+    <p id="notification-delete-description">{{ t('Deleting these notifications removes their local history. This cannot be undone.') }}</p>
+    <p data-notif-delete-all-note hidden>{{ t('This includes notifications outside the current search.') }}</p>
+    <div class="field notice-search"><label for="notification-review-search">{{ t('Search affected notifications') }}</label>
+      <input id="notification-review-search" type="search" data-search-surface="notification-delete-review" data-search-kind="custom" data-search-target="[data-notif-preview]" data-search-manual {{ wording_attr('data-search-label', ta('Search affected notifications')) }} {{ wording_attr('placeholder', ta('Search')) }}></div>
+    <ul class="notice-preview" data-notif-preview data-searchable="notification-delete-review"></ul>
+    <label class="check"><input type="checkbox"> <span>{{ t('I reviewed the notifications listed above.') }}</span></label>
+    <label class="check"><input type="checkbox"> <span>{{ t('I understand the deletion cannot be undone.') }}</span></label>
+    <div class="field"><label for="notification-delete-slider">{{ t('Move confirmation to 100%') }}</label>
+      <input id="notification-delete-slider" type="range" min="0" max="100" step="1" value="0" disabled>
+      <progress max="100" value="0" aria-hidden="true"></progress></div>
+    <p role="status" data-notif-review-status></p>
+    <div class="form-actions">
+      <button type="button" class="btn" data-notif-confirm-cancel>{{ t('Cancel') }}</button>
+      <button type="button" class="btn danger" data-notif-confirm-delete disabled>{{ t('Delete selected') }}</button>
+    </div>
+  </div>
+</dialog>
 <dialog data-elevate-dialog aria-labelledby="elev-title">
   <form method="post" action="/auth/elevate" class="stack" data-elevate-form>
     {{ csrf() }}<input type="hidden" name="next" value="{{ path }}">

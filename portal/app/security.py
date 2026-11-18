@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hmac
 import ipaddress
+import json
 import secrets
 
 from fastapi import Request
@@ -122,8 +123,11 @@ class Flash:
     def __init__(self, secret: str):
         self._s = URLSafeTimedSerializer(secret, salt="tempdesk-flash")
 
-    def dumps(self, kind: str, text: str) -> str:
-        return self._s.dumps({"k": kind, "t": text[:400]})
+    def dumps(self, kind: str, text: str, notice: dict | None = None) -> str:
+        value = {"k": kind, "t": text[:400]}
+        if notice and len(json.dumps(notice, ensure_ascii=False).encode("utf-8")) <= 1000:
+            value["n"] = notice
+        return self._s.dumps(value)
 
     def loads(self, raw: str | None) -> dict | None:
         if not raw:
@@ -132,7 +136,12 @@ class Flash:
             v = self._s.loads(raw, max_age=300)
         except (BadSignature, SignatureExpired):
             return None
-        return {"kind": v.get("k", "info"), "text": v.get("t", "")} if isinstance(v, dict) else None
+        if not isinstance(v, dict):
+            return None
+        value = {"kind": v.get("k", "info"), "text": v.get("t", "")}
+        if isinstance(v.get("n"), dict):
+            value["notice"] = v["n"]
+        return value
 
 
 class SuperConfirm:

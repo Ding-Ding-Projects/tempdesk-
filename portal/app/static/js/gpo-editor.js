@@ -20,7 +20,7 @@
   var phone = window.matchMedia('(max-width: 900px)');
 
   function toast(m, k) { TD.toast && TD.toast(m, k); }
-  function fail(e) { toast(e && e.message ? e.message : String(e), 'error'); }
+  function fail(e) { toast(e?.notification || e?.message || String(e), 'error'); }
   function setView(v) { root.setAttribute('data-view', v); if (phone.matches) window.scrollTo(0, 0); }
   function enc(s) { return encodeURIComponent(s); }
   function admxClass() { return scope === 'User' ? 'User' : 'Machine'; }
@@ -270,7 +270,7 @@
     var help = el('p', 'help-text', p.explain || t('No help text is provided for this policy.')); form.appendChild(help);
     var tags = el('div', 'tagrow');
     if (p.supportedOn) tags.appendChild(el('span', null, p.supportedOn));
-    if (p.key) { var reg = (admxClass() === 'User' ? 'HKCU\\' : 'HKLM\\') + p.key + (p.valueName ? '\\' + p.valueName : ''); var rb = el('button', 'mono', reg); rb.type = 'button'; rb.title = t('Copy'); rb.setAttribute('aria-label', t('Copy') + ' ' + reg); rb.addEventListener('click', function () { TD.copyText(reg).then(function () { toast(t('Copied'), 'success'); }); }); tags.appendChild(rb); }
+    if (p.key) { var reg = (admxClass() === 'User' ? 'HKCU\\' : 'HKLM\\') + p.key + (p.valueName ? '\\' + p.valueName : ''); var rb = el('button', 'mono', reg); rb.type = 'button'; rb.title = t('Copy'); rb.setAttribute('aria-label', t('Copy') + ' ' + reg); rb.addEventListener('click', function () { TD.copyText(reg).then(function () { toast({ key: 'Copied' }, 'success'); }); }); tags.appendChild(rb); }
     tags.appendChild(el('span', 'mono', p.id));
     form.appendChild(tags);
     form.appendChild(el('p', 'hint', t('A policy backup is taken first, so Undo can restore it.')));
@@ -288,7 +288,7 @@
       $$('[data-list-editor]', form).forEach(function (le) { var n = le.getAttribute('data-name'); fields[n] = $$('input[name="' + n + '"]', le).map(function (i) { return i.value; }); var nn = $$('input[name="' + n + '_name"]', le).map(function (i) { return i.value; }); if (nn.length) fields[n + '_name'] = nn; });
       ap.disabled = true;
       C.postForm('/gpo/' + enc(gid) + '/admx/' + enc(p.id), fields).then(function (j) {
-        p.state = fields.state; toast(j.message || t('Policy saved.'), 'success'); renderList();
+        p.state = fields.state; toast(TD.notifications.fromResponse(j) || { key: 'Policy saved.' }, 'success'); renderList();
         var row = $('[data-ged-list] [data-idx="' + activeIdx + '"]'); if (row) row.focus();
       }, fail).then(function () { ap.disabled = false; });
     });

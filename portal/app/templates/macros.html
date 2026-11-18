@@ -45,7 +45,7 @@
 {%- endmacro %}
 
 {% macro flash_block(flash) -%}
-{% if flash %}<div class="alert {{ 'error' if flash.kind == 'error' else 'success' if flash.kind == 'success' else '' }}" role="{{ 'alert' if flash.kind == 'error' else 'status' }}" data-notify="{{ flash.kind }}">{{ flash.text }}</div>{% endif %}
+{% if flash %}<div class="alert {{ 'error' if flash.kind == 'error' else 'success' if flash.kind == 'success' else '' }}" role="{{ 'alert' if flash.kind == 'error' else 'status' }}" data-notify="{{ flash.kind }}"{% if flash.notice %} data-notice-copy='{{ flash.notice | tojson }}'{% endif %}>{{ flash.text }}</div>{% endif %}
 {%- endmacro %}
 
 {% macro search_box(tv, regex_error=None, label='Filter this list', target='table', scope='section, .card, .tile, main', kind='table', items=None) -%}

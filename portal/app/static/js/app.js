@@ -23,50 +23,13 @@
   function $(sel, ctx) { return (ctx || doc).querySelector(sel); }
   function $$(sel, ctx) { return Array.prototype.slice.call((ctx || doc).querySelectorAll(sel)); }
 
-  // ---------------------------------------------------------- notifications and toasts
-  var NKEY = 'td.notifications';
-  function loadN() { try { return JSON.parse(store.get(NKEY) || '[]'); } catch (e) { return []; } }
-  function saveN(list) { store.set(NKEY, JSON.stringify(list.slice(-100))); renderBell(); }
-  function toast(text, kind) {
-    var box = $('[data-toasts]');
-    if (!box || !text) return;
-    var el = doc.createElement('div');
-    el.className = 'toast ' + (kind || '');
-    el.setAttribute('role', kind === 'error' ? 'alert' : 'status');
-    var span = doc.createElement('span'); span.textContent = text; span.style.flex = '1';
-    var close = doc.createElement('button'); close.type = 'button'; close.className = 'btn sm text'; close.textContent = t('Close');
-    close.addEventListener('click', function () { dismiss(); });
-    el.appendChild(span); el.appendChild(close);
-    box.appendChild(el);
-    var list = loadN(); list.push({ text: text, kind: kind || 'info', time: Date.now(), read: false }); saveN(list);
-    var timer = setTimeout(dismiss, kind === 'error' ? 9000 : 5000);
-    function dismiss() {
-      clearTimeout(timer);
-      if (motionOff()) { el.remove(); return; }
-      el.classList.add('leaving');
-      setTimeout(function () { el.remove(); }, 300);
-    }
+  function toast(message, kind) {
+    return window.TD.notifications?.show(message, kind);
   }
-  window.TD = { t: t, store: store, toast: toast, motionOff: motionOff };
-  function renderBell() {
-    var badge = $('[data-bell-count]'), listEl = $('[data-notif-list]');
-    var list = loadN();
-    var unread = list.filter(function (n) { return !n.read; }).length;
-    if (badge) { badge.hidden = unread === 0; badge.textContent = String(unread); }
-    if (listEl) {
-      listEl.textContent = '';
-      if (!list.length) { var li = doc.createElement('li'); li.className = 'muted'; li.textContent = t('No notifications yet'); listEl.appendChild(li); }
-      list.slice().reverse().forEach(function (n) {
-        var li = doc.createElement('li'); if (!n.read) li.className = 'unread';
-        var d = doc.createElement('div'); d.textContent = n.text;
-        var tm = doc.createElement('div'); tm.className = 'subtle'; tm.textContent = new Date(n.time).toLocaleString();
-        li.appendChild(d); li.appendChild(tm); listEl.appendChild(li);
-      });
-    }
+  function isCopyKey(key) {
+    return typeof key === 'string' && Object.hasOwn(S, key);
   }
-
-  // Flash messages from the server become toasts and enter the notification history.
-  $$('[data-notify]').forEach(function (el) { toast(el.textContent.trim(), el.getAttribute('data-notify')); });
+  window.TD = { t: t, store: store, toast: toast, motionOff: motionOff, isCopyKey: isCopyKey };
 
   // ---------------------------------------------------------- theme
   function setTheme(next) {
@@ -93,7 +56,7 @@
       var src = $(el.getAttribute('data-copy'));
       var attr = el.getAttribute('data-copy-attr');
       var text = src ? (attr ? src.getAttribute(attr) : src.textContent) : '';
-      copyText(text.trim()).then(function () { toast(t('Copied'), 'success'); }, function () { toast(t('Copy failed'), 'error'); });
+      copyText(text.trim()).then(function () { toast({ key: 'Copied' }, 'success'); }, function () { toast({ key: 'Copy failed' }, 'error'); });
       return;
     }
     el = ev.target.closest('[data-toggle-secret]');
@@ -340,7 +303,7 @@
         if (it.tab && window.TDTabs) { ev.preventDefault(); window.TDTabs.open(it.href, it.label); window.location.href = it.href; }
         if (it.focus) { ev.preventDefault(); var f = $(it.focus); if (f) { f.focus(); f.click(); } }
         if (it.el) { ev.preventDefault(); closeMenu(); it.el.focus(); it.el.click(); return; }
-        if (it.copy) { ev.preventDefault(); copyText(target.innerText.replace(/\s+\n/g, '\n').trim()).then(function () { toast(t('Copied'), 'success'); }, function () { toast(t('Copy failed'), 'error'); }); }
+        if (it.copy) { ev.preventDefault(); copyText(target.innerText.replace(/\s+\n/g, '\n').trim()).then(function () { toast({ key: 'Copied' }, 'success'); }, function () { toast({ key: 'Copy failed' }, 'error'); }); }
         closeMenu();
       });
       menu.appendChild(el);
@@ -398,7 +361,7 @@
       if (name === 'contrast') { if (v) root.setAttribute('data-contrast', 'high'); else root.removeAttribute('data-contrast'); }
       if (name === 'focus') { if (v) root.setAttribute('data-focus', 'always'); else root.removeAttribute('data-focus'); }
       if (name === 'accent') { applyAccent(v); return; }
-      toast(t('Saved in this browser'), 'success');
+      toast({ key: 'Saved in this browser' }, 'success');
     });
   });
   function applyAccent(v) {
@@ -427,13 +390,13 @@
       var pin = ($('#school-pin') || {}).value || '';
       var want = b.getAttribute('data-school');
       if (want === 'on') {
-        if (pin.length < 4) { toast(t('Set a PIN first'), 'error'); return; }
-        sha(pin).then(function (h) { store.set('td.schoolPin', h); setCookie('td_school', '1'); window.dispatchEvent(new Event('td:school')); toast(t('School mode is on'), 'success'); setTimeout(function () { location.reload(); }, 400); });
+        if (pin.length < 4) { toast({ key: 'Set a PIN first' }, 'error'); return; }
+        sha(pin).then(function (h) { store.set('td.schoolPin', h); setCookie('td_school', '1'); window.dispatchEvent(new Event('td:school')); toast({ key: 'School mode is on' }, 'success'); setTimeout(function () { location.reload(); }, 400); });
       } else {
         var saved = store.get('td.schoolPin');
         sha(pin).then(function (h) {
-          if (saved && saved !== h) { toast(t('Wrong PIN'), 'error'); return; }
-          store.del('td.schoolPin'); setCookie('td_school', ''); window.dispatchEvent(new Event('td:school')); toast(t('School mode is off'), 'success'); setTimeout(function () { location.reload(); }, 400);
+          if (saved && saved !== h) { toast({ key: 'Wrong PIN' }, 'error'); return; }
+          store.del('td.schoolPin'); setCookie('td_school', ''); window.dispatchEvent(new Event('td:school')); toast({ key: 'School mode is off' }, 'success'); setTimeout(function () { location.reload(); }, 400);
         });
       }
     });
@@ -471,5 +434,4 @@
     });
   });
 
-  renderBell();
 })();

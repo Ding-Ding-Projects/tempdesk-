@@ -1,0 +1,17 @@
+{
+  "v": 3,
+  "title": "Management notifications",
+  "launch": { "view": "canvas", "page": "management-notifications" },
+  "pages": [{ "id": "management-notifications", "title": "Management notifications" }],
+  "boards": {
+    "History.dc.html": { "page": "management-notifications", "x": 0, "y": 80, "w": 1080, "h": 880, "title": "Filtered notification history" },
+    "Delete-Phone.dc.html": { "page": "management-notifications", "x": 1470, "y": 80, "w": 360, "h": 900, "title": "Notification deletion review at 360 px" }
+  },
+  "order": ["History.dc.html", "Delete-Phone.dc.html"],
+  "notes": {
+    "history-title": { "page": "management-notifications", "x": 0, "y": 0, "kind": "title1", "text": "Notification history and deletion" },
+    "history": { "page": "management-notifications", "x": 1110, "y": 170, "maxW": 315, "text": "Look for the selected row inside the active search. Try Accent colour and Motion. The running portal supplies independent regex search, keyboard selection, and persistent history." },
+    "deletion": { "page": "management-notifications", "x": 1870, "y": 170, "maxW": 315, "text": "The first key is checked; the second key, slider and explicit action still separate reviewing from deleting. Try Accent colour and Motion. Verify confirmation and Escape in the running portal." }
+  },
+  "designSystems": []
+}

@@ -65,6 +65,14 @@ The validated file stays in the current browser tab and survives reloads within 
 
 Under **Display and accessibility**, use **Action sounds** to silence the console's wording cues. The choice is saved in this browser and takes effect immediately. School mode pauses sounds and keeps the saved choice. Saving a valid file plays an ascending three-note cue. A rejected file or save plays a descending two-note cue. The browser synthesizes both cues locally after a user action. The wording status is available as text and is announced in the same way when audio is muted or unavailable.
 
+### Notification history
+
+Open the bell in the management console to review and search notifications. **Select all matches** and **Invert matches** operate on the current filter. Space toggles a row checkbox. Shift+Space extends selection from the last selected row. Selection stays within the current matches. **Dismiss selected toasts** closes the visible messages and keeps their records. Warnings and errors stay visible on the current page until dismissed.
+
+**Delete selected** and **Clear all history** list the affected items before deletion. The review has a separate search and regex builder that highlight matches within the complete affected list. Check both review controls, move confirmation to 100 percent, and use the separate Delete button. A changed filter or changed history resets the confirmation. Cancel or Escape returns to the originating action.
+
+**Export matches** downloads ordinary notification copy in JSON. Personal wording applies to the shipped message text in the console. Record arguments and unclassified details retain their literal values. New unclassified or literal diagnostics stay in the current page only, and the export reports their omission. Known messages are stored individually under the signed-in account in this browser. Older unassigned history remains in local storage outside the account's list.
+
 Older management clients receive HTTP 410 from the retired server upload and clear routes. The console ignores files left on the server by older versions. Choose the original file in the current browser to apply it again.
 
 ## Extension hooks (for the Server area and other modules)
