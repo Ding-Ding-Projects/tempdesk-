@@ -46,3 +46,8 @@ Motion: entrance rise and pop with `cubic-bezier(.2,.9,.25,1)`, everything off u
 | `Console-Phone.dc.html` | The console on a phone: command bar on top, bottom bar navigation |
 
 Ground `#070B0B` with a 28 px dot grid, tiles `#0E1615` with `#1C2927` borders, 22 to 28 px radii, floating dock navigation. The plain HTTP warning is a status pill, not a banner. The older `Admin-*.dc.html` artboards are superseded.
+
+
+## Virtual Commons design reference
+
+Use the guest creation artboard's radio choice tiles for server edition selection. The edition group shares the existing choice grid, spacing, typography, colors and focus treatment. Unavailable editions remain visible and are marked unavailable. Use the guest credentials artboard for the checkout result and the existing filled action for the RDP download. The dim sum result uses the same guest card and action styles. Live visual parity remains to be verified.
