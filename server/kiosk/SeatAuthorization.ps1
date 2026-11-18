@@ -24,8 +24,21 @@ function Get-SeatState {
     if ($state.version -ne 1 -or $state.target -cne $script:SeatTarget -or $state.state -notin @('empty','reserved','granting','assigned','revoking')) {
         throw 'Invalid saved seat state.'
     }
-    if ($state.state -ne 'empty' -and $state.lease -cnotmatch '^[a-zA-Z0-9_-]{24}$') { throw 'Invalid saved lease.' }
-    if ($state.state -in @('granting','assigned') -and $state.sid -notmatch '^S-1-5-21-\d+-\d+-\d+-\d+$') { throw 'Invalid saved account.' }
+    foreach ($field in 'state','lease','target','sid','username','expiresAt') {
+        if ($state.$field -isnot [string]) { throw 'Invalid saved seat field.' }
+    }
+    if ($state.state -eq 'empty') {
+        if ($state.lease -or $state.sid -or $state.username -or $state.expiresAt) { throw 'Unexpected empty-seat metadata.' }
+    } elseif ($state.lease -cnotmatch '^[a-zA-Z0-9_-]{24}$') { throw 'Invalid saved lease.' }
+    if ($state.sid) {
+        if ($state.state -notin @('granting','assigned','revoking') -or $state.sid -notmatch '^S-1-5-21-\d+-\d+-\d+-\d+$' -or
+            $state.username -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,19}@' -or $state.expiresAt -notmatch '(Z|[+-]\d\d:\d\d)$') {
+            throw 'Invalid persisted account attachment.'
+        }
+        $null = [datetimeoffset]::Parse($state.expiresAt,[cultureinfo]::InvariantCulture)
+    } elseif ($state.state -in @('granting','assigned') -or $state.username -or $state.expiresAt) {
+        throw 'Incomplete persisted account attachment.'
+    }
     $state
 }
 
