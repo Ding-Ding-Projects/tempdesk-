@@ -8,7 +8,7 @@
     </label>
     <label class="field" data-setting="{{ ta('Motion') }}">
       {{ t('Transition curve') }}
-      <select data-motion-curve>
+      <select data-motion-curve data-search-exempt="four fixed global transition curves">
         <option value="default">{{ ta('Standard') }}</option>
         <option value="linear">{{ ta('Linear') }}</option>
         <option value="gentle">{{ ta('Gentle') }}</option>
@@ -18,8 +18,10 @@
   </div>
   <fieldset class="field" data-kind-editor data-setting="{{ ta('Animation settings') }}">
     <legend>{{ t('Animation settings') }}</legend>
-    <label>{{ t('Element') }}
-      <select data-kind-name>
+    <div class="field" data-setting="{{ ta('Element') }} {{ ta('Search animation types') }}">
+      <label for="animation-types">{{ t('Element') }}</label>
+      <span class="ss-host tight" data-search-surface="animation-types" data-search-kind="select" data-search-target="#animation-types" data-search-compact {{ wording_attr('data-search-label', ta('Search animation types')) }}></span>
+      <select id="animation-types" data-kind-name data-searchable="animation-types">
         <option value="entry">{{ ta('Page entry') }}</option>
         <option value="stagger">{{ ta('List stagger') }}</option>
         <option value="card">{{ ta('Cards') }}</option>
@@ -35,13 +37,13 @@
         <option value="tabs">{{ ta('Tabs') }}</option>
         <option value="hover">{{ ta('Hover effects') }}</option>
       </select>
-    </label>
+    </div>
     <label class="check"><input type="checkbox" data-kind-custom> {{ t('Customize this animation') }}</label>
     <div class="form-grid" data-kind-fields hidden>
       <label class="check"><input type="checkbox" data-kind-enabled> {{ t('Enabled') }}</label>
       <label>{{ t('Duration (ms)') }} <input type="number" min="0" max="5000" step="1" data-kind-duration></label>
       <label>{{ t('Delay (ms)') }} <input type="number" min="0" max="2000" step="1" data-kind-delay></label>
-      <label>{{ t('Transition curve') }} <select data-kind-ease>
+      <label>{{ t('Transition curve') }} <select data-kind-ease data-search-exempt="four fixed per-animation easing curves">
         {% for value, label in [('default','Standard'),('linear','Linear'),('gentle','Gentle'),('spring','Spring')] %}
         <option value="{{ value }}">{{ ta(label) }}</option>{% endfor %}
       </select></label>
@@ -58,13 +60,15 @@
 <section class="card" data-style-editor data-setting-section data-setting="{{ ta('Appearance editor') }}">
   <h2>{{ t('Appearance editor') }}</h2>
   <div class="form-grid">
-    <label class="field" data-setting="{{ ta('Element') }}">{{ t('Element') }}
-      <select data-style-target>
+    <div class="field" data-setting="{{ ta('Element') }} {{ ta('Search editable elements') }}">
+      <label for="appearance-elements">{{ t('Element') }}</label>
+      <span class="ss-host tight" data-search-surface="appearance-elements" data-search-kind="select" data-search-target="#appearance-elements" data-search-compact {{ wording_attr('data-search-label', ta('Search editable elements')) }}></span>
+      <select id="appearance-elements" data-style-target data-searchable="appearance-elements">
         {% for value, label in appearance_targets %}<option value="{{ value }}">{{ ta(label) }}</option>{% endfor %}
       </select>
-    </label>
+    </div>
     <label class="field" data-setting="{{ ta('Font family') }}">{{ t('Font family') }}
-      <select data-style-font>
+      <select data-style-font data-search-exempt="five built-in font stacks including the inherited default">
         {% for value, label in [('', 'Default'), ('system', 'System'), ('sans', 'Sans serif'), ('serif', 'Serif'), ('mono', 'Monospace')] %}
         <option value="{{ value }}">{{ ta(label) }}</option>{% endfor %}
       </select>

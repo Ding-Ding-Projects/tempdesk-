@@ -2,6 +2,22 @@
  "about": "Hand-written catalogue of the portal search surfaces. Each entry is one independent search field wired to the shared regex builder (site/assets/regex-builder.js) by app/static/js/search-surfaces.js. tests/test_search_surfaces.py renders every entry with a page against the fake agent and fails on any list, table, tree, picker, menu or tab strip without a registered search or a written exemption.",
  "surfaces": [
   {
+   "id": "animation-types",
+   "template": "app/templates/appearance/motion.html",
+   "selector": "[data-search-surface=\"animation-types\"]",
+   "consumer": "Fourteen configurable animation types in the motion editor",
+   "page": "/settings",
+   "kind": "select"
+  },
+  {
+   "id": "appearance-elements",
+   "template": "app/templates/appearance/motion.html",
+   "selector": "[data-search-surface=\"appearance-elements\"]",
+   "consumer": "Editable component families in the appearance editor",
+   "page": "/settings",
+   "kind": "select"
+  },
+  {
    "id": "cmd-bar",
    "template": "app/templates/layouts/admin.html",
    "selector": "[data-search-surface=\"cmd-bar\"]",

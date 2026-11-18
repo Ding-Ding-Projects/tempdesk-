@@ -1,5 +1,7 @@
 {
  "strings": {
+    "Search animation types": "搜尋動畫類型",
+    "Search editable elements": "搜尋可編輯元素",
     "Transition duration": "過場時間",
     "Transition curve": "過場曲線",
     "Linear": "線性",
