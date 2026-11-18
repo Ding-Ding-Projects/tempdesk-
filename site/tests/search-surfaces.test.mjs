@@ -12,7 +12,7 @@ import { installDom } from './mini-dom.mjs';
 import { build } from '../build.mjs';
 
 const SITE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const cat = JSON.parse(readFileSync(path.join(SITE, 'search-surfaces.json'), 'utf8'));
+const catalog = JSON.parse(readFileSync(path.join(SITE, 'search-surfaces.json'), 'utf8'));
 const read = (rel) => readFileSync(path.join(SITE, rel), 'utf8');
 
 // Helpers that are verified to put attachRegexBuilder on their field.
@@ -20,24 +20,24 @@ const WRAPPERS = { searchBox: 'assets/canvas/search-ui.js' };
 
 test('catalogue: ids are unique and every entry has the required fields', () => {
   const ids = new Set();
-  for (const s of cat.surfaces) {
+  for (const s of catalog.surfaces) {
     for (const k of ['id', 'page', 'surface', 'file', 'consumer']) assert.ok(s[k], `${s.id || '?'}: missing ${k}`);
     assert.ok(!ids.has(s.id), 'duplicate id ' + s.id);
     ids.add(s.id);
-    assert.ok(cat.consumers[s.consumer], `${s.id}: unknown consumer ${s.consumer}`);
+    assert.ok(catalog.consumers[s.consumer], `${s.id}: unknown consumer ${s.consumer}`);
   }
-  assert.ok(cat.surfaces.length >= 50, 'the catalogue covers the whole site');
+  assert.ok(catalog.surfaces.length >= 50, 'the catalogue covers the whole site');
 });
 
 test('catalogue: every entry exists in its source file and is wired to the regex builder', () => {
-  for (const s of cat.surfaces) {
+  for (const s of catalog.surfaces) {
     assert.ok(existsSync(path.join(SITE, s.file)), `${s.id}: ${s.file} does not exist`);
     const src = read(s.file);
     const needle = s.match || s.id;
     const n = src.split(needle).length - 1;
     assert.ok(n >= (s.count || 1), `${s.id}: "${needle}" not found ${s.count || 1} time(s) in ${s.file}`);
     if (!s.match) assert.match(src, new RegExp(`['"\\s:]${s.id.replace(/[-]/g, '\\-')}['"\\s]`), `${s.id}: id is not passed in ${s.file}`);
-    const wired = s.file.endsWith('.html') || s.file === 'build.mjs'
+    const wired = s.file.endsWith('.html') || s.file === 'build.mjs' || s.file === 'docs-workflows.mjs'
       ? /data-search-surface/.test(src) // declarative: site.js wires these with attachListFilter
       : new RegExp(`\\b${s.consumer}\\(`).test(src) || (s.consumer === 'attachListFilter' && /\bwithFilter\(/.test(src));
     assert.ok(wired, `${s.id}: ${s.file} does not call ${s.consumer}`);
@@ -55,7 +55,7 @@ test('catalogue: every entry exists in its source file and is wired to the regex
 });
 
 test('catalogue: every id used in the sources is catalogued (no unregistered surface ids)', () => {
-  const ids = new Set(cat.surfaces.map((s) => s.id));
+  const ids = new Set(catalog.surfaces.map((s) => s.id));
   const files = sourceFiles();
   const used = [];
   for (const f of files) {
@@ -93,13 +93,22 @@ test('documentation search mounts inside the sidebar on the index and articles',
     assert.match(sidebar, /<span data-docs-nav-filter hidden><\/span>/);
     if (file !== 'index.html') assert.ok(html.includes('/blob/' + referenceRevision + '/docs/'));
   }
+  const index = await readFile(path.join(outputDirectory, 'docs', 'index.html'), 'utf8');
+  const checklistFilters = [...index.matchAll(/data-search-surface="(docs-guide-steps-[^"]+)"/g)].map(match => match[1]).sort();
+  const declaredFilters = catalog.surfaces.filter(entry => entry.file === 'docs-workflows.mjs').map(entry => entry.id).sort();
+  assert.equal(declaredFilters.length, 5);
+  assert.deepEqual(checklistFilters, declaredFilters);
+  assert.equal([...index.matchAll(/<section[^>]+data-guide-task="[^"]+"[^>]*>/g)].length, 5);
+  assert.doesNotMatch(index, /<section[^>]+data-guide-task="[^"]+"[^>]*\bhidden\b/);
+  assert.match(index, /href="overview\.html#guest-sign-in-walkthrough"/);
+  assert.match(index, /href="virtual-commons\.html#verify-a-checkout"/);
 });
 
 // ---------------------------------------------------------------------------------------------
 // Guard: containers without a registered search
 // ---------------------------------------------------------------------------------------------
 function sourceFiles() {
-  const out = ['index.html', 'answer-file.html', 'build.mjs'];
+  const out = ['index.html', 'answer-file.html', 'build.mjs', 'docs-workflows.mjs'];
   const walk = (dir) => {
     for (const e of readdirSync(path.join(SITE, dir))) {
       const rel = dir + '/' + e;

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guided documentation desktop</title>
+  <link rel="stylesheet" href="../../site/assets/site.css">
+  <link rel="stylesheet" href="guided-docs.css">
+  <script src="artboard.js" defer></script>
+</head>
+<body>
+<x-dc>
+  <div id="guide-reference" data-edition="desktop" data-language="en" data-artboard-motion="{{motion}}" style="--artboard-accent:{{accentColor}}"></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960},"accentColor":{"type":"color","default":"#006A61","editor":"color","label":"Accent colour"},"motion":{"type":"boolean","default":true,"editor":"toggle","label":"Motion"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {accentColor: this.props?.accentColor ?? "#006A61", motion: this.props?.motion ?? true};
+  }
+}
+</script>
+</body>
+</html>

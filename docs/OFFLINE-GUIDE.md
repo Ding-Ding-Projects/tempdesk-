@@ -5,7 +5,7 @@ Open `TempDeskDocs-<version>-portable.exe` to use the documentation without a we
 ## Find a guide
 
 1. Choose **Docs** from the top navigation. Use documentation search to look up a task such as setting up a session host.
-2. Open an article and use its contents or related guides to find the next step. Choose **TempDesk operator wiki** from the documentation index to open the bundled wiki entry.
+2. Use **Choose a task** to follow a deployment, guest sign-in, or Virtual Commons checklist. For a task with choices, each backend or session host keeps its own marks on this device. Open a guide from the checklist or use the complete article index.
 3. Use **Ctrl+Shift+F** to find a page from any guide. **Alt+Left** and **Alt+Right** move through the pages you visited.
 
 The reader bundles the documentation, feature articles, Answer File Studio and Base64 toolkit. The Studio can prepare a local kit. Account creation, deployment and server management use their corresponding TempDesk components.

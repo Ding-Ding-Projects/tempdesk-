@@ -21,6 +21,8 @@ Anyone on your network opens the guest portal, gets a username and password for 
 
 ## Quick start
 
+Use the [guided documentation](https://ding-ding-projects.github.io/tempdesk-/docs/#guided-workflows) to choose a directory, verify a guest sign-in, or check a Virtual Commons destination. The checklists save your marks locally as you work.
+
 1. Open the Answer File Studio (website or Deployer), pick the **TempDesk server** template, fill in names, network and passwords, and build the kit.
 2. VMware Workstation on this PC: in the Deployer, drop the Windows Server 2025 ISO on **Step 1b** and click **Create the virtual machine and start the install**; the app makes the machine, attaches both ISOs, starts it and presses the boot key. Any other hypervisor: attach the kit ISO as a second CD next to the Windows Server 2025 ISO. Bare metal: copy the kit to the root of the USB stick that holds the Windows installer. **Disk 0 is erased.**
 3. Boot. Setup installs Windows Server Core, creates the domain and installs TempDesk. The server's sign-in screen says **TempDesk is ready** with the addresses when it finishes.

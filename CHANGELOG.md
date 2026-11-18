@@ -7,6 +7,7 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
 
 ### Added
 
+- The documentation index has guided checklists for deployment, guest sign-in, and Virtual Commons. Each path saves its marks locally.
 - TempDesk Docs packages the documentation website, operator wiki and local tools in a portable offline reader.
 - Deployer: **VMware virtual machine** step on the Deploy page. Choose or drop the Windows Server ISO
   and the app creates a VMware Workstation virtual machine with an empty disk, attaches the Windows

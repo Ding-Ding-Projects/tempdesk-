@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 import { promises as fs, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { renderDocumentationWorkflows } from './docs-workflows.mjs';
 
 const SITE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(SITE, '..');
@@ -224,9 +225,10 @@ async function build({ outputDirectory, referenceRevision = 'main' } = {}) {
   const index = { generated: new Date().toISOString(), pages: [] };
 
   // 1. static files
-  const STATIC_SKIP = new Set(['_site', 'node_modules', 'tests', 'templates', 'build.mjs', 'features.json', 'package.json', 'package-lock.json', 'README.md', 'payload', '.gitignore', 'vendor-src', 'build-vendor.mjs']);
+  const STATIC_SKIP = new Set(['_site', 'node_modules', 'tests', 'templates', 'build.mjs', 'docs-workflows.mjs', 'features.json', 'package.json', 'package-lock.json', 'README.md', 'payload', '.gitignore', 'vendor-src', 'build-vendor.mjs']);
   const statics = await walk(SITE, (rel, e) => !STATIC_SKIP.has(rel.split('/')[0]) && !rel.split('/').some((p) => p.startsWith('.')) && !(e.isFile() && /\.(py|mjs\.map)$/.test(rel)));
   for (const f of statics) await copyFile(path.join(SITE, f), path.join(OUT, f));
+  await copyFile(path.join(REPO, 'design', 'guided-documentation', 'guided-docs.css'), path.join(OUT, 'assets', 'guided-docs.css'));
   await fs.writeFile(path.join(OUT, '.nojekyll'), '');
 
   // 2. features
@@ -284,6 +286,7 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
     const md = await fs.readFile(path.join(REPO, d.file), 'utf8');
     const dir = path.posix.dirname(d.file);
     const linkMap = (href) => {
+      if (href.startsWith(BASE_URL)) return '../' + href.slice(BASE_URL.length);
       if (/^(https?:|#|mailto:)/.test(href)) return href;
       const [p, hash] = href.split('#');
       const target = path.posix.normalize(path.posix.join(dir, p)).replace(/^\.\//, '');
@@ -317,21 +320,32 @@ ${r.html}
     await fs.writeFile(path.join(OUT, 'docs', d.name + '.html'), page({ title: d.title + ' | TempDesk docs', desc: plainText(md).slice(0, 180), root: '../', url: 'docs/' + d.name + '.html', body }));
     index.pages.push({ url: 'docs/' + d.name + '.html', title: d.title, summary: 'Docs: ' + d.file, kind: 'doc', sections: r.headings.filter((x) => x.level <= 3 && x.level > 1).map((x) => ({ id: x.id, title: x.text })), text: plainText(md) });
   }
-  const docsIndexBody = `<div class="docs-layout">${nav('index')}<div class="docs-main"><div class="content">
+  const guideCatalogs = await Promise.all(['en', 'zh-HK'].map(async lang =>
+    JSON.parse(await fs.readFile(path.join(SITE, 'i18n', lang + '.json'), 'utf8'))));
+  const docsGuides = renderDocumentationWorkflows(docPages, guideCatalogs, escapeHtml);
+  const docsIndexBody = `<div class="docs-layout docs-index-layout"><div class="docs-main"><div class="content">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../" data-i18n="nav.home">Home</a><span aria-hidden="true">/</span><span data-i18n="nav.docs">Docs</span></nav>
 <h1 data-i18n="docs.title">Documentation</h1>
-<p class="lede" data-i18n="docs.lead">Guides and reference for every TempDesk component, built from the files in the repository.</p>
+<p class="lede" data-i18n="docs.lead">Find a guide, follow a checklist, or look up a TempDesk reference.</p>
 <section id="docs-search" data-palette="Search the docs">
 <h2 data-i18n="docs.search">Search the docs</h2>
 <div class="searchrow"><input type="search" id="docs-q" data-i18n-attr="placeholder:docs.searchPh;aria-label:docs.search" placeholder="Search all docs" aria-label="Search the docs" autocomplete="off"><button type="button" class="iconbtn regex-toggle" id="docs-re" aria-pressed="false" data-i18n-attr="aria-label:search.regex;title:search.regex" aria-label="Regular expression" title="Regular expression">.*</button></div>
 <p class="meter-label" id="docs-count" aria-live="polite"></p>
 <div class="hits" id="docs-hits"></div>
 </section>
+${docsGuides}
 <h2 id="all-docs" data-i18n="docs.all">All documents</h2>
 <div class="hits" data-search-surface="docs-all" data-search-label="docs.all">${docs.map((d) => `<a class="hit" href="${d.name}.html">${escapeHtml(d.title)}<small>${escapeHtml(d.file)}</small></a>`).join('')}</div>
-</div></div></div>`;
-  await fs.writeFile(path.join(OUT, 'docs', 'index.html'), page({ title: 'Documentation | TempDesk', desc: 'Guides and reference for every TempDesk component.', root: '../', url: 'docs/', body: docsIndexBody, extraScripts: '<script src="../assets/docs-search.js"></script>\n', titleKey: 'docs.title' }));
-  index.pages.push({ url: 'docs/index.html', title: 'Documentation', summary: 'All docs', kind: 'page', sections: [{ id: 'docs-search', title: 'Search the docs' }] });
+</div></div>
+<details class="docs-index-rail" open><summary data-i18n="docs.guide.articleNavigation">Article navigation</summary>${nav('index')}</details>
+</div>`;
+  await fs.writeFile(path.join(OUT, 'docs', 'index.html'), page({
+    title: 'Documentation | TempDesk', desc: 'Guides and reference for every TempDesk component.', root: '../', url: 'docs/',
+    body: docsIndexBody, extraHead: '<link rel="stylesheet" href="../assets/guided-docs.css">\n',
+    extraScripts: '<script src="../assets/docs-search.js"></script>\n<script src="../assets/docs-workflows.js"></script>\n', titleKey: 'docs.title',
+  }));
+  index.pages.push({ url: 'docs/index.html', title: 'Documentation', summary: 'Guided tasks and the article index', kind: 'page',
+    sections: [{ id: 'docs-search', title: 'Search the docs' }, { id: 'guided-workflows', title: 'Choose a task' }, { id: 'all-docs', title: 'All documents' }] });
 
   // 5. payload
   const manifest = { schema: 'tempdesk-payload', version: 1, generated: new Date().toISOString(), files: [] };

@@ -366,8 +366,13 @@
       if (el.__rxbFilter) return;
       var sel = el.getAttribute('data-search-items'), lk = el.getAttribute('data-search-label'), mt = el.getAttribute('data-search-mount');
       var mount = mt ? el.querySelector(mt) : null;
-      RX.attachListFilter(el, { id: el.getAttribute('data-search-surface'), t: rxT, label: lk ? t('rx.filterFor', [t(lk)]) : undefined, mount: mount || undefined, place: mount ? 'after' : 'before',
+      var label = () => t('rx.filterFor', [t(lk)]);
+      var filter = RX.attachListFilter(el, { id: el.getAttribute('data-search-surface'), t: rxT, label: lk ? label() : undefined, mount: mount || undefined, place: mount ? 'after' : 'before',
         items: sel ? function () { return Array.prototype.slice.call(el.querySelectorAll(sel)); } : undefined });
+      if (lk) ready.push(function () {
+        filter.input.placeholder = label();
+        filter.input.setAttribute('aria-label', filter.input.placeholder);
+      });
     });
   }
   window.TempDeskSite = {

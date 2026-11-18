@@ -17,5 +17,6 @@
 - [ ] Publish the operator wiki when its repository is available. [Prepared wiki entry point](docs/wiki/pending/Home.md)
 - [x] Build and launch the standalone documentation reader locally. Verify offline search, the Virtual Commons guide, and the prepared operator wiki.
 - [x] Verify the standalone documentation executable from a normal release. [Offline documentation walkthrough](README.md#standalone-offline-documentation)
-- [ ] Confirm source archive isolation and pinned source links in the next published bundle.
+- [x] Verify the source-bound documentation executable downloaded from the v1.0.74 release.
+- [ ] Verify the guided documentation on GitHub Pages and in the downloadable offline reader.
 - [ ] Verify the remaining delivery forms.

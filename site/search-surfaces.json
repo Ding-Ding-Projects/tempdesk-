@@ -406,6 +406,41 @@
    "consumer": "attachListFilter"
   },
   {
+   "id": "docs-guide-steps-deploy-server",
+   "page": "docs/index.html",
+   "surface": "Server Core deployment checklist",
+   "file": "docs-workflows.mjs",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "docs-guide-steps-deploy-samba",
+   "page": "docs/index.html",
+   "surface": "Samba deployment checklist",
+   "file": "docs-workflows.mjs",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "docs-guide-steps-guest-kiosk",
+   "page": "docs/index.html",
+   "surface": "Guest sign-in checklist",
+   "file": "docs-workflows.mjs",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "docs-guide-steps-commons-desktop",
+   "page": "docs/index.html",
+   "surface": "Desktop Experience checkout checklist",
+   "file": "docs-workflows.mjs",
+   "consumer": "attachListFilter"
+  },
+  {
+   "id": "docs-guide-steps-commons-core",
+   "page": "docs/index.html",
+   "surface": "Server Core checkout readiness checklist",
+   "file": "docs-workflows.mjs",
+   "consumer": "attachListFilter"
+  },
+  {
    "id": "docs-toc",
    "page": "docs/*.html",
    "surface": "On this page",
