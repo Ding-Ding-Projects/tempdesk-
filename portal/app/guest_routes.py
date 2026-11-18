@@ -101,7 +101,7 @@ async def create(request: Request):
                                 status=exc.status if exc.status < 500 else 502)
         raise
     # Keep the credentials server side; the browser only gets a random id.
-    once_id = request.app.state.once.put({"credentials": created, "rdpTarget": target})
+    once_id = request.app.state.once.put({"credentials": created, "rdpTarget": target, "rdpEdition": edition if target else None})
     resp = redirect(request, "/created")
     set_cookie(request, resp, ONCE_COOKIE, once_id, max_age=600)
     return resp
@@ -123,9 +123,12 @@ async def created(request: Request):
     target = result.get("rdpTarget")
     commons_checkout = bool(target) or result.get("commons") is True
     # Older pending checkouts recorded a flag and could only use the legacy destination.
-    if "rdpTarget" not in result and result.get("commons") is True:
-        target = targets.get("legacy")
-    if target in targets.values():
+    edition = result.get("rdpEdition")
+    if "rdpEdition" not in result:
+        edition = "legacy"
+        if "rdpTarget" not in result and result.get("commons") is True:
+            target = targets.get(edition)
+    if target and targets.get(edition) == target:
         username = creds.get("upn") or (f"{netbios}\\{creds['username']}" if netbios else creds["username"])
         if RDP_USER.fullmatch(username):
             profile = (f"full address:s:{target}\r\nusername:s:{username}\r\n"

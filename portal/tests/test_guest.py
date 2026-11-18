@@ -239,3 +239,22 @@ def test_pending_legacy_commons_checkout_survives_upgrade(tmp_path):
     assert result.status_code == 200
     assert 'download="Virtual-Commons.rdp"' in result.text
     assert portal.client.get("/created").status_code == 410
+
+
+def test_commons_download_cannot_follow_a_target_to_another_edition(tmp_path, monkeypatch):
+    from app import guest_routes
+
+    portal = Portal("guest", tmp_path, extra_env={
+        "COMMONS_RDP_GUI": "desktop.example.test",
+        "COMMONS_RDP_CORE": "core.example.test",
+    })
+    monkeypatch.setattr(guest_routes.secrets, "randbelow", lambda upper: upper - 1)
+    checkout = portal.post("/create", {"expiryId": "1h", "checkout": "commons", "edition": "gui"})
+    assert checkout.status_code == 303
+    portal.settings.commons_rdp_gui = "core.example.test"
+    portal.settings.commons_rdp_core = "desktop.example.test"
+    result = portal.client.get("/created")
+    assert result.status_code == 200
+    assert "The Remote Desktop file is unavailable." in result.text
+    assert 'download="Virtual-Commons.rdp"' not in result.text
+    assert portal.client.get("/created").status_code == 410
