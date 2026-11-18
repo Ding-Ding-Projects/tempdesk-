@@ -594,7 +594,86 @@
     },
     {
       "id": "completeness-parity",
-      "scope": "all"
+      "scope": "all",
+      "coverage": {
+        "deployer": {
+          "applicable": true,
+          "implementation": "site/feature-inventory.mjs",
+          "documentation": "docs/features/completeness-evidence/coverage.md",
+          "localization": null,
+          "persistence": "docs/feature-inventory.json",
+          "focusedCheck": "site/tests/feature-inventory.test.mjs",
+          "interaction": null,
+          "captures": null,
+          "remaining": "Links and gap classifications exist for this category. Each remaining category still needs a per-surface coverage review."
+        },
+        "management": {
+          "applicable": true,
+          "implementation": "site/feature-inventory.mjs",
+          "documentation": "docs/features/completeness-evidence/coverage.md",
+          "localization": null,
+          "persistence": "docs/feature-inventory.json",
+          "focusedCheck": "site/tests/feature-inventory.test.mjs",
+          "interaction": null,
+          "captures": null,
+          "remaining": "Links and gap classifications exist for this category. Each remaining category still needs a per-surface coverage review."
+        },
+        "guest": {
+          "applicable": true,
+          "implementation": "site/feature-inventory.mjs",
+          "documentation": "docs/features/completeness-evidence/coverage.md",
+          "localization": null,
+          "persistence": "docs/feature-inventory.json",
+          "focusedCheck": "site/tests/feature-inventory.test.mjs",
+          "interaction": null,
+          "captures": null,
+          "remaining": "Links and gap classifications exist for this category. Each remaining category still needs a per-surface coverage review."
+        },
+        "kiosk": {
+          "applicable": true,
+          "implementation": "site/feature-inventory.mjs",
+          "documentation": "docs/features/completeness-evidence/coverage.md",
+          "localization": null,
+          "persistence": "docs/feature-inventory.json",
+          "focusedCheck": "site/tests/feature-inventory.test.mjs",
+          "interaction": null,
+          "captures": null,
+          "remaining": "Links and gap classifications exist for this category. Each remaining category still needs a per-surface coverage review."
+        },
+        "hosted": {
+          "applicable": true,
+          "implementation": "site/feature-inventory.mjs",
+          "documentation": "docs/features/completeness-evidence/coverage.md",
+          "localization": null,
+          "persistence": "docs/feature-inventory.json",
+          "focusedCheck": "site/tests/feature-inventory.test.mjs",
+          "interaction": null,
+          "captures": null,
+          "remaining": "Links and gap classifications exist for this category. Each remaining category still needs a per-surface coverage review."
+        },
+        "offline": {
+          "applicable": true,
+          "implementation": "site/feature-inventory.mjs",
+          "documentation": "docs/features/completeness-evidence/coverage.md",
+          "localization": null,
+          "persistence": "docs/feature-inventory.json",
+          "focusedCheck": "site/tests/feature-inventory.test.mjs",
+          "interaction": null,
+          "captures": null,
+          "remaining": "Links and gap classifications exist for this category. Each remaining category still needs a per-surface coverage review."
+        },
+        "delivery": {
+          "applicable": true,
+          "implementation": "site/feature-inventory.mjs",
+          "documentation": "docs/features/completeness-evidence/coverage.md",
+          "localization": null,
+          "persistence": "docs/feature-inventory.json",
+          "focusedCheck": "site/tests/feature-inventory.test.mjs",
+          "interaction": null,
+          "captures": null,
+          "remaining": "Links and gap classifications exist for this category. Each remaining category still needs a per-surface coverage review."
+        }
+      }
     },
     {
       "id": "front-provenance",
@@ -607,6 +686,78 @@
           "reference": "https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.75",
           "observation": "The downloaded reader reported its version and embedded source revision.",
           "remaining": "Verify every required visible version and update timestamp field."
+        }
+      },
+      "coverage": {
+        "deployer": {
+          "applicable": true,
+          "implementation": "deployer/app/src/renderer/js/pages.js",
+          "documentation": "docs/features/completeness-evidence/front-screen-provenance.md",
+          "localization": "deployer/i18n/en.json",
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "Verify the packaged build metadata renders with seconds and timezone on the initial screen, including the unavailable case."
+        },
+        "management": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/front-screen-provenance.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "Verify source-bound version, timestamp with seconds and timezone on the initial screen."
+        },
+        "guest": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/front-screen-provenance.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "Verify source-bound version, timestamp with seconds and timezone on the initial screen."
+        },
+        "kiosk": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/front-screen-provenance.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "Verify source-bound version, timestamp with seconds and timezone on the initial screen."
+        },
+        "hosted": {
+          "applicable": true,
+          "implementation": "site/assets/release.js",
+          "documentation": "docs/features/completeness-evidence/front-screen-provenance.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "The release offer exists. Establish and verify the front-screen provenance of the version of the site itself."
+        },
+        "offline": {
+          "applicable": true,
+          "implementation": "deployer/app/scripts/build-docs-companion.js",
+          "documentation": "docs/features/completeness-evidence/front-screen-provenance.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "The portable reader embeds build metadata. Observe its displayed date, local time with seconds, and timezone before navigation."
+        },
+        "delivery": {
+          "applicable": false,
+          "remaining": "The requirement is about interactive behavior. The project delivery surface tracks the build and publication contracts."
         }
       }
     },
@@ -625,24 +776,284 @@
         "offline": {
           "state": "partial",
           "method": "runtime",
-          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "revision": "9b4329b14b328b6b88301fd296bd0b3100994940",
           "reference": "docs/evidence/guided-docs-inventory.json",
           "observation": "The walkthrough has four inspected source-bound captures with hashes.",
           "remaining": "Cover remaining reader workflows and supported appearance settings."
+        }
+      },
+      "coverage": {
+        "deployer": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "Exercise each applicable route and state in the candidate, then retain inspected captures and their interaction receipts."
+        },
+        "management": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": "docs/evidence/management-notifications.json",
+          "captures": "docs/evidence/management-notifications.json",
+          "remaining": "Exercise each applicable route and state in the candidate, then retain inspected captures and their interaction receipts."
+        },
+        "guest": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": "docs/evidence/virtual-commons-attachments.json",
+          "captures": "docs/evidence/virtual-commons-attachments.json",
+          "remaining": "Exercise each applicable route and state in the candidate, then retain inspected captures and their interaction receipts."
+        },
+        "kiosk": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": "docs/evidence/guest-sign-in-inventory.json",
+          "captures": "docs/evidence/guest-sign-in-inventory.json",
+          "remaining": "Exercise each applicable route and state in the candidate, then retain inspected captures and their interaction receipts."
+        },
+        "hosted": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "Exercise each applicable route and state in the candidate, then retain inspected captures and their interaction receipts."
+        },
+        "offline": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": "docs/evidence/guided-docs-inventory.json",
+          "captures": "docs/evidence/guided-docs-inventory.json",
+          "remaining": "Exercise each applicable route and state in the candidate, then retain inspected captures and their interaction receipts."
+        },
+        "delivery": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "Exercise each applicable route and state in the candidate, then retain inspected captures and their interaction receipts."
         }
       }
     },
     {
       "id": "screen-recording",
-      "scope": "applicationDelivery"
+      "scope": "applicationDelivery",
+      "coverage": {
+        "deployer": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "A current source-bound end-to-end screen recording and its capture method are needed."
+        },
+        "management": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "A current source-bound end-to-end screen recording and its capture method are needed."
+        },
+        "guest": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "A current source-bound end-to-end screen recording and its capture method are needed."
+        },
+        "kiosk": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "A current source-bound end-to-end screen recording and its capture method are needed."
+        },
+        "hosted": {
+          "applicable": false,
+          "remaining": "This workflow concerns applications and their delivery. Publishing the public website uses the website delivery requirements."
+        },
+        "offline": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "A current source-bound end-to-end screen recording and its capture method are needed."
+        },
+        "delivery": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "A current source-bound end-to-end screen recording and its capture method are needed."
+        }
+      }
     },
     {
       "id": "design-reference-parity",
-      "scope": "interfaces"
+      "scope": "interfaces",
+      "coverage": {
+        "deployer": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/design-and-layout.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "Match reference and product routes, capture tuples, component audits and machine-readable visual comparisons."
+        },
+        "management": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/design-and-layout.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "Match reference and product routes, capture tuples, component audits and machine-readable visual comparisons."
+        },
+        "guest": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/design-and-layout.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "Match reference and product routes, capture tuples, component audits and machine-readable visual comparisons."
+        },
+        "kiosk": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/design-and-layout.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "Match reference and product routes, capture tuples, component audits and machine-readable visual comparisons."
+        },
+        "hosted": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/design-and-layout.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "Match reference and product routes, capture tuples, component audits and machine-readable visual comparisons."
+        },
+        "offline": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/design-and-layout.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "Match reference and product routes, capture tuples, component audits and machine-readable visual comparisons."
+        },
+        "delivery": {
+          "applicable": false,
+          "remaining": "The requirement is about interactive behavior. The project delivery surface tracks the build and publication contracts."
+        }
+      }
     },
     {
       "id": "design-folder",
-      "scope": "delivery"
+      "scope": "delivery",
+      "coverage": {
+        "deployer": {
+          "applicable": false,
+          "remaining": "Project build, publication and maintenance own this obligation."
+        },
+        "management": {
+          "applicable": false,
+          "remaining": "Project build, publication and maintenance own this obligation."
+        },
+        "guest": {
+          "applicable": false,
+          "remaining": "Project build, publication and maintenance own this obligation."
+        },
+        "kiosk": {
+          "applicable": false,
+          "remaining": "Project build, publication and maintenance own this obligation."
+        },
+        "hosted": {
+          "applicable": false,
+          "remaining": "Project build, publication and maintenance own this obligation."
+        },
+        "offline": {
+          "applicable": false,
+          "remaining": "Project build, publication and maintenance own this obligation."
+        },
+        "delivery": {
+          "applicable": true,
+          "implementation": "design/README.md",
+          "documentation": "docs/features/completeness-evidence/design-and-layout.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "Reconcile the checked-in design sources with the current products, including canvas links and handoff records."
+        }
+      }
     },
     {
       "id": "layout-verification-matrix",
@@ -656,11 +1067,127 @@
           "observation": "The checkout action label fit across 48 measured viewport, language, theme and emulated scale combinations.",
           "remaining": "Measure and verify layout coverage across the rest of the guest routes and deployment profiles."
         }
+      },
+      "coverage": {
+        "deployer": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/design-and-layout.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "The candidate needs normal and minimum viewport evidence by language, theme and display scale."
+        },
+        "management": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/design-and-layout.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "The candidate needs normal and minimum viewport evidence by language, theme and display scale."
+        },
+        "guest": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/design-and-layout.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "The candidate needs normal and minimum viewport evidence by language, theme and display scale."
+        },
+        "kiosk": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/design-and-layout.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "The candidate needs normal and minimum viewport evidence by language, theme and display scale."
+        },
+        "hosted": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/design-and-layout.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "The candidate needs normal and minimum viewport evidence by language, theme and display scale."
+        },
+        "offline": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/design-and-layout.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "The candidate needs normal and minimum viewport evidence by language, theme and display scale."
+        },
+        "delivery": {
+          "applicable": false,
+          "remaining": "The requirement is about interactive behavior. The project delivery surface tracks the build and publication contracts."
+        }
       }
     },
     {
       "id": "public-screenshot-gallery",
-      "scope": "websiteDelivery"
+      "scope": "websiteDelivery",
+      "coverage": {
+        "deployer": {
+          "applicable": false,
+          "remaining": "The published website and its project About field own the address requirements."
+        },
+        "management": {
+          "applicable": false,
+          "remaining": "The published website and its project About field own the address requirements."
+        },
+        "guest": {
+          "applicable": false,
+          "remaining": "The published website and its project About field own the address requirements."
+        },
+        "kiosk": {
+          "applicable": false,
+          "remaining": "The published website and its project About field own the address requirements."
+        },
+        "hosted": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "The live gallery, approved image inventory and project readback still need publication proof."
+        },
+        "offline": {
+          "applicable": false,
+          "remaining": "The published website and its project About field own the address requirements."
+        },
+        "delivery": {
+          "applicable": true,
+          "implementation": null,
+          "documentation": "docs/features/completeness-evidence/capture-evidence.md",
+          "localization": null,
+          "persistence": null,
+          "focusedCheck": null,
+          "interaction": null,
+          "captures": null,
+          "remaining": "The live gallery, approved image inventory and project readback still need publication proof."
+        }
+      }
     },
     {
       "id": "landing-site",
@@ -945,6 +1472,98 @@
     {
       "id": "roblox-visual-realism",
       "scope": "gameAsset"
+    }
+  ],
+  "captureReceipts": [
+    {
+      "manifest": "docs/evidence/guest-sign-in-inventory.json",
+      "surfaces": [
+        "kiosk"
+      ],
+      "records": [
+        "duration-picker",
+        "duration-picker-narrow",
+        "sign-in-ready",
+        "expiry-countdown",
+        "active-sign-in",
+        "test-sign-in-deleted"
+      ]
+    },
+    {
+      "manifest": "docs/evidence/guided-docs-inventory.json",
+      "surfaces": [
+        "offline"
+      ],
+      "records": [
+        "01-choose-guest-sign-in",
+        "02-mark-guest-progress",
+        "03-select-desktop-experience",
+        "04-read-server-core-guidance"
+      ]
+    },
+    {
+      "manifest": "docs/evidence/management-notifications.json",
+      "surfaces": [
+        "management"
+      ],
+      "records": [
+        "01-search-history",
+        "02-select-a-match",
+        "03-review-confirmation"
+      ]
+    },
+    {
+      "manifest": "docs/evidence/management-sounds.json",
+      "surfaces": [
+        "management"
+      ],
+      "records": [
+        "01-find-action-sounds",
+        "02-turn-sounds-off",
+        "03-school-pauses-cues"
+      ]
+    },
+    {
+      "manifest": "docs/evidence/management-wording-walkthrough.json",
+      "surfaces": [
+        "management"
+      ],
+      "records": [
+        "01-select-a-wording-file",
+        "02-apply-wording",
+        "03-reload-the-same-tab",
+        "04-clear-and-restore"
+      ]
+    },
+    {
+      "manifest": "docs/evidence/offline-reader-inventory.json",
+      "surfaces": [
+        "offline"
+      ],
+      "records": [
+        "offline-reader-checkout-focus-1440"
+      ]
+    },
+    {
+      "manifest": "docs/evidence/standalone-docs-inventory.json",
+      "surfaces": [
+        "offline"
+      ],
+      "records": [
+        "portable-docs-search"
+      ]
+    },
+    {
+      "manifest": "docs/evidence/virtual-commons-attachments.json",
+      "surfaces": [
+        "guest"
+      ],
+      "records": [
+        "choose-desktop-experience",
+        "choose-server-core",
+        "02-checkout-confirmation",
+        "03-download-again"
+      ]
     }
   ]
 }
