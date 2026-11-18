@@ -2,7 +2,7 @@
 {% from "macros.html" import csrf, info with context %}
 {% block title %}{{ ta('Undo history') }}{% endblock %}
 {% block content %}
-<div class="page-head"><h1>{{ t('Undo history') }}</h1><a class="btn" href="?export=json" download>{{ t('JSON') }}</a></div>
+<div class="page-head"><h1>{{ t('Undo history') }}</h1><a class="btn" href="?{{ request.url.include_query_params(export='json').query }}" download>{{ t('JSON') }}</a></div>
 <p class="muted">{{ t('Every change made in the Admin console is recorded in a Git repository on the portal data volume. Size: {size} KB.', size=(repo_size // 1024)) }}{% if not git %} <span class="chip warn">{{ t('Git is not available: records are kept as files only.') }}</span>{% endif %}</p>
 <form method="get" class="card form-grid">
   <div class="field" data-advanced><label for="hs">{{ t('Show') }} {{ info('Everyone shows all administrators\' actions. Only my actions shows yours.') }}</label><select id="hs" name="scope" data-search-exempt="two fixed choices"><option value="all">{{ t('Everyone') }}</option><option value="mine" {% if scope == 'mine' %}selected{% endif %}>{{ t('Only my actions') }}</option></select></div>
@@ -15,7 +15,7 @@
   <p class="subtle">{{ t('{shown} of {total}', shown=rows|length, total=total) }}</p>
   {% if rows %}<div class="ss-host" data-search-surface="undo-history" data-search-kind="list" data-search-target="#undo-rows" data-search-items=":scope > li" {{ wording_attr('data-search-label', ta('Search these actions')) }}></div><ul class="timeline" id="undo-rows" data-searchable="undo-history">{% for r in rows %}
     <li><span class="dot {{ 'neutral' if r.status == 'undone' else ('coral' if not r.undoable else '') }}"></span><div class="grow" style="min-width:0">
-      <a href="?id={{ r.id }}" class="break">{{ r.summary }}</a>
+      <a href="?{{ request.url.include_query_params(id=r.id).query }}" class="break">{{ r.summary }}</a>
       <div class="subtle"><time data-epoch="{{ r.time }}">{{ r.id }}</time> · {{ r.user }} · <span class="mono">{{ r.action }}</span>
         {% if r.status == 'undone' %}<span class="chip">{{ t('undone') }}</span>{% endif %}
         {% if not r.undoable and not r.undoOf and not r.redoOf %}<span class="chip warn" title="{{ r.reason }}">{{ t('cannot be undone') }}</span>{% endif %}</div></div>

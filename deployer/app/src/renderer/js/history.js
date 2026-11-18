@@ -17,6 +17,40 @@ function diffView(text) {
   return pre;
 }
 
+function dateRange(refresh) {
+  const from = h('input', { type: 'date' });
+  const through = h('input', { type: 'date' });
+  const warning = h('span', { role: 'status' });
+  function valid() {
+    return from.validity.valid && through.validity.valid && (!from.value || !through.value || from.value <= through.value);
+  }
+  function update() {
+    warning.textContent = valid() ? '' : t('records.dateOrder');
+    refresh();
+  }
+  from.addEventListener('input', update);
+  through.addEventListener('input', update);
+  return {
+    controls: h('div', { class: 'row' }, [
+      h('label', null, [t('records.from'), from]), h('label', null, [t('records.to'), through]), warning
+    ]),
+    values: () => ({ from: from.value || null, through: through.value || null }),
+    includes(day) {
+      return valid() && (!from.value || day && day >= from.value) && (!through.value || day && day <= through.value);
+    }
+  };
+}
+
+async function saveRecords(name, data) {
+  const result = await td.invoke['file:save']({ name, text: JSON.stringify(data, null, 2) + '\n' });
+  if (result.ok) toast(notice('export.saved', [result.path]), 'success');
+}
+
+function localDay(timestamp) {
+  const date = new Date(timestamp);
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+}
+
 export async function historyPage(root, app) {
   const info = await td.invoke['ws:info']();
   const log = await td.invoke['ws:log'](2000);
@@ -28,8 +62,35 @@ export async function historyPage(root, app) {
   // search-surface: history-log (the History search below filters this list)
   const list = h('div', { class: 'list', role: 'list' });
   let matcher = null, kind = 'all', compareA = null;
-  const kinds = ['all', 'change', 'undo', 'redo', 'restore'];
-  const seg = h('div', { class: 'row', role: 'group', 'aria-label': t('hist.filter') }, kinds.map((k) => h('button', { type: 'button', class: 'btn btn-sm ' + (k === kind ? 'btn-primary' : 'btn-ghost'), 'aria-pressed': String(k === kind), onclick: (e) => { kind = k; [...seg.children].forEach((b) => { const on = b === e.currentTarget; b.className = 'btn btn-sm ' + (on ? 'btn-primary' : 'btn-ghost'); b.setAttribute('aria-pressed', String(on)); }); draw(); } }, [t('hist.kind.' + k)])));
+  let limit = 100, shown = [], lastId;
+  const selection = new Set();
+  const dates = dateRange(draw);
+  const kinds = ['all', ...new Set(log.map(entry => entry.kind))];
+  const knownKinds = new Set(['all', 'change', 'undo', 'redo', 'restore']);
+  const kindLabel = value => knownKinds.has(value) ? t('hist.kind.' + value) : value;
+  const counts = new Map();
+  for (const entry of log) counts.set(entry.kind, (counts.get(entry.kind) || 0) + 1);
+  const preview = h('details');
+  const summary = h('summary');
+  const previewList = h('ul');
+  preview.append(summary, previewList);
+  const save = btn(t('records.exportSelected'), () => saveRecords('tempdesk-history.json', {
+    schema: 'tempdesk-history-index', version: 1, encoding: 'UTF-8', lineEnding: 'LF',
+    range: dates.values(), records: chosen().map(({ id, t, author, message, kind }) => ({ id, t, author, message, kind }))
+  }), 'btn-ghost');
+  function chosen() { return shown.filter(entry => selection.has(entry.id)); }
+  function updateSelection() {
+    const selected = chosen();
+    summary.textContent = t('records.preview') + ' · ' + t('records.selection', [selected.length, shown.length]);
+    previewList.replaceChildren(...selected.map(entry => h('li', { text: entry.message + ' · ' + entry.id })));
+    save.disabled = !selected.length;
+    for (const checkbox of list.querySelectorAll('input[type=checkbox]')) checkbox.checked = selection.has(checkbox.value);
+  }
+  const bulk = h('div', { class: 'row' }, [
+    btn(t('records.selectMatches'), () => { shown.forEach(entry => selection.add(entry.id)); updateSelection(); }, 'btn-ghost'),
+    btn(t('records.invert'), () => { shown.forEach(entry => selection.has(entry.id) ? selection.delete(entry.id) : selection.add(entry.id)); updateSelection(); }, 'btn-ghost'), save
+  ]);
+  const seg = h('div', { class: 'row', role: 'group', 'aria-label': t('hist.filter') }, kinds.map((k) => h('button', { type: 'button', class: 'btn btn-sm ' + (k === kind ? 'btn-primary' : 'btn-ghost'), 'aria-pressed': String(k === kind), onclick: (e) => { kind = k; [...seg.children].forEach((b) => { const on = b === e.currentTarget; b.className = 'btn btn-sm ' + (on ? 'btn-primary' : 'btn-ghost'); b.setAttribute('aria-pressed', String(on)); }); draw(); } }, [kindLabel(k) + ' (' + (k === 'all' ? log.length : counts.get(k)) + ')'])));
   async function show(e, idx) {
     const prev = log[idx + 1];
     const d = await td.invoke['ws:diff'](prev ? prev.id : null, e.id);
@@ -55,19 +116,32 @@ export async function historyPage(root, app) {
     detail.replaceChildren(h('h2', { text: t('hist.compareTitle', [older.message, newer.message]) }), diffView(d));
   }
   function draw() {
-    const shown = log.filter((e) => (kind === 'all' || e.kind === kind) && (!matcher || Core.testMatch(e.message + ' ' + e.author, matcher)));
-    list.replaceChildren(...shown.slice(0, 500).map((e) => {
+    shown = log.filter((e) => dates.includes(localDay(e.t)) && (kind === 'all' || e.kind === kind) && (!matcher || Core.testMatch(e.message + ' ' + e.author, matcher)));
+    list.replaceChildren(...shown.slice(0, limit).map((e) => {
       const idx = log.indexOf(e);
       const it = h('div', { class: 'item', role: 'listitem', tabindex: '0' }, [h('div', { class: 'grow' }, [h('div', { class: 'title', text: e.message }), h('div', { class: 'sub', text: fmtTime(e.t) + ' · ' + t('hist.kind.' + e.kind) + (idx === 0 ? ' · ' + t('hist.current') : '') })])]);
+      const check = h('input', { type: 'checkbox', value: String(e.id), checked: selection.has(e.id), 'aria-label': e.message });
+      check.addEventListener('click', event => {
+        event.stopPropagation();
+        const anchor = shown.findIndex(row => row.id === lastId);
+        const end = shown.indexOf(e);
+        const range = event.shiftKey && anchor >= 0 ? shown.slice(Math.min(anchor, end), Math.max(anchor, end) + 1) : [e];
+        for (const row of range) check.checked ? selection.add(row.id) : selection.delete(row.id);
+        lastId = e.id;
+        updateSelection();
+      });
+      it.prepend(check);
       it.addEventListener('click', () => show(e, idx));
-      it.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') show(e, idx); });
+      it.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && ev.target === it) show(e, idx); });
       contextMenu(it, () => [{ label: t('hist.view'), kbd: 'Enter', run: () => show(e, idx) }, { label: t('hist.restore'), run: () => restore(e), disabled: idx === 0 }, { label: compareA ? t('hist.compareWith') : t('hist.compareStart'), run: () => compare(e) }, { label: t('hist.copyId'), run: () => td.invoke['clipboard:write'](String(e.id)) }]);
       return it;
     }));
+    if (shown.length > limit) list.appendChild(btn(t('records.more'), () => { limit += 100; draw(); list.querySelectorAll('input')[limit - 100]?.focus(); }, 'btn-ghost'));
+    updateSelection();
     if (!shown.length) list.appendChild(h('div', { class: 'empty', text: log.length > 1 ? t('hist.noMatch') : t('hist.empty') }));
   }
   const sb = searchBox({ label: t('hist.search'), onChange: (m) => { matcher = m.ok && !m.empty ? m : null; draw(); }, count: (m) => Core.countMatches(log.map((e) => e.message), m) });
-  root.appendChild(h('div', { class: 'cols' }, [h('div', { class: 'side' }, [h('div', { class: 'card flat stack' }, [sb, seg]), h('div', { style: { marginTop: '12px', maxHeight: '70vh', overflow: 'auto' } }, [list])]), h('div', { class: 'grow' }, [detail])]));
+  root.appendChild(h('div', { class: 'cols' }, [h('div', { class: 'side' }, [h('div', { class: 'card flat stack' }, [sb, dates.controls, seg, bulk, preview]), h('div', { style: { marginTop: '12px', maxHeight: '70vh', overflow: 'auto' } }, [list])]), h('div', { class: 'grow' }, [detail])]));
   draw();
   const onChange = () => { if (app.page === 'history') app.render(); };
   document.addEventListener('td:history', onChange, { once: true });
@@ -138,8 +212,29 @@ export async function helpPage(root, app) {
     if (!rel.length) { root.appendChild(h('div', { class: 'card empty', text: t('help.noChangelog') })); return; }
     const box = h('div', { class: 'stack' });
     let matcher = null;
-    const draw = () => box.replaceChildren(...rel.filter((r) => !matcher || Core.testMatch(r.version + ' ' + r.body, matcher)).map((r) => { const c = h('div', { class: 'card' }, [h('h2', { text: r.version + (r.date ? ' · ' + r.date : '') }), renderMarkdown(r.body)]); if (matcher) highlight(c, matcher); return c; }));
-    root.appendChild(h('div', { class: 'card flat', style: { marginBottom: '14px' } }, [searchBox({ label: t('help.searchChangelog'), onChange: (m) => { matcher = m.ok && !m.empty ? m : null; draw(); }, count: (m) => Core.countMatches(rel.map((r) => r.body), m) })]));
+    const dates = dateRange(draw);
+    const text = release => [release.version, release.date, release.body].join(' ');
+    const matches = () => rel.filter(release => dates.includes(release.date) && (!matcher || Core.testMatch(text(release), matcher)));
+    const data = () => ({ schema: 'tempdesk-changelog', version: 1, encoding: 'UTF-8', lineEnding: 'LF', range: dates.values(), releases: matches() });
+    function draw() {
+      box.replaceChildren(...matches().map(release => {
+        const card = h('div', { class: 'card' }, [h('h2', { text: [release.version, release.date].filter(Boolean).join(' · ') }), renderMarkdown(release.body)]);
+        if (matcher) highlight(card, matcher);
+        return card;
+      }));
+      if (!box.children.length) box.appendChild(h('p', { class: 'empty', text: t('hist.noMatch') }));
+    }
+    root.appendChild(h('div', { class: 'card flat stack' }, [
+      searchBox({ label: t('help.searchChangelog'), onChange: m => { matcher = m.ok && !m.empty ? m : null; draw(); }, count: m => Core.countMatches(rel.filter(r => dates.includes(r.date)).map(text), m) }),
+      dates.controls,
+      h('div', { class: 'row' }, [
+        btn(t('export.title'), () => saveRecords('tempdesk-changelog.json', data()), 'btn-ghost'),
+        btn(t('records.copy'), async () => {
+          await td.invoke['clipboard:write'](JSON.stringify(data(), null, 2));
+          toast(notice('records.copyDone'), 'success');
+        }, 'btn-ghost')
+      ])
+    ]));
     root.appendChild(box); draw();
     return;
   }
@@ -178,7 +273,12 @@ export async function helpPage(root, app) {
       heading?.scrollIntoView({ block: 'start' });
       return true;
     });
-    body.replaceChildren(doc);
+    const headings = [...doc.querySelectorAll('[data-doc-anchor]')];
+    const contents = h('details', null, [h('summary', { text: t('records.contents') })]);
+    if (headings.length) contents.appendChild(h('nav', { 'aria-label': t('records.contents') }, headings.map(heading =>
+      btn(heading.textContent, () => { heading.focus(); heading.scrollIntoView({ block: 'start' }); }, 'btn-ghost btn-sm')
+    )));
+    body.replaceChildren(...(headings.length ? [contents, doc] : [doc]));
     if (matcher) { const n = highlight(doc, matcher); const m = doc.querySelector('mark'); if (m) m.scrollIntoView({ block: 'center' }); announce(n); }
   }
   function announce() { /* the search box already reports counts */ }
