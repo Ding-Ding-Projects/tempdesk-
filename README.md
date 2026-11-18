@@ -398,3 +398,11 @@ Read `docs/SECURITY.md` first. In short: guests are always standard users; the a
 | Windows builds | `build.bat` and `build-installer.bat` on Windows |
 
 See `AGENTS.md` for repository rules. License: MIT.
+
+## Fresh VMware lab provisioning
+
+These captures show the fresh Server 2025 Core and Windows 11 client during unattended setup for source revision `5fb4e0235d1d0a8fe2d428e0af1cdd4ad34677f5`. Both were captured from their VMware consoles at 1024 × 768. Domain enrollment, management portal and kiosk operation remain pending.
+
+| Server setup | Guest setup |
+| --- | --- |
+| ![Windows Server setup at 20 percent](docs/evidence/fresh-lab/server-setup.png) | ![Windows 11 setup at 30 percent](docs/evidence/fresh-lab/guest-setup.png) |
