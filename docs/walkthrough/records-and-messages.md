@@ -6,7 +6,7 @@ Open History in TempDesk Deployer. Combine the action buttons, text or regular e
 
 Tick individual checkboxes or Shift-click two checkboxes to select a range. Invert selection flips the current matches. Expand **Selected records** to inspect the revision identifiers and messages before saving. Only selected revisions that still match the filters enter the export.
 
-The UTF-8 JSON history index includes schema version 1, the chosen dates, each revision identifier, timestamp, author, first-line message and action. Diffs, credentials and workspace contents are outside this index. It serves as a review copy. Restoring a workspace still uses History's Restore action.
+The UTF-8 JSON history index includes schema version 1, the chosen dates, each revision identifier, timestamp, author, first-line message and action. Diffs, credentials and workspace contents are outside this index. CSV and HTML export the same selected columns, omitting the JSON envelope. CSV protects spreadsheet formulas and uses CRLF. HTML and JSON use LF. These files serve as review copies. Restoring a workspace still uses History's Restore action.
 
 ## Read changes and documentation
 

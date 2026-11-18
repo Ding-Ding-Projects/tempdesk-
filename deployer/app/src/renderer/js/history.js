@@ -1,7 +1,7 @@
 // History timeline (Git or JSON lines backend): commit list with search, coloured per-file diff,
 // compare two versions, restore any version as a new commit, unlimited undo and redo.
 // Help: changelog viewer and offline docs browser with search.
-import { h, t, btn, toast, notice, searchBox, contextMenu, fmtTime, dialog, superConfirm, listFilter } from './ui.js';
+import { h, t, btn, toast, notice, searchBox, contextMenu, fmtTime, dialog, superConfirm, listFilter, chooseExportFormat } from './ui.js';
 
 const td = window.td;
 const Core = window.TempDeskCore;
@@ -41,8 +41,15 @@ function dateRange(refresh) {
   };
 }
 
-async function saveRecords(name, data) {
-  const result = await td.invoke['file:save']({ name, text: JSON.stringify(data, null, 2) + '\n' });
+async function saveRecords(name, data, rowsKey, columns) {
+  const format = await chooseExportFormat(['json', 'csv', 'html'], 'records.formats');
+  if (!format) return;
+  const rows = data[rowsKey];
+  let text;
+  if (format === 'json') text = JSON.stringify(data, null, 2) + '\n';
+  else if (format === 'csv') text = Core.toCsv(rows, columns);
+  else text = Core.toHtml(name, rows, columns);
+  const result = await td.invoke['file:save']({ name: name + '.' + format, text });
   if (result.ok) toast(notice('export.saved', [result.path]), 'success');
 }
 
@@ -74,10 +81,10 @@ export async function historyPage(root, app) {
   const summary = h('summary');
   const previewList = h('ul');
   preview.append(summary, previewList);
-  const save = btn(t('records.exportSelected'), () => saveRecords('tempdesk-history.json', {
+  const save = btn(t('records.exportSelected'), () => saveRecords('tempdesk-history', {
     schema: 'tempdesk-history-index', version: 1, encoding: 'UTF-8', lineEnding: 'LF',
     range: dates.values(), records: chosen().map(({ id, t, author, message, kind }) => ({ id, t, author, message, kind }))
-  }), 'btn-ghost');
+  }, 'records', ['id', 't', 'author', 'message', 'kind']), 'btn-ghost');
   function chosen() { return shown.filter(entry => selection.has(entry.id)); }
   function updateSelection() {
     const selected = chosen();
@@ -98,7 +105,7 @@ export async function historyPage(root, app) {
     const fileSel = h('select', { 'aria-label': t('hist.file') }, [h('option', { value: '', text: t('hist.allFiles') })].concat(files.map((f) => h('option', { value: f, text: f }))));
     const view = h('div', null, [diffView(d)]);
     fileSel.addEventListener('change', async () => view.replaceChildren(diffView(await td.invoke['ws:diff'](prev ? prev.id : null, e.id, fileSel.value || undefined))));
-    detail.replaceChildren(h('div', { class: 'row between' }, [h('h2', { text: e.message, style: { margin: 0 } }), h('span', { class: 'chip', text: t('hist.kind.' + e.kind) })]),
+    detail.replaceChildren(h('div', { class: 'row between' }, [h('h2', { text: e.message, style: { margin: 0 } }), h('span', { class: 'chip', text: kindLabel(e.kind) })]),
       h('p', { class: 'small muted', text: fmtTime(e.t) + ' · ' + e.author + ' · ' + String(e.id).slice(0, 12) }),
       h('div', { class: 'row' }, [listFilter(fileSel, 'history-file-picker', t('hist.file'), { items: (l) => [...l.options] }), btn(t('hist.restore'), () => restore(e), 'btn-primary btn-sm', { disabled: idx === 0 || undefined }), btn(compareA ? t('hist.compareWith') : t('hist.compareStart'), () => compare(e), 'btn-ghost btn-sm')]), view);
   }
@@ -116,10 +123,10 @@ export async function historyPage(root, app) {
     detail.replaceChildren(h('h2', { text: t('hist.compareTitle', [older.message, newer.message]) }), diffView(d));
   }
   function draw() {
-    shown = log.filter((e) => dates.includes(localDay(e.t)) && (kind === 'all' || e.kind === kind) && (!matcher || Core.testMatch(e.message + ' ' + e.author, matcher)));
+    shown = log.filter((e) => dates.includes(localDay(e.t)) && (kind === 'all' || e.kind === kind) && (!matcher || matcher.ok && Core.testMatch(e.message + ' ' + e.author, matcher)));
     list.replaceChildren(...shown.slice(0, limit).map((e) => {
       const idx = log.indexOf(e);
-      const it = h('div', { class: 'item', role: 'listitem', tabindex: '0' }, [h('div', { class: 'grow' }, [h('div', { class: 'title', text: e.message }), h('div', { class: 'sub', text: fmtTime(e.t) + ' · ' + t('hist.kind.' + e.kind) + (idx === 0 ? ' · ' + t('hist.current') : '') })])]);
+      const it = h('div', { class: 'item', role: 'listitem', tabindex: '0' }, [h('div', { class: 'grow' }, [h('div', { class: 'title', text: e.message }), h('div', { class: 'sub', text: fmtTime(e.t) + ' · ' + kindLabel(e.kind) + (idx === 0 ? ' · ' + t('hist.current') : '') })])]);
       const check = h('input', { type: 'checkbox', value: String(e.id), checked: selection.has(e.id), 'aria-label': e.message });
       check.addEventListener('click', event => {
         event.stopPropagation();
@@ -138,9 +145,9 @@ export async function historyPage(root, app) {
     }));
     if (shown.length > limit) list.appendChild(btn(t('records.more'), () => { limit += 100; draw(); list.querySelectorAll('input')[limit - 100]?.focus(); }, 'btn-ghost'));
     updateSelection();
-    if (!shown.length) list.appendChild(h('div', { class: 'empty', text: log.length > 1 ? t('hist.noMatch') : t('hist.empty') }));
+    if (!shown.length) list.appendChild(h('div', { class: 'empty', text: log.length ? t('hist.noMatch') : t('hist.empty') }));
   }
-  const sb = searchBox({ label: t('hist.search'), onChange: (m) => { matcher = m.ok && !m.empty ? m : null; draw(); }, count: (m) => Core.countMatches(log.map((e) => e.message), m) });
+  const sb = searchBox({ label: t('hist.search'), onChange: (m) => { matcher = m.empty ? null : m; draw(); }, count: (m) => Core.countMatches(log.map((e) => e.message), m) });
   root.appendChild(h('div', { class: 'cols' }, [h('div', { class: 'side' }, [h('div', { class: 'card flat stack' }, [sb, dates.controls, seg, bulk, preview]), h('div', { style: { marginTop: '12px', maxHeight: '70vh', overflow: 'auto' } }, [list])]), h('div', { class: 'grow' }, [detail])]));
   draw();
   const onChange = () => { if (app.page === 'history') app.render(); };
@@ -214,7 +221,7 @@ export async function helpPage(root, app) {
     let matcher = null;
     const dates = dateRange(draw);
     const text = release => [release.version, release.date, release.body].join(' ');
-    const matches = () => rel.filter(release => dates.includes(release.date) && (!matcher || Core.testMatch(text(release), matcher)));
+    const matches = () => rel.filter(release => dates.includes(release.date) && (!matcher || matcher.ok && Core.testMatch(text(release), matcher)));
     const data = () => ({ schema: 'tempdesk-changelog', version: 1, encoding: 'UTF-8', lineEnding: 'LF', range: dates.values(), releases: matches() });
     function draw() {
       box.replaceChildren(...matches().map(release => {
@@ -225,10 +232,10 @@ export async function helpPage(root, app) {
       if (!box.children.length) box.appendChild(h('p', { class: 'empty', text: t('hist.noMatch') }));
     }
     root.appendChild(h('div', { class: 'card flat stack' }, [
-      searchBox({ label: t('help.searchChangelog'), onChange: m => { matcher = m.ok && !m.empty ? m : null; draw(); }, count: m => Core.countMatches(rel.filter(r => dates.includes(r.date)).map(text), m) }),
+      searchBox({ label: t('help.searchChangelog'), onChange: m => { matcher = m.empty ? null : m; draw(); }, count: m => Core.countMatches(rel.filter(r => dates.includes(r.date)).map(text), m) }),
       dates.controls,
       h('div', { class: 'row' }, [
-        btn(t('export.title'), () => saveRecords('tempdesk-changelog.json', data()), 'btn-ghost'),
+        btn(t('export.title'), () => saveRecords('tempdesk-changelog', data(), 'releases', ['version', 'date', 'body']), 'btn-ghost'),
         btn(t('records.copy'), async () => {
           await td.invoke['clipboard:write'](JSON.stringify(data(), null, 2));
           toast(notice('records.copyDone'), 'success');
