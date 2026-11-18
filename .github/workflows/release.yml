@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: release
@@ -14,18 +15,26 @@ concurrency:
 
 jobs:
   release:
-    runs-on: windows-latest
+    runs-on: windows-2025
     steps:
-      - name: Record the start time
-        id: start
-        shell: pwsh
-        run: |
-          "utc=$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))" >> $env:GITHUB_OUTPUT
-          "epoch=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" >> $env:GITHUB_OUTPUT
-
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check release source and tools
+        shell: pwsh
+        run: |
+          foreach ($tool in @('gh', 'git', 'python', 'cmd')) {
+            if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) { throw "Missing release tool $tool on windows-2025." }
+          }
+          if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Publish from the main branch.' }
+          git merge-base --is-ancestor $env:GITHUB_SHA refs/remotes/origin/main
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot verify source lineage on main.' }
 
       - name: Work out the version
         id: ver
@@ -42,12 +51,13 @@ jobs:
         id: prev
         shell: pwsh
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           # Squirrel makes a delta against the newest previous full package. Syncing the whole
           # GitHub feed downloads every old package in parallel and fails on file locks, so only
           # the newest full package and a one-line RELEASES are served to it from a local folder.
-          $prev = gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>$null
+          $prev = gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName'
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot list previous releases.' }
           if (-not $prev) { Write-Host 'No previous release: full package only.'; exit 0 }
           $seed = Join-Path $env:RUNNER_TEMP 'squirrel-seed'
           New-Item -ItemType Directory -Force -Path $seed | Out-Null
@@ -68,62 +78,33 @@ jobs:
         env:
           TEMPDESK_VERSION: ${{ steps.ver.outputs.version }}
           TEMPDESK_REMOTE_RELEASES: ${{ steps.prev.outputs.remote }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: build-installer.bat /s
 
-      - name: Confirm Setup.exe is not signed
-        shell: pwsh
-        run: |
-          $s = Get-AuthenticodeSignature deployer/output/squirrel-windows/Setup.exe
-          Write-Host "Setup.exe signature status: $($s.Status)"
-          if ($s.Status -ne 'NotSigned') { throw "Setup.exe must be unsigned, got $($s.Status)" }
 
-      - name: Write the release notes
-        id: notes
-        shell: pwsh
-        run: |
-          $end = (Get-Date).ToUniversalTime()
-          $startEpoch = [int64]'${{ steps.start.outputs.epoch }}'
-          $secs = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - $startEpoch
-          $dur = '{0}m {1}s' -f [math]::Floor($secs / 60), ($secs % 60)
-          $lines = & ./scripts/line-counts.ps1
-          $notes = @(
-            "TempDesk Deployer ${{ steps.ver.outputs.version }} built from ${{ github.sha }}.",
-            '',
-            'Install with **Setup.exe**. Installed copies update themselves from this release feed and ask before restarting.',
-            'Open **TempDeskDocs-${{ steps.ver.outputs.version }}-portable.exe** to read the documentation offline.',
-            'The installer and the app are **not code-signed** (owner decision), so Windows SmartScreen may warn on first run.',
-            '',
-            '| Workflow | UTC |',
-            '| --- | --- |',
-            "| Started | ${{ steps.start.outputs.utc }} |",
-            "| Finished | $($end.ToString('yyyy-MM-ddTHH:mm:ssZ')) |",
-            "| Duration | $dur |",
-            '',
-            '### Lines of code',
-            ''
-          ) + $lines
-          Set-Content -Path release-notes.md -Value ($notes -join "`n") -Encoding utf8
-
-      - name: Publish the GitHub release
+      - name: Publish and read back the source-bound release
         shell: pwsh
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          $o = 'deployer/output/squirrel-windows'
-          $v = '${{ steps.ver.outputs.version }}'
-          # Publish only this version's packages, and a RELEASES feed that lists only them.
-          $mine = Get-ChildItem $o -Filter "*-$v-*.nupkg"
-          if (-not ($mine | Where-Object Name -like '*-full.nupkg')) { throw "No full package for $v" }
-          $feed = Get-Content "$o/RELEASES" | Where-Object { $_ -match [regex]::Escape("-$v-") }
-          [IO.File]::WriteAllText("$o/RELEASES", ($feed -join "`r`n"))
-          Write-Host "RELEASES:"; Get-Content "$o/RELEASES" | Write-Host
-          $assets = @("$o/Setup.exe", "$o/RELEASES") + ($mine | ForEach-Object FullName)
-          foreach ($portable in @("deployer/bin/TempDeskDeployer-$v-portable.exe", "deployer/bin/docs/TempDeskDocs-$v-portable.exe")) {
-            if (-not (Test-Path -LiteralPath $portable -PathType Leaf) -or (Get-Item -LiteralPath $portable).Length -eq 0) {
-              throw "Missing versioned portable file $portable"
-            }
-            $assets += $portable
-          }
-          gh release create '${{ steps.ver.outputs.tag }}' @assets --title 'TempDesk Deployer ${{ steps.ver.outputs.tag }}' --notes-file release-notes.md --target '${{ github.sha }}'
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.ver.outputs.version }}
+          RELEASE_EVIDENCE: ${{ runner.temp }}/tempdesk-release-evidence
+        run: ./scripts/publish-release.ps1
+
+      - name: Collect release files and job context
+        if: ${{ always() }}
+        continue-on-error: true
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ steps.ver.outputs.version }}
+          RELEASE_EVIDENCE: ${{ runner.temp }}/tempdesk-release-evidence
+          RELEASE_JOB_STATUS: ${{ job.status }}
+        run: ./scripts/collect-release-evidence.ps1
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        continue-on-error: true
+        with:
+          name: tempdesk-release-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/tempdesk-release-evidence/
+          if-no-files-found: warn
+          retention-days: 7
