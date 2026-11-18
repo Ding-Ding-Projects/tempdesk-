@@ -19,7 +19,7 @@ Status values: implemented, partial (with what is missing), not done (with the r
 | Cmdlet runner | implemented | Generated forms, WhatIf, confirm for destructive verbs, JSON tree |
 | samba-tool runner | implemented | Shown only with the `samba-tool` capability |
 | Wi-Fi, scripts, allowlist, settings, audit | implemented | |
-| Personal wording | implemented | Upload, drag and drop with celebration, clear, validation, never on unauthenticated pages |
+| Personal wording | partial | Browser-local Settings import and drop, same-tab reload, clear and authenticated wording scope. Verify the remaining dynamic copy surfaces and outcome sounds. |
 | Imports and exports | implemented | Every table to CSV, JSON and XLSX. Settings JSON (preview, never partial), netsh WLAN XML, script upload, allowlist text and app catalog JSON, directory JSON, CSV and LDIF, CSV bulk import of guests or users with dry run |
 | Server-side version history for settings and scripts | implemented | `PORTAL_DATA_DIR/history`, diff and restore |
 | Unlimited undo and redo in Git | implemented | `PORTAL_DATA_DIR/history.git-work`, conflict check, dependents check, redaction. Not undoable (marked before confirming): password reset, unlock, guest delete, Wi-Fi delete and key changes, cmdlet and samba-tool runs, directory delete on Samba. GPO edits undo by restoring the backup taken before the change; GPO delete undo imports that backup but does not restore links. Server area actions record through `track()` only where that module calls it. |

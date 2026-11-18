@@ -7,8 +7,8 @@
   <a class="btn" href="/directory/search">{{ t('LDAP search') }}</a>
   <a class="btn filled" href="/directory/create{% if dn %}?parent={{ dn|urlencode }}{% endif %}">{{ t('Create object') }}</a></div>
 <div class="panes">
-  <nav class="card pane-nav" aria-label="{{ ta('Directory tree') }}">
-    <div class="ss-host" data-search-surface="dir-classic-tree" data-search-kind="tree" data-search-target="[data-lazy-tree]" data-search-compact data-search-label="{{ ta('Filter tree') }}"></div>
+  <nav class="card pane-nav" {{ wording_attr('aria-label', ta('Directory tree')) }}>
+    <div class="ss-host" data-search-surface="dir-classic-tree" data-search-kind="tree" data-search-target="[data-lazy-tree]" data-search-compact {{ wording_attr('data-search-label', ta('Filter tree')) }}></div>
     <ul class="tree" data-lazy-tree data-current="{{ dn or '' }}" data-searchable="dir-classic-tree">
       {% for n in root %}
       <li><div class="node">{% if n.hasChildren %}<button type="button" class="twisty" aria-expanded="false" data-dn="{{ n.dn }}" aria-label="{{ ta('Expand') }} {{ n.name }}">&#9656;</button>{% else %}<span style="width:32px"></span>{% endif %}

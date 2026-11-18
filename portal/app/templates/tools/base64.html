@@ -6,7 +6,7 @@
 <p class="muted">{{ t('Everything runs in this browser. Nothing you enter or open here is sent to the server.') }}</p>
 <div class="row" data-b64-app>
 <section class="grow card stack" style="flex-basis:520px">
-  <div class="segmented" role="radiogroup" aria-label="{{ ta('Direction') }}"><label><input type="radio" name="b64dir" value="encode" checked>{{ t('Encode') }}</label><label><input type="radio" name="b64dir" value="decode">{{ t('Decode') }}</label></div>
+  <div class="segmented" role="radiogroup" {{ wording_attr('aria-label', ta('Direction')) }}><label><input type="radio" name="b64dir" value="encode" checked>{{ t('Encode') }}</label><label><input type="radio" name="b64dir" value="decode">{{ t('Decode') }}</label></div>
   <div class="form-grid">
     <div class="field" data-advanced><label for="b64-alpha">{{ t('Alphabet') }} {{ info('Standard uses + and /. URL-safe uses - and _ so the result can go in URLs and file names.') }}</label><select data-search-exempt="two fixed alphabets" id="b64-alpha"><option value="standard">{{ t('Standard') }}</option><option value="url">{{ t('URL-safe') }}</option></select></div>
     <div class="field" data-advanced><label for="b64-wrap">{{ t('Line wrapping') }} {{ info('MIME splits lines at 76 characters with CRLF, as in email. PEM uses 64. None keeps one long line.') }}</label><select data-search-exempt="fixed wrapping choices" id="b64-wrap"><option value="0">{{ t('None') }}</option><option value="76">{{ t('MIME (76, CRLF)') }}</option><option value="64">{{ t('PEM (64)') }}</option><option value="custom">{{ t('Custom') }}</option></select></div>
@@ -38,14 +38,14 @@
     <div class="progress" aria-hidden="true"><span data-b64-progress style="width:0"></span></div>
     <p class="subtle" data-b64-status aria-live="polite">{{ t('No file open.') }}</p>
     <div class="cluster"><button type="button" class="btn sm" data-b64="pause" disabled>{{ t('Pause') }}</button><button type="button" class="btn sm" data-b64="cancel" disabled>{{ t('Cancel') }}</button><button type="button" class="btn sm" data-b64="zip" disabled>{{ t('Download all as zip') }}</button></div>
-    <div class="ss-host" data-search-surface="b64-files" data-search-kind="list" data-search-target="[data-b64-files]" data-search-items="li" data-search-compact data-search-label="{{ ta('Search files') }}"></div>
+    <div class="ss-host" data-search-surface="b64-files" data-search-kind="list" data-search-target="[data-b64-files]" data-search-items="li" data-search-compact {{ wording_attr('data-search-label', ta('Search files')) }}></div>
     <ul class="small" data-b64-files data-searchable="b64-files"></ul></section>
   <section class="card"><h2>{{ t('Detected type') }}</h2><p data-b64-type class="muted">{{ t('Nothing decoded yet.') }}</p>
     <div data-b64-preview class="inset small mono" style="max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-all"></div>
     <p class="hint">{{ t('Previews are shown as text or as an image only. Decoded content is never run.') }}</p></section>
   <section class="card"><h2>{{ t('History') }}</h2>
     <label class="check" data-advanced><input type="checkbox" id="b64-keep"> {{ t('Keep input and output in history (stored in this browser)') }}</label> {{ info('Keeps your input and output in this browser\'s storage so they survive a reload. Off by default for privacy.') }}
-    <div class="ss-host" data-search-surface="b64-history" data-search-kind="list" data-search-target="[data-b64-history]" data-search-items="li" data-search-compact data-search-label="{{ ta('Search history') }}"></div>
+    <div class="ss-host" data-search-surface="b64-history" data-search-kind="list" data-search-target="[data-b64-history]" data-search-items="li" data-search-compact {{ wording_attr('data-search-label', ta('Search history')) }}></div>
     <ol class="small" data-b64-history data-searchable="b64-history"></ol><button type="button" class="btn sm text" data-b64="clearhist">{{ t('Clear history') }}</button></section>
 </aside>
 </div>

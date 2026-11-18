@@ -4,6 +4,14 @@ import test from 'node:test';
 import withEditionProductName from '../../portal/app/static/js/picker-wording.js';
 import wording from '../../portal/app/static/js/wording.js';
 
+test('wording limits count Unicode code points', () => {
+  const sample = '🌿';
+  const file = (key, value) => JSON.stringify({ schemaVersion: 1, entries: { [key]: value } });
+  assert.equal(wording.validate(file(sample.repeat(160), sample.repeat(1000))).size, 1);
+  assert.throws(() => wording.validate(file(sample.repeat(161), 'x')), {code: 'keyLength'});
+  assert.throws(() => wording.validate(file('x', sample.repeat(1001))), {code: 'valueLength'});
+});
+
 const editions = ['Windows Server with GUI', 'Windows Server without GUI'];
 
 test('edition labels use the full product name from a local wording file', () => {

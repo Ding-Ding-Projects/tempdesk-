@@ -4,10 +4,10 @@
 <div class="page-head rise"><h1 class="mid-title" style="flex:1 1 auto">{{ t('Search: {text}', text=q) if q else t('Search everything') }}</h1></div>
 <form method="get" action="/find" class="tile rise" role="search" style="padding:14px 16px">
   <div class="cluster"><label class="sr-only" for="fq">{{ t('Search everything') }}</label>
-    <input id="fq" type="search" name="q" value="{{ q }}" placeholder="{{ ta('Guests, directory, policies and pages') }}" style="flex:1 1 260px">
+    <input id="fq" type="search" name="q" value="{{ q }}" {{ wording_attr('placeholder', ta('Guests, directory, policies and pages')) }} style="flex:1 1 260px">
     <button class="btn filled" type="submit">{{ t('Search') }}</button></div>
 </form>
-{% if total %}<div class="ss-host" data-search-surface="find-results" data-search-kind="list" data-search-target="#find-results" data-search-items=".find-item" data-search-group=".find-group" data-search-label="{{ ta('Search within these results') }}"></div>{% endif %}
+{% if total %}<div class="ss-host" data-search-surface="find-results" data-search-kind="list" data-search-target="#find-results" data-search-items=".find-item" data-search-group=".find-group" {{ wording_attr('data-search-label', ta('Search within these results')) }}></div>{% endif %}
 <div id="find-results" role="list" data-searchable="find-results">
 {% if q and not total %}<div class="tile">{{ t('No matches') }}</div>{% endif %}
 {% for key, label in [('guests', 'Guests'), ('objects', 'Directory'), ('gpos', 'Group Policy'), ('pages', 'Pages')] if res[key] %}

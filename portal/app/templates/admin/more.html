@@ -3,7 +3,7 @@
 {% block title %}{{ ta('More') }}{% endblock %}
 {% block content %}
 <h1>{{ t('All sections') }}</h1>
-<div class="ss-host" style="max-width:560px" data-search-surface="more-sections" data-search-kind="list" data-search-target="#more-sections" data-search-items="a.btn" data-search-group="section" data-search-label="{{ ta('Search all sections') }}"></div>
+<div class="ss-host" style="max-width:560px" data-search-surface="more-sections" data-search-kind="list" data-search-target="#more-sections" data-search-items="a.btn" data-search-group="section" {{ wording_attr('data-search-label', ta('Search all sections')) }}></div>
 <div id="more-sections" role="list" data-searchable="more-sections">
 {% for group, items in nav_items|groupby('group') %}
 <section class="card rise" style="--i:{{ loop.index0 }}"><h2>{{ t(group) }}</h2>

@@ -19,6 +19,7 @@
 ## Documentation and delivery
 
 - [x] Inventory the required features across the Deployer, management portal, guest portal, kiosk, public documentation, offline reader, and project delivery. [Verification inventory](docs/FEATURE-INVENTORY.md)
+- [ ] Complete management personal-wording verification across the remaining dynamic copy surfaces and outcome sounds.
 - [ ] Complete the remaining feature implementation and runtime verification on every applicable surface.
 - [ ] Publish the operator wiki when its repository is available. [Prepared wiki entry point](docs/wiki/pending/Home.md)
 - [x] Build and launch the standalone documentation reader locally. Verify offline search, the Virtual Commons guide, and the prepared operator wiki.

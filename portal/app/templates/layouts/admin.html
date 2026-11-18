@@ -9,12 +9,12 @@
 {% macro is_cur(item) -%}{{ 'true' if (item.href == '/' and path == '/') or (item.href != '/' and (path == item.href or path.startswith(item.href ~ '/'))) else '' }}{%- endmacro %}
 <div class="shell{% if not session %} bare{% endif %}">
   {% if session %}
-  <nav class="dock" aria-label="{{ ta('Sections') }}">
-    <a class="logo" href="/" aria-label="{{ ta('Dashboard') }}">{{ logo(34, 'var(--surface-2)') }}</a>
+  <nav class="dock" {{ wording_attr('aria-label', ta('Sections')) }}>
+    <a class="logo" href="/" {{ wording_attr('aria-label', ta('Dashboard')) }}>{{ logo(34, 'var(--surface-2)') }}</a>
     {% for id in dock_ids %}{% for item in nav_items if item.id == id %}
     <a href="{{ item.href }}" {% if is_cur(item) %}aria-current="page"{% endif %} aria-label="{{ ta(item.label) }}">{{ icon(item.icon, 22) }}<span class="lbl" aria-hidden="true">{{ ta(item.label) }}</span></a>
     {% endfor %}{% endfor %}
-    <a class="more" href="/more" {% if path == '/more' %}aria-current="page"{% endif %} aria-label="{{ ta('More') }}">{{ icon('apps', 22) }}<span class="lbl" aria-hidden="true">{{ ta('More') }}</span></a>
+    <a class="more" href="/more" {% if path == '/more' %}aria-current="page"{% endif %} {{ wording_attr('aria-label', ta('More')) }}>{{ icon('apps', 22) }}<span class="lbl" aria-hidden="true">{{ ta('More') }}</span></a>
     {% for item in nav_items if item.id == 'settings' %}
     <a href="{{ item.href }}" {% if is_cur(item) %}aria-current="page"{% endif %} aria-label="{{ ta(item.label) }}">{{ icon('settings', 22) }}<span class="lbl" aria-hidden="true">{{ ta(item.label) }}</span></a>
     {% endfor %}
@@ -29,11 +29,11 @@
         <div class="cmdbar-box">
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           <input id="cmd-input" class="cmd-input" type="text" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="cmd-list" aria-autocomplete="list"
-                 aria-keyshortcuts="Control+Shift+F" placeholder="{{ ta('Type a command or search, for example: new guest 4h') }}" data-cmd-input
-                 data-search-surface="cmd-bar" data-search-kind="custom" data-search-manual data-search-label="{{ ta('Command bar') }}">
+                 aria-keyshortcuts="Control+Shift+F" {{ wording_attr('placeholder', ta('Type a command or search, for example: new guest 4h')) }} data-cmd-input
+                 data-search-surface="cmd-bar" data-search-kind="custom" data-search-manual {{ wording_attr('data-search-label', ta('Command bar')) }}>
           <kbd aria-hidden="true">Ctrl Shift F</kbd>
         </div>
-        <ul class="cmd-list" id="cmd-list" role="listbox" aria-label="{{ ta('Suggestions') }}" hidden data-cmd-list data-searchable="cmd-bar"></ul>
+        <ul class="cmd-list" id="cmd-list" role="listbox" {{ wording_attr('aria-label', ta('Suggestions')) }} hidden data-cmd-list data-searchable="cmd-bar"></ul>
         <form method="post" action="/guests" hidden data-cmd-form>{{ csrf() }}</form>
       </div>
       <span class="spacer-m only-phone" aria-hidden="true"></span>
@@ -64,18 +64,18 @@
           <button type="submit" class="btn icon" aria-label="{{ ta('Redo') }} (Ctrl+Y)" title="{{ ta('Redo') }} (Ctrl+Y)" aria-keyshortcuts="Control+Y" data-redo>{{ icon('redo') }}</button>
         </form>
       </div>
-      <button type="button" class="btn icon bell" data-bell aria-label="{{ ta('Notifications') }}" aria-expanded="false">{{ icon('bell') }}<span class="badge" data-bell-count hidden>0</span></button>
+      <button type="button" class="btn icon bell" data-bell {{ wording_attr('aria-label', ta('Notifications')) }} aria-expanded="false">{{ icon('bell') }}<span class="badge" data-bell-count hidden>0</span></button>
       <div class="pill-wrap">
         <button type="button" class="avatar-btn" aria-haspopup="true" aria-expanded="false" aria-controls="me-menu" data-me
                 aria-label="{{ ta('Signed in as {name}', name=user.displayName or user.sam) }}">{{ ((user.displayName or user.sam or '?')|trim)[:1]|upper }}</button>
         <div class="menu-pop" id="me-menu" hidden data-me-menu data-searchable="avatar-menu">
           <div class="who"><strong>{{ user.displayName or user.sam }}</strong><div class="subtle">{{ user.sam }}</div></div>
-          <div class="ss-host tight" data-search-surface="avatar-menu" data-search-kind="menu" data-search-target="[data-me-menu]" data-search-items=".row-btn, [data-lang-form]" data-search-compact data-search-label="{{ ta('Search this menu') }}"></div>
+          <div class="ss-host tight" data-search-surface="avatar-menu" data-search-kind="menu" data-search-target="[data-me-menu]" data-search-items=".row-btn, [data-lang-form]" data-search-compact {{ wording_attr('data-search-label', ta('Search this menu')) }}></div>
           <form method="post" action="/prefs" class="no-print" data-lang-form>
             {{ csrf() }}<input type="hidden" name="next" value="{{ path }}">
             {% if not school %}
             <label class="sr-only" for="top-lang">{{ t('Language') }}</label>
-            <div class="ss-host tight" data-search-surface="lang-picker" data-search-kind="select" data-search-target="#top-lang" data-search-compact data-search-label="{{ ta('Search languages') }}"></div>
+            <div class="ss-host tight" data-search-surface="lang-picker" data-search-kind="select" data-search-target="#top-lang" data-search-compact {{ wording_attr('data-search-label', ta('Search languages')) }}></div>
             <select id="top-lang" name="lang" data-autosubmit data-searchable="lang-picker">
               {% for k, v in lang_modes.items() %}<option value="{{ k }}" {% if tr.mode == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
             </select>
@@ -93,8 +93,8 @@
       </div>
     </header>
     <div class="doc-tabs-row">
-      <div class="doc-tabs" data-doc-tabs role="tablist" aria-label="{{ ta('Open tabs') }}" data-searchable="doc-tabs"></div>
-      <div class="ss-host tight doc-tabs-search" data-search-surface="doc-tabs" data-search-kind="tabs" data-search-manual data-search-compact data-search-label="{{ ta('Search open tabs') }}"></div>
+      <div class="doc-tabs" data-doc-tabs role="tablist" {{ wording_attr('aria-label', ta('Open tabs')) }} data-searchable="doc-tabs"></div>
+      <div class="ss-host tight doc-tabs-search" data-search-surface="doc-tabs" data-search-kind="tabs" data-search-manual data-search-compact {{ wording_attr('data-search-label', ta('Search open tabs')) }}></div>
     </div>
     {% endif %}
     <main id="main" class="content" tabindex="-1" {% if tab_title %}data-tab-title="{{ tab_title }}"{% endif %}>
@@ -104,16 +104,16 @@
   </div>
 </div>
 {% if session %}
-<nav class="bottombar" aria-label="{{ ta('Sections') }}">
+<nav class="bottombar" {{ wording_attr('aria-label', ta('Sections')) }}>
   {% for id in phone_ids %}{% for item in nav_items if item.id == id %}
   <a href="{{ item.href }}" {% if is_cur(item) %}aria-current="page"{% endif %}><span class="ind">{{ icon(item.icon, 20) }}</span><span>{{ t(short[id]) }}</span></a>
   {% endfor %}{% endfor %}
   <a href="/more" {% if path == '/more' %}aria-current="page"{% endif %}><span class="ind">{{ icon('more', 20) }}</span><span>{{ t('More') }}</span></a>
 </nav>
-<div class="notif-panel card raised" data-notif-panel hidden role="dialog" aria-label="{{ ta('Notifications') }}">
+<div class="notif-panel card raised" data-notif-panel hidden role="dialog" {{ wording_attr('aria-label', ta('Notifications')) }}>
   <div class="cluster"><h2 style="margin:0">{{ t('Notifications') }}</h2><span class="spacer"></span>
   <button type="button" class="btn sm text" data-notif-read>{{ t('Mark all read') }}</button><button type="button" class="btn sm text" data-notif-clear>{{ t('Clear all') }}</button></div>
-  <div class="ss-host" data-search-surface="notifications" data-search-kind="list" data-search-target="[data-notif-list]" data-search-compact data-search-label="{{ ta('Search notifications') }}"></div>
+  <div class="ss-host" data-search-surface="notifications" data-search-kind="list" data-search-target="[data-notif-list]" data-search-compact {{ wording_attr('data-search-label', ta('Search notifications')) }}></div>
   <ul data-notif-list data-searchable="notifications"></ul>
 </div>
 <dialog data-elevate-dialog aria-labelledby="elev-title">
@@ -126,7 +126,9 @@
     <div class="form-actions"><button class="btn filled" type="submit">{{ t('Confirm') }}</button><button class="btn" type="button" data-close>{{ t('Cancel') }}</button></div>
   </form>
 </dialog>
+{% if wording_session %}
 <div class="drop-overlay" data-drop-overlay aria-hidden="true">{{ t('Drop a personal wording JSON file') }}</div>
 <div class="sr-only" aria-live="polite" data-live></div>
+{% endif %}
 {% endif %}
 {% endblock %}

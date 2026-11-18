@@ -276,7 +276,8 @@ def test_csv_import_guests_dry_run_then_apply(admin):
     tok = admin.token("/import")
     csv = "displayName,expiryId,minutes\r\nA,1h,\r\nB,,90\r\nC,,abc\r\n"
     r = admin.client.post("/import/preview", data={"csrf_token": tok, "kind": "guests"}, files={"file": ("g.csv", csv, "text/csv")})
-    assert "2 ready" in r.text and "1 with problems" in r.text
+    copy = r.text.replace("<!--td-wording-->", "").replace("<!--/td-wording-->", "")
+    assert "2 ready" in copy and "1 with problems" in copy
     assert not admin.state.guests
     pending = r.text.split('name="pending" value="')[1].split('"')[0]
     r = admin.client.post("/import/apply", data={"csrf_token": tok, "pending": pending})

@@ -47,6 +47,12 @@ Motion: entrance rise and pop with `cubic-bezier(.2,.9,.25,1)`, everything off u
 
 Ground `#070B0B` with a 28 px dot grid, tiles `#0E1615` with `#1C2927` borders, 22 to 28 px radii, floating dock navigation. The plain HTTP warning is a status pill, not a banner. The older `Admin-*.dc.html` artboards are superseded.
 
+### Personal wording in management Settings
+
+Use the desktop and phone console shells from `Console-Home.dc.html` and `Console-Phone.dc.html`. Keep the wording card after the logo settings. Place the state, file picker and Apply or Replace action in that order, with Clear alongside the action where space allows. Use the existing card, filled action and alert styles. On narrow screens the controls wrap in reading order.
+
+An empty card shows the original wording state. An invalid file leaves the last valid wording visible and announces the result. Clear restores original copy and returns focus to the file control. The decorative drop overlay keeps focus in the current workflow.
+
 
 ## Virtual Commons design reference
 

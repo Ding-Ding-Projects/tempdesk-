@@ -158,38 +158,4 @@
     });
   }
 
-  // ---------------------------------------------------------- personal wording drag and drop (any page)
-  var overlay = $('[data-drop-overlay]'), live = $('[data-live]'), depth = 0;
-  var schoolOn = doc.cookie.split(';').some(function (c) { return c.trim() === 'td_school=1'; });
-  function hasFile(e) { return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0; }
-  function isOwnDrop(e) { return e.target.closest && (e.target.closest('input[type="file"]') || e.target.closest('[data-b64-app]')); }
-  if (overlay && !schoolOn) {
-    doc.addEventListener('dragenter', function (e) { if (!hasFile(e) || isOwnDrop(e)) return; depth++; overlay.classList.add('show'); });
-    doc.addEventListener('dragleave', function (e) { if (!hasFile(e)) return; depth = Math.max(0, depth - 1); if (!depth) overlay.classList.remove('show'); });
-    doc.addEventListener('dragover', function (e) { if (hasFile(e) && !isOwnDrop(e)) e.preventDefault(); });
-    doc.addEventListener('drop', function (e) {
-      if (!hasFile(e) || isOwnDrop(e)) return;
-      e.preventDefault(); depth = 0; overlay.classList.remove('show');
-      var f = e.dataTransfer.files[0]; if (!f) return;
-      if (f.size > 256 * 1024) { fail(t('This file was not applied') + ': ' + 'The file is larger than 256 KiB.'); return; }
-      if (live) live.textContent = t('Uploading personal wording');
-      f.arrayBuffer().then(function (buf) {
-        return fetch('/api/wording', { method: 'POST', body: buf, credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf(), Accept: 'application/json' } });
-      }).then(function (r) { return r.json(); }).then(function (j) {
-        if (j.ok) celebrate(j.headline || t('Personal wording applied'));
-        else fail(t('This file was not applied') + ': ' + (j.error || ''));
-      }).catch(function () { fail(t('This file was not applied')); });
-    });
-  }
-  function fail(msg) { if (live) live.textContent = msg; TD.toast && TD.toast(msg, 'error'); }
-  function celebrate(text) {
-    if (live) live.textContent = text;
-    var el = doc.createElement('div'); el.className = 'celebrate'; el.setAttribute('aria-hidden', 'true');
-    var h = doc.createElement('div'); h.className = 'headline'; h.textContent = text; el.appendChild(h);
-    doc.body.appendChild(el);
-    var reduced = TD.motionOff && TD.motionOff();
-    requestAnimationFrame(function () { el.classList.add('in'); });
-    setTimeout(function () { el.classList.add('out'); }, reduced ? 2500 : 3000);
-    setTimeout(function () { el.remove(); location.reload(); }, reduced ? 3000 : 3600);
-  }
 })();

@@ -125,12 +125,12 @@
     var out = new Map();
     top.entries.__pairs.forEach(function (p, idx) {
       var k = p[0], v = p[1], num = idx + 1;
-      if (k.length < 1 || k.length > MAX_KEY) throw fail('keyLength', num);
+      if (k.length < 1 || Array.from(k).length > MAX_KEY) throw fail('keyLength', num);
       if (!k.trim()) throw fail('keyBlank', num);
       if (FORBIDDEN.indexOf(k) >= 0) throw fail('keyReserved', num);
       if (hasControl(k, false)) throw fail('keyControl', num);
       if (typeof v !== 'string') throw fail('valueType', num);
-      if (v.length > MAX_VALUE) throw fail('valueLength', num);
+      if (Array.from(v).length > MAX_VALUE) throw fail('valueLength', num);
       if (hasControl(v, true)) throw fail('valueControl', num);
       out.set(k, v);
     });

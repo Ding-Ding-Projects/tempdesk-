@@ -14,33 +14,33 @@
 </div>
 {% include "admin/_gpo_tabs.html" %}
 <div class="ged" data-ged data-view="tree">
-  <nav class="ged-pane ged-nav" aria-label="{{ ta('Policy tree') }}">
-    <div class="seg" role="radiogroup" aria-label="{{ ta('Scope') }}" data-ged-scope>
+  <nav class="ged-pane ged-nav" {{ wording_attr('aria-label', ta('Policy tree')) }}>
+    <div class="seg" role="radiogroup" {{ wording_attr('aria-label', ta('Scope')) }} data-ged-scope>
       <button type="button" role="radio" aria-checked="true" data-scope="Computer">{{ t('Computer') }}</button>
       <button type="button" role="radio" aria-checked="false" data-scope="User">{{ t('User') }}</button>
     </div>
-    <div class="ss-host tight ged-tree-search" data-ged-tree-search="Computer" data-search-surface="gpo-tree-computer" data-search-kind="tree" data-search-manual data-search-compact data-search-label="{{ ta('Search the Computer tree') }}"></div>
-    <div class="ss-host tight ged-tree-search" data-ged-tree-search="User" hidden data-search-surface="gpo-tree-user" data-search-kind="tree" data-search-manual data-search-compact data-search-label="{{ ta('Search the User tree') }}"></div>
-    <div class="ged-tree" role="tree" aria-label="{{ ta('Group Policy Management Editor') }}" data-ged-tree data-searchable="gpo-tree-computer gpo-tree-user"><div class="skeleton" style="height:28px"></div></div>
+    <div class="ss-host tight ged-tree-search" data-ged-tree-search="Computer" data-search-surface="gpo-tree-computer" data-search-kind="tree" data-search-manual data-search-compact {{ wording_attr('data-search-label', ta('Search the Computer tree')) }}></div>
+    <div class="ss-host tight ged-tree-search" data-ged-tree-search="User" hidden data-search-surface="gpo-tree-user" data-search-kind="tree" data-search-manual data-search-compact {{ wording_attr('data-search-label', ta('Search the User tree')) }}></div>
+    <div class="ged-tree" role="tree" {{ wording_attr('aria-label', ta('Group Policy Management Editor')) }} data-ged-tree data-searchable="gpo-tree-computer gpo-tree-user"><div class="skeleton" style="height:28px"></div></div>
     <div class="admx-stat" data-ged-stats>{{ t('Loading') }}</div>
   </nav>
-  <section class="ged-pane ged-mid" aria-label="{{ ta('Policies') }}" data-ged-mid>
+  <section class="ged-pane ged-mid" {{ wording_attr('aria-label', ta('Policies')) }} data-ged-mid>
     <div class="cluster"><button type="button" class="btn sm text ged-back" data-ged-back="tree">‹ {{ t('Back') }}</button><strong data-ged-midtitle style="flex:1;min-width:0"></strong></div>
     <div class="ged-search">
       <label class="box"><span class="sr-only">{{ t('Search policies') }}</span>
         <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-subtle);flex:none"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-        <input type="search" placeholder="{{ ta('Search policies') }}" data-ged-q autocomplete="off"
-          data-search-surface="gpo-list" data-search-kind="custom" data-search-manual data-search-label="{{ ta('Search policies') }}"><span class="found" data-ged-found aria-live="polite"></span></label>
+        <input type="search" {{ wording_attr('placeholder', ta('Search policies')) }} data-ged-q autocomplete="off"
+          data-search-surface="gpo-list" data-search-kind="custom" data-search-manual {{ wording_attr('data-search-label', ta('Search policies')) }}><span class="found" data-ged-found aria-live="polite"></span></label>
     </div>
-    <div class="chip-row" role="radiogroup" aria-label="{{ ta('Show') }}" data-ged-filters>
+    <div class="chip-row" role="radiogroup" {{ wording_attr('aria-label', ta('Show')) }} data-ged-filters>
       <button type="button" class="c-chip sm" role="radio" aria-checked="true" data-f="all">{{ t('All') }}</button>
       <button type="button" class="c-chip sm" role="radio" aria-checked="false" data-f="configured">{{ t('Configured') }} <span class="count" data-ged-ccount></span></button>
       <label class="c-chip sm" style="gap:6px"><span class="sr-only">{{ t('Supported on') }}</span><select data-ged-supported data-searchable="gpo-supported" style="min-height:0;height:30px;border:0;background:transparent;padding:0 4px;width:auto;font-size:.82rem;color:inherit"><option value="">{{ t('Supported on: any') }}</option></select></label>
-      <span class="ss-host tight ged-sup-search" data-search-surface="gpo-supported" data-search-kind="select" data-search-target="[data-ged-supported]" data-search-compact data-search-label="{{ ta('Search Supported on') }}"></span>
+      <span class="ss-host tight ged-sup-search" data-search-surface="gpo-supported" data-search-kind="select" data-search-target="[data-ged-supported]" data-search-compact {{ wording_attr('data-search-label', ta('Search Supported on')) }}></span>
     </div>
-    <div class="ged-list" role="listbox" aria-label="{{ ta('Policies') }}" data-ged-list data-searchable="gpo-list"></div>
+    <div class="ged-list" role="listbox" {{ wording_attr('aria-label', ta('Policies')) }} data-ged-list data-searchable="gpo-list"></div>
   </section>
-  <section class="ged-pane ged-sheet" aria-label="{{ ta('Policy editor') }}" data-ged-sheet>
+  <section class="ged-pane ged-sheet" {{ wording_attr('aria-label', ta('Policy editor')) }} data-ged-sheet>
     <div class="ged-empty"><strong>{{ t('Pick a setting') }}</strong>{{ t('Choose a folder in the tree, then a policy or item in the list.') }}</div>
   </section>
 </div>

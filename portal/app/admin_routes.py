@@ -23,7 +23,6 @@ from .docs import changelog_html, docs_index, render_doc
 from .security import ONCE_COOKIE, SESSION_COOKIE, Session, client_ip, safe_next
 from .tables import table
 from .undo_routes import check_spec, gpo_snapshot, http_inv, track
-from .vocab import WordingError, headline_for
 from .web import (
     agent_message,
     csrf_protect,
@@ -1864,10 +1863,8 @@ async def settings_page(request: Request, sess: Session = Depends(require_admin)
         doc = await call(request, sess, "GET", "/settings")
     except AgentError as exc:
         err = agent_message(request, exc)
-    voc = request.app.state.vocab
     return await render(request, "admin/settings.html", {
         "doc": doc or {}, "doc_error": err, "fields": settings_schema.FIELDS, "errors": {},
-        "wording": {"count": voc.count, "updated": voc.updated, "invalid": voc.load_error},
     })
 
 
@@ -1878,10 +1875,8 @@ async def settings_save(request: Request, sess: Session = Depends(require_admin)
     doc = settings_schema.from_form(form, current)
     clean, errors = settings_schema.validate_settings(doc)
     if errors:
-        voc = request.app.state.vocab
         return await render(request, "admin/settings.html", {
-            "doc": doc, "doc_error": None, "fields": settings_schema.FIELDS, "errors": errors,
-            "wording": {"count": voc.count, "updated": voc.updated, "invalid": voc.load_error}}, status=400)
+            "doc": doc, "doc_error": None, "fields": settings_schema.FIELDS, "errors": errors}, status=400)
     try:
         await call(request, sess, "PUT", "/settings", json=clean)
     except AgentError as exc:
@@ -1898,43 +1893,12 @@ async def settings_save(request: Request, sess: Session = Depends(require_admin)
     return ok(request, "/settings", "Settings saved.")
 
 
-@router.post("/settings/wording", dependencies=CSRF)
-async def wording_upload(request: Request, sess: Session = Depends(require_admin)):
-    form = await form_of(request)
-    up = form.get("file")
-    if up is None or not hasattr(up, "read"):
-        return fail(request, "/settings#wording", "Choose a JSON file first.")
-    raw = await up.read(256 * 1024 + 1)
-    try:
-        entries = request.app.state.vocab.apply(raw)
-    except WordingError as exc:
-        return redirect(request, "/settings#wording", ("error", tr(request).plain("This file was not applied", serious=True) + ": " + str(exc)))
-    resp = redirect(request, "/settings#wording", ("success", flash_text(request, "Personal wording loaded: {count} entries.", count=len(entries))))
-    return resp
-
-
-@router.post("/api/wording", dependencies=CSRF)
-async def wording_api(request: Request, sess: Session = Depends(require_admin)):
-    """Drag-and-drop upload. Body is the raw JSON file."""
-    raw = b""
-    async for chunk in request.stream():
-        raw += chunk
-        if len(raw) > 256 * 1024:
-            break
-    try:
-        entries = request.app.state.vocab.apply(raw)
-    except WordingError as exc:
-        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
-    return JSONResponse({"ok": True, "count": len(entries), "headline": headline_for(entries)})
-
-
-@router.post("/settings/wording/clear", dependencies=CSRF)
-async def wording_clear(request: Request, sess: Session = Depends(require_admin)):
-    try:
-        request.app.state.vocab.clear()
-    except WordingError as exc:
-        return redirect(request, "/settings#wording", ("error", str(exc)))
-    return ok(request, "/settings#wording", "Personal wording cleared. The original wording is back.")
+@router.post("/settings/wording")
+@router.post("/api/wording")
+@router.post("/settings/wording/clear")
+async def wording_retired(sess: Session = Depends(require_admin)):
+    # No body or form dependency. An older client receives a retirement response without file parsing.
+    return Response(status_code=410, headers=NO_STORE)
 
 
 @router.post("/settings/logo", dependencies=CSRF)

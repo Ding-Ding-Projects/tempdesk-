@@ -18,7 +18,9 @@ Hooks for other route modules (for example app/server_routes.py):
 
 from __future__ import annotations
 
+import hmac
 import json
+from functools import partial
 import logging
 import time
 from pathlib import Path
@@ -27,7 +29,7 @@ from typing import Any
 from fastapi import Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
-from markupsafe import Markup
+from markupsafe import Markup, escape
 
 from . import nav as navmod
 from .agent_client import AgentClient, AgentError, AgentUnavailable
@@ -61,7 +63,11 @@ JS_STRINGS = [
     "Invalid pattern", "{count} matches", "Hold to confirm", "Keep holding", "Confirmed",
     "Close tab", "Plain", "Regex", "Actions", "Remove", "Add row", "Restore", "Previous versions",
     "No previous versions saved in this browser yet.", "Version restored into the form. Review it, then save.",
-    "Personal wording applied", "This file was not applied", "Uploading personal wording",
+    "Personal wording applied", "This file was not applied", "No file loaded. The original wording is used.",
+    "Personal wording is active in this browser tab.", "The personal wording file is larger than 256 KiB.",
+    "The saved wording could not be read. The original wording is used.", "This browser could not save the personal wording.",
+    "Original wording is shown. This browser could not clear its saved wording.",
+    "Personal wording cleared. The original wording is back.", "Apply wording", "Replace wording",
     "Wrong PIN", "School mode is on", "School mode is off", "Set a PIN first", "Days", "Hours", "Minutes", "Seconds",
     "Contrast {ratio}:1 passes", "Contrast {ratio}:1 is too low for text", "Saved in this browser",
     "Select all", "selected", "Loading", "Expand", "Collapse", "Command palette", "Open", "Theme switched",
@@ -145,14 +151,7 @@ def translator_for(request: Request) -> Translator:
         fun = 0
     if school:
         fun = 0
-    vocab = None
-    settings = request.app.state.settings
-    # Personal wording only after admin sign-in, never in school mode.
-    if settings.mode == "admin" and not school and current_session(request) is not None:
-        voc = request.app.state.vocab
-        if voc.count:
-            vocab = voc.translator()
-    tr = Translator(mode, fun, vocab)
+    tr = Translator(mode, fun)
     request.state.tr = tr
     return tr
 
@@ -196,9 +195,23 @@ async def base_context(request: Request) -> dict:
     school = request.cookies.get(PREF_SCHOOL) == "1"
     if school:
         actions = [a for a in actions if not a["id"].startswith("act-wording")]
+    wording_session = None
+    if sess and not school and request.url.path != "/login":
+        # The browser receives a purpose-specific namespace, never an auth cookie or bearer token.
+        scope = hmac.digest(settings.session_secret.encode(), f"tempdesk-wording:{sess.sid}".encode(), "sha256").hex()
+        wording_session = {"scope": scope, "issued": int(sess.created * 1000), "expires": int(sess.expires_at * 1000)}
+
+    def wording_attr(name: str, text: str) -> Markup:
+        if name not in {"aria-label", "aria-description", "aria-valuetext", "placeholder", "title", "data-search-label"}:
+            raise ValueError("Unsupported personal wording attribute")
+        value = escape(str(text))
+        marker = f" data-td-copy-{name}" if wording_session else ""
+        return Markup(f'{name}="{value}"{marker}')
+
     palette = [
         {"label": tr.plain(i["label"]), "href": i["href"], "group": tr.plain(i.get("group") or ""),
-         "keywords": i.get("keywords", ""), "action": i.get("action", "")}
+         "keywords": i.get("keywords", ""), "action": i.get("action", ""),
+         **({"localCopy": True} if wording_session else {})}
         for i in items + actions
     ]
     extra = getattr(request.state, "palette_extra", None) or []
@@ -206,8 +219,9 @@ async def base_context(request: Request) -> dict:
     ctx = {
         "request": request,
         "mode": settings.mode,
-        "t": tr.html,
+        "t": partial(tr.html, mark_wording=True) if wording_session else tr.html,
         "ta": tr.plain,
+        "wording_attr": wording_attr,
         "tr": tr,
         "lang_modes": MODE_LABELS,
         "school": school,
@@ -230,7 +244,7 @@ async def base_context(request: Request) -> dict:
         "has_logo": (Path(settings.data_dir) / "logo.bin").exists(),
         "now": time.time(),
         "elevated": bool(sess and sess.elevated),
-        "wording_count": request.app.state.vocab.count if settings.mode == "admin" and sess and not school else 0,
+        "wording_session": wording_session,
     }
     return ctx
 

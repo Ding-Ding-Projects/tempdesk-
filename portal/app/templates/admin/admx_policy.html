@@ -10,7 +10,7 @@
 <form class="card raised pane-sheet stack" style="gap:16px" method="post" action="/gpo/{{ gid|urlencode }}/admx/{{ p.id|urlencode }}">{{ csrf() }}
   <input type="hidden" name="class" value="{{ cls }}"><input type="hidden" name="category" value="{{ cat }}">
   <h2 style="font-size:1.25rem">{{ p.name }}</h2>
-  <div class="state-group" role="radiogroup" aria-label="{{ ta('State') }}">
+  <div class="state-group" role="radiogroup" {{ wording_attr('aria-label', ta('State')) }}>
     {% for s, l in [('NotConfigured','Not configured'),('Enabled','Enabled'),('Disabled','Disabled')] %}
     <label><input type="radio" name="state" value="{{ s }}" {% if state == s %}checked{% endif %} data-admx-state> {{ t(l) }}</label>{% endfor %}
   </div>
@@ -32,8 +32,8 @@
       <div class="field" data-list-editor data-name="{{ name }}"><span style="font-weight:600">{{ el.label }}</span>
         <div class="stack tight" data-rows>
           {% set rows = (v.items()|list) if v is mapping else ((v or [])|map('string')|map('list')|list) %}
-          {% if v is mapping %}{% for k2, v2 in v.items() %}<div class="cluster" data-row><label class="sr-only">{{ t('Name') }}</label><input name="{{ name }}_name" value="{{ k2 }}" placeholder="{{ ta('Name') }}" style="flex:1 1 140px"><input name="{{ name }}" value="{{ v2 }}" placeholder="{{ ta('Value') }}" style="flex:1 1 140px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div>{% endfor %}
-          {% else %}{% for v2 in v or [] %}<div class="cluster" data-row><input name="{{ name }}" value="{{ v2 }}" aria-label="{{ ta('Value') }}" style="flex:1 1 200px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div>{% endfor %}{% endif %}
+          {% if v is mapping %}{% for k2, v2 in v.items() %}<div class="cluster" data-row><label class="sr-only">{{ t('Name') }}</label><input name="{{ name }}_name" value="{{ k2 }}" {{ wording_attr('placeholder', ta('Name')) }} style="flex:1 1 140px"><input name="{{ name }}" value="{{ v2 }}" {{ wording_attr('placeholder', ta('Value')) }} style="flex:1 1 140px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div>{% endfor %}
+          {% else %}{% for v2 in v or [] %}<div class="cluster" data-row><input name="{{ name }}" value="{{ v2 }}" {{ wording_attr('aria-label', ta('Value')) }} style="flex:1 1 200px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div>{% endfor %}{% endif %}
         </div>
         <div class="cluster"><button type="button" class="btn sm tonal" data-add-row>{{ t('Add row') }}</button><button type="button" class="btn sm text" data-add-row="named">{{ t('Add named row') }}</button></div>
       </div>

@@ -7,5 +7,5 @@
   <a class="btn" href="/gpo/{{ gid|urlencode }}/report/download?format=xml" download>{{ t('Export XML') }}</a></div>
 {% include "admin/_gpo_tabs.html" %}
 <p class="hint">{{ t('The report is shown in a sandbox: scripts in it never run.') }}</p>
-<iframe class="report-frame" title="{{ ta('Group Policy report') }}" sandbox="" referrerpolicy="no-referrer" srcdoc="{{ srcdoc }}"></iframe>
+<iframe class="report-frame" {{ wording_attr('title', ta('Group Policy report')) }} sandbox="" referrerpolicy="no-referrer" srcdoc="{{ srcdoc }}"></iframe>
 {% endblock %}

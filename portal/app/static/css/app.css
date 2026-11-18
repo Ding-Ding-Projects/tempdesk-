@@ -221,6 +221,10 @@ button.status-pill, a.status-pill { cursor: pointer; }
 .btn.coral-text { --bd: transparent; --fg: var(--coral); }
 .btn.danger { --bg: var(--danger-bg); --fg: var(--danger); --bd: transparent; }
 .btn.lg { min-height: 56px; font-size: 1.06rem; padding: 0 28px; }
+#wording .cluster .btn {
+  min-height: 48px; min-inline-size: 0; max-inline-size: 100%;
+  white-space: normal; overflow-wrap: anywhere; padding-block: .5rem;
+}
 .btn.sm { min-height: 36px; padding: 0 14px; font-size: .875rem; }
 .btn.icon { width: var(--touch); padding: 0; }
 .btn[disabled], .btn[aria-disabled="true"] { opacity: .5; cursor: not-allowed; transform: none; }

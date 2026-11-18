@@ -256,7 +256,7 @@
     open(false);
     if (it.run) { input.value = ''; it.run(); return; }
     if (it.action === 'theme') { TD.toggleTheme && TD.toggleTheme(); return; }
-    if (it.action === 'logout') { var f = $('[data-logout-form]'); if (f) f.submit(); return; }
+    if (it.action === 'logout') { var f = $('[data-logout-form]'); if (f) f.requestSubmit(); return; }
     if (it.href) location.href = it.href;
   }
   function liveFind() {

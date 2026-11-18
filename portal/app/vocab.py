@@ -1,32 +1,24 @@
-"""Personal wording: an optional admin-supplied vocabulary for UI copy.
+"""Reference validation and translation for the browser-local wording format.
 
 The file replaces ordinary phrases in interface text only (labels, headings,
 buttons, help, notifications, titles). It is never applied to data values and
 never on pages shown before an administrator signs in.
 
-Privacy rules: the file content is never logged, exported, or echoed in error
+Privacy rules: file content is never logged, exported, or echoed in error
 messages. Validation errors name positions (entry numbers), never the text.
 """
 
 from __future__ import annotations
 
 import json
-import logging
-import os
 import re
-import threading
-import time
 import unicodedata
-from pathlib import Path
-
-log = logging.getLogger("tempdesk.wording")
 
 MAX_BYTES = 256 * 1024
 MAX_DEPTH = 8
 MAX_KEY = 160
 MAX_VALUE = 1000
 FORBIDDEN_KEYS = {"__proto__", "prototype", "constructor"}
-FILE_NAME = "personal-wording.json"
 HEADLINE_KEY = "private vocabulary"
 DEFAULT_HEADLINE = "Personal wording applied"
 
@@ -181,83 +173,3 @@ def _identity(text) -> str:
 
 
 identity = _identity
-
-
-class Vocabulary:
-    def __init__(self, data_dir: str | os.PathLike):
-        self.dir = Path(data_dir)
-        self.path = self.dir / FILE_NAME
-        self._lock = threading.Lock()
-        self._entries: dict[str, str] = {}
-        self._translator = _identity
-        self.updated: float | None = None
-        self.load_error = False
-        self.load()
-
-    def load(self) -> None:
-        with self._lock:
-            self._entries, self._translator, self.updated, self.load_error = {}, _identity, None, False
-            try:
-                raw = self.path.read_bytes()
-            except FileNotFoundError:
-                return
-            except OSError:
-                log.warning("personal wording file could not be read; using ordinary wording")
-                self.load_error = True
-                return
-            try:
-                entries = validate(raw)
-            except WordingError:
-                log.warning("personal wording file failed validation; using ordinary wording")
-                self.load_error = True
-                return
-            self._entries = entries
-            self._translator = build_translator(entries)
-            try:
-                self.updated = self.path.stat().st_mtime
-            except OSError:
-                self.updated = time.time()
-
-    def apply(self, raw: bytes) -> dict[str, str]:
-        """Validate then store. Nothing changes unless validation passes."""
-        entries = validate(raw)
-        translator = build_translator(entries)
-        self.dir.mkdir(parents=True, exist_ok=True)
-        tmp = self.dir / f".{FILE_NAME}.{os.getpid()}.tmp"
-        try:
-            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-            with os.fdopen(fd, "wb") as fh:
-                fh.write(bytes(raw))
-                fh.flush()
-                os.fsync(fh.fileno())
-            os.chmod(tmp, 0o600)
-            os.replace(tmp, self.path)
-        except OSError:
-            try:
-                tmp.unlink()
-            except OSError:
-                pass
-            raise WordingError("The file could not be saved on the server (check the data volume).") from None
-        with self._lock:
-            self._entries = entries
-            self._translator = translator
-            self.updated = time.time()
-            self.load_error = False
-        return entries
-
-    def clear(self) -> None:
-        with self._lock:
-            try:
-                self.path.unlink()
-            except FileNotFoundError:
-                pass
-            except OSError:
-                raise WordingError("The file could not be removed from the server.") from None
-            self._entries, self._translator, self.updated, self.load_error = {}, _identity, None, False
-
-    @property
-    def count(self) -> int:
-        return len(self._entries)
-
-    def translator(self):
-        return self._translator

@@ -77,6 +77,19 @@ def _fill(text: str, args: dict, html: bool) -> str:
     return PLACEHOLDER.sub(sub, text)
 
 
+def _marked_html(text: str, args: dict) -> str:
+    """Mark catalog literals while keeping interpolated data outside the markers."""
+    pieces = []
+    for part in PLACEHOLDER.split(text):
+        if not part:
+            continue
+        if PLACEHOLDER.fullmatch(part):
+            pieces.append(str(escape(args.get(part[1:-1], part))))
+        else:
+            pieces.append(f"<!--td-wording-->{escape(part)}<!--/td-wording-->")
+    return "".join(pieces)
+
+
 class Translator:
     """Bound per request: language mode, fun level and the wording filter."""
 
@@ -103,15 +116,20 @@ class Translator:
             return en if en == zh else f"{en} / {zh}"
         return _fill(self._one(self.mode, key, serious), args, False)
 
-    def html(self, key: str, serious: bool = False, **args):
+    def html(self, key: str, serious: bool = False, *, mark_wording: bool = False, **args):
         """Element content. Bilingual renders two lines."""
+        mark = mark_wording and key in CATALOGS["en"]["strings"]
+
+        def render(lang: str) -> str:
+            text = self._one(lang, key, serious)
+            return _marked_html(text, args) if mark else _fill(str(escape(text)), args, True)
+
         if self.mode == "bi":
-            en = _fill(str(escape(self._one("en", key, serious))), args, True)
-            zh = _fill(str(escape(self._one("zh-HK", key, serious))), args, True)
+            en, zh = render("en"), render("zh-HK")
             if en == zh:
                 return Markup(en)
             return Markup(f'<span class="bi-en">{en}</span><span class="bi-zh" lang="zh-HK">{zh}</span>')
-        return Markup(_fill(str(escape(self._one(self.mode, key, serious))), args, True))
+        return Markup(render(self.mode))
 
 
 def all_keys(lang: str = "en") -> set[str]:

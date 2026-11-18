@@ -8,23 +8,23 @@
 {% block content %}
 {% set tab = 'admx' %}
 <div class="page-head"><h1>{{ t('Administrative Templates') }}</h1>
-  <div class="segmented" role="tablist" aria-label="{{ ta('Scope') }}" data-search-exempt="two fixed scopes, Computer and User">
+  <div class="segmented" role="tablist" {{ wording_attr('aria-label', ta('Scope')) }} data-search-exempt="two fixed scopes, Computer and User">
     <a role="tab" href="?class=Machine&category={{ cat|urlencode }}&q={{ q|urlencode }}" aria-selected="{{ 'true' if cls == 'Machine' else 'false' }}">{{ t('Computer') }}</a>
     <a role="tab" href="?class=User&category={{ cat|urlencode }}&q={{ q|urlencode }}" aria-selected="{{ 'true' if cls == 'User' else 'false' }}">{{ t('User') }}</a></div></div>
 <p class="subtle">{{ g.displayName }}</p>
 {% include "admin/_gpo_tabs.html" %}
 <div class="panes">
-  <nav class="card pane-nav" aria-label="{{ ta('Categories') }}">
-    {% if tree %}<div class="ss-host" data-search-surface="admx-categories" data-search-kind="tree" data-search-target="#admx-tree" data-search-compact data-search-label="{{ ta('Search categories') }}"></div>
+  <nav class="card pane-nav" {{ wording_attr('aria-label', ta('Categories')) }}>
+    {% if tree %}<div class="ss-host" data-search-surface="admx-categories" data-search-kind="tree" data-search-target="#admx-tree" data-search-compact {{ wording_attr('data-search-label', ta('Search categories')) }}></div>
     <ul class="tree" id="admx-tree" data-searchable="admx-categories">{% for c in tree %}{{ cat_node(c) }}{% endfor %}</ul>
     {% else %}<p class="muted">{{ t('No ADMX categories were found in the central store.') }}</p>{% endif %}
   </nav>
-  <section class="card pane-list stack tight" aria-label="{{ ta('Policies') }}">
+  <section class="card pane-list stack tight" {{ wording_attr('aria-label', ta('Policies')) }}>
     <form method="get" class="stack tight" role="search">
       <input type="hidden" name="class" value="{{ cls }}"><input type="hidden" name="category" value="{{ cat }}">
       <label class="sr-only" for="pq">{{ t('Search policies') }}</label>
-      <input id="pq" type="search" name="q" value="{{ q }}" placeholder="{{ ta('Search policies') }}"
-        data-search-surface="admx-policies" data-search-kind="list" data-search-target="#policy-list" data-search-items=".policy-row" data-search-text="data-filter-text" data-search-label="{{ ta('Search policies') }}">
+      <input id="pq" type="search" name="q" value="{{ q }}" {{ wording_attr('placeholder', ta('Search policies')) }}
+        data-search-surface="admx-policies" data-search-kind="list" data-search-target="#policy-list" data-search-items=".policy-row" data-search-text="data-filter-text" {{ wording_attr('data-search-label', ta('Search policies')) }}>
       <input type="hidden" name="re" value="" data-regex-flag>
     </form>
     <div id="policy-list" class="stack tight" role="list" data-searchable="admx-policies">

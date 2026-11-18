@@ -30,7 +30,7 @@
       <div class="field"><label for="attr">{{ t('Attribute') }}</label><input id="attr" name="attr" list="schema-attrs" required autocomplete="off" spellcheck="false">
         <datalist id="schema-attrs" data-search-exempt="native suggestions of the attribute name field">{% for a in obj.schemaAllowed or [] %}<option value="{{ a }}">{% endfor %}</datalist></div>
       <div class="field"><label for="vals">{{ t('Values, one per line') }}</label><textarea id="vals" name="values" class="mono" rows="4"></textarea></div>
-      <div class="segmented" role="radiogroup" aria-label="{{ ta('Operation') }}">
+      <div class="segmented" role="radiogroup" {{ wording_attr('aria-label', ta('Operation')) }}>
         {% for op, l in [('set','Set'),('add','Add'),('remove','Remove'),('clear','Clear')] %}<label><input type="radio" name="op" value="{{ op }}" {% if loop.first %}checked{% endif %}>{{ t(l) }}</label>{% endfor %}
       </div>
       <p class="hint">{{ t('You can undo this afterwards.') }}</p>

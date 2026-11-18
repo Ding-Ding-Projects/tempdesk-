@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ tr.html_lang }}" data-mode="{{ mode }}">
+<html lang="{{ tr.html_lang }}" data-mode="{{ mode }}"{% if wording_session %} data-wording-scope="{{ wording_session.scope }}" data-wording-issued="{{ wording_session.issued }}" data-wording-expires="{{ wording_session.expires }}"{% elif mode == 'admin' and (not session or path == '/login') %} data-wording-reset{% endif %}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -20,6 +20,10 @@
 <script type="application/json" id="td-palette">{{ palette_json }}</script>
 <script type="application/json" id="td-strings">{{ js_strings }}</script>
 <script src="/static/js/app.js" defer></script>
+{% if wording_session %}<script src="/static/js/wording.js" defer></script>{% endif %}
+{% if wording_session or (mode == 'admin' and (not session or path == '/login')) %}
+<script src="/static/js/admin-wording.js" defer></script>
+{% endif %}
 <script src="/static/js/regex-builder.js" defer></script>
 <script src="/static/js/search-surfaces.js" defer></script>
 <script src="/static/js/palette.js" defer></script>

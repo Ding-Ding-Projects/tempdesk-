@@ -33,7 +33,7 @@ The build context is the repository root, so the image also bundles `docs/*.md` 
 | `PORT` | Default 8080 (guest) or 8081 (admin) |
 | `TRUSTED_PROXY` | Comma separated IPs or networks whose `X-Forwarded-For` is trusted. Unset: the direct peer address is used. |
 | `COOKIE_SECURE` | `auto` (default: Secure only when the request is HTTPS), `true` or `false` |
-| `PORTAL_DATA_DIR` | Default `/data`. Admin console state: personal wording, logo, onboarding, version history, undo repository. |
+| `PORTAL_DATA_DIR` | Default `/data`. Admin console state including the logo, onboarding, version history and undo repository. |
 | `PORTAL_STATE_DIR` | Default: `PORTAL_DATA_DIR`. SQLite file with sessions, rate-limit windows and the encrypted one-time store. |
 | `GUEST_CREATE_LIMIT`, `GUEST_CREATE_WINDOW_SECONDS` | Portal side create limit per client address (default 10 per 10 minutes) |
 
@@ -56,6 +56,14 @@ The agent speaks plain HTTP by default. In that case keys, admin sign-ins, guest
 ## Admin console features
 
 Dashboard, guests, directory browser and editor, LDAP search, Group Policy (properties, links, Administrative Templates, security settings, registry values and preferences, permissions, reports, backups, WMI filters, block inheritance), cmdlet runner, samba-tool runner, Wi-Fi profiles, scripts, app allowlist, settings, audit log, version history, unlimited undo and redo committed to Git, CSV import, imports and exports, docs and changelog, first-run wizard, Base64 tools. See `FEATURES.md` for the status of each feature.
+
+### Browser-local personal wording
+
+Open Settings and find **Personal wording**, then choose and apply a JSON file. Dropping the file on the signed-in console uses the same validation and cache. The file has schema version 1 and an `entries` object of wording pairs. The limits are 256 KiB of UTF-8, nesting depth 8, 160 Unicode code points per key and 1,000 per value. Invalid input leaves the prior valid wording in place.
+
+The validated file stays in the current browser tab and survives reloads within the same management sign-in. Clear it in Settings to restore original copy immediately. School mode suspends the wording and hides the controls. A fresh sign-in starts with the original labels. Personal wording applies to marked interface copy and supported accessible names. Record values and document metadata keep their shipped forms.
+
+Older management clients receive HTTP 410 from the retired server upload and clear routes. The console ignores files left on the server by older versions. Choose the original file in the current browser to apply it again.
 
 ## Extension hooks (for the Server area and other modules)
 

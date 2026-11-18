@@ -1,130 +1,129 @@
 """Personal wording and the undo journal. Fixtures use neutral words only."""
 
 import json
-import logging
 import os
-import stat
+import re
 import subprocess
+from pathlib import Path
 
 import pytest
+from starlette.requests import Request
 
+from app.i18n import Translator
+from app.security import SESSION_COOKIE
 from app.undo import redact
 from app.vocab import WordingError, build_translator, validate
 from tests.conftest import Portal, csrf_of
 from tests.fake_agent import BASE
 
-GOOD = {"schemaVersion": 1, "entries": {"guest": "visitor", "Settings": "Preferences", "private vocabulary": "Fresh words loaded"}}
-
-
-def upload(p: Portal, payload: bytes):
-    tok = p.token("/settings")
-    return p.client.post("/settings/wording", data={"csrf_token": tok}, files={"file": ("w.json", payload, "application/json")}, follow_redirects=False)
-
-
-def wording_file(p: Portal):
-    return os.path.join(p.settings.data_dir, "personal-wording.json")
-
-
 def test_translator_rules():
     tr = build_translator({"computer": "machine", "sign-in": "login", "sign": "mark"})
     assert tr("Need a computer?") == "Need a machine?"
     assert tr("Computer ready") == "Machine ready"
-    assert tr("computers") == "computers"  # whole words only
-    assert tr("Create my sign-in") == "Create my login"  # longest key first
-    single = build_translator({"a": "b", "b": "c"})
-    assert single("a b") == "b c"  # single pass, no re-replacement
-
-
-def test_valid_apply_and_headline(admin):
-    r = admin.client.post("/api/wording", content=json.dumps(GOOD).encode(),
-                          headers={"X-CSRF-Token": admin.token("/settings"), "Content-Type": "application/json"})
-    assert r.json() == {"ok": True, "count": 3, "headline": "Fresh words loaded"}
-    page = admin.client.get("/guests").text
-    assert "Create a visitor account" in page
-    assert stat.S_IMODE(os.stat(wording_file(admin)).st_mode) == 0o600
-
-
-def test_default_headline(admin):
-    r = admin.client.post("/api/wording", content=json.dumps({"schemaVersion": 1, "entries": {"computer": "machine"}}).encode(),
-                          headers={"X-CSRF-Token": admin.token("/settings")})
-    assert r.json()["headline"] == "Personal wording applied"
-
-
-def test_data_values_never_replaced(admin):
-    upload(admin, json.dumps({"schemaVersion": 1, "entries": {"Administrator": "Boss", "guest": "visitor"}}).encode())
-    page = admin.client.get(f"/directory/object?dn=CN%3DAdministrator%2CCN%3DUsers%2C{BASE}").text
-    assert "CN=Administrator" in page  # DN untouched
-    admin.post("/guests", {"expiryId": "1h"}, page="/guests")
-    name = list(admin.state.guests)[0]
-    assert name.startswith("guest-") and name in admin.client.get("/guests").text
+    assert tr("computers") == "computers"
+    assert tr("Create my sign-in") == "Create my login"
+    assert build_translator({"a": "b", "b": "c"})("a b") == "b c"
 
 
 INVALID = [
-    (b"x" * (256 * 1024 + 1), "larger than 256 KiB"),
-    (json.dumps({"schemaVersion": 1, "entries": {"a": "b"}, "x": [[[[[[[[[1]]]]]]]]]}).encode(), "nested more than 8"),
-    (b'{"schemaVersion":1,"entries":{"a":"b","a":"c"}}', "duplicate key"),
-    (json.dumps({"schemaVersion": 1, "entries": {"__proto__": "b"}}).encode(), "reserved name"),
-    (json.dumps({"schemaVersion": 1, "entries": {"": "b"}}).encode(), "1 to 160"),
-    (json.dumps({"schemaVersion": 1, "entries": {"k" * 161: "b"}}).encode(), "1 to 160"),
-    (json.dumps({"schemaVersion": 1, "entries": {"a": "b\u0007"}}).encode(), "control characters"),
-    (json.dumps({"schemaVersion": 1, "entries": {"a": "b" * 1001}}).encode(), "longer than 1000"),
-    (json.dumps({"schemaVersion": 2, "entries": {"a": "b"}}).encode(), "schemaVersion must be"),
-    (json.dumps({"schemaVersion": 1, "entries": {"a": "b"}, "extra": 1}).encode(), "Only the properties"),
-    (b"not json", "not valid JSON"),
-    (b"\xff\xfe\x00", "not valid UTF-8"),
+    pytest.param(b"x" * (256 * 1024 + 1), "larger than 256 KiB", id="oversize"),
+    pytest.param(json.dumps({"schemaVersion": 1, "entries": {"a": "b"}, "x": [[[[[[[[[1]]]]]]]]]}).encode(), "nested more than 8", id="depth"),
+    pytest.param(b'{"schemaVersion":1,"entries":{"a":"b","a":"c"}}', "duplicate key", id="duplicate"),
+    pytest.param(json.dumps({"schemaVersion": 1, "entries": {"__proto__": "b"}}).encode(), "reserved name", id="reserved"),
+    pytest.param(json.dumps({"schemaVersion": 1, "entries": {"": "b"}}).encode(), "1 to 160", id="blank-key"),
+    pytest.param(json.dumps({"schemaVersion": 1, "entries": {"k" * 161: "b"}}).encode(), "1 to 160", id="long-key"),
+    pytest.param(json.dumps({"schemaVersion": 1, "entries": {"a": "b\u0007"}}).encode(), "control characters", id="control"),
+    pytest.param(json.dumps({"schemaVersion": 1, "entries": {"a": "b" * 1001}}).encode(), "longer than 1000", id="long-value"),
+    pytest.param(json.dumps({"schemaVersion": 2, "entries": {"a": "b"}}).encode(), "schemaVersion must be", id="version"),
+    pytest.param(json.dumps({"schemaVersion": 1, "entries": {"a": "b"}, "extra": 1}).encode(), "Only the properties", id="extra-key"),
+    pytest.param(b"not json", "not valid JSON", id="json"),
+    pytest.param(b"\xff\xfe\x00", "not valid UTF-8", id="utf8"),
 ]
 
 
 @pytest.mark.parametrize("payload,reason", INVALID)
-def test_invalid_changes_nothing(admin, payload, reason):
-    upload(admin, json.dumps({"schemaVersion": 1, "entries": {"computer": "machine"}}).encode())
-    before = open(wording_file(admin), "rb").read()
-    with pytest.raises(WordingError) as exc:
+def test_wording_schema_rejects_invalid_files(payload, reason):
+    with pytest.raises(WordingError, match=re.escape(reason)):
         validate(payload)
-    assert reason in str(exc.value)
-    r = admin.client.post("/api/wording", content=payload, headers={"X-CSRF-Token": admin.token("/settings")})
-    assert r.status_code == 400 and r.json()["ok"] is False
-    assert open(wording_file(admin), "rb").read() == before
-    assert admin.app.state.vocab.count == 1
 
 
 def test_error_messages_never_echo_content():
-    secret = "zebra-quokka"
+    sample = "neutral-wording-sentinel"
     with pytest.raises(WordingError) as exc:
-        validate(json.dumps({"schemaVersion": 1, "entries": {secret: "x" * 2000}}).encode())
-    assert secret not in str(exc.value)
+        validate(json.dumps({"schemaVersion": 1, "entries": {sample: "x" * 2000}}).encode())
+    assert sample not in str(exc.value)
 
 
-def test_unauthenticated_pages_never_show_replacements(tmp_path):
+def test_product_copy_markers_exclude_interpolated_values():
+    mark = str(Translator("en").html("Loaded: {count} entries.", mark_wording=True, count="literal <Settings>"))
+    pieces = re.findall(r"<!--td-wording-->(.*?)<!--/td-wording-->", mark)
+    assert pieces == ["Loaded: ", " entries."]
+    assert "literal &lt;Settings&gt;" in mark
+    assert all("Settings" not in piece for piece in pieces)
+
+
+def test_wording_controls_require_an_authenticated_session(tmp_path):
+    p = Portal("admin", tmp_path)
+    login = p.client.get("/login").text
+    assert "data-wording-scope" not in login
+    assert 'src="/static/js/wording.js"' not in login
+    assert "data-wording-file" not in login
+    p.login()
+    page = p.client.get("/settings").text
+    match = re.search(r'data-wording-scope="([0-9a-f]{64})"', page)
+    assert match
+    cookie = p.client.cookies.get(SESSION_COOKIE)
+    assert cookie and cookie not in page
+    assert p.app.state.sessions.get(cookie).sid not in page
+    assert 'data-wording-file' in page and '<!--td-wording-->Personal wording' in page
+    assert 'No file loaded' in page
+    assert 'action="/settings/wording"' not in page
+    p.post("/logout")
+    assert "data-wording-scope" not in p.client.get("/login").text
+    p.login()
+    other = p.client.get("/settings").text
+    assert match[1] not in other
+
+
+def test_school_mode_suppresses_wording_bootstrap(admin):
+    admin.client.cookies.set("td_school", "1")
+    page = admin.client.get("/settings").text
+    palette = page.split('id="td-palette">')[1].split("</script>")[0]
+    assert "Personal wording" not in palette
+    assert "data-wording-scope" not in page and "data-wording-file" not in page
+
+
+LEGACY_WORDING_ROUTES = {"/settings/wording", "/api/wording", "/settings/wording/clear"}
+
+
+def test_retired_uploads_do_not_open_a_legacy_file_or_read_submitted_content(tmp_path, monkeypatch):
+    old_file = tmp_path / "data" / "personal-wording.json"
+    old_file.parent.mkdir()
+    sentinel = b'{"schemaVersion":1,"entries":{"guest":"neutral-wording-sentinel"}}'
+    old_file.write_bytes(sentinel)
+    original_read = Path.read_bytes
+    original_stream = Request.stream
+
+    def read_bytes(path):
+        assert path.name != "personal-wording.json"
+        return original_read(path)
+
+    async def stream(request):
+        # Starlette can create a middleware receive iterator before dispatching the route.
+        # Guard actual reads by the route request rather than construction of that iterator.
+        assert type(request) is not Request or request.url.path not in LEGACY_WORDING_ROUTES
+        async for chunk in original_stream(request):
+            yield chunk
+
+    monkeypatch.setattr(Path, "read_bytes", read_bytes)
+    monkeypatch.setattr(Request, "stream", stream)
     p = Portal("admin", tmp_path)
     p.login()
-    upload(p, json.dumps({"schemaVersion": 1, "entries": {"Sign in": "Enter", "Admin console": "Control room", "Username": "Handle"}}).encode())
-    assert "Control room" in p.client.get("/").text
-    p.post("/logout")
-    login = p.client.get("/login").text
-    assert "Control room" not in login and "Handle" not in login and "Admin console" in login
-    err = p.client.get("/does-not-exist").text
-    assert "Control room" not in err
-    g = Portal("guest", tmp_path)  # same data dir, guest mode
-    assert "Handle" not in g.client.get("/check").text
-
-
-def test_school_mode_hides_vocabulary(admin):
-    upload(admin, json.dumps({"schemaVersion": 1, "entries": {"Guests": "Visitors"}}).encode())
-    assert "Visitors" in admin.client.get("/guests").text
-    admin.client.cookies.set("td_school", "1")
-    page = admin.client.get("/guests").text
-    assert "Visitors" not in page
-    assert "Personal wording" not in admin.client.get("/").text.split('id="td-palette">')[1].split("</script>")[0]
-
-
-def test_clear_restores(admin):
-    upload(admin, json.dumps({"schemaVersion": 1, "entries": {"Guests": "Visitors"}}).encode())
-    assert "Visitors" in admin.client.get("/guests").text
-    r = admin.post("/settings/wording/clear", page="/settings")
-    assert r.status_code == 303
-    assert not os.path.exists(wording_file(admin))
-    assert "Visitors" not in admin.client.get("/guests").text
+    assert "neutral-wording-sentinel" not in p.client.get("/settings").text
+    for route in LEGACY_WORDING_ROUTES:
+        r = p.client.post(route, content=sentinel, headers={"Content-Type": "application/json"})
+        assert r.status_code == 410 and r.content == b""
+    assert original_read(old_file) == sentinel
 
 
 def test_palette_and_settings_index_wording_controls(admin):
@@ -133,14 +132,6 @@ def test_palette_and_settings_index_wording_controls(admin):
     for label in ("Upload personal wording file", "Personal wording status", "Replace personal wording file", "Clear personal wording"):
         assert label in palette
     assert 'id="wording"' in page and "No file loaded" in page
-
-
-def test_wording_never_logged(admin, caplog):
-    caplog.set_level(logging.DEBUG)
-    upload(admin, json.dumps({"schemaVersion": 1, "entries": {"computer": "machine-xyzzy"}}).encode())
-    upload(admin, b'{"schemaVersion":1,"entries":{"computer":"plover","computer":"x"}}')
-    admin.client.get("/settings")
-    assert "machine-xyzzy" not in caplog.text and "plover" not in caplog.text
 
 
 # ---------------------------------------------------------------- undo journal

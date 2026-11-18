@@ -1,5 +1,14 @@
 {
  "strings": {
+    "Choose a JSON file up to 256 KiB or drop it on the console. It stays in this browser tab while you are signed in.": "Choose a JSON file up to 256 KiB or drop it on the console. It stays in this browser tab while you are signed in.",
+    "Choose a personal wording JSON file": "Choose a personal wording JSON file",
+    "Apply wording": "Apply wording",
+    "Replace wording": "Replace wording",
+    "Personal wording is active in this browser tab.": "Personal wording is active in this browser tab.",
+    "The personal wording file is larger than 256 KiB.": "The personal wording file is larger than 256 KiB.",
+    "The saved wording could not be read. The original wording is used.": "The saved wording could not be read. The original wording is used.",
+    "This browser could not save the personal wording.": "This browser could not save the personal wording.",
+    "Original wording is shown. This browser could not clear its saved wording.": "Original wording is shown. This browser could not clear its saved wording.",
   "The Remote Desktop file is unavailable. Your sign-in was created. Ask staff which computer to use.": "The Remote Desktop file is unavailable. Your sign-in was created. Ask staff which computer to use.",
   "Server edition": "Server edition",
   "Choose an available server edition.": "Choose an available server edition.",

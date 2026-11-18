@@ -41,7 +41,7 @@
 {% macro csrf() -%}<input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">{%- endmacro %}
 
 {% macro info(key) -%}
-<button type="button" class="info-btn" data-info="{{ ta(key) }}" aria-label="{{ ta('More information') }}">i</button>
+<button type="button" class="info-btn" data-info="{{ ta(key) }}" {{ wording_attr('aria-label', ta('More information')) }}>i</button>
 {%- endmacro %}
 
 {% macro flash_block(flash) -%}
@@ -112,7 +112,7 @@
 {%- endmacro %}
 
 {% macro bulk_bar(actions, token=None, target_label=None) -%}
-<div class="bulkbar" data-bulkbar role="region" aria-label="{{ ta('Bulk actions') }}">
+<div class="bulkbar" data-bulkbar role="region" {{ wording_attr('aria-label', ta('Bulk actions')) }}>
   <strong><span data-bulk-count>0</span> {{ t('selected') }}</strong>
   <label class="sr-only" for="bulk-action">{{ t('Bulk action') }}</label>
   <select id="bulk-action" name="bulk" style="width:auto;min-height:40px" data-search-exempt="the few bulk actions of this page">
@@ -129,7 +129,7 @@
 </div>
 {%- endmacro %}
 
-{% macro sel_all() -%}<th class="sel"><input type="checkbox" data-select-all aria-label="{{ ta('Select all') }}"></th>{%- endmacro %}
+{% macro sel_all() -%}<th class="sel"><input type="checkbox" data-select-all {{ wording_attr('aria-label', ta('Select all')) }}></th>{%- endmacro %}
 {% macro sel(value, label) -%}<td class="sel"><input type="checkbox" name="sel" value="{{ value }}" aria-label="{{ ta('Select {name}', name=label) }}"></td>{%- endmacro %}
 
 {% macro local_time(iso, fallback='Never') -%}

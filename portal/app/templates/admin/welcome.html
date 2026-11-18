@@ -3,7 +3,7 @@
 {% block title %}{{ ta('First-run setup') }}{% endblock %}
 {% block content %}
 <h1>{{ t('First-run setup') }}</h1>
-<div class="progress" role="progressbar" aria-valuemin="1" aria-valuemax="{{ steps|length }}" aria-valuenow="{{ step }}" aria-label="{{ ta('Setup progress') }}"><span style="width:{{ (step / steps|length * 100)|round }}%"></span></div>
+<div class="progress" role="progressbar" aria-valuemin="1" aria-valuemax="{{ steps|length }}" aria-valuenow="{{ step }}" {{ wording_attr('aria-label', ta('Setup progress')) }}><span style="width:{{ (step / steps|length * 100)|round }}%"></span></div>
 <ol class="step-list" data-search-exempt="fixed setup step indicator">{% for st in steps %}<li {% if loop.index == step %}aria-current="step"{% elif loop.index < step %}class="done"{% endif %}>{{ loop.index }}. {{ t(st.title) }}{% if st.id in (state.skipped or []) %} ({{ t('skipped') }}){% endif %}</li>{% endfor %}</ol>
 <form class="card lg stack rise" method="post" action="/welcome" style="max-width:760px">{{ csrf() }}<input type="hidden" name="step" value="{{ step }}">
   <h2>{{ t(s.title) }}{% if s.optional %} <span class="chip">{{ t('optional') }}</span>{% endif %}</h2>
@@ -15,7 +15,7 @@
     <div class="field"><label for="wt">{{ t('Welcome text') }}</label><textarea id="wt" name="welcomeText" rows="3" maxlength="1000">{{ doc.welcomeText or '' }}</textarea></div>
   {% elif s.id == 'expiry' %}
     <p class="hint">{{ t('Pick what guests can choose. Minutes 0 means permanent.') }}</p>
-    <div class="stack tight" data-rows>{% for c in doc.expiryChoices or [] %}<div class="cluster" data-row><input name="exp_id" value="{{ c.id }}" aria-label="{{ ta('Id') }}" style="flex:0 1 110px"><input name="exp_label" value="{{ c.label }}" aria-label="{{ ta('Label') }}" style="flex:1 1 180px"><input name="exp_minutes" type="number" min="0" value="{{ c.minutes }}" aria-label="{{ ta('Minutes') }}" style="flex:0 1 130px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div>{% endfor %}</div>
+    <div class="stack tight" data-rows>{% for c in doc.expiryChoices or [] %}<div class="cluster" data-row><input name="exp_id" value="{{ c.id }}" {{ wording_attr('aria-label', ta('Id')) }} style="flex:0 1 110px"><input name="exp_label" value="{{ c.label }}" {{ wording_attr('aria-label', ta('Label')) }} style="flex:1 1 180px"><input name="exp_minutes" type="number" min="0" value="{{ c.minutes }}" {{ wording_attr('aria-label', ta('Minutes')) }} style="flex:0 1 130px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div>{% endfor %}</div>
     <label class="check" data-advanced><input type="checkbox" name="allowPermanent" {% if doc.allowPermanent %}checked{% endif %}> {{ t('Allow permanent guest accounts') }}</label> {{ info('Lets guests pick an account that never expires. Staff can still delete it at any time.') }}
   {% elif s.id == 'wifi' %}
     {% if wifi %}<p>{{ t('Existing profiles') }}: {% for w in wifi %}<span class="chip">{{ w.ssid }}</span> {% endfor %}</p>{% endif %}

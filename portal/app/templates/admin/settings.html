@@ -4,8 +4,8 @@
 {% block content %}
 <div class="page-head"><h1>{{ t('Settings') }}</h1>
   <a class="btn" href="/settings/export" download>{{ t('Export settings') }}</a><a class="btn" href="/history/settings">{{ t('Version history') }}</a></div>
-<div class="field" style="max-width:560px"><label for="settings-search">{{ t('Search settings') }}</label><input id="settings-search" type="search" data-settings-search placeholder="{{ ta('Type to filter settings') }}"
-  data-search-surface="settings" data-search-kind="list" data-search-target="main" data-search-items="[data-setting]:not([data-setting-section])" data-search-text="data-setting" data-search-group="[data-setting-section]" data-search-param="find" data-search-label="{{ ta('Search settings') }}"></div>
+<div class="field" style="max-width:560px"><label for="settings-search">{{ t('Search settings') }}</label><input id="settings-search" type="search" data-settings-search {{ wording_attr('placeholder', ta('Type to filter settings')) }}
+  data-search-surface="settings" data-search-kind="list" data-search-target="main" data-search-items="[data-setting]:not([data-setting-section])" data-search-text="data-setting" data-search-group="[data-setting-section]" data-search-param="find" {{ wording_attr('data-search-label', ta('Search settings')) }}></div>
 
 <form method="post" action="/settings" class="stack" novalidate>{{ csrf() }}
 <section class="card rise" data-setting-section><h2>{{ t('TempDesk settings') }}</h2>
@@ -18,10 +18,10 @@
       {% if err %}<span class="error-text" role="alert">{{ err }}</span>{% endif %}
       <div class="stack tight" data-rows>
       {% for c in v or [] %}<div class="cluster" data-row>
-        <input name="exp_id" value="{{ c.id }}" aria-label="{{ ta('Id') }}" placeholder="{{ ta('Id') }}" style="flex:0 1 110px"><input name="exp_label" value="{{ c.label }}" aria-label="{{ ta('Label') }}" placeholder="{{ ta('Label') }}" style="flex:1 1 180px">
-        <input name="exp_minutes" type="number" value="{{ c.minutes }}" min="0" aria-label="{{ ta('Minutes') }}" placeholder="{{ ta('Minutes') }}" style="flex:0 1 130px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div>{% endfor %}
+        <input name="exp_id" value="{{ c.id }}" {{ wording_attr('aria-label', ta('Id')) }} {{ wording_attr('placeholder', ta('Id')) }} style="flex:0 1 110px"><input name="exp_label" value="{{ c.label }}" {{ wording_attr('aria-label', ta('Label')) }} {{ wording_attr('placeholder', ta('Label')) }} style="flex:1 1 180px">
+        <input name="exp_minutes" type="number" value="{{ c.minutes }}" min="0" {{ wording_attr('aria-label', ta('Minutes')) }} {{ wording_attr('placeholder', ta('Minutes')) }} style="flex:0 1 130px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div>{% endfor %}
       </div>
-      <template data-row-template><div class="cluster" data-row><input name="exp_id" aria-label="{{ ta('Id') }}" placeholder="{{ ta('Id') }}" style="flex:0 1 110px"><input name="exp_label" aria-label="{{ ta('Label') }}" placeholder="{{ ta('Label') }}" style="flex:1 1 180px"><input name="exp_minutes" type="number" min="0" aria-label="{{ ta('Minutes') }}" placeholder="{{ ta('Minutes') }}" style="flex:0 1 130px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div></template>
+      <template data-row-template><div class="cluster" data-row><input name="exp_id" {{ wording_attr('aria-label', ta('Id')) }} {{ wording_attr('placeholder', ta('Id')) }} style="flex:0 1 110px"><input name="exp_label" {{ wording_attr('aria-label', ta('Label')) }} {{ wording_attr('placeholder', ta('Label')) }} style="flex:1 1 180px"><input name="exp_minutes" type="number" min="0" {{ wording_attr('aria-label', ta('Minutes')) }} {{ wording_attr('placeholder', ta('Minutes')) }} style="flex:0 1 130px"><button type="button" class="btn sm text" data-remove-row>{{ t('Remove') }}</button></div></template>
       <button type="button" class="btn sm tonal" data-add-template-row style="align-self:flex-start">{{ t('Add choice') }}</button>
     </fieldset>
     {% elif kind == 'bool' %}
@@ -62,7 +62,7 @@
     <div class="field" data-advanced data-setting="{{ ta('Focus ring') }}"><label class="check"><input type="checkbox" data-pref="focus" value="always"> {{ t('Always show the focus ring') }}</label> {{ info('Shows the keyboard focus ring after mouse clicks too, not only when using the keyboard.') }}<span class="hint">{{ t('Also shows it after mouse clicks.') }}</span></div>
     <div class="field" data-setting="{{ ta('Accent color') }} {{ ta('Color picker') }} {{ ta('Hue') }}" data-advanced style="grid-column:1/-1"><span style="font-weight:600">{{ t('Accent color') }}</span> {{ info('Drag on the ring to pick a hue and in the square for saturation and brightness, or type a hex or RGB value. Arrow keys adjust the focused control; hold Shift for bigger steps. The check below compares the color with the page background.') }}
       <input type="hidden" id="p-accent" data-pref="accent" value="#7cf3e6">
-      <div data-colorpicker data-target="#p-accent" role="group" aria-label="{{ ta('Color picker') }}"></div>
+      <div data-colorpicker data-target="#p-accent" role="group" {{ wording_attr('aria-label', ta('Color picker')) }}></div>
       <button type="button" class="btn sm text" data-accent-reset style="align-self:flex-start">{{ t('Reset') }}</button></div>
     <div class="field" data-advanced data-setting="{{ ta('Corner roundness') }}"><label for="p-radius">{{ t('Corner roundness') }} <output data-out-for="p-radius"></output> {{ info('How rounded corners are on cards, buttons and fields.') }}</label><input id="p-radius" type="range" min="0" max="150" step="10" data-pref="radius" value="100"><span class="hint">{{ t('0 is square corners, 100 is the default.') }}</span></div>
     {% if not school %}
@@ -72,9 +72,9 @@
     {% endif %}
     <div class="field" data-setting="{{ ta('School mode') }}" id="school"><span style="font-weight:600">{{ t('School mode') }}</span>
       <p class="hint">{{ t('Forces English and hides the funny level, personal wording and playful extras. The PIN lock is a convenience for this browser, not a security control.') }}</p>
-      <div class="cluster"><label class="sr-only" for="school-pin">{{ t('PIN') }}</label><input id="school-pin" type="password" inputmode="numeric" maxlength="12" placeholder="{{ ta('PIN') }}" style="width:140px" autocomplete="off">
+      <div class="cluster"><label class="sr-only" for="school-pin">{{ t('PIN') }}</label><input id="school-pin" type="password" inputmode="numeric" maxlength="12" {{ wording_attr('placeholder', ta('PIN')) }} style="width:140px" autocomplete="off">
         {% if school %}<button type="button" class="btn sm tonal" data-school="off">{{ t('Turn off school mode') }}</button>{% else %}<button type="button" class="btn sm tonal" data-school="on">{{ t('Turn on school mode') }}</button>{% endif %}</div>
-      <label for="school-name" class="small">{{ t('Name shown for this mode') }}</label><input id="school-name" data-school-name maxlength="40" placeholder="{{ ta('School mode') }}"></div>
+      <label for="school-name" class="small">{{ t('Name shown for this mode') }}</label><input id="school-name" data-school-name maxlength="40" {{ wording_attr('placeholder', ta('School mode')) }}></div>
   </div>
 </section>
 
@@ -86,22 +86,19 @@
     {% if has_logo %}<button class="btn text" type="submit" name="op" value="clear">{{ t('Remove logo') }}</button>{% endif %}</form>
 </section>
 
-{% if not school %}
+{% if wording_session %}
 <section class="card rise" id="wording" data-setting-section data-setting="{{ ta('Personal wording') }} {{ ta('Upload personal wording file') }} {{ ta('Replace personal wording file') }} {{ ta('Clear personal wording (restore original wording)') }} {{ ta('Personal wording status') }} vocabulary">
   <h2>{{ t('Personal wording') }} {{ info('A JSON file that replaces ordinary words in the interface text with your own. It never changes data such as names, attributes or passwords, and never shows before sign-in.') }}</h2>
-  <div id="wording-status" class="alert {{ 'success' if wording.count else ('error' if wording.invalid else '') }}" role="status">
-    {% if wording.count %}<span class="grow">{{ t('Loaded: {count} entries.', count=wording.count) }}</span>
-    {% elif wording.invalid %}<span class="grow">{{ t('The stored file is not valid, so the original wording is used. Upload a new file or clear it.') }}</span>
-    {% else %}<span class="grow">{{ t('No file loaded. The original wording is used.') }}</span>{% endif %}
+  <div id="wording-status" class="alert" tabindex="-1"><span class="grow" data-wording-status>{{ t('No file loaded. The original wording is used.') }}</span></div>
+  <p class="hint" id="wording-help">{{ t('Choose a JSON file up to 256 KiB or drop it on the console. It stays in this browser tab while you are signed in.') }}</p>
+  <div class="field">
+    <label for="wf">{{ t('Choose a personal wording JSON file') }}</label>
+    <input id="wf" type="file" accept=".json,application/json" aria-describedby="wording-help wording-status" data-wording-file>
+    <div class="cluster">
+      <button class="btn filled" type="button" data-wording-apply disabled>{{ t('Apply wording') }}</button>
+      <button class="btn" type="button" id="wording-clear" data-wording-clear disabled>{{ t('Clear personal wording (restore original wording)') }}</button>
+    </div>
   </div>
-  <p class="hint">{{ t('Format: {"schemaVersion":1,"entries":{"ordinary phrase":"replacement"}}. Up to 256 KiB. You can also drop the file anywhere in the Admin console.') }}</p>
-  <form method="post" action="/settings/wording" enctype="multipart/form-data" class="cluster">{{ csrf() }}
-    <label for="wf">{{ t('Replace personal wording file') if wording.count else t('Upload personal wording file') }}</label>
-    <input id="wf" type="file" name="file" accept=".json,application/json" required>
-    <button class="btn filled" type="submit">{{ t('Replace') if wording.count else t('Upload') }}</button></form>
-  {% if wording.count or wording.invalid %}
-  <form method="post" action="/settings/wording/clear" id="wording-clear" style="margin-top:12px">{{ csrf() }}<button class="btn danger" type="submit">{{ t('Clear personal wording (restore original wording)') }}</button></form>
-  {% endif %}
 </section>
 {% endif %}
 

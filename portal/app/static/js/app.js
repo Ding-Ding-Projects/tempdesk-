@@ -428,12 +428,12 @@
       var want = b.getAttribute('data-school');
       if (want === 'on') {
         if (pin.length < 4) { toast(t('Set a PIN first'), 'error'); return; }
-        sha(pin).then(function (h) { store.set('td.schoolPin', h); setCookie('td_school', '1'); toast(t('School mode is on'), 'success'); setTimeout(function () { location.reload(); }, 400); });
+        sha(pin).then(function (h) { store.set('td.schoolPin', h); setCookie('td_school', '1'); window.dispatchEvent(new Event('td:school')); toast(t('School mode is on'), 'success'); setTimeout(function () { location.reload(); }, 400); });
       } else {
         var saved = store.get('td.schoolPin');
         sha(pin).then(function (h) {
           if (saved && saved !== h) { toast(t('Wrong PIN'), 'error'); return; }
-          store.del('td.schoolPin'); setCookie('td_school', ''); toast(t('School mode is off'), 'success'); setTimeout(function () { location.reload(); }, 400);
+          store.del('td.schoolPin'); setCookie('td_school', ''); window.dispatchEvent(new Event('td:school')); toast(t('School mode is off'), 'success'); setTimeout(function () { location.reload(); }, 400);
         });
       }
     });

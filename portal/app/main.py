@@ -30,7 +30,6 @@ from .security import (
 )
 from .history import History
 from .undo import Journal
-from .vocab import Vocabulary
 from .web import install_error_handlers
 
 log = logging.getLogger("tempdesk")
@@ -85,7 +84,6 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
     app.state.lookup_limiter = RateLimiter(db, "lookup", settings.lookup_limit, settings.lookup_window_seconds)
     app.state.login_limiter = RateLimiter(db, "login", settings.login_limit, settings.login_window_seconds)
     app.state.sessions = SessionStore(db, settings.session_secret)
-    app.state.vocab = Vocabulary(settings.data_dir)
     app.state.history = History(settings.data_dir)
     app.state.journal = Journal(settings.data_dir)
 
