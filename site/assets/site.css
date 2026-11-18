@@ -330,3 +330,17 @@ input[type="checkbox"]:not([role="switch"]):not(label > input), input[type="radi
   .sheet .sheet-panel { border: 1px solid CanvasText; }
   .sheet :focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
 }
+.reader-settings { display: grid; gap: .75rem; }
+.reader-settings h3 { margin: 0; }
+.reader-settings label {
+  display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(5rem, 1fr) auto;
+  align-items: center; gap: .6rem;
+}
+.reader-settings input { min-width: 0; max-width: 100%; }
+.reader-settings output { font-variant-numeric: tabular-nums; }
+.reader-settings .btn { justify-self: start; }
+article.content :is(p, li, blockquote) { max-inline-size: var(--reader-measure, none); line-height: var(--reader-leading, inherit); }
+@media (max-width: 30rem) {
+  .reader-settings label { grid-template-columns: minmax(0, 1fr) auto; }
+  .reader-settings label > span { grid-column: 1 / -1; }
+}
