@@ -11,7 +11,7 @@ import { createHash } from 'node:crypto';
 import { promises as fs, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { renderDocumentationWorkflows } from './docs-workflows.mjs';
+import { relatedDocumentationWorkflows, renderDocumentationWorkflows } from './docs-workflows.mjs';
 import { inventoryPath, inventorySummary, readInventory } from './feature-inventory.mjs';
 
 const SITE = path.dirname(fileURLToPath(import.meta.url));
@@ -345,6 +345,8 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
   const nav = (cur) => `<nav class="docs-nav" aria-label="Docs" data-search-surface="docs-nav" data-search-items="a" data-search-label="nav.docs" data-search-mount="[data-docs-nav-filter]"><span data-docs-nav-filter hidden></span><a href="index.html"${cur === 'index' ? ' aria-current="page"' : ''} data-i18n="docs.home">All docs</a>${docs.map((d) => `<a href="${d.name}.html"${cur === d.name ? ' aria-current="page"' : ''}>${escapeHtml(d.title)}</a>`).join('')}</nav>`;
   await mkdirp(path.join(OUT, 'docs'));
   for (const image of usedImages) await copyFile(path.join(REPO, image), path.join(OUT, image));
+  const guideCatalogs = await Promise.all(['en', 'zh-HK'].map(async lang =>
+    JSON.parse(await fs.readFile(path.join(SITE, 'i18n', lang + '.json'), 'utf8'))));
   for (const { d, r, md } of docPages) {
     const toc = r.headings.filter((x) => x.level === 2).map((x) => `<a class="hit" href="#${x.id}">${escapeHtml(x.text)}</a>`).join('');
     const language = d.file.endsWith('.zh-HK.md') ? ' lang="yue-HK"' : '';
@@ -352,13 +354,12 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../" data-i18n="nav.home">Home</a><span aria-hidden="true">/</span><a href="index.html" data-i18n="nav.docs">Docs</a></nav>
 ${toc ? `<details style="margin:12px 0"><summary style="min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700" data-i18n="docs.toc">On this page</summary><div class="hits" data-search-surface="docs-toc" data-search-label="docs.toc">${toc}</div></details>` : ''}
 ${r.html}
+${relatedDocumentationWorkflows(d.file, guideCatalogs[0], escapeHtml)}
 <p class="meter-label" style="margin-top:40px">Source: <a href="${escapeHtml(sourceBase + d.file)}">${escapeHtml(d.file)}</a></p>
 </article></div></div>`;
     await fs.writeFile(path.join(OUT, 'docs', d.name + '.html'), page({ title: d.title + ' | TempDesk docs', desc: plainText(md).slice(0, 180), root: '../', url: 'docs/' + d.name + '.html', body }));
     index.pages.push({ url: 'docs/' + d.name + '.html', title: d.title, summary: 'Docs: ' + d.file, kind: 'doc', sections: r.headings.filter((x) => x.level <= 3 && x.level > 1).map((x) => ({ id: x.id, title: x.text })), text: plainText(md) });
   }
-  const guideCatalogs = await Promise.all(['en', 'zh-HK'].map(async lang =>
-    JSON.parse(await fs.readFile(path.join(SITE, 'i18n', lang + '.json'), 'utf8'))));
   const docsGuides = renderDocumentationWorkflows(docPages, guideCatalogs, escapeHtml);
   const docsIndexBody = `<div class="docs-layout docs-index-layout"><div class="docs-main"><div class="content">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../" data-i18n="nav.home">Home</a><span aria-hidden="true">/</span><span data-i18n="nav.docs">Docs</span></nav>
