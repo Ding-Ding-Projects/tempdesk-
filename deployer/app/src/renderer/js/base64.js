@@ -56,7 +56,7 @@ export async function base64Page(root, app) {
   function showBytes(bytes, declared) {
     const type = B.detectType(bytes);
     st.lastBytes = bytes; st.lastType = type;
-    typeLine.textContent = t('b64.detected', [type.mime, fmtBytes(bytes.length)]) + (declared && declared !== type.mime ? ' · ' + t('b64.declared', [declared]) : '');
+    typeLine.textContent = t('b64.detected', [type.mime, fmtBytes(bytes.length)]) + (declared && declared !== type.mime ? ' Â· ' + t('b64.declared', [declared]) : '');
     preview.hidden = false; preview.replaceChildren();
     if (type.kind === 'image' && type.mime !== 'image/svg+xml') {
       const url = URL.createObjectURL(new Blob([bytes], { type: type.mime }));
@@ -98,7 +98,7 @@ export async function base64Page(root, app) {
     h('div', { class: 'cols' }, [h('div', { class: 'grow' }, [h('label', { class: 'lab', text: t('b64.input') }), inArea]), h('div', { class: 'grow' }, [h('label', { class: 'lab', text: t('b64.output') }), outArea])]), err, typeLine, actions, preview]));
 
   // Files
-  const fileInfo = h('div', { class: 'small', 'aria-live': 'polite', text: st.file ? st.file.name + ' · ' + fmtBytes(st.file.size) : t('b64.noFile') });
+  const fileInfo = h('div', { class: 'small', 'aria-live': 'polite', text: st.file ? st.file.name + ' Â· ' + fmtBytes(st.file.size) : t('b64.noFile') });
   const bar = h('i');
   const barWrap = h('div', { class: 'bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': '0', 'aria-label': t('b64.fileProgress') }, [bar]);
   const jobStatus = h('div', { class: 'small muted', role: 'status' });
@@ -113,9 +113,20 @@ export async function base64Page(root, app) {
 
   }
   app.onBase64Drop = async (file) => { const p = td.pathForFile(file); if (!p) { toast(notice('b64.dropFailed'), 'error'); return; } await useFile(await td.invoke['b64:stat'](p)); };
-  async function startJob() {
+  async function startJob(replace = false) {
     if (!st.file) { toast(notice('b64.noFile'), 'error'); return; }
     const opts = { source: st.file.path, mode: st.mode, variant: st.variant === 'mime' ? 'standard' : st.variant, pad: st.pad, lineLength: st.variant === 'mime' ? (st.lineLength || 76) : st.lineLength, strict: st.strict, outDir, overwrite: false };
+    if (replace) {
+      const target = await td.invoke['b64:pick']();
+      if (!target) return;
+      const confirmed = await superConfirm({
+        title: t('b64.overwriteTitle'), danger: t('b64.overwriteWarn', [target.path]),
+        word: target.name, action: t('b64.overwriteHold')
+      });
+      if (!confirmed) return;
+      opts.dest = target.path;
+      opts.overwrite = true;
+    }
     const r = await td.invoke['b64:start'](opts);
     if (r.exists) {
       toast(notice('b64.err.generic', [t('b64.overwriteWarn', [r.dest])]), 'error');
@@ -144,7 +155,7 @@ export async function base64Page(root, app) {
   const dirLine = h('span', { class: 'small muted', text: t('b64.outNext') });
   root.appendChild(h('div', { class: 'card', 'data-base64-file-drop': true }, [h('h2', { text: t('b64.files') }), h('p', { class: 'small muted', text: t('b64.filesLead') }), fileInfo,
     h('div', { class: 'row' }, [btn(t('b64.pick'), async () => useFile(await td.invoke['b64:pick']()), 'btn-ghost'), btn(t('b64.outDir'), async () => { outDir = await td.invoke['file:pickFolder'](); dirLine.textContent = outDir ? t('b64.outIn', [outDir]) : t('b64.outNext'); }, 'btn-ghost'), dirLine]),
-    h('div', { class: 'row' }, [btn(st.mode === 'encode' ? t('b64.encodeFile') : t('b64.decodeFile'), () => startJob(), 'btn-primary'), pauseB, cancelB]), barWrap, jobStatus]));
+    h('div', { class: 'row' }, [btn(st.mode === 'encode' ? t('b64.encodeFile') : t('b64.decodeFile'), () => startJob(), 'btn-primary'), btn(t('b64.overwriteTitle'), () => startJob(true), 'btn-ghost'), pauseB, cancelB]), barWrap, jobStatus]));
 
   // History with search, undo/redo through the workspace, and bulk export
   const hist = (await td.invoke['ws:get']('tools/base64.json')) || { entries: [] };
@@ -154,7 +165,7 @@ export async function base64Page(root, app) {
   function draw() {
     const shown = (hist.entries || []).filter((e) => !matcher || Core.testMatch(textOf(e), matcher));
     list.replaceChildren(...shown.slice(0, 200).map((e) => {
-      const it = h('div', { class: 'item', tabindex: '0' }, [h('div', { class: 'grow' }, [h('div', { class: 'title', text: t('b64.hist.' + e.action, [e.inputLength]) + (e.file ? ' · ' + e.file : '') }), h('div', { class: 'sub', text: fmtTime(e.time) + ' · ' + e.variant + (e.sha256 ? ' · SHA-256 ' + e.sha256.slice(0, 12) : '') + (e.input !== undefined ? ' · ' + t('b64.payloadKept') : '') })])]);
+      const it = h('div', { class: 'item', tabindex: '0' }, [h('div', { class: 'grow' }, [h('div', { class: 'title', text: t('b64.hist.' + e.action, [e.inputLength]) + (e.file ? ' Â· ' + e.file : '') }), h('div', { class: 'sub', text: fmtTime(e.time) + ' Â· ' + e.variant + (e.sha256 ? ' Â· SHA-256 ' + e.sha256.slice(0, 12) : '') + (e.input !== undefined ? ' Â· ' + t('b64.payloadKept') : '') })])]);
       contextMenu(it, () => [{ label: t('b64.reuse'), run: () => { if (e.input !== undefined) { st.input = e.input; st.mode = e.mode; app.render(); } else toast(notice('b64.noPayload')); }, disabled: e.input === undefined }, { label: t('common.copy'), run: () => td.invoke['clipboard:write'](JSON.stringify(e)) }]);
       return it;
     }));

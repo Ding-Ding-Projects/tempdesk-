@@ -41,6 +41,9 @@ async function publishVerified(temp, file) {
       await fs.promises.link(temp, candidate);
       return candidate;
     } catch (err) {
+      if (['EPERM', 'EACCES', 'EOPNOTSUPP', 'ENOSYS', 'ENOTSUP'].includes(err.code)) {
+        throw new Error('This destination does not permit hard links. Choose a folder that supports hard links to publish without replacing an existing file.');
+      }
       if (err.code !== 'EEXIST') throw err;
       candidate = numberedPath(file, n);
     }
@@ -108,8 +111,21 @@ class Job {
       this.emit({ type: 'verifying' });
       const verified = await this.verify(tmp, srcHash.digest('hex'), o.mode === 'decode' ? outHash.digest('hex') : null);
       if (!verified.ok) throw new Error('Round-trip verification failed: the SHA-256 of the result does not match the source.');
-      const published = await publishVerified(tmp, dst);
-      fs.unlinkSync(tmp);
+      let published;
+      if (o.overwrite === true && o.dest) {
+        // A selected destination may point to the input through another spelling or link.
+        const source = await fs.promises.stat(src, { bigint: true });
+        const target = await fs.promises.stat(dst, { bigint: true });
+        if (!target.isFile() || (source.dev === target.dev && source.ino === target.ino)) {
+          throw new Error('Select an existing output file distinct from the source.');
+        }
+        if (this.cancelled) throw new Error('cancelled');
+        await fs.promises.rename(tmp, dst);
+        published = dst;
+      } else {
+        published = await publishVerified(tmp, dst);
+        await fs.promises.unlink(tmp);
+      }
       this.dest = published;
       const r = { type: 'done', dest: published, bytesIn: total, bytesOut: fs.statSync(published).size, sha256: verified.sha256 };
       this.emit(r);
