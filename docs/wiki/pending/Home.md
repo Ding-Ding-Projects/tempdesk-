@@ -7,6 +7,8 @@ Start here to deploy shared computers, set up temporary sign-ins, and verify rem
 - [TempDesk overview and setup](../../../README.md) explains the main components and deployment choices.
 - [Server management](../../SERVER.md) explains the server console, supported routes, and operational limits.
 - [Security](../../SECURITY.md) describes the permissions and credential boundaries.
+- [Operator guide index](../../features/README.md) organizes common tasks.
+- [API diagnostics with Postman](../../features/http-api/README.md) shows how to check service health and authorized reads.
 - [Agent API](../../API.md) documents the service endpoints and authentication model.
 - [Read the documentation offline](../../OFFLINE-GUIDE.md) explains the standalone reader and its local settings.
 

@@ -12,6 +12,7 @@
 <script src="vendor/wording.js"></script>
 <script src="vendor/base64.js"></script>
 <script src="vendor/answer.js"></script>
+<script type="module" src="js/status-hub.js"></script>
 <script type="module" src="js/app.js"></script>
 </head>
 <body>
@@ -22,6 +23,7 @@
     <span class="name" id="tb-name">TempDesk Deployer</span>
     <span class="ver" id="tb-ver"></span>
     <div class="tb-actions" id="tb-actions"></div>
+    <button type="button" id="status-hub-open" style="-webkit-app-region:no-drag">Status Hub</button>
     <div class="winbtns">
       <button type="button" class="winbtn" id="win-min" aria-label="Minimize"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h10" stroke="currentColor" stroke-width="1.2"/></svg></button>
       <button type="button" class="winbtn" id="win-max" aria-label="Maximize"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
@@ -38,5 +40,6 @@
     </div>
   </div>
 </div>
+<dialog id="status-hub-panel" aria-labelledby="status-hub-title"><h2 id="status-hub-title">Status Hub</h2><p id="status-hub-result" aria-live="polite" style="white-space:pre-line"></p><button id="status-hub-refresh">Refresh</button> <button id="status-hub-close">Close</button></dialog>
 </body>
 </html>

@@ -84,6 +84,8 @@
   </div>
 </section>
 
+{% include 'appearance/motion.html' %}
+
 <section class="card rise" data-setting-section data-setting="{{ ta('Organization logo') }}" id="logo"><h2>{{ t('Organization logo') }}</h2>
   <p class="hint">{{ t('Shown in the Admin console and on the guest portal. PNG, JPEG or WebP, up to 512 KB.') }}</p>
   {% if has_logo %}<img src="/logo" alt="{{ ta('Current logo') }}" style="max-height:64px;border-radius:8px">{% endif %}

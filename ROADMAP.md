@@ -34,3 +34,8 @@
 - [x] Record the guest checklist and both Virtual Commons guide paths from a source-bound local offline build. [Illustrated steps](README.md#guided-checkout-walkthrough)
 - [x] Verify the guided documentation on GitHub Pages and in the downloadable v1.0.75 offline reader.
 - [ ] Verify the remaining delivery forms.
+
+- [x] Add the operator-guide source index, contribution and security policies, and release-pinned README count as tracked documentation.
+- [ ] Exercise the Agent and Portal Postman collections against an isolated installation and verify each auth and capability-dependent response. [HTTP diagnostics guide](docs/features/http-api/README.md)
+- [ ] Produce a current source-bound product walkthrough recording and refresh visual evidence for changed surfaces.
+- [ ] Publish a classified line count with author attribution and derive a hand-written implementation estimate from the same release count.

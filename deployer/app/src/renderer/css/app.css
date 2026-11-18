@@ -338,3 +338,27 @@ button.info:hover, button.info[aria-expanded="true"] { border-color: var(--prima
 .menu .rxb-filter button, .menu .rxb-filter input { width: auto; }
 .menu .rxb-filter .rxb-ib { width: 32px; min-height: 32px; padding: 0; justify-content: center; }
 .rxb-wrap { min-width: 0; }
+@media (prefers-reduced-motion: reduce) {
+  :root, :root *, :root *::before, :root *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+.menu {
+  min-inline-size: min(220px, calc(100vw - 1rem));
+  max-inline-size: calc(100vw - 1rem);
+  max-block-size: calc(100dvh - 60px);
+  overflow: auto;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+}
+@media (pointer: fine) and (min-width: 48rem) {
+  .dialog, .menu { resize: both; }
+}
+@media (max-width: 30rem) {
+  .dialog { padding: 1rem; }
+  .dialog .btn, .menu button { white-space: normal; min-height: 48px; }
+  .drawer .content { overflow-wrap: anywhere; }
+}

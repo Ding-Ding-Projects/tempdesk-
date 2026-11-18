@@ -1,0 +1,176 @@
+{
+  "info": {
+    "name": "TempDesk HTTP diagnostics",
+    "description": "Read-only TempDesk diagnostics. Configure the intended targets and credentials locally. See the HTTP API operator guide.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Windows and Samba Agent",
+      "item": [
+        {
+          "name": "Read agent health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TempDesk-Key",
+                "value": "{{AGENT_GUEST_KEY}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{AGENT_BASE_URL}}/health"
+          }
+        },
+        {
+          "name": "Read public guest settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TempDesk-Key",
+                "value": "{{AGENT_GUEST_KEY}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{AGENT_BASE_URL}}/public/settings"
+          }
+        },
+        {
+          "name": "List directory root children",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TempDesk-Key",
+                "value": "{{AGENT_ADMIN_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{AGENT_ADMIN_BEARER}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{AGENT_BASE_URL}}/ad/tree"
+          }
+        },
+        {
+          "name": "List Group Policy objects",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TempDesk-Key",
+                "value": "{{AGENT_ADMIN_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{AGENT_ADMIN_BEARER}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{AGENT_BASE_URL}}/gpo"
+          }
+        },
+        {
+          "name": "List managed guest accounts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-TempDesk-Key",
+                "value": "{{AGENT_ADMIN_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{AGENT_ADMIN_BEARER}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{AGENT_BASE_URL}}/guests"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Guest and Management Portals",
+      "item": [
+        {
+          "name": "Read guest portal health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{GUEST_PORTAL_URL}}/healthz"
+          }
+        },
+        {
+          "name": "Open guest portal",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{GUEST_PORTAL_URL}}/"
+          }
+        },
+        {
+          "name": "Read management portal health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{MANAGEMENT_PORTAL_URL}}/healthz"
+          }
+        },
+        {
+          "name": "Read management console pulse",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{MANAGEMENT_PORTAL_URL}}/api/console/pulse"
+          }
+        },
+        {
+          "name": "Read directory root children",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{MANAGEMENT_PORTAL_URL}}/api/dir/children"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "AGENT_BASE_URL",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "AGENT_GUEST_KEY",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "AGENT_ADMIN_KEY",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "AGENT_ADMIN_BEARER",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "GUEST_PORTAL_URL",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "MANAGEMENT_PORTAL_URL",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

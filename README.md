@@ -2,9 +2,16 @@
 
 Temporary, self-service sign-ins for shared Windows computers, on an Active Directory domain that deploys itself.
 
-Anyone on your network opens the guest portal, gets a username and password for 1 hour, 4 hours, a day, a week or until they delete it, and uses the computer as a normal user. When time is up TempDesk warns them, signs them out, and deletes the account and its files.
+Guests use the portal to request a time-limited standard account. Operators configure the directory and session destinations, then verify sign-in and expiry on each supported host.
+
+[Open TempDesk online](https://ding-ding-projects.github.io/tempdesk-/) · [Install the Windows Deployer](https://github.com/Ding-Ding-Projects/tempdesk-/releases/latest/download/Setup.exe) · [Read the offline documentation guide](docs/OFFLINE-GUIDE.md)
+
+**Contents** [Quick start](#quick-start) · [Deployment flow](#deployment-flow) · [Walkthroughs](#see-it-work-click-by-click) · [Operator guides](docs/features/README.md) · [API collections](docs/features/http-api/README.md) · [Evidence and delivery](#evidence-and-delivery)
 
 ## What is in the box
+
+<details>
+<summary>Components and where they run</summary>
 
 | Part | What it does |
 | --- | --- |
@@ -19,6 +26,8 @@ Anyone on your network opens the guest portal, gets a username and password for 
 | **Website** (`site/`) | Landing page, Answer File Studio, Base64 toolkit, feature articles and docs. |
 | **TempDesk Docs** | The website's guides, operator wiki, search and browser tools in a standalone executable for offline reference. [Open the offline documentation guide](docs/OFFLINE-GUIDE.md). |
 
+</details>
+
 ## Quick start
 
 Use the [guided documentation](https://ding-ding-projects.github.io/tempdesk-/docs/#guided-workflows) to choose a directory, verify a guest sign-in, or check a Virtual Commons destination. The checklists save your marks locally as you work. See the [live kiosk walkthrough](#guest-sign-in-walkthrough) and [guided checkout walkthrough](#guided-checkout-walkthrough) for illustrated steps, and the [verification inventory](docs/FEATURE-INVENTORY.md) for coverage by surface. Operators can follow the [Virtual Commons host setup](docs/VIRTUAL-COMMONS.md#prepare-the-desktop-experience-host) before publishing a session destination.
@@ -31,9 +40,25 @@ Use the [guided documentation](https://ding-ding-projects.github.io/tempdesk-/do
 
 Prefer Linux? Use **TempDesk Lite**: see `samba/README.md`.
 
+## Deployment flow
+
+```mermaid
+flowchart TD
+    A[Choose where the directory will run] --> B{Directory backend}
+    B -->|Windows Server| C[Generate the unattended kit and deploy the agent]
+    B -->|Samba| D[Deploy the TempDesk Lite directory and agent]
+    C --> E[Connect the portals to the agent]
+    D --> E
+    E --> F[Confirm directory health and guest policy]
+    F --> G[Create a temporary standard account]
+    G --> H[Verify sign-in and expiry at the intended destination]
+```
+
+Follow the [guided deployment and checkout tasks](https://ding-ding-projects.github.io/tempdesk-/docs/#guided-workflows).
+
 ## See it work, click by click
 
-Every picture below is a capture of the real built software, taken while it was driven for this test. The control that was clicked or typed into is outlined in red. Passwords, this PC's name and its network address are covered.
+These walkthroughs preserve captures from the builds identified in their receipts. Some older captures mark the interaction in red. The receipts and source revisions identify which behavior each walkthrough proves.
 
 <details>
 <summary><strong>Deploy a server from the desktop app, VMware included</strong> (27 steps)</summary>
@@ -404,6 +429,9 @@ See `AGENTS.md` for repository rules. License: MIT.
 
 ## Guest sign-in walkthrough
 
+<details>
+<summary>Steps and evidence for guest sign-in walkthrough</summary>
+
 1. Open the guest kiosk. Select **1 hour** and choose **Create my sign-in**.
 
    ![Guest kiosk with the one-hour duration selected](docs/evidence/guest-sign-in-3a18b69/01-choose-duration.png)
@@ -436,7 +464,12 @@ Windows 11 domain membership and desktop sign-in, temporary account creation thr
 
 The checklist also covers two ways to verify that an open session ends. Leave the session connected through its known expiry with the test directory briefly unavailable, or remove the account while its session is open. In either case, confirm that the original session disappears.
 
+</details>
+
 ## Guided checkout walkthrough
+
+<details>
+<summary>Steps and evidence for guided checkout walkthrough</summary>
 
 Open [the documentation guide](https://ding-ding-projects.github.io/tempdesk-/docs/#guided-workflows) or choose **Docs** in TempDesk Docs. These images were taken in the offline reader built from `9b4329b14b328b6b88301fd296bd0b3100994940`, in bilingual mode. The checklists record your own progress. See [Lab verification](#lab-verification) for the current status of the actual kiosk, directory and session hosts.
 
@@ -458,7 +491,12 @@ Open [the documentation guide](https://ding-ding-projects.github.io/tempdesk-/do
 
 The [capture inventory](docs/evidence/guided-docs-inventory.json) lists the exact source and executable hashes, image hashes, timestamps and viewport.
 
+</details>
+
 ## Browser attachment walkthrough
+
+<details>
+<summary>Steps and evidence for browser attachment walkthrough</summary>
 
 The picker captures came from the kiosk build at `caddfb9c4e672ad59e3a8af8e7b7fd9386d5d2f0`. The confirmation and retry came from build `32128b6a4731ace51ae9e26e031ce8d96bbb99b9`. The browser used an isolated Samba directory and test destinations for both editions. See [Lab verification](#lab-verification) for native session sign-in and expiry.
 
@@ -478,7 +516,12 @@ The picker captures came from the kiosk build at `caddfb9c4e672ad59e3a8af8e7b7fd
 
 The [attachment and layout receipt](docs/evidence/virtual-commons-attachments.json) records both automatic downloads, keyboard retries, removed test accounts, image hashes, and measured viewports.
 
+</details>
+
 ## Personal wording walkthrough
+
+<details>
+<summary>Steps and evidence for personal wording walkthrough</summary>
 
 These steps were captured in the signed-in management portal from the v1.0.80 source build, using an isolated browser and a sample JSON file. The [capture receipt](docs/evidence/management-wording-walkthrough.json) records the source revision, portal image, browser checks, and image hashes.
 
@@ -504,7 +547,12 @@ In TempDesk Deployer and Answer File Studio, personal wording changes interface 
 
 Deployer keeps notification message keys and literal values in memory. The open notification drawer updates its text and search results when personal wording is applied or cleared. A successful import plays the Windows tada cue after the wording is saved. A rejected wording drop plays the invalid-input cue and leaves the current wording in place. Both use the existing sound switch and volume.
 
+</details>
+
 ## Management action sounds walkthrough
+
+<details>
+<summary>Steps and evidence for management action sounds walkthrough</summary>
 
 These images come from the running management portal at `c4cf03ed5ae7b0cd42e2f24cb33095d2972c4f71`, using a separate test directory. The [capture and interaction inventory](docs/evidence/management-sounds.json) records the source, image hashes, geometry and browser results.
 
@@ -520,7 +568,12 @@ These images come from the running management portal at `c4cf03ed5ae7b0cd42e2f24
 
    ![School mode silences sounds and keeps the Action sounds box checked](docs/evidence/management-sounds-c4cf03e/03-school-pauses-cues.png)
 
+</details>
+
 ## Management notification walkthrough
+
+<details>
+<summary>Steps and evidence for management notification walkthrough</summary>
 
 The signed-in management portal at `d986ca134da5c7833f165e7e16fdfba0a0505a8c` was tested with a separate sample directory. The [capture and interaction receipt](docs/evidence/management-notifications.json) records the image hashes, source revision and 48 measured language, theme, width and scale combinations.
 
@@ -536,7 +589,12 @@ The signed-in management portal at `d986ca134da5c7833f165e7e16fdfba0a0505a8c` wa
 
    ![One checked review control leaves the slider and Delete button disabled](docs/evidence/management-notifications-d986ca1/03-review-confirmation.png)
 
+</details>
+
 ## Standalone offline documentation
+
+<details>
+<summary>Steps and evidence for standalone offline documentation</summary>
 
 Open **TempDesk Docs** to browse the guides, search the documentation and read the operator wiki offline. The [portable executable in v1.0.73](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.73) ran from an otherwise empty folder. Searching for **Configure the destinations** opened the Virtual Commons guide, and the sidebar opened the prepared wiki.
 
@@ -544,16 +602,49 @@ Open **TempDesk Docs** to browse the guides, search the documentation and read t
 
 The [evidence inventory](docs/evidence/standalone-docs-inventory.json) records the released executable, capture hash and viewport. See [Read the documentation offline](docs/OFFLINE-GUIDE.md) for navigation and build instructions.
 
+</details>
+
 ## Offline checkout guide
+
+<details>
+<summary>Steps and evidence for offline checkout guide</summary>
 
 TempDesk Deployer [v1.0.65](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.65) opened the bundled operator wiki and moved focus to **Verify a checkout** in the bundled Virtual Commons guide. The image was captured on November 18, 2026 at 10:06:09 UTC on an isolated desktop, using a 1440 × 1000 viewport at emulated device scale 1 in dark mode. The [evidence inventory](docs/evidence/offline-reader-inventory.json) records the released executable and capture hashes. The image shows the guide and heading focus. Guest session acceptance is tracked separately.
 
 ![Offline TempDesk Deployer reader focused on Verify a checkout](docs/evidence/deployer-v1.0.65/checkout-guide.png)
 
+</details>
+
 ## Fresh VMware lab provisioning
+
+<details>
+<summary>Steps and evidence for fresh vmware lab provisioning</summary>
 
 These earlier captures show Server 2025 Core and the Windows 11 client during unattended setup for source revision `5fb4e0235d1d0a8fe2d428e0af1cdd4ad34677f5`. Both were captured from their VMware consoles at 1024 × 768. The subsequent controller and kiosk checks are recorded in [Lab verification](#lab-verification).
 
 | Server setup | Guest setup |
 | --- | --- |
 | ![Windows Server setup at 20 percent](docs/evidence/fresh-lab/server-setup.png) | ![Windows 11 setup at 30 percent](docs/evidence/fresh-lab/guest-setup.png) |
+
+</details>
+
+
+## Evidence and delivery
+
+The walkthroughs above preserve earlier source-bound captures. A current end-to-end recording and refreshed captures for the current candidate are pending. See the [verification inventory](docs/FEATURE-INVENTORY.md), [roadmap](ROADMAP.md) and [verification handoff](HANDOFF.md).
+
+<details>
+<summary>Published line count and implementation estimate</summary>
+
+The [v1.0.89 release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.89) reports 91,175 nonblank lines from `scripts/line-counts.ps1`. Its count excludes the generated unattended settings catalogue and package lockfiles. The published total still includes tests, documentation and other generated or machine-maintained files.
+
+A human implementation estimate remains pending. The release provides neither a hand-written source subtotal nor author attribution. The estimate will use that subtotal divided by a stated sustainable daily rate, then apply any stated review or integration multiplier. The aggregate above cannot supply the hand-written subtotal.
+
+</details>
+
+<details>
+<summary>Sanitized shared workflow summary</summary>
+
+Review the product and verification scope before editing. Make a focused change, preserve unrelated work and document the exact verification performed. Keep credentials and deployment details out of source, logs and captures. See the [contribution guide](CONTRIBUTING.md) and [repository instructions](AGENTS.md).
+
+</details>

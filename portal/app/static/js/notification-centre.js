@@ -90,6 +90,8 @@
     setDisabled(controls.dismiss, !active);
     setDisabled(controls.remove, !chosen.length);
     setDisabled(controls.export, !visible.length);
+    if (controls["export-selected"]) setDisabled(controls["export-selected"], !chosen.length);
+    if (controls["read-selected"]) setDisabled(controls["read-selected"], !chosen.some(id => !rows.get(id).record.read));
     setDisabled(controls.clear, !validSearch() || !rows.size);
     setDisabled(controls.read, ![...rows.values()].some(row => !row.record.read));
 
@@ -201,8 +203,8 @@
     bell.focus();
   }
 
-  function exportMatches() {
-    const matching = matchingRows().map(id => rows.get(id).record);
+  function exportRows(ids) {
+    const matching = ids.map(id => rows.get(id).record);
     const exported = matching.filter(row => notices.isStorable(row.message)).map(row => ({
       message: notices.renderMessage(row.message, true),
       kind: row.kind,
@@ -325,7 +327,14 @@
         report("Selected toasts dismissed.");
         break;
       case "export":
-        exportMatches();
+        exportRows(matchingRows());
+        break;
+      case "export-selected":
+        exportRows(selectedRows());
+        break;
+      case "read-selected":
+        report(notices.markRead(selectedRows()) ? "Notifications marked read." :
+          "This browser could not update notification history.");
         break;
       case "remove":
       case "clear":

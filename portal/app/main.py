@@ -143,6 +143,8 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
         app.include_router(undo_router)
         from .console_routes import router as console_router
 
+        from .status_hub import router as status_hub_router
+        app.include_router(status_hub_router)
         app.include_router(console_router)
         app.include_router(admin_router)
         try:

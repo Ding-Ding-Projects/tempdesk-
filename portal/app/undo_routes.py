@@ -204,7 +204,8 @@ async def history_page(request: Request, sess: Session = Depends(require_admin))
         rows = [r for r in rows if q in json.dumps([r.get("summary"), r.get("target"), r.get("user")], ensure_ascii=False).casefold()]
     users = sorted({r.get("user", "") for r in j.all()})
     actions = sorted({r.get("action", "") for r in j.all()})
-    sel = j.get(qp.get("id") or "") if qp.get("id") else None
+    selected_id = qp.get("id")
+    sel = next((row for row in rows if row["id"] == selected_id), None) if selected_id else None
     diff_lines = None
     if sel:
         from .history import diff as mkdiff
@@ -216,7 +217,15 @@ async def history_page(request: Request, sess: Session = Depends(require_admin))
 
         return Response(json.dumps(rows, indent=2, ensure_ascii=False, default=str), media_type="application/json",
                         headers={"Content-Disposition": 'attachment; filename="tempdesk-history.json"'})
+    page_size = 500
+    pages = max(1, (len(rows) + page_size - 1) // page_size)
+    try:
+        page = min(pages, max(1, int(qp.get("page", "1"))))
+    except ValueError:
+        page = 1
+    start = (page - 1) * page_size
+    visible_rows = rows[start:start + page_size]
     return await render(request, "admin/history_log.html", {
-        "rows": rows[:500], "total": len(rows), "users": users, "actions": actions, "scope": scope, "f": dict(qp),
+        "rows": visible_rows, "total": len(rows), "page": page, "pages": pages, "users": users, "actions": actions, "scope": scope, "f": dict(qp),
         "sel": sel, "diff": diff_lines, "repo_size": j.repo_size(), "git": j.git_available(),
-        "deps": {r["id"]: len(j.dependents(r)) for r in rows[:500] if r.get("status") == "done" and r.get("undoable")}})
+        "deps": {r["id"]: len(j.dependents(r)) for r in visible_rows if r.get("status") == "done" and r.get("undoable")}})

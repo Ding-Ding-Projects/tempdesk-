@@ -310,3 +310,37 @@ label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { min-heig
 input[type="checkbox"]:not([role="switch"]):not(label > input), input[type="radio"]:not(label > input) { outline-offset: 10px; box-shadow: 0 0 0 10px transparent; }
 .switch input { width: 48px; height: 30px; }
 .switch input::after { width: 24px; height: 24px; }
+@media (prefers-reduced-motion: reduce) {
+  :root, :root *, :root *::before, :root *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+.sheet .sheet-panel { min-inline-size: 0; max-block-size: 100dvh; overflow-wrap: anywhere; }
+@media (pointer: fine) and (min-width: 48rem) {
+  .sheet.center .sheet-panel { resize: both; max-inline-size: calc(100vw - 2rem); overflow: auto; }
+}
+@media (max-width: 30rem) {
+  .sheet .sheet-panel button, .sheet .sheet-panel select { min-block-size: 48px; max-inline-size: 100%; }
+  .sheet .sheet-panel input { max-inline-size: 100%; }
+}
+@media (forced-colors: active) {
+  .sheet .sheet-panel { border: 1px solid CanvasText; }
+  .sheet :focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
+}
+.reader-settings { display: grid; gap: .75rem; }
+.reader-settings h3 { margin: 0; }
+.reader-settings label {
+  display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(5rem, 1fr) auto;
+  align-items: center; gap: .6rem;
+}
+.reader-settings input { min-width: 0; max-width: 100%; }
+.reader-settings output { font-variant-numeric: tabular-nums; }
+.reader-settings .btn { justify-self: start; }
+article.content :is(p, li, blockquote) { max-inline-size: var(--reader-measure, none); line-height: var(--reader-leading, inherit); }
+@media (max-width: 30rem) {
+  .reader-settings label { grid-template-columns: minmax(0, 1fr) auto; }
+  .reader-settings label > span { grid-column: 1 / -1; }
+}

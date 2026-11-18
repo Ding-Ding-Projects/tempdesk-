@@ -127,7 +127,10 @@ function handle(channel, fn) {
   });
 }
 
+const statusHub = require('./status-hub');
+
 function registerIpc() {
+  handle('hub:status', statusHub.snapshot);
   handle('app:info', async () => ({
     build: BUILD, platform: process.platform, versions: { electron: process.versions.electron, node: process.versions.node, chrome: process.versions.chrome },
     animations: animationsEnabled(), highContrast: nativeTheme.shouldUseHighContrastColors, dark: nativeTheme.shouldUseDarkColors,
@@ -234,7 +237,10 @@ function registerIpc() {
     run.on((ev) => send('engine:event', Object.assign({ run: id }, ev)));
     run.start();
     runs.set(id, run);
-    run.done.then(() => runs.delete(id));
+    run.done.then((result) => {
+      runs.delete(id);
+      void statusHub.recordResult(result);
+    });
     return id;
   });
   handle('engine:cancel', (id) => { const r = runs.get(id); if (r) r.cancel(); });
@@ -511,7 +517,6 @@ function registerIpc() {
   handle('b64:start', async (o) => {
     const id = 'b64-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const dest = o.dest || outputPath(o.source, o.mode, o.outDir, o.name);
-    if (fs.existsSync(dest) && !o.overwrite) return { exists: true, dest };
     const job = new Job(Object.assign({}, o, { dest }));
     job.on((ev) => send('b64:event', Object.assign({ job: id }, ev)));
     jobs.set(id, job);
@@ -606,10 +611,11 @@ if (!process.squirrelEvent) {
     hardenSession();
     registerIpc();
     createWindow();
+    void statusHub.start(app.getVersion());
     nativeTheme.on('updated', () => send('theme:system', { dark: nativeTheme.shouldUseDarkColors, highContrast: nativeTheme.shouldUseHighContrastColors }));
     updater.on((s) => send('update:state', s));
     if (store.settings().updates) setTimeout(() => updater.check().catch(() => {}), 15000);
   });
-  app.on('window-all-closed', async () => { try { if (workspace) await workspace.flush(); } catch (e) { /* ignore */ } app.quit(); });
+  app.on('window-all-closed', async () => { await statusHub.finish().catch(() => {}); try { if (workspace) await workspace.flush(); } catch (e) { /* ignore */ } app.quit(); });
 }
 Menu.setApplicationMenu(null);

@@ -1,0 +1,101 @@
+<section class="card rise" id="motion-editor" data-motion-editor data-setting-section data-setting="{{ ta('Motion') }}">
+  <h2>{{ t('Motion') }}</h2>
+  <div class="form-grid">
+    <label class="field" data-setting="{{ ta('Motion') }}">
+      {{ t('Transition duration') }}
+      <input type="range" min="25" max="200" step="5" value="100" data-motion-speed>
+      <output data-motion-value>100%</output>
+    </label>
+    <label class="field" data-setting="{{ ta('Motion') }}">
+      {{ t('Transition curve') }}
+      <select data-motion-curve>
+        <option value="default">{{ ta('Standard') }}</option>
+        <option value="linear">{{ ta('Linear') }}</option>
+        <option value="gentle">{{ ta('Gentle') }}</option>
+        <option value="spring">{{ ta('Spring') }}</option>
+      </select>
+    </label>
+  </div>
+  <fieldset class="field" data-kind-editor data-setting="{{ ta('Animation settings') }}">
+    <legend>{{ t('Animation settings') }}</legend>
+    <label>{{ t('Element') }}
+      <select data-kind-name>
+        <option value="entry">{{ ta('Page entry') }}</option>
+        <option value="stagger">{{ ta('List stagger') }}</option>
+        <option value="card">{{ ta('Cards') }}</option>
+        <option value="dialog">{{ ta('Dialogs') }}</option>
+        <option value="menu">{{ ta('Menus') }}</option>
+        <option value="sheet">{{ ta('Sheets') }}</option>
+        <option value="tooltip">{{ ta('Tooltips') }}</option>
+        <option value="toast">{{ ta('Notifications') }}</option>
+        <option value="switch">{{ ta('Switches') }}</option>
+        <option value="chart">{{ ta('Charts') }}</option>
+        <option value="progress">{{ ta('Progress') }}</option>
+        <option value="pulse">{{ ta('Live indicators') }}</option>
+        <option value="tabs">{{ ta('Tabs') }}</option>
+        <option value="hover">{{ ta('Hover effects') }}</option>
+      </select>
+    </label>
+    <label class="check"><input type="checkbox" data-kind-custom> {{ t('Customize this animation') }}</label>
+    <div class="form-grid" data-kind-fields hidden>
+      <label class="check"><input type="checkbox" data-kind-enabled> {{ t('Enabled') }}</label>
+      <label>{{ t('Duration (ms)') }} <input type="number" min="0" max="5000" step="1" data-kind-duration></label>
+      <label>{{ t('Delay (ms)') }} <input type="number" min="0" max="2000" step="1" data-kind-delay></label>
+      <label>{{ t('Transition curve') }} <select data-kind-ease>
+        {% for value, label in [('default','Standard'),('linear','Linear'),('gentle','Gentle'),('spring','Spring')] %}
+        <option value="{{ value }}">{{ ta(label) }}</option>{% endfor %}
+      </select></label>
+    </div>
+  </fieldset>
+  <div class="cluster">
+    <button type="button" class="btn tonal" data-motion-preview>{{ ta('Preview') }}</button>
+    <button type="button" class="btn" data-motion-reset>{{ t('Reset') }}</button>
+    <span aria-hidden="true" class="motion-sample"></span>
+  </div>
+  <p class="hint" data-motion-status role="status" data-disabled="{{ ta('Motion preview is disabled by your motion preference.') }}" data-unavailable="{{ ta('Storage unavailable. Changes apply only on this page.') }}"></p>
+</section>
+{% set appearance_targets = [('card', 'Cards'), ('button', 'Buttons'), ('input', 'Fields'), ('dialog', 'Dialogs'), ('menu', 'Menus'), ('notice', 'Notifications')] %}
+<section class="card" data-style-editor data-setting-section data-setting="{{ ta('Appearance editor') }}">
+  <h2>{{ t('Appearance editor') }}</h2>
+  <div class="form-grid">
+    <label class="field" data-setting="{{ ta('Element') }}">{{ t('Element') }}
+      <select data-style-target>
+        {% for value, label in appearance_targets %}<option value="{{ value }}">{{ ta(label) }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="field" data-setting="{{ ta('Font family') }}">{{ t('Font family') }}
+      <select data-style-font>
+        {% for value, label in [('', 'Default'), ('system', 'System'), ('sans', 'Sans serif'), ('serif', 'Serif'), ('mono', 'Monospace')] %}
+        <option value="{{ value }}">{{ ta(label) }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="field" data-setting="{{ ta('Font weight') }}">{{ t('Font weight') }}
+      <input type="range" min="300" max="900" step="100" data-style-weight><output data-style-weight-value></output>
+    </label>
+    <label class="field" data-setting="{{ ta('Letter spacing') }}">{{ t('Letter spacing') }}
+      <input type="range" min="0" max="8" step="1" data-style-spacing><output data-style-spacing-value></output>
+    </label>
+    <label class="field" data-setting="{{ ta('Corner roundness') }}">{{ t('Corner roundness') }}
+      <input type="range" min="0" max="48" step="1" data-style-radius>
+      <output data-style-radius-value></output>
+    </label>
+    <label class="field" data-setting="{{ ta('Border width') }}">{{ t('Border width') }}
+      <input type="range" min="0" max="8" step="1" data-style-width>
+      <output data-style-width-value></output>
+    </label>
+    <label class="field" data-setting="{{ ta('Border color') }}">{{ t('Border color') }}
+      <input type="color" data-style-color>
+    </label>
+  </div>
+  <div class="cluster">
+    <button type="button" class="btn" data-style-undo disabled>{{ t('Undo') }}</button>
+    <button type="button" class="btn" data-style-redo disabled>{{ t('Redo') }}</button>
+    <button type="button" class="btn" data-style-export>{{ t('Export appearance') }}</button>
+    <button type="button" class="btn" data-style-reset>{{ t('Reset selected element') }}</button>
+  </div>
+  <label class="field" data-setting="{{ ta('Import appearance') }}">{{ t('Import appearance') }}
+    <input type="file" accept="application/json,.json" data-style-import>
+  </label>
+  <span role="status" data-invalid="{{ ta('Invalid appearance file. Your settings are unchanged.') }}" data-style-status data-storage-unavailable="{{ ta('Storage unavailable. Changes apply only on this page.') }}"></span>
+</section>
+<p class="hint">{{ t('With focus inside a resizable menu, press Alt+Shift and an arrow key to resize. Press Alt+Shift+Home to reset.') }}</p>

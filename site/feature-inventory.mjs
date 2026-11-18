@@ -1,10 +1,13 @@
 import { readFile } from 'node:fs/promises';
+import { validateCoverage } from '../scripts/feature-coverage.mjs';
+import { requiredFeatureIds } from '../scripts/required-feature-identities.mjs';
 
 export const inventoryPath = 'docs/feature-inventory.json';
 
 const keyPattern = /^[a-z][a-z0-9-]*$/;
 const revisionPattern = /^[a-f0-9]{40}$/;
 const evidenceMethods = new Set(['source', 'runtime', 'release', 'deployment']);
+const requiredSurfaces = ['deployer', 'management', 'guest', 'kiosk', 'hosted', 'offline', 'delivery'];
 const statusOrder = ['verified', 'partial', 'pending', 'inapplicable'];
 
 function require(condition, description) {
@@ -15,7 +18,7 @@ function text(value) {
   return typeof value === 'string' && value.trim() !== '';
 }
 
-export function validateInventory(inventory, expectedFeatures) {
+export function validateInventory(inventory, expectedFeatures = requiredFeatureIds) {
   require(inventory?.schemaVersion === 1, 'unsupported schema version');
   require(Array.isArray(inventory.surfaces), 'surfaces are required');
   require(inventory.scopes && typeof inventory.scopes === 'object', 'scopes are required');
@@ -27,7 +30,8 @@ export function validateInventory(inventory, expectedFeatures) {
     require(text(surface.title) && text(surface.titleZh), 'missing surface names for ' + surface.id);
     surfaceIds.add(surface.id);
   }
-  require(surfaceIds.size > 0, 'at least one surface is required');
+  require(requiredSurfaces.length === surfaceIds.size && requiredSurfaces.every(surface => surfaceIds.has(surface)),
+    'the surface set does not match the supported product surfaces');
 
   for (const [id, scope] of Object.entries(inventory.scopes)) {
     require(Array.isArray(scope.appliesTo), 'missing applicability for ' + id);
@@ -63,6 +67,7 @@ export function validateInventory(inventory, expectedFeatures) {
     require(expected.size === featureIds.size && [...expected].every(id => featureIds.has(id)),
       'the feature set does not match the expected catalogue');
   }
+  validateCoverage(inventory);
   return inventory;
 }
 
