@@ -1,6 +1,6 @@
 {
  "strings": {
-  "The Remote Desktop file is unavailable. Your sign-in was created. Ask staff for the correct computer, or delete this sign-in if you no longer need it.": "暫時未能提供遠端桌面檔案。登入帳戶已建立。請向職員查詢應該用邊部電腦；如果唔再需要，可以刪除呢個帳戶。",
+  "The Remote Desktop file is unavailable. Your sign-in was created. Ask staff which computer to use.": "暫時未能提供遠端桌面檔案。登入帳戶已建立。請向職員查詢應該用邊部電腦。",
   "Server edition": "伺服器版本",
   "Choose an available server edition.": "請選擇可用嘅伺服器版本。",
   "Windows Server with GUI": "有圖形介面嘅 Windows Server",
