@@ -337,6 +337,11 @@ def audit_columns(rows: list) -> list[tuple[str, str]]:
     return [(k, k[:1].upper() + k[1:]) for k in keys[:6]]
 
 
+@router.get("/auth/local-tools")
+async def local_auth_tools(request: Request, sess: Session = Depends(require_admin)):
+    return await render(request, "admin/local_tools.html", {})
+
+
 @router.get("/more")
 async def more(request: Request, sess: Session = Depends(require_admin)):
     return await render(request, "admin/more.html", {})
