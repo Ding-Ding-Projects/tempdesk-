@@ -16,4 +16,4 @@ Open Help, then Docs, choose an article, and expand **Article contents**. Activa
 
 ## Review management history
 
-In the management portal, apply the server-side user, action, scope and search filters, then open a record or download JSON. The URL preserves these filters. The separate search inside the displayed list acts on the browser view only.
+In the management portal, apply the server-side user, action, scope and search filters, then open a record or download JSON. The URL preserves these filters. Previous and Next move between pages of up to 500 matching rows. JSON includes all server-side matches across pages. The separate search inside the displayed list acts on the browser view only.

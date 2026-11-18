@@ -22,6 +22,11 @@
       {% if r.status == 'done' and r.undoable %}<form method="post" action="/undo">{{ csrf() }}<input type="hidden" name="id" value="{{ r.id }}"><input type="hidden" name="back" value="/history"><button class="btn sm" type="submit" {% if deps.get(r.id) %}disabled title="{{ ta('Later changes to the same item exist. Undo those first ({count}).', count=deps.get(r.id)) }}"{% endif %}>{{ t('Undo this') }}</button></form>
       {% elif r.status == 'undone' %}<form method="post" action="/redo">{{ csrf() }}<input type="hidden" name="id" value="{{ r.id }}"><input type="hidden" name="back" value="/history"><button class="btn sm tonal" type="submit">{{ t('Redo') }}</button></form>{% endif %}
     </li>{% endfor %}</ul>
+    {% if pages > 1 %}<nav class="row" aria-label="{{ ta('Undo history') }}">
+      {% if page > 1 %}<a class="btn" rel="prev" href="?{{ request.url.remove_query_params('id').include_query_params(page=page-1).query }}">{{ t('Previous') }}</a>{% endif %}
+      <span class="subtle">{{ page }} / {{ pages }}</span>
+      {% if page < pages %}<a class="btn" rel="next" href="?{{ request.url.remove_query_params('id').include_query_params(page=page+1).query }}">{{ t('Next') }}</a>{% endif %}
+    </nav>{% endif %}
   {% else %}<div class="empty"><strong>{{ t('No recorded actions') }}</strong>{{ t('Changes you make in the Admin console appear here and can be undone.') }}</div>{% endif %}
 </section>
 {% if sel %}
