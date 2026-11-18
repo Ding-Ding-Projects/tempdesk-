@@ -4,6 +4,8 @@
 // mode, sounds, updates, Git remote, import/export and backup.
 import { h, t, originalText, state, btn, toast, notice, dialog, superConfirm, promptDialog, info, searchBox, select, play, listFilter } from './ui.js';
 
+import { narrationControls } from './narration.js';
+
 const td = window.td;
 const Core = window.TempDeskCore;
 
@@ -101,6 +103,7 @@ export async function settingsPage(root, app) {
       app.wordingMap ? btn(t('wording.clear'), () => app.clearWording(), 'btn-ghost btn-sm') : null,
       btn(t('wording.schemaBtn'), () => dialog(t('wording.schemaTitle'), () => [h('p', { text: t('wording.schemaHelp') }), h('pre', { class: 'xml', text: '{\n  "schemaVersion": 1,\n  "entries": {\n    "computer": "machine",\n    "private vocabulary": "Wording applied"\n  }\n}' }), h('p', { class: 'small muted', text: t('wording.rules') })]), 'btn-ghost btn-sm')])]), 'vocabulary'));
   }
+  langRows.push(narrationControls());
   sec('language', langRows);
 
   // Sound
