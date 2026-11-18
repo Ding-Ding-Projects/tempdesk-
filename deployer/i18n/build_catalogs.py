@@ -323,6 +323,10 @@ s('lang.en', 'English', 'English'); s('lang.zh-HK', 'Cantonese (Traditional Chin
 for i, (en, zh) in enumerate([('Serious', '正經'), ('Friendly', '友善'), ('Playful', '活潑'), ('Silly', '搞笑')]):
     s('funny.' + str(i), en, zh)
 s('wording.upload', 'Upload wording file', '上載用詞檔'); s('wording.clear', 'Restore original wording', '還原原有用詞'); s('wording.cleared', 'Original wording restored.', '已還原原有用詞。')
+s('wording.clearError', 'The wording file could not be cleared. The current wording is still in use.', '未能清除用字檔案。現有用字仍然生效。')
+s('wording.readError', 'The wording file could not be read. The current wording is still in use.', '讀唔到用字檔案。現有用字仍然生效。')
+s('wording.rejected', 'The personal wording file was not applied.', '個人用字檔案未有套用。')
+s('wording.saveError', 'The wording file could not be saved. The current wording is still in use.', '未能儲存用字檔案。現有用字仍然生效。')
 s('wording.active', 'Personal wording is on ({0} replacements).', '個人用詞已開啟（{0} 個取代）。'); s('wording.none', 'No personal wording.', '沒有個人用詞。')
 tone('wording.applied', ['Personal wording applied', 'Personal wording applied', 'Personal wording applied', 'Personal wording applied'], ['已套用個人用詞', '已套用個人用詞', '已套用個人用詞', '已套用個人用詞'])
 s('wording.schemaBtn', 'File format', '檔案格式'); s('wording.schemaTitle', 'Personal wording file', '個人用詞檔'); s('wording.schemaHelp', 'A UTF-8 JSON file like this example. Each entry replaces whole words in the interface.', '類似此例子的 UTF-8 JSON 檔案。每個項目會取代介面中完整的字詞。')
