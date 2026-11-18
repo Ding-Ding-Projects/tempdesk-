@@ -821,3 +821,22 @@ html[data-motion="reduced"] .rxb-pop, html[data-motion="off"] .rxb-pop { animati
   .menu-pop, .http-pop, .ctx-menu, #motion-editor fieldset { border: 1px solid CanvasText; }
   #motion-editor :focus-visible, [data-style-editor] :focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
 }
+
+:root[data-style-card-font] :is(.card) { font-family: var(--style-card-font); }
+:root[data-style-card-weight] :is(.card) { font-weight: var(--style-card-weight); }
+:root[data-style-card-spacing] :is(.card) { letter-spacing: var(--style-card-spacing); }
+:root[data-style-button-font] :is(.btn) { font-family: var(--style-button-font); }
+:root[data-style-button-weight] :is(.btn) { font-weight: var(--style-button-weight); }
+:root[data-style-button-spacing] :is(.btn) { letter-spacing: var(--style-button-spacing); }
+:root[data-style-input-font] :is(.field input:not([type=range]):not([type=checkbox]):not([type=color]), .field select, .field textarea) { font-family: var(--style-input-font); }
+:root[data-style-input-weight] :is(.field input:not([type=range]):not([type=checkbox]):not([type=color]), .field select, .field textarea) { font-weight: var(--style-input-weight); }
+:root[data-style-input-spacing] :is(.field input:not([type=range]):not([type=checkbox]):not([type=color]), .field select, .field textarea) { letter-spacing: var(--style-input-spacing); }
+:root[data-style-dialog-font] :is(dialog) { font-family: var(--style-dialog-font); }
+:root[data-style-dialog-weight] :is(dialog) { font-weight: var(--style-dialog-weight); }
+:root[data-style-dialog-spacing] :is(dialog) { letter-spacing: var(--style-dialog-spacing); }
+:root[data-style-menu-font] :is(.menu-pop, .ctx-menu) { font-family: var(--style-menu-font); }
+:root[data-style-menu-weight] :is(.menu-pop, .ctx-menu) { font-weight: var(--style-menu-weight); }
+:root[data-style-menu-spacing] :is(.menu-pop, .ctx-menu) { letter-spacing: var(--style-menu-spacing); }
+:root[data-style-notice-font] :is(.toast) { font-family: var(--style-notice-font); }
+:root[data-style-notice-weight] :is(.toast) { font-weight: var(--style-notice-weight); }
+:root[data-style-notice-spacing] :is(.toast) { letter-spacing: var(--style-notice-spacing); }

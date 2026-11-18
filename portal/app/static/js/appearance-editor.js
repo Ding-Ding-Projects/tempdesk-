@@ -7,7 +7,14 @@
   };
   const editor = document.querySelector('[data-style-editor]');
 
+  const fonts = {
+    system: 'system-ui, sans-serif', sans: 'Arial, sans-serif',
+    serif: 'Georgia, serif', mono: 'ui-monospace, Consolas, monospace'
+  };
   const validators = {
+    font: n => typeof n === 'string' && Object.hasOwn(fonts, n),
+    weight: n => Number.isInteger(n) && n >= 300 && n <= 900 && n % 100 === 0,
+    spacing: n => Number.isInteger(n) && n >= 0 && n <= 8,
     radius: n => Number.isInteger(n) && n >= 0 && n <= 48,
     width: n => Number.isInteger(n) && n >= 0 && n <= 8,
     color: n => typeof n === 'string' && /^#[0-9a-f]{6}$/i.test(n)
@@ -37,11 +44,16 @@
     const root = document.documentElement;
     for (const target of Object.keys(selectors)) {
       const item = settings[target] || {};
-      for (const name of ['radius', 'width', 'color']) {
+      for (const name of Object.keys(validators)) {
         const flag = 'data-style-' + target + '-' + name;
         const property = '--style-' + target + '-' + name;
         root.toggleAttribute(flag, name in item);
-        if (name in item) root.style.setProperty(property, name === 'color' ? item[name] : item[name] + 'px');
+        if (name in item) {
+          let value = item[name];
+          if (name === 'font') value = fonts[value];
+          if (['width', 'radius', 'spacing'].includes(name)) value += 'px';
+          root.style.setProperty(property, value);
+        }
         else root.style.removeProperty(property);
       }
     }
@@ -56,7 +68,7 @@
     const redoButton = editor.querySelector('[data-style-redo]');
     const status = editor.querySelector('[data-style-status]');
     let lastSaved = JSON.stringify(settings);
-    const controls = Object.fromEntries(['radius', 'width', 'color'].map(name =>
+    const controls = Object.fromEntries(Object.keys(validators).map(name =>
       [name, editor.querySelector('[data-style-' + name + ']')]));
     function refresh() {
       undoButton.disabled = !undo.length;
@@ -68,7 +80,10 @@
       controls.radius.value = item.radius ?? (style ? parseFloat(style.borderTopLeftRadius) : 0);
       controls.width.value = item.width ?? (style ? parseFloat(style.borderTopWidth) : 1);
       controls.color.value = item.color ?? (rgb ? '#' + rgb.slice(1).map(n => Number(n).toString(16).padStart(2, '0')).join('') : '#7cf3e6');
-      for (const name of ['radius', 'width']) {
+      controls.font.value = item.font || '';
+      controls.weight.value = item.weight ?? Math.min(900, Math.max(300, Math.round((parseFloat(style?.fontWeight) || 400) / 100) * 100));
+      controls.spacing.value = item.spacing ?? (parseFloat(style?.letterSpacing) || 0);
+      for (const name of ['radius', 'width', 'weight', 'spacing']) {
         editor.querySelector('[data-style-' + name + '-value]').value =
           name in item ? item[name] + ' px' : '—';
       }
@@ -125,7 +140,10 @@
     target.addEventListener('change', refresh);
     for (const [name, control] of Object.entries(controls)) {
       control.addEventListener('input', () => {
-        settings[target.value] = { ...settings[target.value], [name]: name === 'color' ? control.value : Number(control.value) };
+        const item = { ...settings[target.value] };
+        if (name === 'font' && !control.value) delete item.font;
+        else item[name] = ['font', 'color'].includes(name) ? control.value : Number(control.value);
+        settings[target.value] = item;
         persist();
       });
     }

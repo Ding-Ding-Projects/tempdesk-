@@ -63,6 +63,18 @@
         {% for value, label in appearance_targets %}<option value="{{ value }}">{{ ta(label) }}</option>{% endfor %}
       </select>
     </label>
+    <label class="field" data-setting="{{ ta('Font family') }}">{{ t('Font family') }}
+      <select data-style-font>
+        {% for value, label in [('', 'Default'), ('system', 'System'), ('sans', 'Sans serif'), ('serif', 'Serif'), ('mono', 'Monospace')] %}
+        <option value="{{ value }}">{{ ta(label) }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="field" data-setting="{{ ta('Font weight') }}">{{ t('Font weight') }}
+      <input type="range" min="300" max="900" step="100" data-style-weight><output data-style-weight-value></output>
+    </label>
+    <label class="field" data-setting="{{ ta('Letter spacing') }}">{{ t('Letter spacing') }}
+      <input type="range" min="0" max="8" step="1" data-style-spacing><output data-style-spacing-value></output>
+    </label>
     <label class="field" data-setting="{{ ta('Corner roundness') }}">{{ t('Corner roundness') }}
       <input type="range" min="0" max="48" step="1" data-style-radius>
       <output data-style-radius-value></output>
