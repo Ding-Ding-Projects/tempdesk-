@@ -281,6 +281,7 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
   const inventory = await readInventory(new URL('../', import.meta.url));
   const localAttachments = new Set([
     inventoryPath,
+    'docs/evidence/virtual-commons-attachments.json',
     'docs/evidence/virtual-commons-checkout.json',
     'docs/evidence/virtual-commons-picker-wording.json',
   ]);

@@ -51,3 +51,5 @@ Ground `#070B0B` with a 28 px dot grid, tiles `#0E1615` with `#1C2927` borders, 
 ## Virtual Commons design reference
 
 Use the guest creation artboard's radio choice tiles for server edition selection. The edition group shares the existing choice grid, spacing, typography, colors and focus treatment. Unavailable editions remain visible and are marked unavailable. Use the guest credentials artboard for the checkout result and the existing filled action for the RDP download. The dim sum result uses the same guest card and action styles. Live visual parity remains to be verified.
+
+The checkout button keeps the guest creation artboard's filled pill and 56 px minimum height. Its label stays centered and wraps inside the pill as the available width decreases or the text grows. At 360 px, the full action label must fit. At 1440 px, a label that fits uses one line. The same layout supports both language catalogues.

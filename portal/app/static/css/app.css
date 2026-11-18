@@ -228,6 +228,13 @@ button.status-pill, a.status-pill { cursor: pointer; }
 @keyframes ripple { to { transform: scale(2.6); opacity: 0; } }
 .btn.block { width: 100%; }
 
+#virtual-commons > button[type="submit"] {
+  padding-block: .5em;
+  overflow-wrap: anywhere;
+  text-align: center;
+  white-space: normal;
+}
+
 .search-pill {
   min-height: var(--touch); padding: 0 8px 0 16px; border-radius: var(--r-pill); border: 1px solid var(--outline);
   background: var(--surface-2); color: var(--text-muted); display: inline-flex; align-items: center; gap: 10px;

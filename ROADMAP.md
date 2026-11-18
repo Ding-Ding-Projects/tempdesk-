@@ -7,6 +7,7 @@
 - [x] Observe automatic removal of a separate one-hour account after its configured expiry.
 - [x] Verify that the kiosk language search label and its regex controls fit at 360 px and 1440 px.
 - [x] Verify both connection files and guest account checks against an isolated Samba directory. [Checkout receipt](docs/evidence/virtual-commons-checkout.json)
+- [x] Verify scoped confirmations, both attachment destinations, retry and temporary account removal against a real isolated directory. [Attachment receipt](docs/evidence/virtual-commons-attachments.json)
 - [x] Verify local edition wording, invalid file handling, clear and validation recovery in a built guest portal. [Picker receipt](docs/evidence/virtual-commons-picker-wording.json)
 - [ ] Exercise edition wording on the configured live kiosk alongside a verified checkout session.
 - [ ] Connect a kiosk to the native Windows agent through an authenticated configuration and prove temporary account creation there.

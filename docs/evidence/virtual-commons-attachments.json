@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "ba64c82bbad0b90d461a386e9bb07eae6620f553",
+  "sourceTree": "ee2d75b284a46d451865796dd3881fcfad4639b3",
+  "portalImage": "sha256:bdc9775388b32bcb276515b9abde83ed49bd8d886ea627d9da9f25366fa312d6",
+  "directoryImage": "sha256:134495308d4cfffaee26e82c276bd1aa0babfb0f336f988a06c233d6c5db9580",
+  "observedOn": "2026-11-18",
+  "method": "Source-bound guest portal and Samba Active Directory images on an isolated test network.",
+  "http": {
+    "sameBrowserIndependentConfirmations": true,
+    "unauthenticatedAttachmentRejected": true,
+    "sameAttachmentOnRetry": true,
+    "results": [
+      {
+        "edition": "desktop-experience",
+        "destinationMatched": true,
+        "passwordAbsent": true,
+        "accountValidatedAndRemoved": true,
+        "fileSha256": "eb568e88308333788fafc0a653ea81a5be04feefbdbdcd770e7a10446a6e1348"
+      },
+      {
+        "edition": "server-core",
+        "destinationMatched": true,
+        "passwordAbsent": true,
+        "accountValidatedAndRemoved": true,
+        "fileSha256": "b9ce6a7667fc9cb4e7acef5cfefd112e15cf08065280bbcee3ea80bd6147c60c"
+      }
+    ]
+  },
+  "browser": {
+    "engine": "Chromium headless shell",
+    "completedAt": "2026-11-18T14:22:28.748Z",
+    "filename": "Virtual-Commons.rdp",
+    "accountRecordsRemoved": true,
+    "isolatedProfileRemoved": true,
+    "results": [
+      {
+        "edition": "desktop-experience",
+        "viewportWidth": 1440,
+        "automaticDownload": true,
+        "keyboardRetryMatched": true,
+        "passwordAbsent": true,
+        "fileSha256": "9c56d21821ced698c51971f439f092b0515eda9c3dc4deab2d2f1586b6bc30e0"
+      },
+      {
+        "edition": "server-core",
+        "viewportWidth": 360,
+        "automaticDownload": true,
+        "keyboardRetryMatched": true,
+        "passwordAbsent": true,
+        "fileSha256": "a4b975cd06141e0d8e93bec5cdb40a5403bc09e8524db182caf68af897838311"
+      }
+    ]
+  },
+  "remaining": "Both destinations were fixture addresses. Native session sign-in and expiry remain open."
+}

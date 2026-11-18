@@ -320,7 +320,17 @@
     },
     {
       "id": "functional-ui",
-      "scope": "interfaces"
+      "scope": "interfaces",
+      "progress": {
+        "guest": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "ba64c82bbad0b90d461a386e9bb07eae6620f553",
+          "reference": "docs/evidence/virtual-commons-attachments.json",
+          "observation": "Two guest checkouts retained their respective confirmations and attachment destinations. Retrying returned the same file.",
+          "remaining": "Verify the complete guest interface, including real sessions on the configured hosts."
+        }
+      }
     },
     {
       "id": "onboarding-wizard",
