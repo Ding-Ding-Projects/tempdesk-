@@ -14,11 +14,19 @@ In the edition picker, a file entry for `Microsoft Windows` also supplies wordin
 
 ## Configure the destinations
 
-Set `COMMONS_RDP_GUI` to a Desktop Experience session host configured to accept temporary domain users. Use a host reachable from the Remote Desktop client, optionally followed by its port. Keep session hosts separate from the domain controller.
+Set `COMMONS_RDP_GUI` to a verified Desktop Experience session host. Use a name reachable from the Remote Desktop client, optionally followed by its port. Keep session hosts separate from the domain controller. Follow [the dedicated App Host setup](../server/apphost/README.md#prepare-a-virtual-commons-session-host), then verify a short checkout before publishing the destination.
 
 Windows Server Core supports Remote Desktop for administration. Microsoft does not include the RD Session Host role in Server Core, and the TempDesk App Host installer requires Desktop Experience. Leave `COMMONS_RDP_CORE` unset unless you have validated a supported configuration that provides the intended temporary guest sessions. An open RDP port or an administrator sign-in does not verify guest checkout. See [Microsoft's Server Core role list](https://learn.microsoft.com/en-us/windows-server/administration/server-core/server-core-roles-and-services).
 
 Existing single-target installations can continue using COMMONS_RDP_TARGET. When either edition setting is supplied, the edition settings determine availability.
+
+## Prepare the Desktop Experience host
+
+Use a dedicated domain member with the Remote Desktop Session Host role and a certificate the clients trust. Arrange for the TempDesk Session Watcher to be installed from the joined domain's computer policy. The existing TempDesk Guest Computers policy also manages startup scripts and profiles. Apply it only to computers intended to receive those settings.
+
+Open elevated PowerShell on the dedicated host and preview the setup with `Install-AppHost.ps1 -VirtualCommons -WhatIf`. The preview reads the secure channel, the registered task, and the protected watcher files on the host. It checks the files against the joined domain's published policy. When the preview succeeds, run the installer again with `-VirtualCommons` and the appropriate `-LicenseServer` value. If the role installation needs a restart, rerun the installer afterward to grant the confirmed domain guest group access.
+
+The installer checks the configuration that will enforce expiry. Complete the live checkout check below before adding the host to the guest portal.
 
 ## Apply the settings
 

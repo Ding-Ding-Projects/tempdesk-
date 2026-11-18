@@ -57,6 +57,28 @@ Only apps whose `host` matches this machine (its short name, full DNS name or on
 
 `-RemoveUnlisted` deletes entries this script created earlier (it marks them with `TempDeskManaged = 1`) that are no longer in the list. Entries you created yourself are never touched.
 
+## Prepare a Virtual Commons session host
+
+Use a dedicated, domain-joined Desktop Experience server. Apply the TempDesk Guest Computers policy to the host if it is intended to receive that policy's computer startup scripts, Wi-Fi profiles and profile cleanup. Confirm the TempDesk Session Watcher is registered after the computer startup policy runs.
+
+From the App Host directory, open an elevated PowerShell and run the preview.
+
+```powershell
+.\Install-AppHost.ps1 -VirtualCommons -WhatIf
+```
+
+The preview verifies the secure channel and the enabled watcher task. It checks the installed script and configuration against the joined domain's published files and confirms that local paths are protected. The domain's configuration identifies the guest group.
+
+Use `-Language zh-HK` for Cantonese setup messages or `-Language bi` to show both languages.
+
+Apply the setup with the RD license server for your deployment.
+
+```powershell
+.\Install-AppHost.ps1 -VirtualCommons -LicenseServer lic01.example.test
+```
+
+The installer grants Remote Desktop access to the configured domain security group by SID after it verifies the enabled watcher, its upcoming run and the installed Session Host role. If the role installer needs a restart, finish the restart and repeat this command. Use a short-lived guest account to verify sign-in, expiry of the open session and a rejected reconnect before setting `COMMONS_RDP_GUI`. Follow [Verify a checkout](../../docs/VIRTUAL-COMMONS.md#verify-a-checkout) for the acceptance steps. Use the RemoteApp setup commands above when you also need to publish applications.
+
 ## How apps appear in the portal
 
 The app list lives in the TempDesk settings under `"apps"` (edited in the admin portal). Each signed-in guest sees the enabled apps whose `groups` list contains one of their groups, or every enabled app when `groups` is empty. Each app has two buttons: **Open in browser** (Guacamole) and **Download .rdp**. Run this script again after you add or change apps so the app host allow list matches.

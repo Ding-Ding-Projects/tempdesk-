@@ -40,6 +40,14 @@
 .PARAMETER InstallLicensing
     Install the RDS-Licensing role on this server even without -LicenseServer.
 
+.PARAMETER VirtualCommons
+    Prepare a dedicated Virtual Commons desktop session host. Guest access is
+    granted after checking the existing TempDesk guest-computer watcher and
+    the installed Remote Desktop Session Host role.
+
+.PARAMETER Language
+    Virtual Commons setup language: en, zh-HK, or bi for both.
+
 .PARAMETER RemoveUnlisted
     Remove TSAppAllowList entries previously published by this script
     (marked TempDeskManaged=1) that are no longer in the list.
@@ -50,15 +58,23 @@
 .EXAMPLE
     .\Install-AppHost.ps1 -AppsJson '[{"id":"notepad","name":"Notepad","program":"||notepad","hostPath":"C:\\Windows\\System32\\notepad.exe"}]' -LicenseServer lic01.corp.example -Reboot
 #>
-[CmdletBinding(SupportsShouldProcess = $true)]
+[CmdletBinding(SupportsShouldProcess = $true, DefaultParameterSetName = 'RemoteApps')]
 param(
+    [Parameter(ParameterSetName = 'RemoteApps')]
     [string]$AppsJson,
     [string]$SettingsPath,
     [string]$GuestGroup,
     [string[]]$LicenseServer,
     [switch]$InstallLicensing,
+    [Parameter(ParameterSetName = 'RemoteApps')]
     [switch]$RemoveUnlisted,
-    [switch]$Reboot
+    [switch]$Reboot,
+    [Parameter(Mandatory = $true, ParameterSetName = 'VirtualCommons')]
+    [ValidateScript({ [bool]$_ })]
+    [switch]$VirtualCommons,
+    [Parameter(ParameterSetName = 'VirtualCommons')]
+    [ValidateSet('en', 'zh-HK', 'bi')]
+    [string]$Language = 'en'
 )
 
 Set-StrictMode -Version Latest
@@ -72,6 +88,14 @@ $AllowApps   = Join-Path $AllowRoot 'Applications'
 $AliasRegex  = '^[A-Za-z0-9._-]{1,64}$'
 
 function Write-Step([string]$Text) { Write-Host "==> $Text" -ForegroundColor Cyan }
+
+function Complete-RoleRestart {
+    if ($Reboot) {
+        if ($PSCmdlet.ShouldProcess($env:COMPUTERNAME, 'Restart')) { Restart-Computer -Force }
+    } else {
+        Write-Warning 'A restart is required to finish the role install. Run again with -Reboot, or restart manually.'
+    }
+}
 
 function Set-RegValue {
     param([string]$Path, [string]$Name, $Value, [Microsoft.Win32.RegistryValueKind]$Type)
@@ -104,9 +128,6 @@ if ([Environment]::OSVersion.Version.Build -lt 26100) {
     Write-Warning 'Written for Windows Server 2025 (build 26100). Older versions usually work but are untested.'
 }
 
-$domainNetbios = (Get-CimInstance Win32_NTDomain -Filter "DnsForestName IS NOT NULL" -ErrorAction SilentlyContinue |
-    Where-Object { $_.DomainName } | Select-Object -First 1).DomainName
-if (-not $domainNetbios -and $env:USERDOMAIN -and $env:USERDOMAIN -ne $env:COMPUTERNAME) { $domainNetbios = $env:USERDOMAIN }
 $computerNames = @($env:COMPUTERNAME, "$($env:COMPUTERNAME).$($cs.Domain)") | ForEach-Object { $_.ToLowerInvariant() }
 try {
     $ips = Get-NetIPAddress -ErrorAction Stop | Where-Object { $_.IPAddress -notmatch '^(127\.|::1|fe80)' } | ForEach-Object { $_.IPAddress.ToLowerInvariant() }
@@ -119,9 +140,25 @@ if ($SettingsPath) {
     if (-not (Test-Path -LiteralPath $SettingsPath)) { throw "Settings file not found: $SettingsPath" }
     $settings = Get-Content -LiteralPath $SettingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
 }
-if (-not $GuestGroup) {
-    if ($settings -and $settings.PSObject.Properties['guestGroup'] -and $settings.guestGroup) { $GuestGroup = $settings.guestGroup }
-    else { $GuestGroup = 'TempDesk Guests' }
+if (-not $GuestGroup -and $settings -and $settings.PSObject.Properties['guestGroup'] -and $settings.guestGroup) {
+    $GuestGroup = $settings.guestGroup
+}
+if ($VirtualCommons) {
+    . (Join-Path $PSScriptRoot 'VirtualCommonsHost.ps1')
+    Set-TdVirtualCommonsLocale -Language $Language
+    Write-Step (Get-TdVirtualCommonsText 'checkingWatcher')
+    $watcherConfig = Get-TdVirtualCommonsWatcherConfig -DomainDns $cs.Domain
+    if ($GuestGroup -and $GuestGroup -ine $watcherConfig.guestGroup) {
+        throw (Get-TdVirtualCommonsText 'mismatchedGuestGroup')
+    }
+    $GuestGroup = [string]$watcherConfig.guestGroup
+    $guestSid = Resolve-TdVirtualCommonsGuestSid -DomainDns $cs.Domain -GroupName $GuestGroup
+    if ($WhatIfPreference) {
+        [void]$PSCmdlet.ShouldProcess($env:COMPUTERNAME, (Get-TdVirtualCommonsText 'previewSetup'))
+        return
+    }
+} elseif (-not $GuestGroup) {
+    $GuestGroup = 'TempDesk Guests'
 }
 
 # ---------------------------------------------------------------- roles
@@ -173,6 +210,17 @@ if ($LicenseServer) {
     Write-Warning 'No -LicenseServer given. Without RDS CALs only two admin sessions work after the 120-day grace period.'
 }
 
+if ($VirtualCommons) {
+    if ($restartNeeded) {
+        Write-Warning (Get-TdVirtualCommonsText 'rerunAfterRestart')
+        Complete-RoleRestart
+        return
+    }
+    if (-not (Get-WindowsFeature -Name 'RDS-RD-Server').Installed) {
+        throw (Get-TdVirtualCommonsText 'roleRequired')
+    }
+}
+
 # ---------------------------------------------------------------- remote desktop + NLA
 Write-Step 'Enabling Remote Desktop with Network Level Authentication'
 Set-RegValue -Path $TsKey -Name 'fDenyTSConnections' -Value 0 -Type DWord
@@ -188,25 +236,68 @@ if ($rules) {
     Write-Warning 'Remote Desktop firewall rule group not found. Allow TCP and UDP 3389 manually.'
 }
 
+if ($VirtualCommons) {
+    $listener = Get-ItemProperty -LiteralPath $RdpTcpKey -Name UserAuthentication, SecurityLayer
+    if ((Get-ItemPropertyValue -LiteralPath $TsKey -Name fDenyTSConnections) -ne 0 -or
+        $listener.UserAuthentication -ne 1 -or $listener.SecurityLayer -ne 2) {
+        throw (Get-TdVirtualCommonsText 'listenerRequired')
+    }
+}
+
 # ---------------------------------------------------------------- guest group
 Write-Step "Allowing '$GuestGroup' to sign in over RDP"
 $rduSid = 'S-1-5-32-555'   # BUILTIN\Remote Desktop Users (name differs per language)
 $rdu = Get-LocalGroup -SID $rduSid
-$member = if ($domainNetbios) { "$domainNetbios\$GuestGroup" } else { $GuestGroup }
-try {
+if ($VirtualCommons) {
+    $member = $guestSid
     $already = @(Get-LocalGroupMember -SID $rduSid -ErrorAction Stop |
-        Where-Object { $_.Name -ieq $member -or $_.Name -like "*\$GuestGroup" })
-} catch {
-    # Get-LocalGroupMember fails when the group holds an orphaned SID; fall back to ADSI.
-    $already = @(([ADSI]"WinNT://./$($rdu.Name),group").psbase.Invoke('Members') |
-        ForEach-Object { $_.GetType().InvokeMember('Name', 'GetProperty', $null, $_, $null) } |
-        Where-Object { $_ -ieq $GuestGroup })
+        Where-Object { $_.SID.Value -eq $guestSid })
+} else {
+    $domain = Get-CimInstance Win32_NTDomain -Filter "DnsForestName IS NOT NULL" -ErrorAction SilentlyContinue |
+        Where-Object { $_.DomainName } | Select-Object -First 1
+    $domainNetbios = if ($domain) { $domain.DomainName } elseif ($env:USERDOMAIN -ne $env:COMPUTERNAME) { $env:USERDOMAIN }
+    $member = if ($domainNetbios) { "$domainNetbios\$GuestGroup" } else { $GuestGroup }
+    try {
+        $already = @(Get-LocalGroupMember -SID $rduSid -ErrorAction Stop |
+            Where-Object { $_.Name -ieq $member -or $_.Name -like "*\$GuestGroup" })
+    } catch {
+        # Get-LocalGroupMember fails when the group holds an orphaned SID; fall back to ADSI.
+        $already = @(([ADSI]"WinNT://./$($rdu.Name),group").psbase.Invoke('Members') |
+            ForEach-Object { $_.GetType().InvokeMember('Name', 'GetProperty', $null, $_, $null) } |
+            Where-Object { $_ -ieq $GuestGroup })
+    }
 }
 if ($already.Count -gt 0) {
+    if ($VirtualCommons) {
+        Assert-TdVirtualCommonsGrant -DomainDns $cs.Domain -GuestGroup $GuestGroup -GuestSid $guestSid
+    }
     Write-Host "    already a member of $($rdu.Name)"
 } elseif ($PSCmdlet.ShouldProcess($rdu.Name, "Add $member")) {
-    Add-LocalGroupMember -SID $rduSid -Member $member
+    if ($VirtualCommons) {
+        Assert-TdVirtualCommonsGrant -DomainDns $cs.Domain -GuestGroup $GuestGroup -GuestSid $guestSid
+    }
+    try {
+        Add-LocalGroupMember -SID $rduSid -Member $member -ErrorAction Stop -Confirm:$false
+    } catch {
+        # A second installer may have granted the same domain group while this run was awaiting confirmation.
+        if (-not $VirtualCommons -or -not (Get-LocalGroupMember -SID $rduSid -ErrorAction Stop |
+                Where-Object { $_.SID.Value -eq $guestSid })) {
+            throw
+        }
+    }
     Write-Host "    added to $($rdu.Name)"
+} elseif ($VirtualCommons) {
+    Write-Warning (Get-TdVirtualCommonsText 'skippedGrant')
+    return
+}
+
+if ($VirtualCommons) {
+    if (-not (Get-LocalGroupMember -SID $rduSid -ErrorAction Stop | Where-Object { $_.SID.Value -eq $guestSid })) {
+        throw (Get-TdVirtualCommonsText 'unverifiedGrant')
+    }
+    Write-Step (Get-TdVirtualCommonsText 'completeSetup')
+    Write-Host (Get-TdVirtualCommonsText 'verifyCheckout')
+    return
 }
 
 # ---------------------------------------------------------------- RemoteApps
@@ -283,10 +374,4 @@ if ($published.Count -eq 0) { Write-Warning 'No RemoteApps were published from t
 Write-Step 'Done'
 Write-Host "    RemoteApps published: $($published.Count)"
 Write-Host '    Install a certificate the clients trust for RDP so the portal can keep ignoreCert = false (see README.md).'
-if ($restartNeeded) {
-    if ($Reboot) {
-        if ($PSCmdlet.ShouldProcess($env:COMPUTERNAME, 'Restart')) { Restart-Computer -Force }
-    } else {
-        Write-Warning 'A restart is required to finish the role install. Run again with -Reboot, or restart manually.'
-    }
-}
+if ($restartNeeded) { Complete-RoleRestart }
