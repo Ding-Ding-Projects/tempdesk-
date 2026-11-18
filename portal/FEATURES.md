@@ -7,6 +7,7 @@ Status values: implemented, partial (with what is missing), not done (with the r
 | Feature | Status | Notes |
 | --- | --- | --- |
 | Guest create, show once, no-store, check, delete | implemented | One-time server store, HttpOnly cookie ID, HTTP 410 on second view. A loopback check against the live lab account service using portal revision `2dc043e` created a temporary account, verified active status, self-deleted it, and verified that the credentials were rejected afterward. |
+| Guest account expiry in the Samba lab | verified in lab | The portal at `3dde3c1` wrote the expected directory deadline for a one-hour kiosk checkout. In a separate check, an administrator created a one-minute account and the scheduled Samba reaper removed it. The account was absent from the directory at the 346-second poll. Active Remote Desktop sign-out and re-entry remain separate acceptance checks. |
 | CSRF on every form | implemented | Signed double-submit token |
 | Portal rate limits | implemented | In memory, per process |
 | Admin login, server-side sessions, logout | implemented | |
