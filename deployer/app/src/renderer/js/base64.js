@@ -115,7 +115,7 @@ export async function base64Page(root, app) {
   app.onBase64Drop = async (file) => { const p = td.pathForFile(file); if (!p) { toast(notice('b64.dropFailed'), 'error'); return; } await useFile(await td.invoke['b64:stat'](p)); };
   async function startJob(replace = false) {
     if (!st.file) { toast(notice('b64.noFile'), 'error'); return; }
-    const opts = { source: st.file.path, mode: st.mode, variant: st.variant === 'mime' ? 'standard' : st.variant, pad: st.pad, lineLength: st.variant === 'mime' ? (st.lineLength || 76) : st.lineLength, strict: st.strict, outDir, overwrite: false };
+    const opts = { source: st.file.path, mode: st.mode, variant: st.variant === 'mime' ? 'standard' : st.variant, pad: st.pad, lineLength: st.variant === 'mime' ? (st.lineLength || 76) : st.lineLength, strict: st.strict, outDir, numberedOutput: !replace, overwrite: false };
     if (replace) {
       const target = await td.invoke['b64:pick']();
       if (!target) return;
@@ -126,6 +126,7 @@ export async function base64Page(root, app) {
       if (!confirmed) return;
       opts.dest = target.path;
       opts.overwrite = true;
+      opts.requireExisting = true;
     }
     const r = await td.invoke['b64:start'](opts);
     if (r.exists) {

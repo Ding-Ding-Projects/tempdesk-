@@ -130,6 +130,7 @@ function handle(channel, fn) {
 const statusHub = require('./status-hub');
 
 function registerIpc() {
+  require('./virtual-disks').registerVirtualDisks(handle, dialog, () => win);
   handle('hub:status', statusHub.snapshot);
   handle('app:info', async () => ({
     build: BUILD, platform: process.platform, versions: { electron: process.versions.electron, node: process.versions.node, chrome: process.versions.chrome },
@@ -516,11 +517,13 @@ function registerIpc() {
   handle('b64:stat', (p) => { const st = fs.statSync(p); return { path: p, name: path.basename(p), size: st.size, head: sniff(p, 65536) }; });
   handle('b64:start', async (o) => {
     const id = 'b64-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const dest = o.dest || outputPath(o.source, o.mode, o.outDir, o.name);
-    const job = new Job(Object.assign({}, o, { dest }));
+    const numberedOutput = o.numberedOutput === true && !o.dest;
+    const dest = o.dest || outputPath(o.source, o.mode, o.outDir, o.name, numberedOutput);
+    if (!numberedOutput && !o.overwrite && fs.existsSync(dest)) return { exists: true, dest };
+    const job = new Job(o);
     job.on((ev) => send('b64:event', Object.assign({ job: id }, ev)));
     jobs.set(id, job);
-    job.start().catch(() => {}).finally(() => jobs.delete(id));
+    setImmediate(() => job.start().catch(() => {}).finally(() => jobs.delete(id)));
     return { id, dest };
   });
   handle('b64:pause', (id) => { const j = jobs.get(id); if (j) j.pause(); });
@@ -566,7 +569,7 @@ function smokeTest() {
   win.webContents.once('did-finish-load', async () => {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     await wait(2500);
-    const pages = ['deploy', 'answers', 'deployments', 'portals', 'base64', 'history', 'settings', 'help'];
+    const pages = ['deploy', 'answers', 'deployments', 'portals', 'base64', 'history', 'settings', 'help', 'virtualDisks'];
     const report = [];
     for (const p of pages) {
       const r = await win.webContents.executeJavaScript("(async () => { const ob = document.querySelector('.onb'); if (ob) ob.remove(); window.TempDeskApp.go('" + p + "'); await new Promise((r) => setTimeout(r, 1500)); const v = document.getElementById('view'); return { page: '" + p + "', text: v.innerText.slice(0, 160).replace(/\\s+/g, ' '), controls: v.querySelectorAll('button, input, select, textarea').length, unlabelled: [...v.querySelectorAll('button, input, select, textarea')].filter((c) => !(c.getAttribute('aria-label') || c.labels && c.labels.length || c.textContent.trim() || c.title || c.getAttribute('aria-labelledby'))).map((c) => c.outerHTML.slice(0, 80)) }; })()").catch((e) => ({ page: p, error: e.message }));

@@ -2,6 +2,7 @@
 // actually missing. Strings come from the i18n catalogs through t().
 import { h, t, originalText, state, btn, iconBtn, toast, notice, dialog, confirmDialog, promptDialog, superConfirm, info, searchBox, field, select, contextMenu, showMenu, play, fmtBytes, fmtTime, pulseFocus, announce, listFilter, chooseExportFormat } from './ui.js';
 import { progressPanel } from './run.js';
+import { virtualDiskPage } from './virtual-disks.js';
 import { base64Page } from './base64.js';
 import { settingsPage } from './settings.js';
 import { historyPage, helpPage } from './history.js';
@@ -553,7 +554,7 @@ async function portalsPage(root, app) {
 
 export const PAGES = {
   deploy: deployPage, answers: studioPage, deployments: deploymentsPage, deployment: deploymentTab, portals: portalsPage,
-  base64: base64Page, history: historyPage, settings: settingsPage, help: helpPage
+  virtualDisks: virtualDiskPage, base64: base64Page, history: historyPage, settings: settingsPage, help: helpPage
 };
 
 // Actions for the command palette (pages register more through ACTIONS()).

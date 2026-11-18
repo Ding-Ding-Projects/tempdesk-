@@ -192,7 +192,7 @@ function setupDrop() {
 
 // ---- chrome: rail, title bar actions, tabs -------------------------------------------------
 const NAV = [
-  ['deploy', 'deploy'], ['answers', 'answers'], ['deployments', 'deployments'], ['portals', 'portals'], ['base64', 'tools'], ['history', 'history'], ['settings', 'settings'], ['help', 'help']
+  ['deploy', 'deploy'], ['answers', 'answers'], ['deployments', 'deployments'], ['portals', 'portals'], ['base64', 'tools'], ['history', 'history'], ['settings', 'settings'], ['help', 'help'], ['virtualDisks', 'deployments']
 ];
 function renderChrome() {
   const rail = document.getElementById('rail');

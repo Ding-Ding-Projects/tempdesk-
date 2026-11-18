@@ -16,6 +16,7 @@ const INVOKE = [
   'ws:info', 'ws:save', 'ws:get', 'ws:flush', 'ws:undo', 'ws:redo', 'ws:restore', 'ws:log', 'ws:diff', 'ws:filesAt', 'ws:snapshot', 'ws:setRemote', 'ws:push',
   'ws:branches', 'ws:switchBranch', 'studio:open', 'studio:openPath', 'studio:save', 'studio:recent', 'studio:watch', 'fs:isDir', 'usb:list', 'usb:write',
   'backup:export', 'backup:import',
+  'vd:list', 'vd:discover', 'vd:pick', 'vd:inspect', 'vd:create', 'vd:mount',
   'b64:pick', 'b64:stat', 'b64:start', 'b64:pause', 'b64:resume', 'b64:cancel',
   'update:check', 'update:restart'
 ];
