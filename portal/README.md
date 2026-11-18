@@ -63,6 +63,8 @@ Open Settings and find **Personal wording**, then choose and apply a JSON file. 
 
 The validated file stays in the current browser tab and survives reloads within the same management sign-in. Clear it in Settings to restore original copy immediately. School mode suspends the wording and hides the controls. A fresh sign-in starts with the original labels. Personal wording applies to marked interface copy and supported accessible names. Record values and document metadata keep their shipped forms.
 
+Under **Display and accessibility**, use **Action sounds** to silence the console's wording cues. The choice is saved in this browser and takes effect immediately. School mode pauses sounds and keeps the saved choice. Saving a valid file plays an ascending three-note cue. A rejected file or save plays a descending two-note cue. The browser synthesizes both cues locally after a user action. The wording status is available as text and is announced in the same way when audio is muted or unavailable.
+
 Older management clients receive HTTP 410 from the retired server upload and clear routes. The console ignores files left on the server by older versions. Choose the original file in the current browser to apply it again.
 
 ## Extension hooks (for the Server area and other modules)

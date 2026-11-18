@@ -161,8 +161,13 @@
     }, 3000);
   }
 
+  function beginOperation() {
+    td.actionSounds?.cancel();
+    return ++operation;
+  }
+
   function restoreOriginal(purge) {
-    operation++;
+    beginOperation();
     translate = null;
     endCelebration();
     if (live) live.textContent = "";
@@ -186,11 +191,22 @@
     }
   }
 
-  async function importFile(file) {
+  function playForOperation(cue, name, id) {
+    td.actionSounds?.play(cue, name, () => id === operation && ownsPage());
+  }
+
+  function rejectFile(state, cue, id) {
+    endCelebration();
+    show(state);
+    playForOperation(cue, "rejected", id);
+  }
+
+  async function importFile(file, event) {
     if (!file || !ownsPage()) return;
-    const id = ++operation;
+    const id = beginOperation();
+    const cue = td.actionSounds?.prepare(event);
     if (file.size > wording.MAX_BYTES) {
-      show("size");
+      rejectFile("size", cue, id);
       return;
     }
     let raw, entries, next;
@@ -199,7 +215,7 @@
       entries = wording.validate(raw);
       next = wording.buildTranslator(entries);
     } catch {
-      if (id === operation && ownsPage()) show("invalid");
+      if (id === operation && ownsPage()) rejectFile("invalid", cue, id);
       return;
     }
     if (id !== operation || !ownsPage()) return;
@@ -210,13 +226,14 @@
       }
       sessionStorage.setItem(cacheKey, raw);
     } catch {
-      show("storage");
+      rejectFile("storage", cue, id);
       return;
     }
     translate = next;
     if (fileInput) fileInput.value = "";
     show("loaded", false);
     celebrate(entries);
+    playForOperation(cue, "applied", id);
   }
 
   function clearWording() {
@@ -267,12 +284,12 @@
   }
   render();
 
-  fileInput?.addEventListener("change", () => { operation++; render(); });
-  applyButton?.addEventListener("click", () => importFile(fileInput.files[0]));
+  fileInput?.addEventListener("change", () => { beginOperation(); render(); });
+  applyButton?.addEventListener("click", event => importFile(fileInput.files[0], event));
   clearButton?.addEventListener("click", clearWording);
 
   const filesAt = event => event.dataTransfer && Array.from(event.dataTransfer.types).includes("Files");
-  const hasOwnControl = event => event.target.closest?.("input[type='file'], [data-b64-app]");
+  const hasOwnControl = event => event.target.closest?.("input[type='file']:not([data-wording-file]), [data-b64-app]");
   document.addEventListener("dragenter", event => {
     if (!ownsPage() || !filesAt(event) || hasOwnControl(event)) return;
     dragDepth++;
@@ -290,8 +307,11 @@
     event.preventDefault();
     dragDepth = 0;
     overlay?.classList.remove("show");
-    if (event.dataTransfer.files.length === 1) importFile(event.dataTransfer.files[0]);
-    else show("invalid");
+    if (event.dataTransfer.files.length === 1) importFile(event.dataTransfer.files[0], event);
+    else {
+      const id = beginOperation();
+      rejectFile("invalid", td.actionSounds?.prepare(event), id);
+    }
   });
 
   document.addEventListener("submit", event => {

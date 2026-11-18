@@ -55,6 +55,8 @@ An empty card shows the original wording state. An invalid file leaves the last 
 
 The adjacent first-run setup action uses the same label wrapping when bilingual text grows. Keep the action within its card and retain the existing button style.
 
+The [action-sound detail](management-sounds/Settings-Sounds.dc.html) uses the same form grid, checkbox and helper text as the display preferences. Keep the sound control in the basic view, after the focus preference in the expanded view. The label is at least 48 px high and the help wraps within its field. In school mode, show the suppression message alongside the saved choice and keep the control editable. The checked-in canvas records both states and its accent and motion controls.
+
 ### Deployer notification wording
 
 Use the existing Deployer drawer, search controls and corner notifications. Applying or clearing personal wording updates the open drawer and search count in place. A matching row keeps keyboard focus when its text changes. Errors and warnings keep their dismiss control until the user closes them. The current wording applies to notice text and accessible names. Technical arguments stay literal.

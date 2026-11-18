@@ -480,6 +480,8 @@ The [attachment and layout receipt](docs/evidence/virtual-commons-attachments.js
 
 These steps were captured in the signed-in management portal from the v1.0.80 source build, using an isolated browser and a sample JSON file. The [capture receipt](docs/evidence/management-wording-walkthrough.json) records the source revision, portal image, browser checks, and image hashes.
 
+Use **Action sounds** under **Display and accessibility** to mute the local wording cues. The status and live announcement remain available when sound is off. School mode pauses cues without changing the saved choice.
+
 1. In the management portal, open **Settings** and find **Personal wording**. Select **Choose File** and pick your JSON file.
 
    ![Personal wording in Settings with a sample JSON file selected](docs/evidence/management-wording-c70b63d/01-select-a-wording-file.png)

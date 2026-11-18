@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Management Settings sound control</title>
+  <link rel="stylesheet" href="../../portal/app/static/css/tokens.css">
+  <link rel="stylesheet" href="../../portal/app/static/css/app.css">
+  <link rel="stylesheet" href="../../portal/app/static/css/console.css">
+  <style>
+    .sound-reference { max-width: 920px; margin: 0 auto; padding: 16px; }
+    .sound-reference[data-preview-accent^="#"] { --primary: var(--preview-accent); }
+    .sound-reference[data-motion="off"] * { animation: none; transition: none; }
+  </style>
+</head>
+<body>
+<x-dc>
+  <main class="sound-reference stack" data-motion="{{motionMode}}" data-preview-accent="{{accentColor}}" style="--preview-accent:{{accentColor}}">
+    <section class="card rise" aria-labelledby="normal-heading">
+      <h2 id="normal-heading">Display and accessibility</h2>
+      <div class="form-grid">
+        <div class="field">
+          <label class="check"><input type="checkbox"> Always show the focus ring</label>
+          <span class="hint">Also shows it after mouse clicks.</span>
+        </div>
+        <div class="field">
+          <label class="check action-sounds-check"><input type="checkbox" checked aria-describedby="sound-help"> Action sounds</label>
+          <span class="hint" id="sound-help">Play a short sound when personal wording is applied or a file cannot be used.</span>
+        </div>
+      </div>
+    </section>
+    <section class="card rise" aria-labelledby="school-heading">
+      <h2 id="school-heading">Display and accessibility in school mode</h2>
+      <div class="field">
+        <label class="check action-sounds-check"><input type="checkbox" checked aria-describedby="school-help school-sound"> Action sounds</label>
+        <span class="hint" id="school-help">Play a short sound when personal wording is applied or a file cannot be used.</span>
+        <span class="hint" id="school-sound">School mode silences these sounds.</span>
+      </div>
+    </section>
+  </main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":540},"accentColor":{"type":"color","default":"#7CF3E6","editor":"color","label":"Accent colour"},"motion":{"type":"boolean","default":true,"editor":"toggle","label":"Motion"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accentColor: this.props?.accentColor ?? "#7CF3E6",
+      motionMode: this.props?.motion === false ? "off" : "full"
+    };
+  }
+}
+</script>
+</body>
+</html>

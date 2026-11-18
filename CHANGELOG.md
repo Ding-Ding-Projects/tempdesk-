@@ -7,6 +7,7 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
 
 ### Added
 
+- Management Settings offers a browser-local action-sound switch for personal wording outcomes. School mode pauses those cues and keeps the saved choice.
 - The documentation includes a source-bound feature verification inventory for all seven TempDesk surfaces.
 - The documentation index has guided checklists for deployment, guest sign-in, and Virtual Commons. Each path saves its marks locally.
 - TempDesk Docs packages the documentation website, operator wiki and local tools in a portable offline reader.

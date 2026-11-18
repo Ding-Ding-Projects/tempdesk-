@@ -1,0 +1,27 @@
+{
+  "v": 3,
+  "title": "Management action sounds",
+  "launch": { "view": "canvas", "page": "management-sounds" },
+  "pages": [{ "id": "management-sounds", "title": "Management action sounds" }],
+  "boards": {
+    "Settings-Sounds.dc.html": {
+      "page": "management-sounds",
+      "x": 0,
+      "y": 60,
+      "w": 760,
+      "h": 540,
+      "title": "Display and accessibility sound control"
+    }
+  },
+  "order": ["Settings-Sounds.dc.html"],
+  "notes": {
+    "sound-detail": {
+      "page": "management-sounds",
+      "x": 810,
+      "y": 100,
+      "maxW": 300,
+      "text": "Check Tab and Space in both rows, then resize to 360 px and inspect the help text. Try Accent colour and Motion. The school-mode row shows the saved choice while sound is paused. The real portal supplies persistence and audio."
+    }
+  },
+  "designSystems": []
+}
