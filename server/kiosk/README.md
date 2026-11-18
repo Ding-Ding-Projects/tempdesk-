@@ -15,3 +15,20 @@ Create one Windows 11 desktop for one Virtual Commons booking on a dedicated Hyp
 ```
 
 This profile provides a restricted remote workstation. Windows single-app Assigned Access requires a console sign-in. Application allowlisting and kiosk shell restrictions require a separately managed workstation policy. The VM installer, effective policy, broker grant and guest connection each need their own operational verification.
+
+The deployment engine accepts the same settings in a dedicated section. Run
+`Invoke-TempDeskDeploy.ps1 -Config lab.json -Phase KioskVmPreview` on the Hyper-V host.
+For an actual creation, add `"confirmCreate": "LAB-KIOSK01"` inside the section
+and invoke the separate `KioskVmCreate` phase. Server deployment media and
+answer files are never attached to this VM.
+
+```json
+{
+  "kioskVm": {
+    "name": "LAB-KIOSK01",
+    "windowsIso": "D:\\Media\\Windows11.iso",
+    "privateSwitch": "CommonsLab",
+    "storageParent": "D:\\VMs"
+  }
+}
+```
