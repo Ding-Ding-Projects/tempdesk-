@@ -24,13 +24,16 @@
       {% if rdp %}
       <a class="btn filled lg" href="data:application/x-rdp;base64,{{ rdp }}" download="Virtual-Commons.rdp" id="commons-rdp">{{ t('Download Remote Desktop file') }}</a>
       <script src="/static/js/virtual-commons.js" defer></script>
-      <p>{{ t('Open the downloaded file and enter the password shown here.') }}</p>
       {% elif rdp_unavailable %}
       <p class="alert warn" role="status">{{ t('The Remote Desktop file is unavailable. Your sign-in was created. Ask staff which computer to use.') }}</p>
       {% endif %}
       <ol class="steps" data-search-exempt="three fixed sign-in steps">
+        {% if rdp %}
+        <li>{{ t('Open the downloaded file and enter the password shown here.') }}</li>
+        {% else %}
         <li>{{ t('On the computer sign-in screen, choose Other user.') }}</li>
         <li>{{ t('Type the username exactly as shown, then the password.') }}</li>
+        {% endif %}
         <li>{{ t('Save your files somewhere else before it expires: they are deleted with the account.') }}</li>
       </ol>
     </section>
