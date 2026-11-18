@@ -29,10 +29,12 @@ Status values: implemented, partial (with what is missing), not done (with the r
 
 | Surface and workflow | Status | Evidence or next acceptance check |
 | --- | --- | --- |
-| Guest portal: server edition, finite checkout, and one-time RDP download | partial | Guest suite covers both destinations, disabled editions, and legacy configuration. Verify browser download, real sign-in to each edition, and expiry in the lab. |
+| Guest portal: server edition, finite checkout, and one-time RDP download | partial | Guest suite covers both destinations, disabled editions, legacy configuration, and an address swap between checkout and download. Verify browser download, real sign-in to each edition, and expiry in the lab. |
 | Guest portal: dim sum result | partial | Guest suite verifies that the 1% outcome creates no account. Verify the retry path and responsive layout in the running portal. |
 | Guest portal: local personal wording for edition choices | not done | Existing personal wording is limited to the authenticated admin console. Verify local application and reset on an authorized picker surface. |
-| Admin console and kiosk: hosted lab access | partial | Verify deployment, management sign-in, kiosk checkout, and both addresses from the intended client network. |
+| Admin console: hosted lab access | not done | Verify a real deployment, authenticated management sign-in, and the management address from the intended client network. |
+| Kiosk: hosted lab checkout | not done | Verify a real checkout, keyboard use, supported narrow layout, and the kiosk address from the intended client network. |
+| Deployer and native installer: retain configured destinations | partial | Built configuration checks cover retention on both paths. Verify that destinations survive actual lab reprovisioning. |
 | Public documentation: checkout and setup guide | partial | The guide and guest feature link are deployed. Complete the documentation and wiki inventory and verify companion delivery. |
 
 ## Phase 2 catalogue
