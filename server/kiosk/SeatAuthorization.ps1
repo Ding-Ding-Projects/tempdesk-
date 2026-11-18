@@ -30,18 +30,16 @@ function Get-SeatState {
     if ($state.state -eq 'empty') {
         if ($state.lease -or $state.sid -or $state.username -or $state.expiresAt) { throw 'Unexpected empty-seat metadata.' }
     } elseif ($state.lease -cnotmatch '^[a-zA-Z0-9_-]{24}$') { throw 'Invalid saved lease.' }
-
     if ($state.sid) {
-        if ($state.state -notin @('granting','assigned','revoking') -or
-            $state.sid -notmatch '^S-1-5-21-\d+-\d+-\d+-\d+$' -or
-            $state.username -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,19}@') {
+        if ($state.state -notin @('granting','assigned','revoking') -or $state.sid -notmatch '^S-1-5-21-\d+-\d+-\d+-\d+$' -or
+            $state.username -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,19}@' -or $state.expiresAt -notmatch '(Z|[+-]\d\d:\d\d)$') {
             throw 'Invalid persisted account attachment.'
         }
+        $null = [datetimeoffset]::Parse($state.expiresAt,[cultureinfo]::InvariantCulture)
     } elseif ($state.state -in @('granting','assigned') -or $state.username) {
         throw 'Incomplete persisted account attachment.'
-    }
-    if ($state.sid -or $state.state -eq 'reserved' -or $state.expiresAt) {
-        if ($state.expiresAt -notmatch '(Z|[+-]\d\d:\d\d)$') { throw 'Invalid saved seat deadline.' }
+    } elseif ($state.state -eq 'reserved' -or $state.expiresAt) {
+        if ($state.expiresAt -notmatch '(Z|[+-]\d\d:\d\d)$') { throw 'Invalid saved reservation deadline.' }
         $null = [datetimeoffset]::Parse($state.expiresAt,[cultureinfo]::InvariantCulture)
     }
     $state
@@ -105,7 +103,7 @@ function Resolve-SeatAccount([string]$Username,[datetimeoffset]$Expiry) {
     if (-not $sam.StartsWith($config.usernamePrefix,[StringComparison]::OrdinalIgnoreCase)) { throw 'Wrong guest prefix.' }
     # The AD module is an operator-installed RSAT prerequisite. Pin queries to
     # one writable controller so revocation and authorization read the same replica.
-    $dc = @( (Get-ADDomainController -Discover -DomainName $script:SeatDomain -Writable -ErrorAction Stop).HostName )[0]
+    $dc = @( (Get-ADDomainController -Discover -DomainName $script:SeatDomain -Writable -Service GlobalCatalog -ErrorAction Stop).HostName )[0]
     $users = @(Get-ADUser -Server $dc -SearchBase $config.guestOuDn -SearchScope OneLevel -LDAPFilter "(sAMAccountName=$sam)" -Properties accountExpirationDate -ErrorAction Stop)
     if ($users.Count -ne 1) { throw 'Could not resolve one guest in the approved OU.' }
     $user = $users[0]
@@ -114,7 +112,10 @@ function Resolve-SeatAccount([string]$Username,[datetimeoffset]$Expiry) {
     if ($until -le [datetime]::UtcNow -or [math]::Abs(($until - $Expiry.UtcDateTime).TotalSeconds) -gt 1) { throw 'Directory expiry does not match the booking.' }
     $domainSid = $user.SID.AccountDomainSid.Value
     $guestGroup = Resolve-TdVirtualCommonsGuestSid -DomainDns $script:SeatDomain -GroupName $config.guestGroup
-    $allowed = @("$domainSid-513", $guestGroup)
+    # Get-ADAccountAuthorizationGroup includes ordinary implicit identities
+    # as well as directory memberships. Keep these SIDs in the local privilege
+    # check below; they must not be nested into a privileged local group.
+    $allowed = @("$domainSid-513", $guestGroup, 'S-1-1-0', 'S-1-5-11', 'S-1-5-32-545', 'S-1-5-32-554')
     $groups = @(Get-ADAccountAuthorizationGroup -Identity $user -Server $dc -ErrorAction Stop | ForEach-Object { $_.SID.Value })
     if ($guestGroup -notin $groups -or @($groups | Where-Object { $_ -notin $allowed }).Count) { throw 'Guest has unexpected security group memberships.' }
     # Restrict local privilege paths as well as directory-side memberships.

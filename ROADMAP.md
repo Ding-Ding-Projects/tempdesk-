@@ -11,6 +11,7 @@
 - [x] Verify automatic downloads and keyboard retries for both editions. Check the checkout label across 48 layout combinations. Capture edition selection, confirmation, and retry from the built kiosk. [Browser walkthrough](README.md#browser-attachment-walkthrough)
 - [x] Verify local edition wording, invalid file handling, clear and validation recovery in a built guest portal. [Picker receipt](docs/evidence/virtual-commons-picker-wording.json)
 - [ ] Exercise edition wording on the configured live kiosk alongside a verified checkout session.
+- [ ] Install and enroll the dedicated Kiosk Windows 11 workstation. Verify its reservation, exact guest grant, connection file, sign-in, expiry, and release before another guest can reserve it.
 - [ ] Connect a kiosk to the native Windows agent through an authenticated configuration and prove temporary account creation there.
 - [ ] Join the Windows 11 test client to the intended domain and prove desktop sign-in with a temporary account.
 - [x] Verify the Session Watcher's outage, deadline, and account-identity decisions in isolated fixtures. Compile the bundled watcher and read current-session metadata on Windows PowerShell.

@@ -17,6 +17,7 @@ $paths = @(
     "$squirrel/RELEASES"
     "deployer/bin/TempDeskDeployer-$version-portable.exe"
     "deployer/bin/docs/TempDeskDocs-$version-portable.exe"
+    "deployer/bin/build-companion/TempDeskBuild-$version-portable.exe"
 )
 if (Test-Path -LiteralPath $squirrel -PathType Container) {
     $paths += @(Get-ChildItem -LiteralPath $squirrel -File -Filter "*-$version-*.nupkg" | ForEach-Object FullName)

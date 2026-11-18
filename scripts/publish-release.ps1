@@ -24,7 +24,8 @@ foreach ($package in $packages) {
 }
 [IO.File]::WriteAllLines((Resolve-Path -LiteralPath $feed).Path, [string[]]$rows)
 
-$paths = @("$squirrel/Setup.exe", $feed, "deployer/bin/TempDeskDeployer-$v-portable.exe", "deployer/bin/docs/TempDeskDocs-$v-portable.exe") + @($packages.FullName)
+$paths = @("$squirrel/Setup.exe", $feed, "deployer/bin/TempDeskDeployer-$v-portable.exe",
+    "deployer/bin/docs/TempDeskDocs-$v-portable.exe", "deployer/bin/build-companion/TempDeskBuild-$v-portable.exe") + @($packages.FullName)
 if ((Get-AuthenticodeSignature -LiteralPath $paths[0]).Status -ne 'NotSigned') { throw 'Setup.exe must be unsigned.' }
 $records = foreach ($path in $paths) {
     $item = Get-Item -LiteralPath $path
@@ -63,6 +64,7 @@ $notes = @(
     ''
     'Install with **Setup.exe**. Installed copies stage updates and ask before restarting.'
     "Open **TempDeskDocs-$v-portable.exe** for offline documentation."
+    "Open **TempDeskBuild-$v-portable.exe** to build this release's bundled source."
     'The Squirrel installer and packages are unsigned. Windows SmartScreen may warn on first run.'
     'This workflow builds, packages and publishes. Local test results were not supplied.'
     ''

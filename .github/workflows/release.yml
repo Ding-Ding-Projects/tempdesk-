@@ -81,6 +81,12 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: build-installer.bat /s
 
+      - name: Build the portable build companion (unsigned)
+        shell: cmd
+        env:
+          TEMPDESK_VERSION: ${{ steps.ver.outputs.version }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: build.bat --build-companion /s --skip-tests
 
       - name: Publish and read back the source-bound release
         shell: pwsh
