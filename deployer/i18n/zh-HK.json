@@ -1,4 +1,12 @@
 {
+ "tabs.catalog": "尋找或開啟分頁",
+ "tabs.pin": "釘選分頁",
+ "tabs.unpin": "取消釘選",
+ "tabs.group": "編輯分頁群組",
+ "tabs.groupName": "群組名稱（留空即可移除）",
+ "tabs.saveGroup": "儲存群組",
+ "tabs.openAll": "開啟所有目的地分頁",
+ "tabs.openList": "已開啟分頁",
  "kioskVm.title": "Virtual Commons 的 Windows 11 自助工作站",
  "kioskVm.lead": "為一個 RDP 預約準備一部關機狀態的 Windows 11 Pro、Enterprise 或 Education 工作站。請選擇已獲授權的安裝媒體及儲存資料夾。",
  "kioskVm.provider": "虛擬化平台",
