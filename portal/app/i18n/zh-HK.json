@@ -62,6 +62,7 @@
     "Account sign-in": "帳戶登入",
     "Open local ticket": "開啟本機支援記錄",
     "Use browser site settings to inspect this origin’s local data. Clearing site data removes browser preferences and signs you out. Domain account recovery requires your organization’s administrator.": "你可以喺瀏覽器網站設定檢查呢個網站嘅本機資料。清除網站資料會移除瀏覽器設定同登出。復原網域帳戶需要聯絡機構管理員。",
+    "Search local tickets": "搜尋本機支援記錄",
     "Local ticket storage is unavailable.": "暫時無法儲存本機支援記錄。",
     "Export selected notifications": "匯出所選通知",
     "Mark selected as read": "將所選項目標記為已讀",

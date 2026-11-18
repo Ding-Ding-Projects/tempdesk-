@@ -503,6 +503,14 @@
    "condition": "a CHANGELOG.md is bundled"
   },
   {
+   "id": "recovery-tickets",
+   "template": "app/templates/admin/local_tools.html",
+   "selector": "[data-search-surface=\"recovery-tickets\"]",
+   "consumer": "Browser-local recovery tickets by displayed topic or timestamp",
+   "page": "/auth/local-tools",
+   "kind": "list"
+  },
+  {
    "id": "more-sections",
    "template": "app/templates/admin/more.html",
    "selector": "[data-search-surface=\"more-sections\"]",
