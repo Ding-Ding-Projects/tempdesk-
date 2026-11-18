@@ -16,6 +16,37 @@
       </select>
     </label>
   </div>
+  <fieldset class="field" data-kind-editor data-setting="{{ ta('Animation settings') }}">
+    <legend>{{ t('Animation settings') }}</legend>
+    <label>{{ t('Element') }}
+      <select data-kind-name>
+        <option value="entry">{{ ta('Page entry') }}</option>
+        <option value="stagger">{{ ta('List stagger') }}</option>
+        <option value="card">{{ ta('Cards') }}</option>
+        <option value="dialog">{{ ta('Dialogs') }}</option>
+        <option value="menu">{{ ta('Menus') }}</option>
+        <option value="sheet">{{ ta('Sheets') }}</option>
+        <option value="tooltip">{{ ta('Tooltips') }}</option>
+        <option value="toast">{{ ta('Notifications') }}</option>
+        <option value="switch">{{ ta('Switches') }}</option>
+        <option value="chart">{{ ta('Charts') }}</option>
+        <option value="progress">{{ ta('Progress') }}</option>
+        <option value="pulse">{{ ta('Live indicators') }}</option>
+        <option value="tabs">{{ ta('Tabs') }}</option>
+        <option value="hover">{{ ta('Hover effects') }}</option>
+      </select>
+    </label>
+    <label class="check"><input type="checkbox" data-kind-custom> {{ t('Customize this animation') }}</label>
+    <div class="form-grid" data-kind-fields hidden>
+      <label class="check"><input type="checkbox" data-kind-enabled> {{ t('Enabled') }}</label>
+      <label>{{ t('Duration (ms)') }} <input type="number" min="0" max="5000" step="1" data-kind-duration></label>
+      <label>{{ t('Delay (ms)') }} <input type="number" min="0" max="2000" step="1" data-kind-delay></label>
+      <label>{{ t('Transition curve') }} <select data-kind-ease>
+        {% for value, label in [('default','Standard'),('linear','Linear'),('gentle','Gentle'),('spring','Spring')] %}
+        <option value="{{ value }}">{{ ta(label) }}</option>{% endfor %}
+      </select></label>
+    </div>
+  </fieldset>
   <div class="cluster">
     <button type="button" class="btn tonal" data-motion-preview>{{ ta('Preview') }}</button>
     <button type="button" class="btn" data-motion-reset>{{ t('Reset') }}</button>

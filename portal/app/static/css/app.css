@@ -668,3 +668,131 @@ html[data-motion="reduced"] .rxb-pop, html[data-motion="off"] .rxb-pop { animati
 :root[data-style-notice-radius] :is(.toast) { border-radius: var(--style-notice-radius); }
 :root[data-style-notice-width] :is(.toast) { border-width: var(--style-notice-width); }
 :root[data-style-notice-color] :is(.toast) { border-color: var(--style-notice-color); }
+
+/* Per-kind duration and delay are opt-in. Reduced motion retains precedence. */
+:root[data-motion-entry-custom] :is(.rise, .pop) {
+  animation-duration: var(--motion-entry-duration);
+  animation-delay: var(--motion-entry-delay);
+  animation-timing-function: var(--motion-entry-timing-function);
+  transition-duration: var(--motion-entry-duration);
+  transition-delay: var(--motion-entry-delay);
+  transition-timing-function: var(--motion-entry-timing-function);
+}
+:root[data-motion-entry-off] :is(.rise, .pop) { animation: none; transition: none; }
+:root[data-motion-stagger-custom] :is(.stagger > *) {
+  animation-duration: var(--motion-stagger-duration);
+  animation-delay: var(--motion-stagger-delay);
+  animation-timing-function: var(--motion-stagger-timing-function);
+  transition-duration: var(--motion-stagger-duration);
+  transition-delay: var(--motion-stagger-delay);
+  transition-timing-function: var(--motion-stagger-timing-function);
+}
+:root[data-motion-stagger-off] :is(.stagger > *) { animation: none; transition: none; }
+:root[data-motion-card-custom] :is(.card.rise, .card.pop) {
+  animation-duration: var(--motion-card-duration);
+  animation-delay: var(--motion-card-delay);
+  animation-timing-function: var(--motion-card-timing-function);
+  transition-duration: var(--motion-card-duration);
+  transition-delay: var(--motion-card-delay);
+  transition-timing-function: var(--motion-card-timing-function);
+}
+:root[data-motion-card-off] :is(.card.rise, .card.pop) { animation: none; transition: none; }
+:root[data-motion-dialog-custom] :is(dialog[open]) {
+  animation-duration: var(--motion-dialog-duration);
+  animation-delay: var(--motion-dialog-delay);
+  animation-timing-function: var(--motion-dialog-timing-function);
+  transition-duration: var(--motion-dialog-duration);
+  transition-delay: var(--motion-dialog-delay);
+  transition-timing-function: var(--motion-dialog-timing-function);
+}
+:root[data-motion-dialog-off] :is(dialog[open]) { animation: none; transition: none; }
+:root[data-motion-menu-custom] :is(.menu-pop, .ctx-menu) {
+  animation-duration: var(--motion-menu-duration);
+  animation-delay: var(--motion-menu-delay);
+  animation-timing-function: var(--motion-menu-timing-function);
+  transition-duration: var(--motion-menu-duration);
+  transition-delay: var(--motion-menu-delay);
+  transition-timing-function: var(--motion-menu-timing-function);
+}
+:root[data-motion-menu-off] :is(.menu-pop, .ctx-menu) { animation: none; transition: none; }
+:root[data-motion-sheet-custom] :is(.pane-sheet, .drawer, .ged-sheet) {
+  animation-duration: var(--motion-sheet-duration);
+  animation-delay: var(--motion-sheet-delay);
+  animation-timing-function: var(--motion-sheet-timing-function);
+  transition-duration: var(--motion-sheet-duration);
+  transition-delay: var(--motion-sheet-delay);
+  transition-timing-function: var(--motion-sheet-timing-function);
+}
+:root[data-motion-sheet-off] :is(.pane-sheet, .drawer, .ged-sheet) { animation: none; transition: none; }
+:root[data-motion-tooltip-custom] :is([role=tooltip], .http-pop) {
+  animation-duration: var(--motion-tooltip-duration);
+  animation-delay: var(--motion-tooltip-delay);
+  animation-timing-function: var(--motion-tooltip-timing-function);
+  transition-duration: var(--motion-tooltip-duration);
+  transition-delay: var(--motion-tooltip-delay);
+  transition-timing-function: var(--motion-tooltip-timing-function);
+}
+:root[data-motion-tooltip-off] :is([role=tooltip], .http-pop) { animation: none; transition: none; }
+:root[data-motion-toast-custom] :is(.toast) {
+  animation-duration: var(--motion-toast-duration);
+  animation-delay: var(--motion-toast-delay);
+  animation-timing-function: var(--motion-toast-timing-function);
+  transition-duration: var(--motion-toast-duration);
+  transition-delay: var(--motion-toast-delay);
+  transition-timing-function: var(--motion-toast-timing-function);
+}
+:root[data-motion-toast-off] :is(.toast) { animation: none; transition: none; }
+:root[data-motion-switch-custom] .switch input, :root[data-motion-switch-custom] .switch input::after {
+  animation-duration: var(--motion-switch-duration);
+  animation-delay: var(--motion-switch-delay);
+  animation-timing-function: var(--motion-switch-timing-function);
+  transition-duration: var(--motion-switch-duration);
+  transition-delay: var(--motion-switch-delay);
+  transition-timing-function: var(--motion-switch-timing-function);
+}
+:root[data-motion-switch-off] .switch input, :root[data-motion-switch-off] .switch input::after { animation: none; transition: none; }
+:root[data-motion-chart-custom] :is(.sparkline.draw .ln, .meter > span, .ring-sm .bar) {
+  animation-duration: var(--motion-chart-duration);
+  animation-delay: var(--motion-chart-delay);
+  animation-timing-function: var(--motion-chart-timing-function);
+  transition-duration: var(--motion-chart-duration);
+  transition-delay: var(--motion-chart-delay);
+  transition-timing-function: var(--motion-chart-timing-function);
+}
+:root[data-motion-chart-off] :is(.sparkline.draw .ln, .meter > span, .ring-sm .bar) { animation: none; transition: none; }
+:root[data-motion-progress-custom] :is(.progress > span, .skeleton) {
+  animation-duration: var(--motion-progress-duration);
+  animation-delay: var(--motion-progress-delay);
+  animation-timing-function: var(--motion-progress-timing-function);
+  transition-duration: var(--motion-progress-duration);
+  transition-delay: var(--motion-progress-delay);
+  transition-timing-function: var(--motion-progress-timing-function);
+}
+:root[data-motion-progress-off] :is(.progress > span, .skeleton) { animation: none; transition: none; }
+:root[data-motion-pulse-custom] :is(.live-dot) {
+  animation-duration: var(--motion-pulse-duration);
+  animation-delay: var(--motion-pulse-delay);
+  animation-timing-function: var(--motion-pulse-timing-function);
+  transition-duration: var(--motion-pulse-duration);
+  transition-delay: var(--motion-pulse-delay);
+  transition-timing-function: var(--motion-pulse-timing-function);
+}
+:root[data-motion-pulse-off] :is(.live-dot) { animation: none; transition: none; }
+:root[data-motion-tabs-custom] :is(.tabs-local a, .bottombar a .ind) {
+  animation-duration: var(--motion-tabs-duration);
+  animation-delay: var(--motion-tabs-delay);
+  animation-timing-function: var(--motion-tabs-timing-function);
+  transition-duration: var(--motion-tabs-duration);
+  transition-delay: var(--motion-tabs-delay);
+  transition-timing-function: var(--motion-tabs-timing-function);
+}
+:root[data-motion-tabs-off] :is(.tabs-local a, .bottombar a .ind) { animation: none; transition: none; }
+:root[data-motion-hover-custom] :is(.btn, .chip, .dock a) {
+  animation-duration: var(--motion-hover-duration);
+  animation-delay: var(--motion-hover-delay);
+  animation-timing-function: var(--motion-hover-timing-function);
+  transition-duration: var(--motion-hover-duration);
+  transition-delay: var(--motion-hover-delay);
+  transition-timing-function: var(--motion-hover-timing-function);
+}
+:root[data-motion-hover-off] :is(.btn, .chip, .dock a) { animation: none; transition: none; }
