@@ -121,6 +121,7 @@ async def created(request: Request):
     rdp = None
     targets = _commons_targets(request)
     target = result.get("rdpTarget")
+    commons_checkout = bool(target) or result.get("commons") is True
     # Older pending checkouts recorded a flag and could only use the legacy destination.
     if "rdpTarget" not in result and result.get("commons") is True:
         target = targets.get("legacy")
@@ -131,7 +132,7 @@ async def created(request: Request):
                        "prompt for credentials:i:1\r\nauthentication level:i:2\r\nenablecredsspsupport:i:1\r\n")
             rdp = base64.b64encode(profile.encode("utf-16")).decode("ascii")
     resp = await render(request, "guest/created.html",
-                        {"pub": pub, "c": creds, "netbios": netbios, "rdp": rdp}, headers=NO_STORE)
+                        {"pub": pub, "c": creds, "netbios": netbios, "rdp": rdp, "rdp_unavailable": commons_checkout and not rdp}, headers=NO_STORE)
     resp.delete_cookie(ONCE_COOKIE, path="/")
     return resp
 

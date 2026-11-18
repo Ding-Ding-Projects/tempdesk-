@@ -1,5 +1,6 @@
 {
  "strings": {
+  "The Remote Desktop file is unavailable. Your sign-in was created. Ask staff for the correct computer, or delete this sign-in if you no longer need it.": "The Remote Desktop file is unavailable. Your sign-in was created. Ask staff for the correct computer, or delete this sign-in if you no longer need it.",
   "Server edition": "Server edition",
   "Choose an available server edition.": "Choose an available server edition.",
   "Windows Server with GUI": "Windows Server with GUI",
