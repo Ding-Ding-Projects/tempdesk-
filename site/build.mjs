@@ -32,11 +32,14 @@ function safeUrl(u) {
   if (/^(javascript|vbscript|data):/i.test(s)) return '#';
   return s;
 }
-export function inline(text, linkMap) {
+export function inline(text, linkMap, imageMap) {
   const codes = [];
   let s = String(text).replace(/`([^`]+)`/g, (m, c) => { codes.push(c); return '\u0000' + (codes.length - 1) + '\u0000'; });
   s = escapeHtml(s);
-  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;[^&]*&quot;)?\)/g, (m, alt, url) => `<img src="${escapeHtml(safeUrl(url))}" alt="${alt}" loading="lazy">`);
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;[^&]*&quot;)?\)/g, (m, alt, url) => {
+    const source = safeUrl(url.replace(/&amp;/g, '&'));
+    return `<img src="${escapeHtml(imageMap ? imageMap(source) : source)}" alt="${alt}" loading="lazy">`;
+  });
   s = s.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+&quot;[^&]*&quot;)?\)/g, (m, label, url) => {
     let href = safeUrl(url.replace(/&amp;/g, '&'));
     if (linkMap) href = linkMap(href);
@@ -64,8 +67,8 @@ export function renderMarkdown(md, opts = {}) {
     const cells = (r) => r.trim().slice(1, -1).split(/(?<!\\)\|/).map((c) => c.trim().replace(/\\\|/g, '|'));
     const head = cells(rows[0]);
     // search-surface: docs-table (every rendered Markdown table gets its own row filter)
-    let html = '<div class="tablebox" tabindex="0" data-search-surface="docs-table" data-search-items="tbody tr"><table><thead><tr>' + head.map((c) => '<th>' + inline(c, opts.linkMap) + '</th>').join('') + '</tr></thead><tbody>';
-    rows.slice(2).forEach((r) => { html += '<tr>' + cells(r).map((c) => '<td>' + inline(c, opts.linkMap) + '</td>').join('') + '</tr>'; });
+    let html = '<div class="tablebox" tabindex="0" data-search-surface="docs-table" data-search-items="tbody tr"><table><thead><tr>' + head.map((c) => '<th>' + inline(c, opts.linkMap, opts.imageMap) + '</th>').join('') + '</tr></thead><tbody>';
+    rows.slice(2).forEach((r) => { html += '<tr>' + cells(r).map((c) => '<td>' + inline(c, opts.linkMap, opts.imageMap) + '</td>').join('') + '</tr>'; });
     return { html: html + '</tbody></table></div>', next: j };
   }
   function list(start) {
@@ -113,7 +116,7 @@ export function renderMarkdown(md, opts = {}) {
       const level = Math.min(6, m[1].length + (opts.shift || 0));
       const id = slugify(m[2], opts.used || used);
       headings.push({ level: m[1].length, id, text: m[2].replace(/[`*]/g, '') });
-      out.push(`<h${level} id="${id}">${inline(m[2], opts.linkMap)}</h${level}>`);
+      out.push(`<h${level} id="${id}">${inline(m[2], opts.linkMap, opts.imageMap)}</h${level}>`);
       i++; continue;
     }
     if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(l)) { out.push('<hr>'); i++; continue; }
@@ -127,7 +130,7 @@ export function renderMarkdown(md, opts = {}) {
     if (listRe.test(l)) { const ls = list(i); out.push(ls.html); i = ls.next; continue; }
     const para = [];
     while (i < lines.length && !isBlank(lines[i]) && !/^(#{1,6}\s|```|~~~|\s*>)/.test(lines[i]) && !listRe.test(lines[i]) && !(/^\s*\|/.test(lines[i]) && table(i))) { para.push(lines[i].trim()); i++; }
-    if (para.length) out.push('<p>' + inline(para.join(' '), opts.linkMap).replace(/ {2,}$/gm, '<br>') + '</p>');
+    if (para.length) out.push('<p>' + inline(para.join(' '), opts.linkMap, opts.imageMap).replace(/ {2,}$/gm, '<br>') + '</p>');
     else i++;
   }
   return { html: out.join('\n'), headings };
@@ -264,6 +267,10 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
   // 4. docs
   const docs = await docSources();
   const byFile = new Map(docs.map((d) => [d.file.toLowerCase(), d]));
+  const docImages = new Set((await walk(path.join(REPO, 'docs'),
+    (rel, entry) => entry.isDirectory() || (entry.isFile() && /\.(png|jpe?g|webp|gif)$/i.test(rel))))
+    .map((rel) => 'docs/' + rel));
+  const usedImages = new Set();
   const docPages = [];
   for (const d of docs) {
     const md = await fs.readFile(path.join(REPO, d.file), 'utf8');
@@ -276,13 +283,21 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
       if (hit) return hit.name + '.html' + (hash ? '#' + hash : '');
       return 'https://github.com/Ding-Ding-Projects/tempdesk-/blob/main/' + target + (hash ? '#' + hash : '');
     };
-    const r = renderMarkdown(md, { linkMap });
+    const imageMap = (source) => {
+      if (/^(https?:|#|\/)/i.test(source)) return source;
+      const target = path.posix.normalize(path.posix.join(dir, source));
+      if (!docImages.has(target)) return source;
+      usedImages.add(target);
+      return path.posix.relative('docs', target);
+    };
+    const r = renderMarkdown(md, { linkMap, imageMap });
     const h1 = r.headings.find((x) => x.level === 1);
     d.title = d.title || (h1 ? h1.text : d.name);
     docPages.push({ d, r, md });
   }
   const nav = (cur) => `<nav class="docs-nav" aria-label="Docs" data-search-surface="docs-nav" data-search-items="a" data-search-label="nav.docs"><a href="index.html"${cur === 'index' ? ' aria-current="page"' : ''} data-i18n="docs.home">All docs</a>${docs.map((d) => `<a href="${d.name}.html"${cur === d.name ? ' aria-current="page"' : ''}>${escapeHtml(d.title)}</a>`).join('')}</nav>`;
   await mkdirp(path.join(OUT, 'docs'));
+  for (const image of usedImages) await copyFile(path.join(REPO, image), path.join(OUT, image));
   for (const { d, r, md } of docPages) {
     const toc = r.headings.filter((x) => x.level === 2).map((x) => `<a class="hit" href="#${x.id}">${escapeHtml(x.text)}</a>`).join('');
     const body = `<div class="docs-layout">${nav(d.name)}<div class="docs-main"><article class="content">
