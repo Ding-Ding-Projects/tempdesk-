@@ -118,6 +118,29 @@ function Save-TdAgentJson {
     $obj
 }
 
+function Save-TdWindowsPortalEnv {
+    param($Agent, [string] $Address, [pscredential] $Credential, [string] $Directory)
+
+    $pin = ''
+    if ($Agent.PSObject.Properties['tls'] -and $Agent.tls) {
+        $encoded = Invoke-Command -ComputerName $Address -Credential $Credential -Authentication Negotiate -ErrorAction Stop -ScriptBlock {
+            [Convert]::ToBase64String([IO.File]::ReadAllBytes('C:\ProgramData\TempDesk\agent-cert.cer'))
+        }
+        $der = [Convert]::FromBase64String([string]$encoded)
+        $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($der)
+        try {
+            $body = [Convert]::ToBase64String($cert.RawData, [Base64FormattingOptions]::InsertLineBreaks)
+            $pem = "-----BEGIN CERTIFICATE-----`n$body`n-----END CERTIFICATE-----`n"
+            $pin = Get-TdCertSha256 -Pem $pem
+            Write-TdUtf8File -Path (Join-Path $Directory 'agent-cert.pem') -Text $pem
+        } finally {
+            $cert.Dispose()
+        }
+    }
+    $envs = New-TdPortalEnv -Agent $Agent -AgentHost $Address -CertSha256 $pin
+    Save-TdPortalEnv -Env $envs -Directory $Directory
+}
+
 function Invoke-TdServerMonitor {
     <#
     .SYNOPSIS
@@ -165,8 +188,7 @@ function Invoke-TdServerMonitor {
         $script:Agent = Save-TdAgentJson -Raw $raw -Directory $Directory
     }
     Invoke-TdStep -Id 'envs' -Title 'Write portal settings' -Always -Action {
-        $envs = New-TdPortalEnv -Agent $script:Agent -AgentHost $addr
-        Save-TdPortalEnv -Env $envs -Directory $Directory
+        Save-TdWindowsPortalEnv -Agent $script:Agent -Address $addr -Credential $cred -Directory $Directory
     }
 }
 
@@ -227,7 +249,7 @@ function Invoke-TdServerAdvanced {
         $script:Agent = Save-TdAgentJson -Raw (Get-TdRemoteAgentJson -Address $addr -Credential $domCred) -Directory $Directory
     }
     Invoke-TdStep -Id 'envs' -Title 'Write portal settings' -Always -Action {
-        Save-TdPortalEnv -Env (New-TdPortalEnv -Agent $script:Agent -AgentHost $addr) -Directory $Directory
+        Save-TdWindowsPortalEnv -Agent $script:Agent -Address $addr -Credential $domCred -Directory $Directory
     }
 }
 
