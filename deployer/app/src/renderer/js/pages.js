@@ -5,6 +5,7 @@ import { progressPanel } from './run.js';
 import { base64Page } from './base64.js';
 import { settingsPage } from './settings.js';
 import { historyPage, helpPage } from './history.js';
+import { kioskVmCard } from './kiosk-vm.js';
 
 const td = window.td;
 const Core = window.TempDeskCore;
@@ -150,6 +151,7 @@ function serverDeploy(root, app, nameField) {
     ]),
     h('label', { class: 'check' }, [showWin, h('span', { text: t('vm.show') })]),
     vmRun]));
+  root.appendChild(kioskVmCard(draft, () => saveDraft(originalText('hist.saveDep', [draft.name]))));
   // Manage the VMware machines TempDesk created: state, start, power off, open, screen, delete.
   const vmList = h('div', { class: 'stack', 'data-vm-list': '1', 'aria-live': 'polite' });
   const vmErr = (r) => toast(notice('vmm.failed', [r.error === 'running' ? notice('err.vmRunning') : r.error === 'notManaged' ? notice('err.vmNotManaged') : r.error === 'noScreenshot' ? notice('vmm.noScreen') : String(r.error || '')]), 'error');
