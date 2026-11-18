@@ -132,6 +132,13 @@
       const item = document.createElement("li");
       const option = Array.from(topic.options).find(opt => opt.value === row.topic);
       item.textContent = new Date(row.at).toLocaleString() + " · " + option.text;
+      const detail = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.textContent = item.textContent;
+      const guidance = document.createElement("p");
+      guidance.textContent = row.topic === "account" ? list.dataset.accountHelp : list.dataset.preferencesHelp;
+      detail.append(summary, guidance);
+      item.replaceChildren(detail);
       list.append(item);
     }
   }
@@ -147,5 +154,16 @@
     } catch { desk.querySelector("[data-warning]").hidden = false; }
   }
   desk.querySelector("[data-create]").onclick = () => refresh(true);
+  desk.querySelector("[data-export-tickets]").onclick = () => {
+    try {
+      const tickets = read().map(({at, topic}) => ({at: new Date(at).toISOString(), topic}));
+      const url = URL.createObjectURL(new Blob([JSON.stringify({version: 1, tickets}, null, 2)], {type: "application/json"}));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "recovery-tickets.json";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch { desk.querySelector("[data-warning]").hidden = false; }
+  };
   refresh(false);
 })();

@@ -34,7 +34,10 @@
   <div class="ss-host" data-search-surface="recovery-tickets" data-search-kind="list"
        data-search-target="#recovery-tickets" data-search-items="li"
        {{ wording_attr('data-search-label', ta('Search local tickets')) }}></div>
-  <ul id="recovery-tickets" data-searchable="recovery-tickets" data-tickets></ul><p role="status" data-warning hidden>{{ t('Local ticket storage is unavailable.') }}</p>
+  <div class="cluster"><button type="button" class="btn" data-export-tickets>{{ t('Export ticket history') }}</button></div>
+  <ul data-selection-disabled data-preferences-help="{{ ta('Open this browser’s site settings to inspect local preferences. Clearing site data removes local preferences and signs you out.') }}"
+      data-account-help="{{ ta('Contact your organization’s administrator to restore domain account access. This desk cannot change a password or sign you in.') }}"
+      id="recovery-tickets" data-searchable="recovery-tickets" data-tickets></ul><p role="status" data-warning hidden>{{ t('Local ticket storage is unavailable.') }}</p>
 </section>
 <script defer src="/static/js/local-auth-tools.js"></script>
 {% endblock %}
