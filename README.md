@@ -399,6 +399,14 @@ Read `docs/SECURITY.md` first. In short: guests are always standard users; the a
 
 See `AGENTS.md` for repository rules. License: MIT.
 
+## Running lab portals
+
+The management sign-in (1440 × 900) and guest kiosk (360 × 900) below were captured on November 18, 2026 (Eastern Standard Time) in isolated headless Chromium. Both used dark theme, reduced motion, and device scale 1. The running containers used source revision `ae447bff5de5f4bd753ea0c1cc758a83a250978c` and image ID `sha256:d917d89b9563ef499c26008781a32661a9409730add6a8187de2c272c3f5b5da`. Both entry points answered from a separate container network namespace. The images show the unauthenticated entry points, with empty credential fields. Remote Desktop destinations were not configured for this capture.
+
+| Management sign-in | Guest kiosk |
+| --- | --- |
+| ![Desktop management sign-in with empty fields](docs/evidence/portal-ae447bf/management.png) | ![Guest kiosk at 360 pixels wide](docs/evidence/portal-ae447bf/kiosk.png) |
+
 ## Fresh VMware lab provisioning
 
 These captures show the fresh Server 2025 Core and Windows 11 client during unattended setup for source revision `5fb4e0235d1d0a8fe2d428e0af1cdd4ad34677f5`. Both were captured from their VMware consoles at 1024 × 768. Domain enrollment, management portal and kiosk operation remain pending.
