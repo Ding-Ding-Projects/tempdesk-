@@ -98,15 +98,31 @@ class Store {
     if (!a) return null;
     return { hasKeys: !!(a.guestKey && a.adminKey), tls: !!a.tls, port: a.port || (a.tls ? 8443 : 8080), domainDn: a.domainDn || '' };
   }
-  tabs() { const t = readJson(this.p('tabs.json'), { open: [], active: null }); return Array.isArray(t.open) ? t : { open: [], active: null }; }
+  tabs() { const t = readJson(this.p('tabs.json'), { open: [], active: null }); return Array.isArray(t?.open) ? t : { open: [], active: null }; }
   saveTabs(t) {
     const open = (t.open || []).filter((n) => typeof n === 'string' && /^[A-Za-z0-9][A-Za-z0-9._ -]{0,63}$/.test(n)).slice(0, 30);
-    const pinned = open.filter(name => Array.isArray(t.pinned) && t.pinned.includes(name));
-    const groups = Object.fromEntries(open.filter(name => t.groups && Object.hasOwn(t.groups, name) && typeof t.groups[name] === 'string' && t.groups[name].trim())
-      .map(name => [name, t.groups[name].trim().slice(0, 64)]));
-    const routeIds = values => [...new Set((Array.isArray(values) ? values : []).filter(id => typeof id === 'string' && /^[a-z][a-z0-9-]{0,63}$/.test(id)))].slice(0, 256);
-    const destinations = routeIds(t.destinations), offered = routeIds(t.offered);
-    writeAtomic(this.p('tabs.json'), JSON.stringify({ open, pinned, groups, destinations, offered, active: open.includes(t.active) ? t.active : null }) + '\n');
+    const saved = { open, active: open.includes(t.active) ? t.active : null };
+    const previous = this.tabs();
+
+    // Older callers send only open and active. Keep saved metadata when omitted,
+    // and let an explicitly supplied empty value clear it.
+    const pinned = Array.isArray(t.pinned) ? t.pinned : previous.pinned;
+    if (Array.isArray(pinned)) saved.pinned = open.filter(name => pinned.includes(name));
+
+    const groups = t.groups ?? previous.groups;
+    if (groups && typeof groups === 'object' && !Array.isArray(groups)) {
+      saved.groups = Object.fromEntries(open
+        .filter(name => Object.hasOwn(groups, name) && typeof groups[name] === 'string' && groups[name].trim())
+        .map(name => [name, groups[name].trim().slice(0, 64)]));
+    }
+
+    for (const field of ['destinations', 'offered']) {
+      const values = Array.isArray(t[field]) ? t[field] : previous[field];
+      if (Array.isArray(values)) {
+        saved[field] = [...new Set(values.filter(id => typeof id === 'string' && /^[a-z][a-z0-9-]{0,63}$/.test(id)))].slice(0, 256);
+      }
+    }
+    writeAtomic(this.p('tabs.json'), JSON.stringify(saved) + '\n');
   }
   vocabulary() { try { return fs.readFileSync(this.p('vocabulary.json'), 'utf8'); } catch (e) { return null; } }
   saveVocabulary(text) { writeAtomic(this.p('vocabulary.json'), text); }
