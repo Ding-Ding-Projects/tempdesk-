@@ -39,6 +39,7 @@
         const values = await Promise.all([code(a, counter), code(a, counter + 1)]);
         if (account !== a) return;
         el("code").textContent = values[0];
+        el("copy").disabled = !navigator.clipboard;
         el("next").textContent = values[1];
         a.last = counter;
       }
@@ -48,7 +49,7 @@
     } finally { busy = false; }
   }
   function clear() {
-    revision++; account = null; el("key").value = "";
+    revision++; account = null; el("key").value = ""; el("copy").disabled = true;
     for (const name of ["code", "next", "seconds", "status"]) el(name).textContent = "";
   }
   el("clear").onclick = clear;
@@ -80,6 +81,40 @@
       display();
     } catch { if (version === revision) el("status").textContent = el("status").dataset.invalid; }
   };
+  el("copy").onclick = async () => {
+    const active = account;
+    if (!active || !navigator.clipboard) return;
+    try {
+      const current = Math.floor(Date.now() / (1000 * active.period));
+      const value = await code(active, current);
+      if (active === account) await navigator.clipboard.writeText(value);
+    } catch { el("status").textContent = el("status").dataset.invalid; }
+  };
+  async function scanImage(file) {
+    clear();
+    const version = revision;
+    let bitmap;
+    try {
+      if (!file || file.size > 4 * 1024 * 1024 || !["image/png", "image/jpeg", "image/webp"].includes(file.type)) throw Error();
+      bitmap = await createImageBitmap(file, {resizeWidth: 1024});
+      const decoder = new BarcodeDetector({formats: ["qr_code"]});
+      const results = await decoder.detect(bitmap);
+      if (results.length !== 1 || !/^otpauth:\/\//i.test(results[0].rawValue)) throw Error();
+      if (revision !== version) return;
+      el("key").value = results[0].rawValue;
+      el("load").click();
+    } catch {
+      if (version === revision) el("status").textContent = el("status").dataset.invalid;
+    } finally { bitmap?.close(); el("image").value = ""; }
+  }
+  el("image").disabled = !window.BarcodeDetector || !window.createImageBitmap;
+  el("image").onchange = () => scanImage(el("image").files[0]);
+  el("key").addEventListener("paste", event => {
+    const file = event.clipboardData?.files[0];
+    if (!file || el("image").disabled) return;
+    event.preventDefault();
+    scanImage(file);
+  });
   setInterval(display, 1000);
   window.addEventListener("pagehide", clear);
 
