@@ -6,7 +6,7 @@ Status values: implemented, partial (with what is missing), not done (with the r
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Guest create, show once, no-store, check, delete | implemented | One-time server store, HttpOnly cookie id, 410 on second view |
+| Guest create, show once, no-store, check, delete | implemented | One-time server store, HttpOnly cookie ID, HTTP 410 on second view. A loopback check against the live lab account service using portal revision `2dc043e` created a temporary account, verified active status, self-deleted it, and verified that the credentials were rejected afterward. |
 | CSRF on every form | implemented | Signed double-submit token |
 | Portal rate limits | implemented | In memory, per process |
 | Admin login, server-side sessions, logout | implemented | |
@@ -33,7 +33,7 @@ Status values: implemented, partial (with what is missing), not done (with the r
 | Guest portal: dim sum result | partial | Guest suite verifies the 1% draw and that it creates no account. Headless Chromium verified the packaged portal at `b2877f0` at 360 px with a simulated account service and controlled draws. The dim sum page had no horizontal overflow, created no account, and let a guest activate Try again with Enter. The next checkout created one simulated account and downloaded an RDP file. Live account service acceptance remains open. |
 | Guest portal: local personal wording for edition choices | not done | Existing personal wording is limited to the authenticated admin console. Verify local application and reset on an authorized picker surface. |
 | Admin console: hosted lab access | not done | Verify a real deployment, authenticated management sign-in, and the management address from the intended client network. |
-| Kiosk: hosted lab checkout | not done | Verify a real checkout, keyboard use, supported narrow layout, and the kiosk address from the intended client network. |
+| Kiosk: hosted lab checkout | partial | The kiosk entry point and health endpoint answered from an isolated client on the host. Ordinary guest account lifecycle passed against the live account service over loopback. Virtual Commons checkout with a real RDP session, keyboard and narrow-layout acceptance on the configured kiosk, and verification from a separate LAN device remain open. |
 | Deployer and native installer: retain configured destinations | partial | Built configuration checks cover retention on both paths. Verify that destinations survive actual lab reprovisioning. |
 | Public documentation: checkout and setup guide | partial | The guide and guest feature link are deployed. Complete the documentation and wiki inventory and verify companion delivery. |
 
