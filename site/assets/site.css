@@ -318,3 +318,15 @@ input[type="checkbox"]:not([role="switch"]):not(label > input), input[type="radi
   }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+.sheet .sheet-panel { min-inline-size: 0; max-block-size: 100dvh; overflow-wrap: anywhere; }
+@media (pointer: fine) and (min-width: 48rem) {
+  .sheet.center .sheet-panel { resize: both; max-inline-size: calc(100vw - 2rem); overflow: auto; }
+}
+@media (max-width: 30rem) {
+  .sheet .sheet-panel button, .sheet .sheet-panel select { min-block-size: 48px; max-inline-size: 100%; }
+  .sheet .sheet-panel input { max-inline-size: 100%; }
+}
+@media (forced-colors: active) {
+  .sheet .sheet-panel { border: 1px solid CanvasText; }
+  .sheet :focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
+}

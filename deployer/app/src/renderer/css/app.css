@@ -346,3 +346,19 @@ button.info:hover, button.info[aria-expanded="true"] { border-color: var(--prima
   }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+.menu {
+  min-inline-size: min(220px, calc(100vw - 1rem));
+  max-inline-size: calc(100vw - 1rem);
+  max-block-size: calc(100dvh - 60px);
+  overflow: auto;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+}
+@media (pointer: fine) and (min-width: 48rem) {
+  .dialog, .menu { resize: both; }
+}
+@media (max-width: 30rem) {
+  .dialog { padding: 1rem; }
+  .dialog .btn, .menu button { white-space: normal; min-height: 48px; }
+  .drawer .content { overflow-wrap: anywhere; }
+}

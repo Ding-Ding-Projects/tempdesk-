@@ -796,3 +796,28 @@ html[data-motion="reduced"] .rxb-pop, html[data-motion="off"] .rxb-pop { animati
   transition-timing-function: var(--motion-hover-timing-function);
 }
 :root[data-motion-hover-off] :is(.btn, .chip, .dock a) { animation: none; transition: none; }
+/* Menus and help panels retain their own scrolling area at large text sizes. */
+.menu-pop, .http-pop, .ctx-menu {
+  min-inline-size: min(16rem, calc(100vw - 2rem));
+  max-inline-size: calc(100vw - 1rem);
+  max-block-size: min(75dvh, 42rem);
+  overflow: auto;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+}
+@media (pointer: fine) and (min-width: 48rem) {
+  .menu-pop, .http-pop, .ctx-menu { resize: both; }
+}
+
+@media (max-width: 30rem) {
+  .menu-pop .row-btn, .ctx-menu button, .ctx-menu a, #motion-editor button,
+  [data-style-editor] button, #motion-editor select, [data-style-editor] select { min-block-size: 48px; }
+  #motion-editor fieldset, [data-style-editor] .field { min-inline-size: 0; }
+  #motion-editor select, [data-style-editor] select, [data-style-editor] input { max-inline-size: 100%; }
+  .kv { grid-template-columns: minmax(0, 1fr); }
+  .kv > dd { margin-inline-start: 0; overflow-wrap: anywhere; }
+}
+@media (forced-colors: active) {
+  .menu-pop, .http-pop, .ctx-menu, #motion-editor fieldset { border: 1px solid CanvasText; }
+  #motion-editor :focus-visible, [data-style-editor] :focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
+}
