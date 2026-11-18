@@ -12,7 +12,7 @@
     <input type="file" accept="image/png,image/jpeg,image/webp" data-image>
   </label>
   <p class="hint" data-qr-hint>{{ t('Scan an image or paste an image while the key field is focused. If image scanning is unavailable, use the provisioning URI or key.') }}</p>
-  <label>{{ t('Algorithm') }} <select data-algorithm>
+  <label>{{ t('Algorithm') }} <select data-algorithm data-search-exempt="Three fixed HMAC algorithms for manual entry">
     <option>SHA-1</option><option>SHA-256</option><option>SHA-512</option>
   </select></label>
   <label>{{ t('Digits') }} <input type="number" value="6" min="6" max="8" data-digits></label>
@@ -28,10 +28,16 @@
 <section class="card stack" data-ticket-tool>
   <h2>{{ t('Support tickets') }}</h2>
   <p>{{ t('Nothing is sent anywhere and nobody is reading. Tickets stay in this browser profile.') }}</p>
-  <label>{{ t('Recovery topic') }} <select data-topic><option value="preferences">{{ t('Local preferences') }}</option><option value="account">{{ t('Account sign-in') }}</option></select></label>
+  <label>{{ t('Recovery topic') }} <select data-topic data-search-exempt="Two fixed recovery topics"><option value="preferences">{{ t('Local preferences') }}</option><option value="account">{{ t('Account sign-in') }}</option></select></label>
   <button type="button" class="btn" data-create>{{ t('Open local ticket') }}</button>
   <p>{{ t('Use browser site settings to inspect this origin’s local data. Clearing site data removes browser preferences and signs you out. Domain account recovery requires your organization’s administrator.') }}</p>
-  <ul data-tickets></ul><p role="status" data-warning hidden>{{ t('Local ticket storage is unavailable.') }}</p>
+  <div class="ss-host" data-search-surface="recovery-tickets" data-search-kind="list"
+       data-search-target="#recovery-tickets" data-search-items="li"
+       {{ wording_attr('data-search-label', ta('Search local tickets')) }}></div>
+  <div class="cluster"><button type="button" class="btn" data-export-tickets>{{ t('Export ticket history') }}</button></div>
+  <ul data-selection-disabled data-preferences-help="{{ ta('Open this browser’s site settings to inspect local preferences. Clearing site data removes local preferences and signs you out.') }}"
+      data-account-help="{{ ta('Contact your organization’s administrator to restore domain account access. This desk cannot change a password or sign you in.') }}"
+      id="recovery-tickets" data-searchable="recovery-tickets" data-tickets></ul><p role="status" data-warning hidden>{{ t('Local ticket storage is unavailable.') }}</p>
 </section>
 <script defer src="/static/js/local-auth-tools.js"></script>
 {% endblock %}
