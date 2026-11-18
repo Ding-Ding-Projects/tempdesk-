@@ -21,7 +21,7 @@ Anyone on your network opens the guest portal, gets a username and password for 
 
 ## Quick start
 
-Use the [guided documentation](https://ding-ding-projects.github.io/tempdesk-/docs/#guided-workflows) to choose a directory, verify a guest sign-in, or check a Virtual Commons destination. The checklists save your marks locally as you work.
+Use the [guided documentation](https://ding-ding-projects.github.io/tempdesk-/docs/#guided-workflows) to choose a directory, verify a guest sign-in, or check a Virtual Commons destination. The checklists save your marks locally as you work. See the [live kiosk walkthrough](#guest-sign-in-walkthrough) and [guided checkout walkthrough](#guided-checkout-walkthrough) for illustrated steps.
 
 1. Open the Answer File Studio (website or Deployer), pick the **TempDesk server** template, fill in names, network and passwords, and build the kit.
 2. VMware Workstation on this PC: in the Deployer, drop the Windows Server 2025 ISO on **Step 1b** and click **Create the virtual machine and start the install**; the app makes the machine, attaches both ISOs, starts it and presses the boot key. Any other hypervisor: attach the kit ISO as a second CD next to the Windows Server 2025 ISO. Bare metal: copy the kit to the root of the USB stick that holds the Windows installer. **Disk 0 is erased.**
@@ -433,6 +433,28 @@ Server Core responded as a synchronized Active Directory domain controller with 
 A separate one-hour kiosk account had a configured expiry of 11:47:52 UTC on November 18, 2026. The lab directory confirmed the record was absent at 11:50:37 UTC.
 
 Windows 11 domain membership and desktop sign-in, temporary account creation through the native Windows backend, and Remote Desktop checkout to a session host remain unverified. See [Verify a checkout](docs/VIRTUAL-COMMONS.md#verify-a-checkout).
+
+## Guided checkout walkthrough
+
+Open [the documentation guide](https://ding-ding-projects.github.io/tempdesk-/docs/#guided-workflows) or choose **Docs** in TempDesk Docs. These images were taken in the offline reader built from `9b4329b14b328b6b88301fd296bd0b3100994940`, in bilingual mode. The checklists record your own progress. See [Lab verification](#lab-verification) for the current status of the actual kiosk, directory and session hosts.
+
+1. Choose **Get a guest sign-in** to open the kiosk checklist. Its link opens the illustrated kiosk walkthrough.
+
+   ![Guest sign-in checklist selected with three steps](docs/evidence/guided-docs-9b4329b/01-choose-guest-sign-in.png)
+
+2. After selecting a duration at the kiosk, mark the first step. The guide shows **1 of 3 steps marked** and keeps that mark when you switch tasks and return.
+
+   ![Guest sign-in checklist showing one of three steps marked](docs/evidence/guided-docs-9b4329b/02-mark-guest-progress.png)
+
+3. Choose **Verify Virtual Commons**, then **Desktop Experience session host**. Follow the checks for the session host, connection file, sign-in and expiry.
+
+   ![Virtual Commons guide with Desktop Experience selected and three checkout checks](docs/evidence/guided-docs-9b4329b/03-select-desktop-experience.png)
+
+4. Switch to **Check Server Core readiness** to see the separate requirements for that destination. Use **Configure Virtual Commons destinations** to open the relevant instructions.
+
+   ![Virtual Commons guide showing the Server Core readiness checklist](docs/evidence/guided-docs-9b4329b/04-read-server-core-guidance.png)
+
+The [capture inventory](docs/evidence/guided-docs-inventory.json) lists the exact source and executable hashes, image hashes, timestamps and viewport.
 
 ## Standalone offline documentation
 

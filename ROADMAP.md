@@ -18,5 +18,6 @@
 - [x] Build and launch the standalone documentation reader locally. Verify offline search, the Virtual Commons guide, and the prepared operator wiki.
 - [x] Verify the standalone documentation executable from a normal release. [Offline documentation walkthrough](README.md#standalone-offline-documentation)
 - [x] Verify the source-bound documentation executable downloaded from the v1.0.74 release.
+- [x] Record the guest checklist and both Virtual Commons guide paths from a source-bound local offline build. [Illustrated steps](README.md#guided-checkout-walkthrough)
 - [ ] Verify the guided documentation on GitHub Pages and in the downloadable offline reader.
 - [ ] Verify the remaining delivery forms.
