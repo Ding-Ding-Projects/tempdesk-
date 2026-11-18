@@ -7,3 +7,5 @@ The [offline reader](docs/OFFLINE-GUIDE.md) passed from the downloaded v1.0.75 e
 The [picker browser receipt](docs/evidence/virtual-commons-picker-wording.json) proves that both edition labels use the uploaded operating-system wording, that clear and reload restore the original labels, and that an eligible guest can upload again after checkout validation. Verify this flow on the configured kiosk when supported session targets become available.
 
 The [attachment receipt](docs/evidence/virtual-commons-attachments.json) records both direct RDP downloads and independent confirmations against the real isolated directory. Continue with trusted Windows agent access, supported guest setup, and native session sign-in and expiry on the intended hosts.
+
+The checkout-label repair at `caddfb9c4e672ad59e3a8af8e7b7fd9386d5d2f0` passed the measured narrow and wide cases. The [browser walkthrough](README.md#browser-attachment-walkthrough) preserves both current picker captures alongside the automatic download and keyboard retry proof.

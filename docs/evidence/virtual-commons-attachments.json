@@ -52,5 +52,87 @@
       }
     ]
   },
-  "remaining": "Both destinations were fixture addresses. Native session sign-in and expiry remain open."
+  "remaining": "Both destinations were fixture addresses. Native session sign-in and expiry remain open.",
+  "layout": {
+    "sourceRevision": "caddfb9c4e672ad59e3a8af8e7b7fd9386d5d2f0",
+    "sourceTree": "d10dfa1e5d2dabf57fcc7583721e4cd1a9403aef",
+    "portalImage": "sha256:3d91eb69bdb128f37d22823ccfe2c46e2188ea107c92478ba76f2c7a8c760369",
+    "baselineOverflowCases": 1,
+    "baselineViewport": 360,
+    "measuredCases": 48,
+    "labelOverflowCases": 0,
+    "widths": [
+      360,
+      1440
+    ],
+    "languages": [
+      "en",
+      "zh-HK",
+      "bi"
+    ],
+    "themes": [
+      "dark",
+      "light"
+    ],
+    "scales": [
+      1,
+      1.25,
+      1.5,
+      2
+    ],
+    "browserReplay": {
+      "completedAt": "2026-11-18T14:33:36.413Z",
+      "automaticDownloads": 2,
+      "keyboardRetriesMatched": 2,
+      "accountRecordsRemoved": 2,
+      "fileDigests": {
+        "gui": "c0e817fee3c3fe91f6bc34da00de8c06d6629bd3a333e7cac4021aa2ea5a1c59",
+        "core": "ff47ee2740101f85b004b817c4e49099152e8381ee5e982df83260d8318cf205"
+      }
+    },
+    "captures": [
+      "choose-desktop-experience",
+      "choose-server-core"
+    ]
+  },
+  "records": [
+    {
+      "id": "choose-desktop-experience",
+      "active": true,
+      "path": "docs/evidence/virtual-commons-picker-caddfb9/choose-desktop-experience.png",
+      "alt": "Virtual Commons on a wide screen with Desktop Experience and one hour selected",
+      "sourceCommit": "caddfb9c4e672ad59e3a8af8e7b7fd9386d5d2f0",
+      "artifactSha256": "3610f94e87a5e704a7d42a603e09fb659cc9bdffb1ea681b7309c8de4ea43841",
+      "captureSha256": "fa528692fb3e21035158ad4db950648a9c1ee809e015e8fa5a10f18b98681e0a",
+      "screen": "Virtual Commons picker",
+      "state": "desktop-experience-selected",
+      "theme": "dark",
+      "viewportWidth": 1440,
+      "viewportHeight": 960,
+      "scale": 1,
+      "capturedAt": "2026-11-18T14:35:39.000Z",
+      "interactionProofId": "picker-selection",
+      "interactionReceiptSha256": "15d546de7230c65aaf1a78851a9ab1389cc7cc2d47ab6748654c1e7d324f17cd",
+      "inspectionStatus": "inspected"
+    },
+    {
+      "id": "choose-server-core",
+      "active": true,
+      "path": "docs/evidence/virtual-commons-picker-caddfb9/choose-server-core.png",
+      "alt": "Virtual Commons at 360 pixels with Server Core selected and the complete checkout button label",
+      "sourceCommit": "caddfb9c4e672ad59e3a8af8e7b7fd9386d5d2f0",
+      "artifactSha256": "3610f94e87a5e704a7d42a603e09fb659cc9bdffb1ea681b7309c8de4ea43841",
+      "captureSha256": "9636f36f3ff1ec106c29adcf0f8afc70efdf56cf6032682a98610b128c06f778",
+      "screen": "Virtual Commons picker",
+      "state": "server-core-selected",
+      "theme": "dark",
+      "viewportWidth": 360,
+      "viewportHeight": 960,
+      "scale": 1,
+      "capturedAt": "2026-11-18T14:35:39.272Z",
+      "interactionProofId": "picker-selection",
+      "interactionReceiptSha256": "15d546de7230c65aaf1a78851a9ab1389cc7cc2d47ab6748654c1e7d324f17cd",
+      "inspectionStatus": "inspected"
+    }
+  ]
 }

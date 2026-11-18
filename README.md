@@ -456,6 +456,21 @@ Open [the documentation guide](https://ding-ding-projects.github.io/tempdesk-/do
 
 The [capture inventory](docs/evidence/guided-docs-inventory.json) lists the exact source and executable hashes, image hashes, timestamps and viewport.
 
+## Browser attachment walkthrough
+
+These picker captures came from the built kiosk at `caddfb9c4e672ad59e3a8af8e7b7fd9386d5d2f0`. The download replay used a real isolated Samba directory and configured fixture destinations. Native session sign-in and expiry are tracked in [Lab verification](#lab-verification).
+
+1. In **Virtual Commons**, choose a finite duration and an available edition. The wide capture selects Desktop Experience. The 360 px capture selects Server Core and shows the wrapped checkout label.
+
+   ![Virtual Commons on a wide screen with Desktop Experience and one hour selected](docs/evidence/virtual-commons-picker-caddfb9/choose-desktop-experience.png)
+
+   ![Virtual Commons at 360 pixels with Server Core selected and the complete checkout button label](docs/evidence/virtual-commons-picker-caddfb9/choose-server-core.png)
+
+2. Activate `Virtual Commons: Check out a computer`. The portal opens its one-time confirmation, and the browser saves `Virtual-Commons.rdp`.
+3. If you need another copy, use **Download Remote Desktop file** on the confirmation. Pressing Enter on that link returned the same bytes in both tested edition workflows.
+
+The [attachment and layout receipt](docs/evidence/virtual-commons-attachments.json) records the actual file checks, image hashes, and measured viewports.
+
 ## Standalone offline documentation
 
 Open **TempDesk Docs** to browse the guides, search the documentation and read the operator wiki offline. The [portable executable in v1.0.73](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.73) ran from an otherwise empty folder. Searching for **Configure the destinations** opened the Virtual Commons guide, and the sidebar opened the prepared wiki.

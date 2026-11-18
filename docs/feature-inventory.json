@@ -606,7 +606,17 @@
     },
     {
       "id": "layout-verification-matrix",
-      "scope": "interfaces"
+      "scope": "interfaces",
+      "progress": {
+        "guest": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "caddfb9c4e672ad59e3a8af8e7b7fd9386d5d2f0",
+          "reference": "docs/evidence/virtual-commons-attachments.json",
+          "observation": "The checkout action label fit across 48 measured viewport, language, theme and emulated scale combinations.",
+          "remaining": "Measure and verify layout coverage across the rest of the guest routes and deployment profiles."
+        }
+      }
     },
     {
       "id": "public-screenshot-gallery",
