@@ -5,3 +5,5 @@ The guest and management containers were rebuilt from `3a18b69c04ceace56d70d694b
 Server Core answered for its intended Active Directory domain and reported a synchronized directory with a ready global catalog. Its TempDesk agent returned a healthy Windows backend response. The lab kiosk currently uses Samba. A Windows-backed account-creation run requires a kiosk configured with the Windows agent's approved certificate and guest access.
 
 The Windows 11 test client was powered off during the latest verification. Its domain membership and desktop sign-in remain open. The separate Desktop Experience host still needs its Remote Desktop session-host setup confirmed. Track both in the [roadmap](ROADMAP.md).
+
+The [offline documentation reader](docs/OFFLINE-GUIDE.md) reuses the website build and has a dedicated portable package. A local one-file launch reached the home, documentation search, Virtual Commons guide, and prepared operator wiki with bilingual mode retained between pages. The normal release and a launch from its downloaded asset are separate verification steps.

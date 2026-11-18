@@ -10,6 +10,8 @@ node --test site/tests/      # unit tests (no dependencies)
 python3 -m http.server -d site/_site 8000
 ```
 
+`build.bat /docs` packages the same documentation in the standalone [TempDesk Docs reader](../docs/OFFLINE-GUIDE.md). Its local build uses the checked-in CodeMirror bundle and writes the package to `deployer/bin/docs/`.
+
 `build.mjs` has no runtime dependencies. It:
 
 - rebuilds `assets/vendor/codemirror.js` (CodeMirror 6, bundled with esbuild by `build-vendor.mjs` from the pinned dev dependencies in `package.json`) when `node_modules` is installed; otherwise it uses the committed bundle, so the build and the studio work offline with no CDN

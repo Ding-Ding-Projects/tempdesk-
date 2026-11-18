@@ -1,5 +1,4 @@
-// Asks the GitHub API for the latest TempDesk release and shows its version and date.
-// Shows a truthful "No release yet" state (and hides the download button) when there is none.
+// Shows the bundled documentation version offline or the latest published release online.
 (function () {
   'use strict';
   var API = 'https://api.github.com/repos/Ding-Ding-Projects/tempdesk-/releases/latest';
@@ -14,6 +13,21 @@
     if (S) S.render(line);
   }
   if (S) S.onLang(show);
+  if (location.protocol === 'tempdesk-docs:') {
+    state = { key: 'release.offlineLoading' };
+    show();
+    fetch('build-info.json').then(function (response) {
+      if (!response.ok) throw new Error(String(response.status));
+      return response.json();
+    }).then(function (build) {
+      state = { key: 'release.offline', args: [build.version, build.builtUtc.replace('T', ' ').slice(0, 16)] };
+      show();
+    }).catch(function () {
+      state = { key: 'release.offlineUnavailable' };
+      show();
+    });
+    return;
+  }
   function fmtDate(iso) {
     try { return new Date(iso).toLocaleDateString(document.documentElement.lang === 'zh-HK' ? 'zh-HK' : 'en', { year: 'numeric', month: 'short', day: 'numeric' }); }
     catch (e) { return iso.slice(0, 10); }

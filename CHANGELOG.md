@@ -7,6 +7,7 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
 
 ### Added
 
+- TempDesk Docs packages the documentation website, operator wiki and local tools in a portable offline reader.
 - Deployer: **VMware virtual machine** step on the Deploy page. Choose or drop the Windows Server ISO
   and the app creates a VMware Workstation virtual machine with an empty disk, attaches the Windows
   ISO and the answer ISO, starts it and presses the key for the "Press any key to boot from CD or DVD"
@@ -16,6 +17,7 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
 
 ### Fixed
 
+- The documentation sidebar contains its search field, so articles keep their reading column on wide screens.
 - Deployer: edits on the Deploy page are all kept. After the first saved change every later change was
   written to a stale copy and lost, so the media and the deployment used the old values.
 - Deployer: passwords typed after renaming the deployment are accepted, and the NetBIOS box follows the

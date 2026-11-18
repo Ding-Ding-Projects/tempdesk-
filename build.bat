@@ -1,10 +1,14 @@
 @echo off
 rem Builds TempDesk Deployer (the desktop app) into deployer\bin\ as an unpacked app and a
-rem portable .exe. Usage: build.bat [/s]   /s = silent (errors only). Exit code 0 on success.
+rem portable .exe, plus the standalone documentation in deployer\bin\docs\.
+rem Usage: build.bat [/docs] [/s]   /docs = documentation only, /s = silent.
 setlocal EnableExtensions
 set "ROOT=%~dp0"
 set "QUIET="
+set "DOCSONLY="
+if /I "%~1"=="/docs" set "DOCSONLY=1"
 if /I "%~1"=="/s" set "QUIET=1"
+if /I "%~2"=="/s" set "QUIET=1"
 set "PSEXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 rem Started from PowerShell 7, the inherited module path breaks Windows PowerShell 5.1 (Get-FileHash goes missing).
 set "PSModulePath="
@@ -23,12 +27,15 @@ where node >nul 2>&1 || (echo ERROR: Node.js was not found after download.& exit
 
 set "CMD="%PSEXE%" -NoProfile -ExecutionPolicy Bypass -File "%ROOT%scripts\make-icon.ps1" -Ico "%ROOT%deployer\assets\tempdesk.ico" -Png "%ROOT%deployer\app\src\renderer\img\tempdesk.png""
 call :step "Generating the app icon" || goto :fail
-set "CMD="%PSEXE%" -NoProfile -ExecutionPolicy Bypass -File "%ROOT%scripts\check-powershell.ps1""
-call :step "Checking PowerShell syntax" || goto :fail
+if not defined DOCSONLY (
+  set "CMD="%PSEXE%" -NoProfile -ExecutionPolicy Bypass -File "%ROOT%scripts\check-powershell.ps1""
+  call :step "Checking PowerShell syntax" || goto :fail
+)
 
 pushd "%ROOT%deployer\app"
 set "CMD=cmd /c npm ci --no-audit --no-fund"
 call :step "Installing packages (npm ci)" || (popd & goto :fail)
+if defined DOCSONLY goto :package-docs
 set "CMD=cmd /c node scripts\prepare-bundle.js"
 call :step "Bundling shared modules" || (popd & goto :fail)
 set "CMD=cmd /c node scripts\check-syntax.js"
@@ -37,8 +44,13 @@ set "VEROPT="
 if defined TEMPDESK_VERSION set "VEROPT= -c.extraMetadata.version=%TEMPDESK_VERSION%"
 set "CMD=cmd /c npx electron-builder --win dir portable --x64 --publish never -c.directories.output=..\bin%VEROPT%"
 call :step "Packaging (unpacked + portable)" || (popd & goto :fail)
+:package-docs
+set "CMD=cmd /c node scripts\build-docs-companion.js"
+call :step "Packaging the portable documentation" || (popd & goto :fail)
+if defined DOCSONLY goto :finished
 set "CMD=cmd /c node --test test/*.test.js"
 call :step "Running unit tests after packaging" || (popd & goto :fail)
+:finished
 popd
 if not defined QUIET echo Build finished: %ROOT%deployer\bin
 exit /b 0

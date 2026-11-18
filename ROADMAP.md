@@ -14,4 +14,6 @@
 
 - [ ] Complete the required-feature inventory and runtime verification for each interface.
 - [ ] Publish the operator wiki when its repository is available. [Prepared wiki entry point](docs/wiki/pending/Home.md)
-- [ ] Verify the standalone documentation companion and remaining delivery forms.
+- [x] Build and launch the standalone documentation reader locally. Verify offline search, the Virtual Commons guide, and the prepared operator wiki.
+- [ ] Verify the standalone documentation executable from a normal release. [Offline documentation guide](docs/OFFLINE-GUIDE.md)
+- [ ] Verify the remaining delivery forms.

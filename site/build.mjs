@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 const SITE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(SITE, '..');
-const OUT = path.join(SITE, '_site');
+const DEFAULT_OUT = path.join(SITE, '_site');
 const BASE_URL = 'https://ding-ding-projects.github.io/tempdesk-/';
 
 // ---------------------------------------------------------------------------------------------
@@ -201,18 +201,24 @@ async function docSources() {
   return list;
 }
 
-async function build() {
+async function build({ outputDirectory } = {}) {
+  const OUT = outputDirectory ?? DEFAULT_OUT;
   // 0. CodeMirror bundle: rebuilt with esbuild when the dev dependencies are installed; otherwise the
   //    committed assets/vendor/codemirror.js is used as is (so the build needs no network).
   let vendor = 'committed bundle';
-  if (existsSync(path.join(SITE, 'node_modules', 'esbuild')) && existsSync(path.join(SITE, 'node_modules', '@codemirror', 'view'))) {
+  if (outputDirectory === undefined && existsSync(path.join(SITE, 'node_modules', 'esbuild')) && existsSync(path.join(SITE, 'node_modules', '@codemirror', 'view'))) {
     await import(path.join(SITE, 'build-vendor.mjs'));
     vendor = 'rebuilt with esbuild';
   }
   if (!existsSync(path.join(SITE, 'assets', 'vendor', 'codemirror.js'))) throw new Error('assets/vendor/codemirror.js is missing; run npm ci && node build-vendor.mjs in site/');
   LAYOUT = await fs.readFile(path.join(SITE, 'templates', 'layout.html'), 'utf8');
-  await rmrf(OUT);
-  await mkdirp(OUT);
+  if (outputDirectory === undefined) {
+    await rmrf(OUT);
+    await mkdirp(OUT);
+  } else {
+    // An isolated consumer supplies a new path. Never replace an existing directory.
+    await fs.mkdir(OUT);
+  }
   const index = { generated: new Date().toISOString(), pages: [] };
 
   // 1. static files
@@ -295,7 +301,7 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
     d.title = d.title || (h1 ? h1.text : d.name);
     docPages.push({ d, r, md });
   }
-  const nav = (cur) => `<nav class="docs-nav" aria-label="Docs" data-search-surface="docs-nav" data-search-items="a" data-search-label="nav.docs"><a href="index.html"${cur === 'index' ? ' aria-current="page"' : ''} data-i18n="docs.home">All docs</a>${docs.map((d) => `<a href="${d.name}.html"${cur === d.name ? ' aria-current="page"' : ''}>${escapeHtml(d.title)}</a>`).join('')}</nav>`;
+  const nav = (cur) => `<nav class="docs-nav" aria-label="Docs" data-search-surface="docs-nav" data-search-items="a" data-search-label="nav.docs" data-search-mount="[data-docs-nav-filter]"><span data-docs-nav-filter hidden></span><a href="index.html"${cur === 'index' ? ' aria-current="page"' : ''} data-i18n="docs.home">All docs</a>${docs.map((d) => `<a href="${d.name}.html"${cur === d.name ? ' aria-current="page"' : ''}>${escapeHtml(d.title)}</a>`).join('')}</nav>`;
   await mkdirp(path.join(OUT, 'docs'));
   for (const image of usedImages) await copyFile(path.join(REPO, image), path.join(OUT, image));
   for (const { d, r, md } of docPages) {

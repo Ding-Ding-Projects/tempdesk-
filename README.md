@@ -17,6 +17,7 @@ Anyone on your network opens the guest portal, gets a username and password for 
 | **App streaming** (`streaming/`) | Stream RemoteApps to the browser through Apache Guacamole, or download `.rdp` files. |
 | **Client scripts** (`client/`) | Run on shared PCs: Wi-Fi profiles, Chrome, developer tools and AI apps, sign-out at expiry, profile cleanup. |
 | **Website** (`site/`) | Landing page, Answer File Studio, Base64 toolkit, feature articles and docs. |
+| **TempDesk Docs** | The website's guides, operator wiki, search and browser tools in a standalone executable for offline reference. [Open the offline documentation guide](docs/OFFLINE-GUIDE.md). |
 
 ## Quick start
 

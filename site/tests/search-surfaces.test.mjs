@@ -4,9 +4,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { installDom } from './mini-dom.mjs';
+import { build } from '../build.mjs';
 
 const SITE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const cat = JSON.parse(readFileSync(path.join(SITE, 'search-surfaces.json'), 'utf8'));
@@ -73,6 +76,20 @@ test('built pages load the regex builder', () => {
   if (existsSync(path.join(out, 'tools', 'base64.html'))) {
     for (const f of ['index.html', 'answer-file.html', 'tools/base64.html', 'docs/index.html']) assert.match(readFileSync(path.join(out, f), 'utf8'), /assets\/regex-builder\.js/, '_site/' + f);
     assert.ok(existsSync(path.join(out, 'assets', 'regex-builder.mjs')));
+  }
+});
+
+test('documentation search mounts inside the sidebar on the index and articles', async (t) => {
+  const run = await mkdtemp(path.join(tmpdir(), 'tempdesk-sidebar-'));
+  t.after(() => rm(run, { recursive: true, force: true }));
+  const outputDirectory = path.join(run, 'site');
+  await build({ outputDirectory });
+  for (const file of ['index.html', 'virtual-commons.html', 'wiki-pending-home.html']) {
+    const html = await readFile(path.join(outputDirectory, 'docs', file), 'utf8');
+    const sidebar = html.match(/<nav class="docs-nav"[\s\S]*?<\/nav>/)?.[0];
+    assert.ok(sidebar, 'Missing sidebar in ' + file);
+    assert.match(sidebar, /data-search-mount="\[data-docs-nav-filter\]"/);
+    assert.match(sidebar, /<span data-docs-nav-filter hidden><\/span>/);
   }
 });
 

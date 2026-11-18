@@ -8,6 +8,7 @@ Start here to deploy shared computers, set up temporary sign-ins, and verify rem
 - [Server management](../../SERVER.md) explains the server console, supported routes, and operational limits.
 - [Security](../../SECURITY.md) describes the permissions and credential boundaries.
 - [Agent API](../../API.md) documents the service endpoints and authentication model.
+- [Read the documentation offline](../../OFFLINE-GUIDE.md) explains the standalone reader and its local settings.
 
 ## Verify Virtual Commons
 
