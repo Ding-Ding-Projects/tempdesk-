@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portal appearance controls</title>
+  <link rel="stylesheet" href="../../portal/app/static/css/tokens.css">
+  <link rel="stylesheet" href="../../portal/app/static/css/app.css">
+  <style>main {max-width: 48rem; margin: auto; padding: 1rem} .sample {border: 1px solid var(--primary); padding: 1rem; border-radius: var(--r-md)}</style>
+</head>
+<body>
+<x-dc>
+  <main class="stack" style="--primary: {{accentColor}}" data-motion="{{motionMode}}">
+    <section class="card"><h2>Motion</h2><div class="form-grid">
+      <label class="field">Transition duration <input type="range" min="25" max="200" value="100"></label>
+      <label class="field">Transition curve <select><option>Standard</option><option>Gentle</option><option>Linear</option><option>Spring</option></select></label>
+    </div></section>
+    <section class="card"><h2>Appearance editor</h2><div class="form-grid">
+      <label class="field">Element <select><option>Cards</option><option>Buttons</option><option>Fields</option><option>Dialogs</option><option>Menus</option><option>Notifications</option></select></label>
+      <label class="field">Corner roundness <input type="range" min="0" max="48" value="16"></label>
+      <label class="field">Border width <input type="range" min="0" max="8" value="1"></label>
+      <label class="field">Border color <input type="color" value="#7cf3e6"></label>
+    </div></section>
+    <div class="sample" style="animation: {{animation}}">Preview</div>
+  </main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":640},"accentColor":{"type":"color","default":"#7CF3E6","editor":"color","label":"Accent colour"},"motion":{"type":"boolean","default":true,"editor":"toggle","label":"Motion"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const motion = this.props?.motion !== false;
+    return { accentColor: this.props?.accentColor ?? "#7CF3E6", motionMode: motion ? "full" : "off", animation: motion ? "rise .35s ease-out both" : "none" };
+  }
+}
+</script>
+</body>
+</html>

@@ -2,26 +2,26 @@
   <h2>{{ t('Motion') }}</h2>
   <div class="form-grid">
     <label class="field" data-setting="{{ ta('Motion') }}">
-      <span lang="en">Transition duration</span><span lang="zh-HK">過場時間</span>
+      {{ t('Transition duration') }}
       <input type="range" min="25" max="200" step="5" value="100" data-motion-speed>
       <output data-motion-value>100%</output>
     </label>
     <label class="field" data-setting="{{ ta('Motion') }}">
-      <span lang="en">Transition curve</span><span lang="zh-HK">過場曲線</span>
+      {{ t('Transition curve') }}
       <select data-motion-curve>
-        <option value="default">Standard · 標準</option>
-        <option value="linear">Linear · 線性</option>
-        <option value="gentle">Gentle · 柔和</option>
-        <option value="spring">Spring · 彈性</option>
+        <option value="default">{{ ta('Standard') }}</option>
+        <option value="linear">{{ ta('Linear') }}</option>
+        <option value="gentle">{{ ta('Gentle') }}</option>
+        <option value="spring">{{ ta('Spring') }}</option>
       </select>
     </label>
   </div>
   <div class="cluster">
-    <button type="button" class="btn tonal" data-motion-preview>Preview · 預覽</button>
+    <button type="button" class="btn tonal" data-motion-preview>{{ ta('Preview') }}</button>
     <button type="button" class="btn" data-motion-reset>{{ t('Reset') }}</button>
     <span aria-hidden="true" class="motion-sample"></span>
   </div>
-  <p class="hint" data-motion-status role="status"></p>
+  <p class="hint" data-motion-status role="status" data-disabled="{{ ta('Motion preview is disabled by your motion preference.') }}" data-unavailable="{{ ta('Storage unavailable. Changes apply only on this page.') }}"></p>
 </section>
 {% set appearance_targets = [('card', 'Cards'), ('button', 'Buttons'), ('input', 'Fields'), ('dialog', 'Dialogs'), ('menu', 'Menus'), ('notice', 'Notifications')] %}
 <section class="card" data-style-editor data-setting-section data-setting="{{ ta('Appearance editor') }}">

@@ -1,0 +1,10 @@
+{
+  "v": 3,
+  "title": "Portal appearance",
+  "launch": {"view": "canvas", "page": "appearance"},
+  "pages": [{"id": "appearance", "title": "Display preferences"}],
+  "boards": {"Controls.dc.html": {"page": "appearance", "x": 0, "y": 0, "w": 760, "h": 640, "title": "Motion and component styles"}},
+  "order": ["Controls.dc.html"],
+  "notes": {"controls": {"page": "appearance", "x": 790, "y": 32, "maxW": 300, "text": "Adjust the accent and motion controls. At 360 px the fields stack. Production persistence and preview belong to Settings. Capture, independent review and deployed parity are pending."}},
+  "designSystems": []
+}

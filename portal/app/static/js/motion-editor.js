@@ -36,8 +36,9 @@
     const blocked = reduce.matches || ['off', 'reduced'].includes(root.dataset.motion);
     if (blocked && sampleAnimation) sampleAnimation.cancel();
     editor.querySelector('[data-motion-preview]').disabled = blocked;
-    editor.querySelector('[data-motion-status]').textContent = blocked
-      ? 'Motion preview is disabled by your motion preference. · 你的動態效果設定已停用預覽。' : '';
+    const status = editor.querySelector('[data-motion-status]');
+    status.textContent = blocked
+      ? status.dataset.disabled : '';
   }
 
   apply(read());
@@ -49,7 +50,7 @@
       apply(settings);
       updatePreview();
       try { localStorage.setItem(key, JSON.stringify(settings)); }
-      catch { editor.querySelector('[data-motion-status]').textContent = 'Storage unavailable. · 無法儲存。'; }
+      catch { const status = editor.querySelector('[data-motion-status]'); status.textContent = status.dataset.unavailable; }
     }
     editor.addEventListener('input', event => {
       if (event.target === duration || event.target === curve) save({ duration: Number(duration.value), curve: curve.value });
