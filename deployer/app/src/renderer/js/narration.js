@@ -75,7 +75,8 @@ export function narrationControls() {
   const language = state.school.enabled ? 'en' : state.settings.language;
   const label = (en, zh) => language === 'zh-HK' ? zh : language === 'bilingual' ? en + ' / ' + zh : en;
   const box = h('fieldset', { class: 'field set-row', 'data-row': 'narration', 'data-keywords': 'voice speech narration cantonese' });
-  box.append(h('legend', { text: label('Spoken notifications', '語音通知') }));
+  box.dataset.palette = label('Spoken notifications', '語音通知');
+  box.append(h('legend', { text: box.dataset.palette }), h('p', { class: 'help', text: label('Read notifications using voices installed on this computer.', '使用本機已安裝的語音朗讀通知。') }));
   if (!engine) {
     box.append(h('p', { text: label('Speech is unavailable on this computer.', '此電腦無法播放語音。') }));
     return box;
