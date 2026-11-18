@@ -103,5 +103,5 @@ set "CODE=%ERRORLEVEL%"
 :report-failure
 if "%CODE%"=="0" set "CODE=1"
 echo ERROR: build failed with exit code %CODE%. See the output above or %LOG%.
-if defined QUIET if exist "%LOG%" powershell -NoProfile -Command "Get-Content -LiteralPath $env:LOG -Tail 40"
+if defined QUIET if exist "%LOG%" powershell -NoProfile -Command "Select-String -LiteralPath $env:LOG -Pattern '^\s*not ok \d+ - ' | Select-Object -First 30 | ForEach-Object Line; Get-Content -LiteralPath $env:LOG -Tail 40"
 exit /b %CODE%

@@ -15,7 +15,7 @@ export function editTabGroup(app, name, save) {
 export function showTabCatalog(app, destinations, openDestination, openAll) {
   let dispose;
   dialog(t('tabs.catalog'), close => {
-    const list = h('div', { class: 'list' });
+    const list = h('div', { class: 'list', 'data-search-surface': 'tab-catalog' });
     const records = destinations.map(([id, glyph]) => ({
       title: t('nav.' + id), glyph, group: '', open: () => openDestination(id)
     }));

@@ -199,6 +199,13 @@
    "surface": "Prerequisite checks",
    "file": "src/renderer/js/onboarding.js",
    "consumer": "listFilter"
+  },
+  {
+   "id": "tab-catalog",
+   "page": "Workspace tabs",
+   "surface": "Destination and saved-deployment catalogue",
+   "file": "src/renderer/js/tab-manager.js",
+   "consumer": "searchBox"
   }
  ]
 }
