@@ -13,3 +13,5 @@ The checkout-label repair at `caddfb9c4e672ad59e3a8af8e7b7fd9386d5d2f0` passed t
 Complete initial setup on the dedicated Desktop Experience host, apply the intended TempDesk computer policy and use the [Virtual Commons App Host setup](docs/VIRTUAL-COMMONS.md#prepare-the-desktop-experience-host). Verify that the watcher can reach the directory and ends a real open test session at expiry before enabling its destination for visitors.
 
 Continue the remaining personal-wording surfaces from the browser-local management loader and the [portal guide](portal/README.md#browser-local-personal-wording). Use synthetic test files and signed-in test profiles to verify local state and original-wording restoration. Preserve existing operator data and the native lab boundaries.
+
+The rebuilt bilingual setup action fit its Settings card at 360 px before, during and after an import. The same browser separately verified original wording and local file removal when the session expired. See the four inspected v1.0.80 images in the [personal wording walkthrough](README.md#personal-wording-walkthrough). Verify the remaining dynamic wording and sound surfaces separately.

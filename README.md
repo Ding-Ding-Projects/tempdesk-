@@ -476,6 +476,26 @@ The picker captures came from the kiosk build at `caddfb9c4e672ad59e3a8af8e7b7fd
 
 The [attachment and layout receipt](docs/evidence/virtual-commons-attachments.json) records both automatic downloads, keyboard retries, removed test accounts, image hashes, and measured viewports.
 
+## Personal wording walkthrough
+
+These steps were captured in the signed-in management portal from the v1.0.80 source build, using an isolated browser and a sample JSON file. The [capture receipt](docs/evidence/management-wording-walkthrough.json) records the source revision, portal image, browser checks, and image hashes.
+
+1. In the management portal, open **Settings** and find **Personal wording**. Select **Choose File** and pick your JSON file.
+
+   ![Personal wording in Settings with a sample JSON file selected](docs/evidence/management-wording-c70b63d/01-select-a-wording-file.png)
+
+2. Choose **Apply wording**. The example heading changes to **Local labels** and Settings shows that personal wording is active in this browser tab.
+
+   ![The sample wording applied and the browser-tab status shown](docs/evidence/management-wording-c70b63d/02-apply-wording.png)
+
+3. Reload the same browser tab while signed in. Open **Settings** again if needed. The custom heading and active status are still there.
+
+   ![The custom heading and active status after reloading the same tab](docs/evidence/management-wording-c70b63d/03-reload-the-same-tab.png)
+
+4. Choose the **Clear** button with **restore original wording** in its label. Settings restores its original heading and confirms that the wording was cleared.
+
+   ![The original Settings wording restored and the clear status shown](docs/evidence/management-wording-c70b63d/04-clear-and-restore.png)
+
 ## Standalone offline documentation
 
 Open **TempDesk Docs** to browse the guides, search the documentation and read the operator wiki offline. The [portable executable in v1.0.73](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.73) ran from an otherwise empty folder. Searching for **Configure the destinations** opened the Virtual Commons guide, and the sidebar opened the prepared wiki.

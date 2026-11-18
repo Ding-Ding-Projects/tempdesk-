@@ -53,6 +53,8 @@ Use the desktop and phone console shells from `Console-Home.dc.html` and `Consol
 
 An empty card shows the original wording state. An invalid file leaves the last valid wording visible and announces the result. Clear restores original copy and returns focus to the file control. The decorative drop overlay keeps focus in the current workflow.
 
+The adjacent first-run setup action uses the same label wrapping when bilingual text grows. Keep the action within its card and retain the existing button style.
+
 
 ## Virtual Commons design reference
 

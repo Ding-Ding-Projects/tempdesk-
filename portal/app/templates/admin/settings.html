@@ -102,7 +102,7 @@
 </section>
 {% endif %}
 
-<section class="card rise" data-setting-section data-setting="{{ ta('First-run setup') }} onboarding wizard"><h2>{{ t('First-run setup') }}</h2>
+<section class="card rise" id="restart-setup" data-setting-section data-setting="{{ ta('First-run setup') }} onboarding wizard"><h2>{{ t('First-run setup') }}</h2>
   <form method="post" action="/welcome/restart">{{ csrf() }}<button class="btn" type="submit">{{ t('Run the setup wizard again') }}</button></form></section>
 {% endblock %}
 {% block scripts %}{{ super() }}<script src="/static/js/colorpicker.js" defer></script>{% endblock %}
