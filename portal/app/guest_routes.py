@@ -59,7 +59,12 @@ def _limit(request: Request, limiter) -> None:
 @router.get("/")
 async def home(request: Request):
     pub = await public_settings(request)
-    return await render(request, "guest/home.html", {"pub": pub, "error": None, "values": {}})
+    edition = request.query_params.get("edition")
+    expiry = request.query_params.get("duration")
+    values = {}
+    if edition in pub["commonsEditions"] and expiry in {choice["id"] for choice in pub["commonsExpiryChoices"]}:
+        values = {"commons": True, "edition": edition, "expiryId": expiry}
+    return await render(request, "guest/home.html", {"pub": pub, "error": None, "values": values})
 
 
 @router.post("/create", dependencies=[Depends(csrf_protect)])
@@ -92,7 +97,8 @@ async def create(request: Request):
     _limit(request, request.app.state.create_limiter)
     if commons and secrets.randbelow(100) == 0:
         dish = secrets.choice(("Har gow", "Siu mai", "Char siu bao"))
-        return await render(request, "guest/dim-sum.html", {"pub": pub, "dish": dish}, headers=NO_STORE)
+        return await render(request, "guest/dim-sum.html",
+                            {"pub": pub, "dish": dish, "edition": edition, "duration": expiry}, headers=NO_STORE)
     body = {"expiryId": expiry}
     if display:
         body["displayName"] = display

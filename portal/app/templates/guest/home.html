@@ -34,7 +34,7 @@
     <p class="subtle" style="margin:0">{{ t('Already have one?') }} <a href="/check">{{ t('Check my sign-in') }}</a>{% if pub.allowSelfDelete %} · <a href="/delete">{{ t('Delete my sign-in') }}</a>{% endif %}</p>
   </form>
   {% if pub.commonsEnabled %}
-  <form class="card lg stack rise" method="post" action="/create">
+  <form id="virtual-commons" class="card lg stack rise" method="post" action="/create">
     {{ csrf() }}
     <h2>{{ t('Virtual Commons') }}</h2>
     <input type="hidden" name="checkout" value="commons">
