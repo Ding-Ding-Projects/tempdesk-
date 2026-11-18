@@ -88,8 +88,17 @@ function renderInline(parts, openArticle) {
 }
 function renderMarkdown(md, openArticle) {
   const out = h('div', { class: 'doc' });
+  const anchors = new Set();
   Core.parseMarkdown(md).forEach((b) => {
-    if (b.type === 'h') out.appendChild(h('h' + Math.min(4, b.level + 1), null, renderInline(b.inline, openArticle)));
+    if (b.type === 'h') {
+      const heading = h('h' + Math.min(4, b.level + 1), { tabindex: '-1' }, renderInline(b.inline, openArticle));
+      const base = heading.textContent.toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, '').trim().replace(/\s/g, '-') || 'section';
+      let anchor = base;
+      for (let i = 1; anchors.has(anchor); i++) anchor = base + '-' + i;
+      anchors.add(anchor);
+      heading.dataset.docAnchor = anchor;
+      out.appendChild(heading);
+    }
     else if (b.type === 'p') out.appendChild(h('p', null, renderInline(b.inline, openArticle)));
     else if (b.type === 'pre') out.appendChild(h('pre', { text: b.text }));
     else if (b.type === 'ul' || b.type === 'ol') out.appendChild(h(b.type, null, b.items.map((i) => h('li', null, renderInline(i, openArticle)))));
@@ -157,9 +166,16 @@ export async function helpPage(root, app) {
       }
       const path = target.pathname.slice(1);
       if (target.origin !== origin || !docs.some((article) => article.path === path)) return false;
-      cur = path;
-      draw();
-      body.querySelector('h2, h3, h4')?.scrollIntoView({ block: 'start' });
+      let anchor = '';
+      try { anchor = decodeURIComponent(target.hash.slice(1)); } catch { return false; }
+      if (cur !== path) {
+        cur = path;
+        draw();
+      }
+      const headings = [...body.querySelectorAll('[data-doc-anchor]')];
+      const heading = headings.find((item) => item.dataset.docAnchor === anchor) || headings[0];
+      heading?.focus({ preventScroll: true });
+      heading?.scrollIntoView({ block: 'start' });
       return true;
     });
     body.replaceChildren(doc);
