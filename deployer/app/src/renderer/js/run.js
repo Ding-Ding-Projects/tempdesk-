@@ -1,7 +1,7 @@
 // Progress UI for every long engine step: step list (done checks, pulsing current step, pending
 // outlines), progress bar, live log, cancel, resume from the failed step, recovery hint, and a
 // success celebration. Mirrors design/project/Deployer.dc.html.
-import { h, t, originalText, btn, toast, play, announce, state, contextMenu, listFilter, chooseExportFormat } from './ui.js';
+import { h, t, originalText, btn, toast, notice, play, announce, state, contextMenu, listFilter, chooseExportFormat } from './ui.js';
 
 const td = window.td;
 const Core = window.TempDeskCore;
@@ -128,7 +128,7 @@ export function progressPanel(opts) {
       startBtn.hidden = false; restartBtn.hidden = false;
       wrap.classList.remove('success-burst'); void wrap.offsetWidth; if (!state.motionOff) wrap.classList.add('success-burst');
       play('done');
-      toast(t('run.success', [title]), 'success');
+      toast(notice('run.success', [notice(opts.titleKey, opts.titleArgs)]), 'success');
       if (opts.onDone) opts.onDone(lastResult && lastResult.data);
     } else {
       // Trust failed: ask for the Windows consent prompt (never bypassed), then resume.
@@ -144,7 +144,7 @@ export function progressPanel(opts) {
       status.textContent = ev.cancelled ? t('run.cancelled') : t('run.failed');
       const anyDone = [...steps.values()].some((s) => s.state === 'done');
       resumeBtn.hidden = !anyDone; startBtn.hidden = anyDone; restartBtn.hidden = !anyDone;
-      if (!ev.cancelled) { play('error'); toast(t('run.failedToast', [title]), 'error'); }
+      if (!ev.cancelled) { play('error'); toast(notice('run.failedToast', [notice(opts.titleKey, opts.titleArgs)]), 'error'); }
     }
   }
   async function exportLog() {
@@ -157,7 +157,7 @@ export function progressPanel(opts) {
     else if (fmt === 'html') text = Core.toHtml(originalTitle, logLines, ['time', 'level', 'text']);
     else text = logLines.map((l) => l.time + ' ' + l.level.toUpperCase() + ' ' + l.text).join('\r\n') + '\r\n';
     const r = await td.invoke['file:save']({ name, text, filters: [{ name: fmt.toUpperCase(), extensions: [fmt] }] });
-    if (r.ok) toast(t('export.saved', [r.path]), 'success');
+    if (r.ok) toast(notice('export.saved', [r.path]), 'success');
   }
   stepIds.forEach((id) => addStep(id));
   const wrap = h('div', { class: 'progress-wrap' }, [

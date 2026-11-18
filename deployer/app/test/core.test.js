@@ -63,6 +63,22 @@ test('translator: language modes, funny levels, serious keys and personal wordin
   assert.strictEqual(t('missing.key'), 'missing.key');
 });
 
+test('an unsuccessful wording save removes its temporary file', (testContext) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tempdesk-wording-write-'));
+  const target = path.join(root, 'vocabulary.json');
+  const sentinel = path.join(target, 'existing.txt');
+  fs.mkdirSync(target);
+  fs.writeFileSync(sentinel, 'original');
+  testContext.after(() => {
+    fs.unlinkSync(sentinel);
+    fs.rmdirSync(target);
+    fs.rmdirSync(root);
+  });
+  assert.throws(() => new Store(root).saveVocabulary('example wording'));
+  assert.equal(fs.readFileSync(sentinel, 'utf8'), 'original');
+  assert.deepStrictEqual(fs.readdirSync(root), ['vocabulary.json']);
+});
+
 test('regex search builder: plain, regex, invalid, counts', () => {
   const plain = Core.buildMatcher('a.b');
   assert.ok(Core.testMatch('xa.by', plain));

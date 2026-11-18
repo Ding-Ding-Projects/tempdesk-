@@ -881,6 +881,10 @@
   "3": "Personal wording applied"
  },
  "wording.clear": "Restore original wording",
+ "wording.clearError": "The wording file could not be cleared. The current wording is still in use.",
+ "wording.readError": "The wording file could not be read. The current wording is still in use.",
+ "wording.rejected": "The personal wording file was not applied.",
+ "wording.saveError": "The wording file could not be saved. The current wording is still in use.",
  "wording.cleared": "Original wording restored.",
  "wording.invalid.depth": "The file is nested deeper than 8 levels. Nothing changed.",
  "wording.invalid.duplicate": "The file has a duplicate key. Nothing changed.",

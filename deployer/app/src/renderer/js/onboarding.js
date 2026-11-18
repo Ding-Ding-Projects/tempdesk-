@@ -1,7 +1,7 @@
 // First-run onboarding: pick a path (Server Core or Lite), check real prerequisites (PowerShell,
 // OpenSSH client, Docker, network, Git), choose language and look, then open the workspace.
 // Back/Next, progress dots, skip for optional steps, and the step is saved so it resumes.
-import { h, t, originalText, btn, state, select, toast, listFilter } from './ui.js';
+import { h, t, originalText, btn, state, select, toast, notice, listFilter } from './ui.js';
 
 const td = window.td;
 
@@ -59,9 +59,9 @@ export function runOnboarding(app) {
     listEl.replaceChildren(...rows.map(([k, v]) => h('div', { class: 'prereq' }, [
       h('span', { class: 'chip ' + (v ? 'ok' : need[k] || k === 'network' ? 'bad' : 'warn'), text: v ? t('onb.found') : need[k] || k === 'network' ? t('onb.missing') : t('onb.optional') }),
       h('div', { style: { flex: '1', minWidth: '200px' } }, [h('div', { style: { fontWeight: '700' }, text: t('onb.pr.' + k) }), h('div', { class: 'small muted', text: v ? String(v) : t('onb.pr.' + k + '.fix') })])])));
-    if (!prereqs.powershell) toast(t('onb.psMissing'), 'error');
+    if (!prereqs.powershell) toast(notice('onb.psMissing'), 'error');
   }
-  wrap.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); toast(t('onb.escHint')); } });
+  wrap.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); toast(notice('onb.escHint')); } });
   document.body.appendChild(wrap);
   draw();
 }

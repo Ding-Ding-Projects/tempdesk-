@@ -2,7 +2,7 @@
 // rows (plain or regex). Includes the appearance editor (accent wheel, hex, contrast check,
 // radius, density, text scale, theme, logo), language, funny level, personal wording, school
 // mode, sounds, updates, Git remote, import/export and backup.
-import { h, t, originalText, state, btn, toast, dialog, superConfirm, promptDialog, info, searchBox, select, play, listFilter } from './ui.js';
+import { h, t, originalText, state, btn, toast, notice, dialog, superConfirm, promptDialog, info, searchBox, select, play, listFilter } from './ui.js';
 
 const td = window.td;
 const Core = window.TempDeskCore;
@@ -74,14 +74,14 @@ export async function settingsPage(root, app) {
     row('textScale', t('set.textScale'), t('set.textScaleHelp'), h('div', { class: 'row' }, [(scale.id = 'textScale-in', scale.setAttribute('aria-label', t('set.textScale')), scale), scaleLab])),
     row('highContrast', t('set.highContrast'), t('set.highContrastHelp'), select([['system', t('opt.system')], ['on', t('opt.on')], ['off', t('opt.off')]], s.highContrast, (v) => set({ highContrast: v }, 'set.highContrast', v))),
     row('motion', t('set.motion'), t('set.motionHelp'), select([['system', t('opt.motionSystem')], ['on', t('opt.on')], ['off', t('opt.off')]], s.motion, (v) => set({ motion: v }, 'set.motion', v)), 'animation'),
-    row('appName', t('set.appName'), t('set.appNameHelp'), (() => { const i = h('input', { type: 'text', value: s.appName, maxlength: '40' }); i.addEventListener('change', () => { const v = i.value.trim(); if (!v || /[<>]/.test(v)) { toast(t('set.appNameBad'), 'error'); i.value = s.appName; return; } set({ appName: v }, 'set.appName', v); }); return i; })(), 'rename title'),
+    row('appName', t('set.appName'), t('set.appNameHelp'), (() => { const i = h('input', { type: 'text', value: s.appName, maxlength: '40' }); i.addEventListener('change', () => { const v = i.value.trim(); if (!v || /[<>]/.test(v)) { toast(notice('set.appNameBad'), 'error'); i.value = s.appName; return; } set({ appName: v }, 'set.appName', v); }); return i; })(), 'rename title'),
     row('logo', t('set.logo'), t('set.logoHelp'), h('div', { class: 'row' }, [logoPrev, btn(t('set.logoPick'), async () => {
       const f = await td.invoke['file:open']({ filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp'] }], maxBytes: 200 * 1024 });
       if (!f || f.cancelled) return;
-      if (f.tooLarge) { toast(t('set.logoTooLarge'), 'error'); return; }
+      if (f.tooLarge) { toast(notice('set.logoTooLarge'), 'error'); return; }
       const ext = f.name.split('.').pop().toLowerCase(), mime = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp' }[ext];
       const det = window.TempDeskBase64.detectType(f.bytes);
-      if (!mime || det.kind !== 'image') { play('invalid'); toast(t('set.logoBad'), 'error'); return; }
+      if (!mime || det.kind !== 'image') { play('invalid'); toast(notice('set.logoBad'), 'error'); return; }
       set({ logo: 'data:' + det.mime + ';base64,' + window.TempDeskBase64.encode(f.bytes) }, 'set.logo', f.name);
     }, 'btn-ghost btn-sm'), s.logo ? btn(t('set.logoReset'), () => set({ logo: '' }, 'set.logo', 'default'), 'btn-ghost btn-sm') : null]), 'icon image')
   ]);
@@ -97,7 +97,7 @@ export async function settingsPage(root, app) {
     // Personal wording
     const stateLine = h('div', { class: 'small', role: 'status', text: app.wordingMap ? t('wording.active', [app.wordingMap.size]) : t('wording.none') });
     langRows.push(row('wording', t('set.wording'), t('set.wordingHelp'), h('div', { class: 'stack' }, [stateLine, h('div', { class: 'row' }, [
-      btn(t('wording.upload'), async () => { const r = await td.invoke['wording:pick'](); if (!r || r.cancelled) return; if (r.tooLarge) { play('invalid'); toast(t('wording.invalid.size'), 'error'); return; } await app.applyWordingBytes(r.bytes); }, 'btn-primary btn-sm'),
+      btn(t('wording.upload'), () => app.pickWordingFile(), 'btn-primary btn-sm'),
       app.wordingMap ? btn(t('wording.clear'), () => app.clearWording(), 'btn-ghost btn-sm') : null,
       btn(t('wording.schemaBtn'), () => dialog(t('wording.schemaTitle'), () => [h('p', { text: t('wording.schemaHelp') }), h('pre', { class: 'xml', text: '{\n  "schemaVersion": 1,\n  "entries": {\n    "computer": "machine",\n    "private vocabulary": "Wording applied"\n  }\n}' }), h('p', { class: 'small muted', text: t('wording.rules') })]), 'btn-ghost btn-sm')])]), 'vocabulary'));
   }
@@ -118,8 +118,8 @@ export async function settingsPage(root, app) {
         const pin = await promptDialog(t('school.unlock'), t('school.pin'), '', { password: true, numeric: true });
         if (!pin) return;
         const r = await td.invoke['school:disable'](pin);
-        if (!r.ok) { play('invalid'); toast(t('school.wrongPin'), 'error'); return; }
-        state.school = await td.invoke['school:get'](); toast(t('school.off'), 'success'); app.applySettings();
+        if (!r.ok) { play('invalid'); toast(notice('school.wrongPin'), 'error'); return; }
+        state.school = await td.invoke['school:get'](); toast(notice('school.off'), 'success'); app.applySettings();
       }, 'btn-primary btn-sm')]
       : [btn(t('school.enable'), async () => {
         const name = await promptDialog(t('school.enable'), t('school.name'), s.schoolName || t('set.school'), { validate: (v) => v.trim() && v.length <= 40 ? '' : t('school.nameBad') });
@@ -127,9 +127,9 @@ export async function settingsPage(root, app) {
         const pin = await promptDialog(t('school.enable'), t('school.newPin'), '', { password: true, numeric: true, validate: (v) => /^\d{4,12}$/.test(v) ? '' : t('school.pinBad') });
         if (!pin) return;
         const pin2 = await promptDialog(t('school.enable'), t('school.repeatPin'), '', { password: true, numeric: true });
-        if (pin !== pin2) { toast(t('school.pinMismatch'), 'error'); return; }
+        if (pin !== pin2) { toast(notice('school.pinMismatch'), 'error'); return; }
         state.school = await td.invoke['school:enable'](pin, name.trim()); await app.applySettings({ schoolName: name.trim() }, originalText('hist.setField', [originalText('set.school'), 'on']));
-        toast(t('school.on', [name.trim()]), 'success');
+        toast(notice('school.on', [name.trim()]), 'success');
       }, 'btn-ghost btn-sm')]), 'classroom lock pin')]);
 
   // History, Git and updates
@@ -139,26 +139,26 @@ export async function settingsPage(root, app) {
     h('p', { class: 'small ' + (wsInfo.kind === 'git' ? 'muted' : 'notice warn'), text: wsInfo.kind === 'git' ? t('hist.backendGit') : t('hist.backendJsonl') }),
     row('gitRemote', t('set.gitRemote'), t('set.gitRemoteHelp'), h('div', { class: 'row' }, [(remote.id = 'gitRemote-in', remote.setAttribute('aria-label', t('set.gitRemote')), remote), btn(t('set.gitSave'), async () => {
       const v = remote.value.trim();
-      try { await td.invoke['ws:setRemote'](v); await set({ gitRemote: v }, 'set.gitRemote', v || 'none'); toast(t('set.gitSaved'), 'success'); } catch (e) { toast(e.message, 'error'); }
-    }, 'btn-ghost btn-sm'), btn(t('set.gitPush'), async () => { try { await td.invoke['ws:push'](); toast(t('set.gitPushed'), 'success'); } catch (e) { toast(t('set.gitPushFailed', [e.message]), 'error'); } }, 'btn-ghost btn-sm', { disabled: !s.gitRemote || wsInfo.kind !== 'git' || undefined })]), 'git push remote'),
-    row('updates', t('set.updates'), app.info.updates ? t('set.updatesHelp') : t('set.updatesPortable'), h('div', { class: 'row' }, [sw(s.updates, (v) => set({ updates: v }, 'set.updates', v), t('set.updates')), btn(t('act.checkUpdates'), async () => { const r = await td.invoke['update:check'](); toast(t('update.state.' + r.state, [r.version || '']), r.state === 'error' ? 'error' : 'info'); }, 'btn-ghost btn-sm', { disabled: !app.info.updates || undefined })]), 'squirrel update')
+      try { await td.invoke['ws:setRemote'](v); await set({ gitRemote: v }, 'set.gitRemote', v || 'none'); toast(notice('set.gitSaved'), 'success'); } catch (e) { toast(e.message, 'error'); }
+    }, 'btn-ghost btn-sm'), btn(t('set.gitPush'), async () => { try { await td.invoke['ws:push'](); toast(notice('set.gitPushed'), 'success'); } catch (e) { toast(notice('set.gitPushFailed', [e.message]), 'error'); } }, 'btn-ghost btn-sm', { disabled: !s.gitRemote || wsInfo.kind !== 'git' || undefined })]), 'git push remote'),
+    row('updates', t('set.updates'), app.info.updates ? t('set.updatesHelp') : t('set.updatesPortable'), h('div', { class: 'row' }, [sw(s.updates, (v) => set({ updates: v }, 'set.updates', v), t('set.updates')), btn(t('act.checkUpdates'), async () => { const r = await td.invoke['update:check'](); toast(notice('update.state.' + r.state, [r.version || '']), r.state === 'error' ? 'error' : 'info'); }, 'btn-ghost btn-sm', { disabled: !app.info.updates || undefined })]), 'squirrel update')
   ]);
 
   // Import, export, backup, reset
   sec('data', [
-    row('settingsIo', t('set.settingsIo'), t('set.settingsIoHelp'), h('div', { class: 'row' }, [btn(t('set.export'), async () => { const r = await td.invoke['settings:export'](); if (r.ok) toast(t('export.saved', [r.path]), 'success'); }, 'btn-ghost btn-sm'), btn(t('set.import'), async () => {
+    row('settingsIo', t('set.settingsIo'), t('set.settingsIoHelp'), h('div', { class: 'row' }, [btn(t('set.export'), async () => { const r = await td.invoke['settings:export'](); if (r.ok) toast(notice('export.saved', [r.path]), 'success'); }, 'btn-ghost btn-sm'), btn(t('set.import'), async () => {
       const r = await td.invoke['settings:import']();
       if (r.cancelled) return;
-      if (!r.ok) { play('invalid'); toast(t('import.settingsBad', [r.key || r.error]), 'error'); return; }
-      app.settings = r.settings; app.applySettings(); toast(t('import.settingsDone'), 'success');
+      if (!r.ok) { play('invalid'); toast(notice('import.settingsBad', [r.key || r.error]), 'error'); return; }
+      app.settings = r.settings; app.applySettings(); toast(notice('import.settingsDone'), 'success');
     }, 'btn-ghost btn-sm')])),
-    row('backup', t('set.backup'), t('set.backupHelp'), h('div', { class: 'row' }, [btn(t('act.backup'), async () => { const r = await td.invoke['backup:export'](); if (r.ok) toast(t('backup.saved', [r.path]), 'success'); }, 'btn-primary btn-sm'), btn(t('backup.restore'), async () => {
+    row('backup', t('set.backup'), t('set.backupHelp'), h('div', { class: 'row' }, [btn(t('act.backup'), async () => { const r = await td.invoke['backup:export'](); if (r.ok) toast(notice('backup.saved', [r.path]), 'success'); }, 'btn-primary btn-sm'), btn(t('backup.restore'), async () => {
       const ok = await superConfirm({ title: t('backup.restoreTitle'), danger: t('backup.restoreWarn'), word: 'RESTORE', action: t('backup.restoreHold') });
       if (!ok) return;
       const r = await td.invoke['backup:import']();
       if (r.cancelled) return;
-      if (!r.ok) { play('invalid'); toast(t('backup.restoreBad', [t('err.' + r.error)]), 'error'); return; }
-      toast(t('backup.restored', [r.count]), 'success'); app.settings = await td.invoke['settings:get'](); app.applySettings();
+      if (!r.ok) { play('invalid'); toast(notice('backup.restoreBad', [notice('err.' + r.error)]), 'error'); return; }
+      toast(notice('backup.restored', [r.count]), 'success'); app.settings = await td.invoke['settings:get'](); app.applySettings();
     }, 'btn-ghost btn-sm')]), 'zip restore'),
     row('onboarding', t('set.onboarding'), t('set.onboardingHelp'), btn(t('set.onboardingRun'), () => app.applySettings({ onboarded: false, onboarding: { step: 0, path: s.onboarding.path, skipped: [] } }, originalText('hist.onboarding')).then(() => import('./onboarding.js').then((m) => m.runOnboarding(app))), 'btn-ghost btn-sm'))
   ]);

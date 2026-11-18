@@ -55,6 +55,10 @@ An empty card shows the original wording state. An invalid file leaves the last 
 
 The adjacent first-run setup action uses the same label wrapping when bilingual text grows. Keep the action within its card and retain the existing button style.
 
+### Deployer notification wording
+
+Use the existing Deployer drawer, search controls and corner notifications. Applying or clearing personal wording updates the open drawer and search count in place. A matching row keeps keyboard focus when its text changes. Errors and warnings keep their dismiss control until the user closes them. The current wording applies to notice text and accessible names. Technical arguments stay literal.
+
 
 ## Virtual Commons design reference
 

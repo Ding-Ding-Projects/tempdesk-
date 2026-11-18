@@ -19,3 +19,5 @@ The rebuilt bilingual setup action fit its Settings card at 360 px before, durin
 Verify durable wording boundaries through the Deployer Settings, workspace history, Studio history, and the deployment, inventory and log exports. Use a dedicated test workspace and a synthetic wording file. Keep old workspace records intact and distinguish the notification drawer from saved records.
 
 Exercise the driver-path import through the generated desktop Studio bridge. The new history entry should use the original field label and preserve the supplied path.
+
+Verify the open Deployer notification drawer and search across applying, replacing and clearing local wording. Verify successful and invalid drops, local save failures, and the existing sound preferences in the built renderer.

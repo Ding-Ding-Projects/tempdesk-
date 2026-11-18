@@ -881,6 +881,10 @@
   "3": "已套用個人用詞"
  },
  "wording.clear": "還原原有用詞",
+ "wording.clearError": "未能清除用字檔案。現有用字仍然生效。",
+ "wording.readError": "讀唔到用字檔案。現有用字仍然生效。",
+ "wording.rejected": "個人用字檔案未有套用。",
+ "wording.saveError": "未能儲存用字檔案。現有用字仍然生效。",
  "wording.cleared": "已還原原有用詞。",
  "wording.invalid.depth": "檔案巢狀超過 8 層。沒有任何變更。",
  "wording.invalid.duplicate": "檔案有重複的鍵。沒有任何變更。",

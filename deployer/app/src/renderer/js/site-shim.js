@@ -93,7 +93,7 @@
     if (!f.matches('input, select, textarea, button, a')) f.setAttribute('tabindex', '-1');
     f.focus({ preventScroll: true }); pulse(f.closest('.field') || f);
   }
-  function toast(msg) { if (host.toast) host.toast(msg); }
+  function toast(msg, kind) { if (host.toast) host.toast(msg, kind); }
   var ready = [], paletteSources = [];
   // The studio registers live search sources; the desktop palette (parent window) asks them.
   window.TempDeskStudioPalette = function (q, regex) {

@@ -1,7 +1,7 @@
 // History timeline (Git or JSON lines backend): commit list with search, coloured per-file diff,
 // compare two versions, restore any version as a new commit, unlimited undo and redo.
 // Help: changelog viewer and offline docs browser with search.
-import { h, t, btn, toast, searchBox, contextMenu, fmtTime, dialog, superConfirm, listFilter } from './ui.js';
+import { h, t, btn, toast, notice, searchBox, contextMenu, fmtTime, dialog, superConfirm, listFilter } from './ui.js';
 
 const td = window.td;
 const Core = window.TempDeskCore;
@@ -48,7 +48,7 @@ export async function historyPage(root, app) {
     app.applySettings();
   }
   async function compare(e) {
-    if (!compareA) { compareA = e; toast(t('hist.compareNext')); show(e, log.indexOf(e)); return; }
+    if (!compareA) { compareA = e; toast(notice('hist.compareNext')); show(e, log.indexOf(e)); return; }
     const a = compareA; compareA = null;
     const older = log.indexOf(a) > log.indexOf(e) ? a : e, newer = older === a ? e : a;
     const d = await td.invoke['ws:diff'](older.id, newer.id);
@@ -80,8 +80,8 @@ function renderInline(parts, openArticle) {
     if (p.t === 'link') return h('a', { href: '#', onclick: (e) => {
       e.preventDefault();
       if (openArticle?.(p.href)) return;
-      if (/^https?:/.test(p.href)) td.invoke['shell:open'](p.href).catch(() => toast(t('help.linkBlocked'), 'error'));
-      else toast(t('help.linkBlocked'), 'error');
+      if (/^https?:/.test(p.href)) td.invoke['shell:open'](p.href).catch(() => toast(notice('help.linkBlocked'), 'error'));
+      else toast(notice('help.linkBlocked'), 'error');
     } }, [p.v]);
     return document.createTextNode(p.v);
   });

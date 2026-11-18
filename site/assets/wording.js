@@ -161,7 +161,21 @@
     };
   }
 
-  var api = { validate: validate, strictParse: strictParse, buildTranslator: buildTranslator, MAX_BYTES: MAX_BYTES, MAX_DEPTH: MAX_DEPTH, MAX_KEY: MAX_KEY, MAX_VALUE: MAX_VALUE };
+  // Keep catalogue references separate from literal arguments until a notice is displayed.
+  function notice(key, args, fallback) { return { key: key, args: args || [], fallback: fallback }; }
+  function renderNotice(message, translate) {
+    function render(value) {
+      if (Array.isArray(value)) return value.map(render).join('');
+      if (value && typeof value === 'object' && typeof value.key === 'string') {
+        var text = translate(value.key, (value.args || []).map(render));
+        return text === value.key && value.fallback !== undefined ? render(value.fallback) : text;
+      }
+      return value == null ? '' : String(value);
+    }
+    return render(message);
+  }
+
+  var api = { validate: validate, strictParse: strictParse, buildTranslator: buildTranslator, notice: notice, renderNotice: renderNotice, MAX_BYTES: MAX_BYTES, MAX_DEPTH: MAX_DEPTH, MAX_KEY: MAX_KEY, MAX_VALUE: MAX_VALUE };
   root.TempDeskWording = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

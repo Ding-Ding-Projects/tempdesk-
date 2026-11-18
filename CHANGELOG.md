@@ -19,6 +19,9 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
 
 ### Fixed
 
+- Refresh Deployer and Studio notices from message keys when personal wording changes, including inside an open notification search.
+- Play the wording success and invalid-input cues through the existing sound and volume settings. Preserve the current wording after a read or save error.
+
 - Keep personal wording out of newly written workspace action labels, Studio history arguments, and Deployer exports and copied progress steps.
 - Carry the chosen deployment, inventory or log export format through to the save dialog.
 

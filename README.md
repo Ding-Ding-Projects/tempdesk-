@@ -498,6 +498,8 @@ These steps were captured in the signed-in management portal from the v1.0.80 so
 
 In TempDesk Deployer and Answer File Studio, personal wording changes interface copy. New workspace history, exported logs, copied progress steps and suggested version names use original labels. Deployment names, field values and paths stay literal. In an export dialog, choose a format to open the save dialog, or dismiss the dialog to cancel.
 
+Deployer keeps notification message keys and literal values in memory. The open notification drawer updates its text and search results when personal wording is applied or cleared. A successful import plays the Windows tada cue after the wording is saved. A rejected wording drop plays the invalid-input cue and leaves the current wording in place. Both use the existing sound switch and volume.
+
 ## Standalone offline documentation
 
 Open **TempDesk Docs** to browse the guides, search the documentation and read the operator wiki offline. The [portable executable in v1.0.73](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.73) ran from an otherwise empty folder. Searching for **Configure the destinations** opened the Virtual Commons guide, and the sidebar opened the prepared wiki.

@@ -18,6 +18,17 @@ const W = require('../assets/wording.js');
 const B64 = require('../assets/base64.js');
 const H = require('../assets/history.js');
 
+test('notification records preserve literal data and render nested copy with current wording', () => {
+  const entry = W.notice('action', [[W.notice('field'), ', ', W.notice('other')], 'C:/Example/Field.json']);
+  const catalogue = { action: 'Set {0} to {1}', field: 'Field', other: 'Other' };
+  const render = (rewrite) => W.renderNotice(entry, (key, args) =>
+    rewrite(catalogue[key]).replace(/\{(\d+)\}/g, (_part, index) => args[index]));
+  assert.equal(render((text) => text.replace('Field', 'Local label')), 'Set Local label, Other to C:/Example/Field.json');
+  assert.equal(render((text) => text), 'Set Field, Other to C:/Example/Field.json');
+  assert.doesNotMatch(JSON.stringify(entry), /Local label/);
+  assert.equal(W.renderNotice(W.notice('missing', [], W.notice('field')), (key) => catalogue[key] || key), 'Field');
+});
+
 test('new history keeps literal at-sign values and old label references still render', async () => {
   const history = new H.History({ store: H.memoryStore(), initial: {}, coalesceMs: 0 });
   await history.load();

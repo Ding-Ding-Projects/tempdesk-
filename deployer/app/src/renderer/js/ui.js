@@ -2,8 +2,10 @@
 // two-key super confirmation, info popovers, context menus, search boxes with the regex builder,
 // sounds and the full-window celebration. Every user-facing string comes through t().
 const Core = window.TempDeskCore;
+const Wording = window.TempDeskWording;
 
-export const state = { t: (k) => k, settings: {}, motionOff: false, info: {}, notifications: [], sounds: {}, school: { enabled: false } };
+export const state = { t: (k) => k, studioT: (k) => k, settings: {}, motionOff: false, info: {}, notifications: [], school: { enabled: false } };
+export const notice = Wording.notice;
 
 export function h(tag, attrs, kids) {
   const e = document.createElement(tag);
@@ -50,38 +52,105 @@ export function iconBtn(name, label, onclick, extra) {
 }
 
 // ---- sounds -------------------------------------------------------------------------------
-const audioCache = {};
-export async function play(name) {
-  if (!state.settings.sounds) return;
-  try {
-    if (!(name in audioCache)) audioCache[name] = await window.td.invoke['sound:get'](name);
-    const src = audioCache[name];
+const audioCache = new Map();
+let soundQueue = Promise.resolve(), activeSound, soundGeneration = 0, wordingSoundGeneration = 0;
+function soundVolume() {
+  return state.settings.sounds ? Math.max(0, Math.min(1, (state.settings.volume || 0) / 100)) : 0;
+}
+export function refreshSoundPreferences() {
+  if (state.school.enabled) {
+    wordingSoundGeneration++;
+    if (activeSound?.wording) activeSound.finish();
+  }
+  const volume = soundVolume();
+  if (!volume) {
+    soundGeneration++;
+    activeSound?.finish();
+  } else if (activeSound) {
+    activeSound.audio.volume = volume;
+  }
+}
+export function play(name, { wording = false } = {}) {
+  const generation = soundGeneration;
+  const wordingGeneration = wordingSoundGeneration;
+  const eligible = () => generation === soundGeneration && soundVolume() &&
+    (!wording || (wordingGeneration === wordingSoundGeneration && !state.school.enabled));
+  if (!eligible()) return;
+  soundQueue = soundQueue.then(async () => {
+    if (!eligible()) return;
+    const src = audioCache.get(name) || await window.td.invoke['sound:get'](name);
     if (!src) return;
-    const a = new Audio(src);
-    a.volume = Math.max(0, Math.min(1, (state.settings.volume || 0) / 100));
-    await a.play();
-  } catch (e) { /* sound is optional */ }
+    audioCache.set(name, src);
+    if (!eligible()) return;
+    const audio = new Audio(src);
+    audio.volume = soundVolume();
+    await new Promise((resolve) => {
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timer);
+        audio.removeEventListener('ended', finish);
+        audio.removeEventListener('error', finish);
+        activeSound = null;
+        audio.pause();
+        resolve();
+      };
+      const timer = setTimeout(finish, 6000);
+      activeSound = { audio, finish, wording };
+      audio.addEventListener('ended', finish, { once: true });
+      audio.addEventListener('error', finish, { once: true });
+      Promise.resolve().then(() => { if (!finished && eligible()) return audio.play(); finish(); }).catch(finish);
+    });
+  }).catch(() => { /* audio availability must not affect the action */ });
+  return soundQueue;
 }
 
 // ---- live region, toasts and notification centre -------------------------------------------
-let live = null, toasts = null;
+let live = null, toasts = null, announceTicket = 0, noticeId = 0;
+const activeToasts = new Map();
 export function announce(text) {
   if (!live) { live = h('div', { class: 'sr-only', 'aria-live': 'polite', role: 'status' }); document.body.appendChild(live); }
+  const ticket = ++announceTicket;
   live.textContent = '';
-  setTimeout(() => { live.textContent = text; }, 30);
+  const timer = setTimeout(() => { if (ticket === announceTicket) live.textContent = text; }, 30);
+  return () => {
+    clearTimeout(timer);
+    if (ticket === announceTicket) live.textContent = '';
+  };
 }
 const notifyListeners = [];
 export function onNotify(fn) { notifyListeners.push(fn); }
-export function toast(text, kind, opts) {
-  opts = opts || {};
+function showNotification(record) { return !state.school.enabled || !record.wording; }
+export function visibleNotifications() { return state.notifications.filter(showNotification); }
+export function notificationText(record) {
+  return Wording.renderNotice(record.message, record.catalogue === 'studio' ? state.studioT : state.t);
+}
+export function refreshToasts() {
+  for (const [element, entry] of activeToasts) {
+    if (!showNotification(entry.record)) { activeToasts.delete(element); element.remove(); continue; }
+    entry.body.textContent = notificationText(entry.record);
+    for (const attr of ['aria-label', 'title']) entry.close.setAttribute(attr, t('common.dismiss'));
+  }
+}
+export function toast(message, kind, opts = {}) {
+  const record = { id: ++noticeId, message, kind: kind || 'info', time: new Date(), catalogue: opts.catalogue, wording: Boolean(opts.wording) };
+  if (!showNotification(record)) return;
   if (!toasts) { toasts = h('div', { class: 'toasts', 'aria-live': 'polite' }); document.body.appendChild(toasts); }
-  const el = h('div', { class: 'toast ' + (kind || ''), role: kind === 'error' ? 'alert' : 'status' }, [h('div', { style: { flex: '1' } }, [text]),
-    iconBtn('close', t('common.dismiss'), () => remove(), { style: { width: '28px', height: '28px' } })]);
+  const body = h('div', { style: { flex: '1' }, text: notificationText(record) });
+  const close = iconBtn('close', t('common.dismiss'), remove, { style: { width: '28px', height: '28px' } });
+  const urgent = ['error', 'warn', 'warning'].includes(kind);
+  const el = h('div', { class: 'toast ' + (kind || ''), role: urgent ? 'alert' : 'status' }, [body, close]);
+  activeToasts.set(el, { record, body, close });
   toasts.appendChild(el);
-  const remove = () => { el.classList.add('out'); setTimeout(() => el.remove(), state.motionOff ? 0 : 240); };
-  setTimeout(remove, opts.ms || (kind === 'error' ? 8000 : 4200));
+  function remove() {
+    if (!activeToasts.has(el) || el.classList.contains('out')) return;
+    el.classList.add('out');
+    setTimeout(() => { activeToasts.delete(el); el.remove(); }, state.motionOff ? 0 : 240);
+  }
+  if (!urgent) setTimeout(remove, opts.ms || 4200);
   if (!opts.noHistory) {
-    state.notifications.unshift({ text: String(text), kind: kind || 'info', time: new Date() });
+    state.notifications.unshift({ ...record, message: opts.historyMessage ?? message });
     state.notifications = state.notifications.slice(0, 200);
     notifyListeners.forEach((f) => f());
   }
@@ -314,7 +383,10 @@ export function select(options, value, onchange) {
 }
 
 // ---- celebration (personal wording applied) -----------------------------------------------
+let stopCelebration;
+export function dismissCelebration() { stopCelebration?.(); }
 export function celebrate(headline) {
+  dismissCelebration();
   const box = h('div', { class: 'celebrate', 'aria-hidden': 'true' }, [h('div', { class: 'glow' }), h('div', { class: 'headline', text: headline })]);
   if (!state.motionOff) {
     for (let i = 0; i < 28; i++) {
@@ -323,9 +395,15 @@ export function celebrate(headline) {
     }
   }
   document.body.appendChild(box);
-  announce(headline);
+  const stopAnnouncement = announce(headline);
   // Animates in, holds 3 s, animates out; with motion off it shows statically for the same time.
-  setTimeout(() => box.remove(), state.motionOff ? 3000 : 3900);
+  const timeout = setTimeout(() => dismissCelebration(), state.motionOff ? 3000 : 3900);
+  stopCelebration = () => {
+    clearTimeout(timeout);
+    box.remove();
+    stopAnnouncement();
+    stopCelebration = null;
+  };
 }
 
 // Focus an element and pulse it (used by the command palette teleport).

@@ -352,7 +352,8 @@
   });
 
   function toast(msg) {
-    var tEl = h('div', { class: 'toast', role: 'status' }, [msg]);
+    var text = typeof msg === 'string' ? msg : window.TempDeskWording.renderNotice(msg, t);
+    var tEl = h('div', { class: 'toast', role: 'status' }, [text]);
     document.body.appendChild(tEl);
     setTimeout(function () { tEl.remove(); }, 2600);
   }

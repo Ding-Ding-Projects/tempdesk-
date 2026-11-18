@@ -14,7 +14,12 @@ import { registerHints, hintAt, hintCount, fieldCard, quickField, meaningOf, hin
 
 const A = window.TempDeskAnswer, Z = window.TempDeskZip, HI = window.TempDeskHistory, S = window.TempDeskSite;
 const t = (k, args, fb) => S.t(k, args, fb);
+const notice = window.TempDeskWording.notice;
 t.original = (k, args, fb) => S.t.original(k, args, fb);
+function authoredError(key, args) {
+  const message = notice(key, args);
+  return Object.assign(new Error(window.TempDeskWording.renderNotice(message, t.original)), { notice: message });
+}
 const LS = S.LS;
 const ROOT = S.ROOT;
 const isPhone = () => window.matchMedia('(max-width: 760px)').matches;
@@ -169,7 +174,7 @@ const isDirect = (m) => (m || model).mode === 'direct';
 function fileXml(m) {
   m = m || model;
   if (m.mode !== 'direct') return A.buildXml(m);
-  if (!rules || !catalog || !catalog.raw) throw new Error(t('direct.needCatalog'));
+  if (!rules || !catalog || !catalog.raw) throw authoredError('direct.needCatalog');
   return DX.buildDirectXml(m.direct, catalog.raw, rules.gen);
 }
 function safeXml(m) { try { return fileXml(m); } catch (e) { return '<!-- ' + String(e.message).replace(/--/g, '- -') + ' -->\n'; } }
@@ -236,12 +241,12 @@ function commit(msg, coalesce) {
 }
 function applyState(state, from) {
   const r = A.normalizeModel(state);
-  if (!r.ok) { S.toast(t('err.model.' + r.error.split('.')[1], null, t('err.badState'))); return; }
+  if (!r.ok) { S.toast(notice('err.model.' + r.error.split('.')[1], [], notice('err.badState'))); return; }
   model = mergeSecrets(r.model, from || model);
   renderView();
 }
-function undo() { if (!history) return; const e = history.undo(); if (e) { applyState(e.state); S.toast(t('hist.undone')); } updateUndo(); }
-function redo() { if (!history) return; const e = history.redo(); if (e) { applyState(e.state); S.toast(t('hist.redone')); } updateUndo(); }
+function undo() { if (!history) return; const e = history.undo(); if (e) { applyState(e.state); S.toast(notice('hist.undone')); } updateUndo(); }
+function redo() { if (!history) return; const e = history.redo(); if (e) { applyState(e.state); S.toast(notice('hist.redone')); } updateUndo(); }
 
 // ------------------------------------------------------------------------------------------------
 // Studio shell: activity bar, side bar, editor tabs, inspector, bottom panel, status bar
@@ -604,12 +609,12 @@ function renderPresetsSide(body) {
     const fr = filterList(Object.keys(p).sort(), q, (n) => n, re);
     if (!Object.keys(p).length) list.appendChild(h('p', { class: 'empty', text: t('pre.none') }));
     (fr.ok ? fr.items : []).forEach(({ it: n }) => list.appendChild(h('div', { class: 'list-row' + (n === branch ? ' cur' : '') }, [h('b', { text: n }), h('small', { class: 'meter-label', text: t('tab.' + (p[n].mode || 'server')) }),
-      h('div', { class: 'row-tools' }, [btn('pre.load', () => { const r = A.normalizeModel(p[n]); if (!r.ok) { S.toast(t('pre.badOne')); return; } model = mergeSecrets(r.model, model); branch = n; LS.set('td.studio.branch', n); commit({ key: 'hist.presetLoad', args: [n] }); renderView(); }, 'btn-primary btn-sm'),
+      h('div', { class: 'row-tools' }, [btn('pre.load', () => { const r = A.normalizeModel(p[n]); if (!r.ok) { S.toast(notice('pre.badOne')); return; } model = mergeSecrets(r.model, model); branch = n; LS.set('td.studio.branch', n); commit({ key: 'hist.presetLoad', args: [n] }); renderView(); }, 'btn-primary btn-sm'),
         btn('pre.delete', () => { if (!window.confirm(t('pre.deleteConfirm', [n]))) return; delete p[n]; savePresets(p); if (branch === n) { branch = ''; LS.set('td.studio.branch', ''); } draw(); renderStatusBar(); }, 'btn-ghost btn-sm')])])));
   };
   const sb = searchBox({ label: t('search.presets'), placeholder: t('search.presets'), compact: true, regexLabel: t('search.regex'), badRegex: t('palette.badRegex'), onChange: (qq, r) => { q = qq; re = r; draw(); } });
   body.append(h('div', { class: 'field' }, [h('label', { for: 'side-pre-name', text: t('pre.name') }), nameIn]), h('label', { class: 'check' }, [inc, t('pre.includePw')]),
-    btn('pre.save', () => { const n = nameIn.value.trim(); if (!n || ['__proto__', 'prototype', 'constructor'].includes(n)) { S.toast(t('pre.nameBad')); return; } const p = loadPresets(); if (p[n] && !window.confirm(t('pre.replace', [n]))) return; p[n] = inc.checked ? clone(model) : A.stripSecrets(model); if (savePresets(p)) { branch = n; LS.set('td.studio.branch', n); nameIn.value = ''; draw(); renderStatusBar(); output(t('pre.saved', [n])); } }, 'btn-primary btn-sm'),
+    btn('pre.save', () => { const n = nameIn.value.trim(); if (!n || ['__proto__', 'prototype', 'constructor'].includes(n)) { S.toast(notice('pre.nameBad')); return; } const p = loadPresets(); if (p[n] && !window.confirm(t('pre.replace', [n]))) return; p[n] = inc.checked ? clone(model) : A.stripSecrets(model); if (savePresets(p)) { branch = n; LS.set('td.studio.branch', n); nameIn.value = ''; draw(); renderStatusBar(); output(t('pre.saved', [n])); } }, 'btn-primary btn-sm'),
     sb.el, list, h('div', { class: 'cta' }, [btn('pre.export', () => openPresets(), 'btn-ghost btn-sm')]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('studio.branchHelp') }));
   draw();
 }
@@ -769,19 +774,19 @@ function quickFix(issue) {
   try {
     if (isDirect()) {
       const d = DX.directFix(model.direct, catalog.raw, rules.gen, issue.id);
-      if (!d) { S.toast(t('fix.notApplied')); return; }
+      if (!d) { S.toast(notice('fix.notApplied')); return; }
       model.direct = d; commit({ key: 'hist.quickFix', args: [issue.id] }); output(t('hist.quickFix', [issue.id])); renderView(); return;
     }
     const parsed = rules.parseXml(fileXml(model), catalog.raw);
     const fixed = rules.applyFix(parsed.model, catalog.raw, issue.id);
-    if (!fixed) { S.toast(t('fix.notApplied')); return; }
+    if (!fixed) { S.toast(notice('fix.notApplied')); return; }
     const xml = A.alignXml(rules.buildXml(fixed, catalog.raw), fileXml(model));
     const r = A.syncFromXml(model, xml, { knownComponent });
     model = r.model;
     commit({ key: 'hist.quickFix', args: [issue.id] });
     output(t('hist.quickFix', [issue.id]));
     renderView();
-  } catch (e) { S.toast(t('fix.notApplied') + ' ' + e.message); }
+  } catch (e) { S.toast([notice('fix.notApplied'), ' ', e.message]); }
 }
 function revealField(k) {
   const id = k.split('.')[0] === 'accounts' ? 'accounts' : k;
@@ -1271,7 +1276,7 @@ function renderAll() {
 }
 function openEditor(pass, comp) {
   allState.pass = pass; allState.open = comp; allState.q = ''; allState.onlySet = false;
-  if (catalog && !catalog.byName.get(comp)) { S.toast(t('flow.notInCatalog', [comp])); return; }
+  if (catalog && !catalog.byName.get(comp)) { S.toast(notice('flow.notInCatalog', [comp])); return; }
   setView('all');
 }
 
@@ -1347,7 +1352,7 @@ const STUDIO_CMDS = () => [
   ['studio.validate', () => $('#st-validate').click()], ['studio.buildKit', downloadZip], ['tb.downloadXml', downloadXml], ['tb.import', () => $('#b-import-file').click()], ['tb.export', openExport], ['tb.save', saveVersion],
   ['studio.newFromTemplate', () => openTab('new')], ['studio.shortcuts', openShortcuts], ['studio.toggleSplit', () => { layout.split = !layout.split; applyLayout(); renderView(); }],
   ...['flow', 'disk', 'commands', 'map', 'all', 'simulate', 'compare', 'snippets', 'secrets', 'plan', 'history', 'xml'].map((id) => ['tab.' + id, () => openTab(id)]),
-  ...Object.keys(A.SNIPPETS).map((id) => ['snip.' + id, () => { model = A.applySnippet(model, id); commit({ key: 'hist.snippet', args: [{ catalogKey: 'snip.' + id }] }); refreshAround(); if (view === 'template') renderEditorOnly(); S.toast(t('snip.inserted', [t('snip.' + id)])); }])
+  ...Object.keys(A.SNIPPETS).map((id) => ['snip.' + id, () => { model = A.applySnippet(model, id); commit({ key: 'hist.snippet', args: [{ catalogKey: 'snip.' + id }] }); refreshAround(); if (view === 'template') renderEditorOnly(); S.toast(notice('snip.inserted', [notice('snip.' + id)])); }])
 ];
 function renderGlobalResults() {
   const res = runGlobalSearch();
@@ -1534,7 +1539,7 @@ async function renderHistory() {
   if (!history) { sec.appendChild(h('p', { text: t('hist.unavailable') })); return; }
   history.flush();
   const rememberCb = h('input', { type: 'checkbox', checked: remember() });
-  rememberCb.addEventListener('change', () => { LS.set('td.rememberPw', rememberCb.checked ? '1' : '0'); S.toast(t(rememberCb.checked ? 'hist.rememberOn' : 'hist.rememberOff')); });
+  rememberCb.addEventListener('change', () => { LS.set('td.rememberPw', rememberCb.checked ? '1' : '0'); S.toast(notice(rememberCb.checked ? 'hist.rememberOn' : 'hist.rememberOff')); });
   const storage = h('div', { class: 'storage' });
   sec.append(
     h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('hist.help', [history.store.kind]) }),
@@ -1564,7 +1569,7 @@ async function renderHistory() {
         h('span', { class: 'msg' }, [h('span', { text: msgText(e.msg) }), h('br'), h('small', { text: new Date(e.t).toLocaleString() + ' · #' + e.id + ' · ' + t('hist.kind.' + e.kind) })]),
         btn('hist.diffCurrent', () => { diffBox.replaceChildren(h('h3', { text: t('hist.diffWith', ['#' + e.id]) }), diffView(xmlOf(e.state), cur)); diffBox.scrollIntoView({ block: 'nearest' }); }, 'btn-ghost btn-sm'),
         idx < entries.length - 1 ? btn('hist.diffPrev', () => { const prev = history.byId(e.back !== null && e.back !== undefined ? e.back : e.id - 1) || entries[idx + 1]; diffBox.replaceChildren(h('h3', { text: t('hist.diffPrevTitle', ['#' + e.id]) }), diffView(xmlOf(prev.state), xmlOf(e.state))); }, 'btn-ghost btn-sm') : null,
-        e === history.head() ? h('small', { text: t('hist.current') }) : btn('hist.restoreBtn', () => { const r = history.restore(e.id); if (r) { applyState(r.state); S.toast(t('hist.restored')); } }, 'btn-primary btn-sm')
+        e === history.head() ? h('small', { text: t('hist.current') }) : btn('hist.restoreBtn', () => { const r = history.restore(e.id); if (r) { applyState(r.state); S.toast(notice('hist.restored')); } }, 'btn-primary btn-sm')
       ]);
       ul.appendChild(li);
     });
@@ -1602,7 +1607,7 @@ function clearHistory() {
   const go = h('button', { type: 'button', class: 'btn btn-coral', disabled: true, text: t('hist.clearConfirm') });
   const check = () => { go.disabled = !(cb.checked && inp.value.trim() === word); };
   inp.addEventListener('input', check); cb.addEventListener('change', check);
-  go.addEventListener('click', async () => { await history.clear(); S.closeSheet(dlg); dlg.remove(); S.toast(t('hist.cleared')); renderView(); });
+  go.addEventListener('click', async () => { await history.clear(); S.closeSheet(dlg); dlg.remove(); S.toast(notice('hist.cleared')); renderView(); });
   dlg.appendChild(h('div', { class: 'sheet-panel' }, [h('h2', { id: 'clr-h', text: t('hist.clearTitle') }), h('p', { id: 'clr-d', text: t('hist.clearBody', [history.entries.length, word]) }),
     h('label', { class: 'check' }, [cb, t('hist.clearUnderstand')]), h('div', { class: 'field' }, [h('label', { for: 'clr-in', text: t('hist.clearType', [word]) }), inp]),
     h('div', { class: 'cta' }, [go, btn('common.cancel', () => { S.closeSheet(dlg); dlg.remove(); })])]));
@@ -1612,7 +1617,7 @@ function saveVersion() {
   const name = window.prompt(t('ver.prompt'), t.original('ver.default', [new Date().toLocaleString()]));
   if (name === null) return;
   history.mark('save', name.slice(0, 80));
-  S.toast(t('ver.saved'));
+  S.toast(notice('ver.saved'));
   updateUndo();
   if (view === 'history') renderView();
 }
@@ -1637,11 +1642,11 @@ function confirmProblems() {
 }
 function copyXml() {
   const text = safeXml(model);
-  (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(() => S.toast(t('tb.copied')), () => S.toast(t('tb.copyFailed')));
+  (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(() => S.toast(notice('tb.copied')), () => S.toast(notice('tb.copyFailed')));
 }
 function downloadXml() {
   if (!confirmProblems()) return;
-  if (isDirect()) { try { fileXml(); } catch (e) { S.toast(t('studio.xmlNotApplied', [e.message])); return; } }
+  if (isDirect()) { try { fileXml(); } catch (e) { S.toast(notice('studio.xmlNotApplied', [e.notice || e.message]), 'error'); return; } }
   download('autounattend.xml', safeXml(model), 'application/xml');
   history && history.mark('download', 'autounattend.xml');
   updateUndo();
@@ -1658,17 +1663,17 @@ async function downloadZip() {
   try {
     if (btnEl) btnEl.disabled = true;
     if (model.mode === 'server') {
-      S.toast(t('dl.fetching'));
+      S.toast(notice('dl.fetching'));
       const r = await fetch(ROOT + 'payload/manifest.json', { cache: 'no-cache' });
-      if (!r.ok) throw new Error(t('dl.noManifest'));
+      if (!r.ok) throw authoredError('dl.noManifest');
       const manifest = await r.json();
       files.push({ name: 'TempDesk/firstboot.json', data: A.buildFirstboot(model.server) });
       const plan = A.kitLayout(manifest, model.server.portalsMode);
       for (const item of plan) {
         const fr = await fetch(ROOT + 'payload/' + item.src.split('/').map(encodeURIComponent).join('/'), { cache: 'no-cache' });
-        if (!fr.ok) throw new Error(t('dl.fileMissing', [item.src]));
+        if (!fr.ok) throw authoredError('dl.fileMissing', [item.src]);
         const bytes = new Uint8Array(await fr.arrayBuffer());
-        if ((await sha256Hex(bytes)) !== item.sha256) throw new Error(t('dl.hashMismatch', [item.src]));
+        if ((await sha256Hex(bytes)) !== item.sha256) throw authoredError('dl.hashMismatch', [item.src]);
         files.push({ name: item.dest, data: bytes });
       }
     } else {
@@ -1677,9 +1682,9 @@ async function downloadZip() {
     downloadBlob('tempdesk-' + model.mode + '-kit.zip', Z.makeZip(files));
     history && history.mark('download', 'tempdesk-' + model.mode + '-kit.zip');
     updateUndo();
-    S.toast(t('dl.done', [files.length]));
+    S.toast(notice('dl.done', [files.length]));
   } catch (e) {
-    S.toast(t('dl.failed', [e.message]));
+    S.toast(notice('dl.failed', [e.notice || e.message]), 'error');
     const box = document.getElementById('b-errors'); if (box) { box.hidden = false; box.textContent = t('dl.failed', [e.message]); }
   } finally { if (btnEl) btnEl.disabled = false; }
 }
@@ -1769,7 +1774,7 @@ function importXmlText(text) {
 // ------------------------------------------------------------------------------------------------
 const PKEY = 'td.presets';
 function loadPresets() { try { const p = JSON.parse(LS.get(PKEY, '{}')); return p && typeof p === 'object' ? p : {}; } catch (e) { return {}; } }
-function savePresets(p) { if (!LS.set(PKEY, JSON.stringify(p))) { S.toast(t('pre.storageFull')); return false; } return true; }
+function savePresets(p) { if (!LS.set(PKEY, JSON.stringify(p))) { S.toast(notice('pre.storageFull')); return false; } return true; }
 function importPresetBundle(json, name) {
   const r = A.normalizePresetBundle(json);
   if (!r.ok) { report([t('pre.bad', [t('err.' + r.error, null, r.error), r.index || ''])], false); return; }
@@ -1796,14 +1801,14 @@ function openPresets() {
       if (pq) psb.setStatus(t('search.listCount', [names.length, all.length]), !names.length);
       if (!names.length) box.appendChild(h('p', { class: 'empty', text: t('pre.none') }));
       names.forEach((n) => box.appendChild(h('div', { class: 'list-row' }, [h('b', { text: n }), h('small', { class: 'meter-label', text: t('tab.' + (p[n].mode || 'server')) }), h('div', { class: 'row-tools' }, [
-        btn('pre.load', () => { const r = A.normalizeModel(p[n]); if (!r.ok) { S.toast(t('pre.badOne')); return; } model = mergeSecrets(r.model, model); view = model.mode; commit({ key: 'hist.presetLoad', args: [n] }); close(); renderView(); }, 'btn-primary btn-sm'),
+        btn('pre.load', () => { const r = A.normalizeModel(p[n]); if (!r.ok) { S.toast(notice('pre.badOne')); return; } model = mergeSecrets(r.model, model); view = model.mode; commit({ key: 'hist.presetLoad', args: [n] }); close(); renderView(); }, 'btn-primary btn-sm'),
         btn('pre.delete', () => { if (!window.confirm(t('pre.deleteConfirm', [n]))) return; delete p[n]; savePresets(p); draw(); }, 'btn-ghost btn-sm')])])));
     };
     draw();
     return [
       h('div', { class: 'field' }, [h('label', { for: 'pre-name', text: t('pre.name') }), nameIn]),
       h('label', { class: 'check' }, [inc, t('pre.includePw')]),
-      h('div', { class: 'cta' }, [btn('pre.save', () => { const n = nameIn.value.trim(); if (!n || ['__proto__', 'prototype', 'constructor'].includes(n)) { S.toast(t('pre.nameBad')); return; } const p = loadPresets(); if (p[n] && !window.confirm(t('pre.replace', [n]))) return; p[n] = inc.checked ? clone(model) : A.stripSecrets(model); if (savePresets(p)) { S.toast(t('pre.saved', [n])); nameIn.value = ''; draw(); } }, 'btn-primary')]),
+      h('div', { class: 'cta' }, [btn('pre.save', () => { const n = nameIn.value.trim(); if (!n || ['__proto__', 'prototype', 'constructor'].includes(n)) { S.toast(notice('pre.nameBad')); return; } const p = loadPresets(); if (p[n] && !window.confirm(t('pre.replace', [n]))) return; p[n] = inc.checked ? clone(model) : A.stripSecrets(model); if (savePresets(p)) { S.toast(notice('pre.saved', [n])); nameIn.value = ''; draw(); } }, 'btn-primary')]),
       h('h3', { text: t('pre.saved.title') }), psb.el, box,
       h('div', { class: 'cta' }, [btn('pre.export', () => { const p = loadPresets(); const out = {}; Object.keys(p).forEach((k) => { out[k] = inc.checked ? p[k] : A.stripSecrets(p[k]); }); download('tempdesk-presets.json', JSON.stringify({ schema: 'tempdesk-presets', version: 1, presets: out }, null, 2) + '\n', 'application/json'); }, 'btn-ghost'),
         btn('pre.import', () => fileIn.click(), 'btn-ghost'), fileIn]),
@@ -1827,9 +1832,9 @@ function directReady() {
 }
 function setMode(next) {
   if (next === 'direct' && !isDirect()) {
-    if (!rules || !catalog || !catalog.raw) { S.toast(t('direct.needCatalog')); return; }
+    if (!rules || !catalog || !catalog.raw) { S.toast(notice('direct.needCatalog')); return; }
     let r;
-    try { r = DX.guidedToDirect(model, A, catalog.raw, rules.gen); } catch (e) { S.toast(t('studio.xmlNotApplied', [e.message])); return; }
+    try { r = DX.guidedToDirect(model, A, catalog.raw, rules.gen); } catch (e) { S.toast(notice('studio.xmlNotApplied', [e.message])); return; }
     model.guidedMode = model.mode;
     model.direct = r.direct;
     model.mode = 'direct';
@@ -1915,7 +1920,7 @@ function pickPass(key, move) {
       const r = DX.copyComponent(model.direct, key, p, catalog.raw, move);
       model.direct = r.direct;
       commit({ key: move ? 'hist.moveComp' : 'hist.dupComp', args: [name, p] });
-      if (r.dropped.length) S.toast(t('direct.dropped', [r.dropped.join(', '), p]));
+      if (r.dropped.length) S.toast(notice('direct.dropped', [r.dropped.join(', '), p]));
       close(); openTab('comp:' + p + '|' + name);
     } }, [h('b', { text: p }), model.direct.all[p + '|' + name] ? h('span', { text: t('direct.mergeInto') }) : null]))),
     btn('common.cancel', close, 'btn-ghost')]);
@@ -2043,7 +2048,7 @@ function renderDirectNew() {
 }
 let importIntoDirect = false;
 function newBlankDirect() {
-  if (!rules || !catalog || !catalog.raw) { S.toast(t('direct.needCatalog')); return; }
+  if (!rules || !catalog || !catalog.raw) { S.toast(notice('direct.needCatalog')); return; }
   const keep = model;
   model = A.defaultModel(); model.mode = 'direct'; model.direct = DX.blankDirect();
   model = mergeSecrets(model, keep);
@@ -2331,7 +2336,7 @@ function renderSnippets() {
   const sec = h('div', { class: 'b-sec' }, [h('header', null, [h('h2', { id: 'snip-h', text: t('tab.snippets') })]), h('p', { class: 'help', style: { color: 'var(--muted)' }, text: t('snip.help') })]);
   const grid = h('div', { class: 'st-gallery' });
   Object.keys(A.SNIPPETS).forEach((id) => grid.appendChild(h('button', { type: 'button', class: 'st-card', onclick: () => {
-    model = A.applySnippet(model, id); commit({ key: 'hist.snippet', args: [{ catalogKey: 'snip.' + id }] }); output(t('hist.snippet', [t('snip.' + id)])); S.toast(t('snip.inserted', [t('snip.' + id)])); refreshAround();
+    model = A.applySnippet(model, id); commit({ key: 'hist.snippet', args: [{ catalogKey: 'snip.' + id }] }); output(t('hist.snippet', [t('snip.' + id)])); S.toast(notice('snip.inserted', [notice('snip.' + id)])); refreshAround();
   } }, [h('b', { text: t('snip.' + id) }), h('span', { text: t('snip.' + id + '.d') })])));
   sec.appendChild(withFilter(grid, 'snippets-gallery', 'tab.snippets'));
   mainEl.appendChild(sec);
@@ -2362,7 +2367,7 @@ function renderSecrets() {
   if (!rows.length) body.appendChild(h('tr', null, [h('td', { colspan: '4', text: t('secrets.none') })]));
   tb.appendChild(body);
   const rememberCb = h('input', { type: 'checkbox', checked: remember() });
-  rememberCb.addEventListener('change', () => { LS.set('td.rememberPw', rememberCb.checked ? '1' : '0'); S.toast(t(rememberCb.checked ? 'hist.rememberOn' : 'hist.rememberOff')); });
+  rememberCb.addEventListener('change', () => { LS.set('td.rememberPw', rememberCb.checked ? '1' : '0'); S.toast(notice(rememberCb.checked ? 'hist.rememberOn' : 'hist.rememberOff')); });
   sec.append(withFilter(h('div', { class: 'tablebox', tabindex: '0' }, [tb]), 'secrets', 'tab.secrets', { items: (l) => [...l.querySelectorAll('tbody tr')], text: (tr) => [...tr.children].filter((c, i) => i !== 1 && i !== 3).map((c) => c.textContent).join(' ') }), h('label', { class: 'check' }, [rememberCb, t('hist.remember')]), h('p', { class: 'notice warn', text: t('exp.pwWarn') }));
   mainEl.appendChild(sec);
 }

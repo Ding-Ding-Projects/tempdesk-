@@ -2,7 +2,7 @@
 // Files of any size are streamed in the main process (constant memory, progress, pause, resume,
 // cancel, SHA-256 round-trip verification, atomic output). Every conversion is a history entry
 // committed to the workspace; payloads are stored only when the user opts in.
-import { h, t, originalText, btn, toast, dialog, superConfirm, searchBox, field, select, contextMenu, play, fmtBytes, fmtTime } from './ui.js';
+import { h, t, originalText, btn, toast, notice, notificationText, dialog, superConfirm, searchBox, field, select, contextMenu, play, fmtBytes, fmtTime } from './ui.js';
 
 const td = window.td;
 const B = window.TempDeskBase64;
@@ -81,15 +81,15 @@ export async function base64Page(root, app) {
   ]);
   const actions = h('div', { class: 'row' }, [
     btn(t('b64.paste'), async () => { inArea.value = await td.invoke['clipboard:read'](); convert(); }, 'btn-ghost btn-sm'),
-    btn(t('b64.copy'), () => { td.invoke['clipboard:write'](outArea.value); toast(t('common.copied')); record('copy'); }, 'btn-ghost btn-sm'),
-    btn(t('b64.dataUrl'), () => { const bytes = st.mode === 'encode' ? B.textToBytes(st.input, st.enc) : st.lastBytes; if (!bytes) return; const mime = st.mode === 'encode' ? 'text/plain' : (st.lastType || {}).mime; const u = B.buildDataUrl(bytes, mime, st.mode === 'encode' && st.enc === 'utf-8' ? { charset: 'utf-8' } : null); td.invoke['clipboard:write'](u); toast(t('b64.dataUrlCopied')); record('dataUrl'); }, 'btn-ghost btn-sm'),
+    btn(t('b64.copy'), () => { td.invoke['clipboard:write'](outArea.value); toast(notice('common.copied')); record('copy'); }, 'btn-ghost btn-sm'),
+    btn(t('b64.dataUrl'), () => { const bytes = st.mode === 'encode' ? B.textToBytes(st.input, st.enc) : st.lastBytes; if (!bytes) return; const mime = st.mode === 'encode' ? 'text/plain' : (st.lastType || {}).mime; const u = B.buildDataUrl(bytes, mime, st.mode === 'encode' && st.enc === 'utf-8' ? { charset: 'utf-8' } : null); td.invoke['clipboard:write'](u); toast(notice('b64.dataUrlCopied')); record('dataUrl'); }, 'btn-ghost btn-sm'),
     btn(t('b64.saveOut'), async () => {
       const isBin = st.mode === 'decode' && st.lastBytes && (st.lastType || {}).kind !== 'text';
       const name = isBin ? B.suggestName('decoded', st.lastType) : st.mode === 'encode' ? 'encoded.b64' : 'decoded.txt';
       const r = await td.invoke['file:save'](isBin ? { name, base64: B.encode(st.lastBytes) } : { name, text: st.output });
-      if (r.ok) { toast(t('export.saved', [r.path]), 'success'); record('saveFile'); }
+      if (r.ok) { toast(notice('export.saved', [r.path]), 'success'); record('saveFile'); }
     }, 'btn-ghost btn-sm'),
-    btn(t('b64.json'), async () => { const r = await td.invoke['file:save']({ name: 'base64-record.json', text: JSON.stringify({ schema: 'tempdesk-base64-record', version: 1, created: new Date().toISOString(), mode: st.mode, variant: st.variant, padding: st.pad, lineLength: st.lineLength, encoding: st.enc, input: st.input, output: st.output }, null, 2) + '\n' }); if (r.ok) toast(t('export.saved', [r.path]), 'success'); }, 'btn-ghost btn-sm'),
+    btn(t('b64.json'), async () => { const r = await td.invoke['file:save']({ name: 'base64-record.json', text: JSON.stringify({ schema: 'tempdesk-base64-record', version: 1, created: new Date().toISOString(), mode: st.mode, variant: st.variant, padding: st.pad, lineLength: st.lineLength, encoding: st.enc, input: st.input, output: st.output }, null, 2) + '\n' }); if (r.ok) toast(notice('export.saved', [r.path]), 'success'); }, 'btn-ghost btn-sm'),
     btn(t('b64.swap'), () => { inArea.value = st.mode === 'encode' ? st.output : st.input; st.mode = st.mode === 'encode' ? 'decode' : 'encode'; st.input = inArea.value; app.render(); }, 'btn-ghost btn-sm')
   ]);
   root.appendChild(h('div', { class: 'card' }, [h('div', { class: 'row between' }, [h('h2', { text: t('b64.text'), style: { margin: 0 } }), modeSeg]), opts,
@@ -110,9 +110,9 @@ export async function base64Page(root, app) {
     fileInfo.textContent = t('b64.fileInfo', [f.name, fmtBytes(f.size), type.mime]);
     if (/\.(b64|base64|txt)$/i.test(f.name)) { st.mode = 'decode'; }
   }
-  app.onBase64Drop = async (file) => { const p = td.pathForFile(file); if (!p) { toast(t('b64.dropFailed'), 'error'); return; } await useFile(await td.invoke['b64:stat'](p)); };
+  app.onBase64Drop = async (file) => { const p = td.pathForFile(file); if (!p) { toast(notice('b64.dropFailed'), 'error'); return; } await useFile(await td.invoke['b64:stat'](p)); };
   async function startJob(overwrite) {
-    if (!st.file) { toast(t('b64.noFile'), 'error'); return; }
+    if (!st.file) { toast(notice('b64.noFile'), 'error'); return; }
     const opts = { source: st.file.path, mode: st.mode, variant: st.variant === 'mime' ? 'standard' : st.variant, pad: st.pad, lineLength: st.variant === 'mime' ? (st.lineLength || 76) : st.lineLength, strict: st.strict, outDir, overwrite: !!overwrite };
     const r = await td.invoke['b64:start'](opts);
     if (r.exists) {
@@ -131,16 +131,17 @@ export async function base64Page(root, app) {
     else if (ev.type === 'done') {
       bar.style.width = '100%'; st.job = null; pauseB.disabled = true; cancelB.disabled = true;
       jobStatus.textContent = t('b64.fileDone', [ev.dest, ev.sha256.slice(0, 16)]);
-      toast(t('b64.fileDoneToast', [ev.dest]), 'success'); play('done');
+      toast(notice('b64.fileDoneToast', [ev.dest]), 'success'); play('done');
       record(st.mode === 'encode' ? 'encodeFile' : 'decodeFile', { file: st.file.name, bytesIn: ev.bytesIn, bytesOut: ev.bytesOut, sha256: ev.sha256 });
     } else if (ev.type === 'error') {
       st.job = null; pauseB.disabled = true; cancelB.disabled = true; bar.style.width = '0';
-      jobStatus.textContent = ev.code === 'cancelled' ? t('run.cancelled') : (ev.offset !== undefined ? t('b64.err.' + ev.code, [ev.offset, '']) : t('b64.err.generic', [ev.message]));
-      if (ev.code !== 'cancelled') toast(jobStatus.textContent, 'error');
+      const message = ev.code === 'cancelled' ? notice('run.cancelled') : (ev.offset !== undefined ? notice('b64.err.' + ev.code, [ev.offset, '']) : notice('b64.err.generic', [ev.message]));
+      jobStatus.textContent = notificationText({ message });
+      if (ev.code !== 'cancelled') toast(message, 'error');
     }
   });
   const dirLine = h('span', { class: 'small muted', text: t('b64.outNext') });
-  root.appendChild(h('div', { class: 'card' }, [h('h2', { text: t('b64.files') }), h('p', { class: 'small muted', text: t('b64.filesLead') }), fileInfo,
+  root.appendChild(h('div', { class: 'card', 'data-base64-file-drop': true }, [h('h2', { text: t('b64.files') }), h('p', { class: 'small muted', text: t('b64.filesLead') }), fileInfo,
     h('div', { class: 'row' }, [btn(t('b64.pick'), async () => useFile(await td.invoke['b64:pick']()), 'btn-ghost'), btn(t('b64.outDir'), async () => { outDir = await td.invoke['file:pickFolder'](); dirLine.textContent = outDir ? t('b64.outIn', [outDir]) : t('b64.outNext'); }, 'btn-ghost'), dirLine]),
     h('div', { class: 'row' }, [btn(st.mode === 'encode' ? t('b64.encodeFile') : t('b64.decodeFile'), () => startJob(false), 'btn-primary'), pauseB, cancelB]), barWrap, jobStatus]));
 
@@ -153,7 +154,7 @@ export async function base64Page(root, app) {
     const shown = (hist.entries || []).filter((e) => !matcher || Core.testMatch(textOf(e), matcher));
     list.replaceChildren(...shown.slice(0, 200).map((e) => {
       const it = h('div', { class: 'item', tabindex: '0' }, [h('div', { class: 'grow' }, [h('div', { class: 'title', text: t('b64.hist.' + e.action, [e.inputLength]) + (e.file ? ' · ' + e.file : '') }), h('div', { class: 'sub', text: fmtTime(e.time) + ' · ' + e.variant + (e.sha256 ? ' · SHA-256 ' + e.sha256.slice(0, 12) : '') + (e.input !== undefined ? ' · ' + t('b64.payloadKept') : '') })])]);
-      contextMenu(it, () => [{ label: t('b64.reuse'), run: () => { if (e.input !== undefined) { st.input = e.input; st.mode = e.mode; app.render(); } else toast(t('b64.noPayload')); }, disabled: e.input === undefined }, { label: t('common.copy'), run: () => td.invoke['clipboard:write'](JSON.stringify(e)) }]);
+      contextMenu(it, () => [{ label: t('b64.reuse'), run: () => { if (e.input !== undefined) { st.input = e.input; st.mode = e.mode; app.render(); } else toast(notice('b64.noPayload')); }, disabled: e.input === undefined }, { label: t('common.copy'), run: () => td.invoke['clipboard:write'](JSON.stringify(e)) }]);
       return it;
     }));
     if (!shown.length) list.appendChild(h('div', { class: 'empty', text: (hist.entries || []).length ? t('hist.noMatch') : t('b64.histEmpty') }));
@@ -163,11 +164,11 @@ export async function base64Page(root, app) {
     btn(t('hist.undo'), () => window.TempDeskApp.undo(), 'btn-ghost btn-sm'), btn(t('hist.redo'), () => window.TempDeskApp.redo(), 'btn-ghost btn-sm'),
     btn(t('b64.bulk'), async () => {
       const entries = (hist.entries || []).filter((e) => e.output !== undefined);
-      if (!entries.length) { toast(t('b64.bulkNone')); return; }
+      if (!entries.length) { toast(notice('b64.bulkNone')); return; }
       const files = entries.map((e, i) => ({ name: String(i + 1).padStart(4, '0') + '-' + e.mode + '.txt', text: e.output }));
       files.push({ name: 'records.json', text: JSON.stringify(entries, null, 2) + '\n' });
       const r = await td.invoke['file:zip']({ name: 'base64-export.zip', files });
-      if (r.ok) toast(t('export.saved', [r.path]), 'success');
+      if (r.ok) toast(notice('export.saved', [r.path]), 'success');
     }, 'btn-ghost btn-sm')])]), sb, list]));
   draw();
   if (st.input) convert(false);

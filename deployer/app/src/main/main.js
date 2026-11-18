@@ -173,19 +173,25 @@ function registerIpc() {
   // Personal wording: validated in full here before anything is stored; never logged.
   handle('wording:get', () => store.vocabulary());
   handle('wording:apply', (bytes) => {
-    const buf = Buffer.from(bytes);
+    let buf;
+    try { buf = Buffer.from(bytes); } catch { return { ok: false, code: 'json' }; }
     try { Wording.validate(new Uint8Array(buf)); } catch (e) { return { ok: false, code: e.code || 'json', entry: e.entry || null }; }
-    store.saveVocabulary(buf.toString('utf8'));
+    try { store.saveVocabulary(buf.toString('utf8')); } catch { return { ok: false, code: 'storage' }; }
     return { ok: true };
   });
   handle('wording:pick', async () => {
     const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: 'JSON', extensions: ['json'] }] });
     if (r.canceled) return { cancelled: true };
-    const st = fs.statSync(r.filePaths[0]);
-    if (st.size > 256 * 1024) return { bytes: null, tooLarge: true };
-    return { bytes: new Uint8Array(fs.readFileSync(r.filePaths[0])) };
+    try {
+      const st = fs.statSync(r.filePaths[0]);
+      if (st.size > Wording.MAX_BYTES) return { bytes: null, tooLarge: true };
+      return { bytes: new Uint8Array(fs.readFileSync(r.filePaths[0])) };
+    } catch { return { error: 'read' }; }
   });
-  handle('wording:clear', () => { store.clearVocabulary(); return { ok: true }; });
+  handle('wording:clear', () => {
+    try { store.clearVocabulary(); } catch { return { ok: false, code: 'storage' }; }
+    return { ok: true };
+  });
 
   // Windows sounds (read through the main process; the renderer plays them from a data URL)
   handle('sound:get', (name) => {

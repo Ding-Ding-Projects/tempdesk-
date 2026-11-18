@@ -1,6 +1,6 @@
 // Pages of the desktop app. Every page builds real UI from real data; empty states say what is
 // actually missing. Strings come from the i18n catalogs through t().
-import { h, t, originalText, state, btn, iconBtn, toast, dialog, confirmDialog, promptDialog, superConfirm, info, searchBox, field, select, contextMenu, showMenu, play, fmtBytes, fmtTime, pulseFocus, announce, listFilter, chooseExportFormat } from './ui.js';
+import { h, t, originalText, state, btn, iconBtn, toast, notice, dialog, confirmDialog, promptDialog, superConfirm, info, searchBox, field, select, contextMenu, showMenu, play, fmtBytes, fmtTime, pulseFocus, announce, listFilter, chooseExportFormat } from './ui.js';
 import { progressPanel } from './run.js';
 import { base64Page } from './base64.js';
 import { settingsPage } from './settings.js';
@@ -24,7 +24,7 @@ function passwordField(label, name, key, help) {
   const upd = () => { setSecret(nm(), key, inp.value); const s = A.passwordStrength(inp.value); meter.textContent = inp.value ? t('pw.' + s.code) + (s.meetsPolicy ? '' : ' · ' + t('pw.policy')) : ''; };
   inp.addEventListener('input', upd);
   const show = btn(t('pw.show'), () => { inp.type = inp.type === 'password' ? 'text' : 'password'; show.setAttribute('aria-pressed', String(inp.type === 'text')); }, 'btn-ghost btn-sm', { 'aria-pressed': 'false' });
-  const gen = btn(t('pw.generate'), () => { inp.value = A.generatePassword(20); upd(); toast(t('pw.generated')); }, 'btn-ghost btn-sm');
+  const gen = btn(t('pw.generate'), () => { inp.value = A.generatePassword(20); upd(); toast(notice('pw.generated')); }, 'btn-ghost btn-sm');
   const f = field({ label, control: inp, help: help || t('pw.notStored'), info: 'info.password' });
   f.appendChild(h('div', { class: 'row' }, [show, gen, meter]));
   upd();
@@ -94,12 +94,12 @@ function serverDeploy(root, app, nameField) {
     secrets: () => ({ ADMINPASSWORD: secretFor(draft.name, 'admin'), DSRMPASSWORD: secretFor(draft.name, 'dsrm') }),
     before: async () => {
       const e = errs();
-      if (Object.keys(e).length) { toast(t('media.invalid', [Object.keys(e).map((k) => t('f.' + k)).join(', ')]), 'error'); return false; }
+      if (Object.keys(e).length) { toast(notice('media.invalid', [Object.keys(e).flatMap((k, i) => i ? [', ', notice('f.' + k)] : [notice('f.' + k)])]), 'error'); return false; }
       await saveDraft(originalText('hist.saveDep', [draft.name]));
       return superConfirm({ title: t('warn.wipeTitle'), danger: t('warn.wipe'), text: t('warn.wipeConfirm', [draft.server.computerName]), word: 'WIPE', action: t('warn.wipeHold') });
     },
     // Show the result buttons without drawing the page again, so the finished steps and the log stay on screen.
-    onDone: (data) => { if (data) { lastMedia = data; toast(t('media.done', [data.folder]), 'success'); showMediaLinks(); } }
+    onDone: (data) => { if (data) { lastMedia = data; toast(notice('media.done', [data.folder]), 'success'); showMediaLinks(); } }
   });
   root.appendChild(media);
   const mediaLinks = h('div', { class: 'row', style: { marginTop: '12px' } });
@@ -120,7 +120,7 @@ function serverDeploy(root, app, nameField) {
   const isoField = text(t('vm.iso'), vm.windowsIso, setV('windowsIso', 'vm.iso'), { mono: true, help: t('vm.isoHelp') });
   const isoInput = isoField.querySelector('input');
   // "Upload" the ISO: drop the file on this area or browse for it. Only its path is kept; the file is not copied.
-  const useIso = (p) => { if (!/[.]iso$/i.test(p || '')) { toast(t('vm.notIso'), 'error'); return; } isoInput.value = p; setV('windowsIso', 'vm.iso')(p); toast(t('vm.isoSet', [p.split('/').pop().split(String.fromCharCode(92)).pop()]), 'success'); };
+  const useIso = (p) => { if (!/[.]iso$/i.test(p || '')) { toast(notice('vm.notIso'), 'error'); return; } isoInput.value = p; setV('windowsIso', 'vm.iso')(p); toast(notice('vm.isoSet', [p.split('/').pop().split(String.fromCharCode(92)).pop()]), 'success'); };
   const drop = h('div', { class: 'notice', role: 'button', tabindex: '0', 'data-vm-drop': '1', 'aria-label': t('vm.drop'), style: { borderStyle: 'dashed', textAlign: 'center', cursor: 'pointer' } }, [h('strong', { text: t('vm.drop') }), h('div', { class: 'small muted', text: t('vm.dropHelp') })]);
   const pick = async () => { const p = await td.invoke['file:pickIso'](); if (p) useIso(p); };
   drop.addEventListener('click', pick);
@@ -133,8 +133,8 @@ function serverDeploy(root, app, nameField) {
   const vmRun = progressPanel({
     kicker: t('vm.kicker'), titleKey: 'vm.runTitle', phase: 'Vm', logName: 'tempdesk-vm-' + draft.name, startLabel: t('vm.create'),
     config: () => Object.assign({}, draft, { server: Object.assign({}, draft.server), vm: Object.assign({}, draft.vm) }),
-    before: async () => { if (!String(vm.windowsIso || '').trim()) { toast(t('vm.needIso'), 'error'); return false; } await saveDraft(originalText('hist.saveDep', [draft.name])); return true; },
-    onDone: (data) => { if (data) toast(t('vm.done', [data.name]), 'success'); refreshVms(); }
+    before: async () => { if (!String(vm.windowsIso || '').trim()) { toast(notice('vm.needIso'), 'error'); return false; } await saveDraft(originalText('hist.saveDep', [draft.name])); return true; },
+    onDone: (data) => { if (data) toast(notice('vm.done', [data.name]), 'success'); refreshVms(); }
   });
   root.appendChild(h('div', { class: 'card' }, [
     h('h2', { text: t('vm.title') }), h('p', { class: 'muted', text: t('vm.lead') }),
@@ -152,14 +152,14 @@ function serverDeploy(root, app, nameField) {
     vmRun]));
   // Manage the VMware machines TempDesk created: state, start, power off, open, screen, delete.
   const vmList = h('div', { class: 'stack', 'data-vm-list': '1', 'aria-live': 'polite' });
-  const vmErr = (r) => toast(t('vmm.failed', [r.error === 'running' ? t('err.vmRunning') : r.error === 'notManaged' ? t('err.vmNotManaged') : r.error === 'noScreenshot' ? t('vmm.noScreen') : String(r.error || '')]), 'error');
+  const vmErr = (r) => toast(notice('vmm.failed', [r.error === 'running' ? notice('err.vmRunning') : r.error === 'notManaged' ? notice('err.vmNotManaged') : r.error === 'noScreenshot' ? notice('vmm.noScreen') : String(r.error || '')]), 'error');
   async function refreshVms() {
     let r;
     try { r = await td.invoke['vm:list'](); } catch (e) { r = { installed: false, machines: [] }; }
     if (!r.installed) { vmList.replaceChildren(h('p', { class: 'muted', text: t('vmm.noVmware') })); return; }
     if (!r.machines.length) { vmList.replaceChildren(h('p', { class: 'muted', text: t('vmm.none') })); return; }
     vmList.replaceChildren(...r.machines.map((m) => {
-      const act = async (what, opts, okMsg) => { const x = await td.invoke['vm:action'](Object.assign({ vmx: m.vmx, what }, opts || {})); if (x.ok) { if (okMsg) toast(t(okMsg, [m.name]), 'success'); } else vmErr(x); await refreshVms(); return x; };
+      const act = async (what, opts, okMsg) => { const x = await td.invoke['vm:action'](Object.assign({ vmx: m.vmx, what }, opts || {})); if (x.ok) { if (okMsg) toast(notice(okMsg, [m.name]), 'success'); } else vmErr(x); await refreshVms(); return x; };
       const netLabel = ['bridged', 'nat', 'hostonly'].includes(m.network) ? t('opt.vmnet.' + m.network).split(':')[0] : m.network;
       return h('div', { class: 'card', 'data-vm': m.name, style: { padding: '14px 16px' } }, [
         h('div', { class: 'row between' }, [
@@ -193,8 +193,8 @@ function serverDeploy(root, app, nameField) {
     filterStep: (id) => id !== 'stage-portals' || s.portalsMode === 'native', startLabel: s.advanced ? t('server.deploy') : t('server.watch'),
     config: () => draft, trustAddress: () => draft.server.ipAddress,
     secrets: () => ({ ADMINPASSWORD: secretFor(draft.name, 'admin'), DSRMPASSWORD: secretFor(draft.name, 'dsrm') }),
-    before: async () => { if (!secretFor(draft.name, 'admin')) { toast(t('server.needPassword'), 'error'); return false; } await saveDraft(originalText('hist.saveDep', [draft.name])); return true; },
-    onDone: () => { toast(t('server.ready'), 'success'); window.TempDeskApp.openTab(draft.name); }
+    before: async () => { if (!secretFor(draft.name, 'admin')) { toast(notice('server.needPassword'), 'error'); return false; } await saveDraft(originalText('hist.saveDep', [draft.name])); return true; },
+    onDone: () => { toast(notice('server.ready'), 'success'); window.TempDeskApp.openTab(draft.name); }
   });
   root.appendChild(h('div', { class: 'card' }, [h('label', { class: 'check' }, [adv, h('span', { text: t('server.advanced') }), info('info.advanced', t('server.advanced'))]), h('p', { class: 'small muted', text: s.advanced ? t('server.advHelp') : t('server.monHelp') }), mon]));
 }
@@ -217,10 +217,10 @@ function liteDeploy(root, app, nameField) {
         try {
           const k = await td.invoke['engine:sshKey']();
           ss.identityFile = k.identityFile; saveDraft(originalText('hist.sshKey'));
-          keyBox.replaceChildren(h('div', { class: 'notice ok' }, [h('p', { text: t('ssh.pasteKey') }), h('pre', { class: 'mono small', style: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', margin: 0 }, text: k.publicKey }), btn(t('common.copy'), () => { td.invoke['clipboard:write'](k.publicKey); toast(t('common.copied')); }, 'btn-ghost btn-sm')]));
-        } catch (e) { toast(t('ssh.keyFailed', [e.message]), 'error'); }
+          keyBox.replaceChildren(h('div', { class: 'notice ok' }, [h('p', { text: t('ssh.pasteKey') }), h('pre', { class: 'mono small', style: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', margin: 0 }, text: k.publicKey }), btn(t('common.copy'), () => { td.invoke['clipboard:write'](k.publicKey); toast(notice('common.copied')); }, 'btn-ghost btn-sm')]));
+        } catch (e) { toast(notice('ssh.keyFailed', [e.message]), 'error'); }
       }, 'btn-ghost'),
-      btn(t('ssh.console'), async () => { const r = await td.invoke['engine:sshConsole']({ userHost: ss.user + '@' + ss.host, port: Number(ss.port) || 22 }); toast(r.ok ? t('ssh.consoleOpened') : t('ssh.consoleFailed'), r.ok ? 'success' : 'error'); }, 'btn-ghost'),
+      btn(t('ssh.console'), async () => { const r = await td.invoke['engine:sshConsole']({ userHost: ss.user + '@' + ss.host, port: Number(ss.port) || 22 }); toast(notice(r.ok ? 'ssh.consoleOpened' : 'ssh.consoleFailed'), r.ok ? 'success' : 'error'); }, 'btn-ghost'),
       info('info.sshAuth', t('ssh.title'))]),
     keyBox,
     h('h3', { text: t('lite.domain'), style: { marginTop: '16px' } }),
@@ -234,7 +234,7 @@ function liteDeploy(root, app, nameField) {
   const run = progressPanel({
     kicker: t('lite.kicker'), titleKey: 'lite.runTitle', titleArgs: [ss.host], phase: 'Lite', logName: 'tempdesk-lite-' + draft.name, startLabel: t('lite.deploy'),
     config: () => draft, secrets: () => ({ ADMINPASSWORD: secretFor(draft.name, 'admin') }),
-    before: async () => { const e = Core.validateDeployment(draft); if (Object.keys(e).length) { toast(t('dep.invalid', [Object.keys(e).join(', ')]), 'error'); return false; } if (!A.strongPassword(secretFor(draft.name, 'admin'))) { toast(t('lite.weak'), 'error'); return false; } await saveDraft(originalText('hist.saveDep', [draft.name])); return true; },
+    before: async () => { const e = Core.validateDeployment(draft); if (Object.keys(e).length) { toast(notice('dep.invalid', [Object.keys(e).join(', ')]), 'error'); return false; } if (!A.strongPassword(secretFor(draft.name, 'admin'))) { toast(notice('lite.weak'), 'error'); return false; } await saveDraft(originalText('hist.saveDep', [draft.name])); return true; },
     onDone: () => window.TempDeskApp.openTab(draft.name)
   });
   root.appendChild(h('div', { class: 'card' }, [run]));
@@ -262,7 +262,7 @@ function studioPage(root, app) {
     let name = branchSel.value;
     let create = false;
     if (name === '__new') { name = await promptDialog(t('studio.newBranch'), t('studio.branchName'), '', { validate: (v) => /^[A-Za-z0-9][A-Za-z0-9._/-]{0,60}$/.test(v) && !v.includes('..') ? '' : t('studio.branchBad') }); create = true; if (!name) { refreshBranches(); return; } }
-    try { await td.invoke['ws:switchBranch'](name, create); toast(t('studio.onBranch', [name]), 'success'); refreshBranches(); }
+    try { await td.invoke['ws:switchBranch'](name, create); toast(notice('studio.onBranch', [name]), 'success'); refreshBranches(); }
     catch (e) { toast(e.message, 'error'); refreshBranches(); }
   });
   function setStatus() { status.textContent = (studioFile ? studioFile : t('studio.untitled')) + (studioDirty ? ' · ' + t('studio.unsaved') : ''); }
@@ -278,11 +278,11 @@ function studioPage(root, app) {
   // Arbitrary .xml files open in Direct mode (passes > components > settings, no template forms).
   async function openFile(r) {
     if (!r) return;
-    if (r.tooLarge) { toast(t('studio.tooLarge'), 'error'); return; }
+    if (r.tooLarge) { toast(notice('studio.tooLarge'), 'error'); return; }
     if (/\.xml$/i.test(r.name || '')) await loadStudio('?mode=direct');
     const ok = host() && host().importText(r.text, r.name);
-    if (!ok) { toast(t('studio.importUnsupported'), 'error'); return; }
-    studioFile = r.path; studioDirty = false; setStatus(); toast(t('studio.opened', [r.name]), 'success');
+    if (!ok) { toast(notice('studio.importUnsupported'), 'error'); return; }
+    studioFile = r.path; studioDirty = false; setStatus(); toast(notice('studio.opened', [r.name]), 'success');
   }
   async function newBlank() {
     if (studioDirty && !(await confirmDialog(t('studio.new'), t('studio.discard'), t('studio.new')))) return;
@@ -290,7 +290,7 @@ function studioPage(root, app) {
     const blank = '<?xml version="1.0" encoding="utf-8"?>\r\n<unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">\r\n</unattend>\r\n';
     const ok = host() && host().importText(blank, 'autounattend.xml');
     studioFile = null; studioDirty = false; setStatus();
-    toast(ok ? t('studio.blankReady') : t('studio.importUnsupported'), ok ? 'success' : 'error');
+    toast(notice(ok ? 'studio.blankReady' : 'studio.importUnsupported'), ok ? 'success' : 'error');
   }
   function fileMenu(e) {
     const r = e.currentTarget.getBoundingClientRect();
@@ -303,9 +303,9 @@ function studioPage(root, app) {
       { label: t('studio.saveAs'), kbd: 'Ctrl+Shift+S', run: () => save(true) }]);
   }
   async function save(as) {
-    const x = xml(); if (!x) { toast(t('studio.notReady'), 'error'); return; }
+    const x = xml(); if (!x) { toast(notice('studio.notReady'), 'error'); return; }
     const r = await td.invoke['studio:save'](studioFile, x, as);
-    if (r.ok) { studioFile = r.path; studioDirty = false; setStatus(); toast(t('studio.saved', [r.path]), 'success'); }
+    if (r.ok) { studioFile = r.path; studioDirty = false; setStatus(); toast(notice('studio.saved', [r.path]), 'success'); }
   }
   async function recent() {
     const list = await td.invoke['studio:recent']();
@@ -329,15 +329,15 @@ function studioPage(root, app) {
     const ok = await superConfirm({ title: t('warn.wipeTitle'), danger: t('warn.wipe'), text: t('studio.isoConfirm'), word: 'WIPE', action: t('warn.wipeHold') });
     if (!ok) return;
     const w = await td.invoke['media:writeKit']({ mode: k.mode, native: k.model.server && k.model.server.portalsMode === 'native', files: k.files.filter((f) => f.text !== undefined) });
-    if (!w.ok) { if (!w.cancelled) toast(w.exists ? t('studio.folderExists', [w.path]) : t('studio.isoFailed'), 'error'); return; }
-    toast(t('studio.building'));
+    if (!w.ok) { if (!w.cancelled) toast(w.exists ? notice('studio.folderExists', [w.path]) : notice('studio.isoFailed'), 'error'); return; }
+    toast(notice('studio.building'));
     const r = await td.invoke['media:iso'](w.path);
-    if (r.ok) { toast(t('studio.isoDone', [r.path]), 'success'); td.invoke['file:reveal'](r.path); } else toast(t('studio.isoFailed') + ' ' + (r.error || ''), 'error');
+    if (r.ok) { toast(notice('studio.isoDone', [r.path]), 'success'); td.invoke['file:reveal'](r.path); } else toast([notice('studio.isoFailed'), ' ', r.error || ''], 'error');
   }
   async function writeUsb() {
     const k = await kitFiles(); if (!k) return;
     const r = await td.invoke['usb:list']();
-    if (!r.ok || !r.drives.length) { toast(r.ok ? t('usb.none') : t('usb.unavailable'), 'error'); return; }
+    if (!r.ok || !r.drives.length) { toast(notice(r.ok ? 'usb.none' : 'usb.unavailable'), 'error'); return; }
     let letter = r.drives[0].letter;
     const okPick = await new Promise((res) => dialog(t('usb.title'), (close) => [
       h('p', { text: t('usb.lead') }),
@@ -352,7 +352,7 @@ function studioPage(root, app) {
       if (!again) return;
       w = await td.invoke['usb:write'](letter, { files: k.files }, letter);
     }
-    if (w.ok) toast(t('usb.done', [w.files, w.root]), 'success'); else toast(t('usb.failed'), 'error');
+    if (w.ok) toast(notice('usb.done', [w.files, w.root]), 'success'); else toast(notice('usb.failed'), 'error');
   }
   // Drag a folder of drivers onto the studio to add a PnP driver path.
   async function dropDrivers(e) {
@@ -361,7 +361,7 @@ function studioPage(root, app) {
     if (!p || !(await td.invoke['fs:isDir'](p))) return;
     e.preventDefault(); e.stopPropagation();
     const r = host() && host().addDriverPath(p);
-    toast(r === 'ok' ? t('studio.driverAdded', [p]) : r === 'exists' ? t('studio.driverExists') : t('studio.driverUnsupported'), r === 'ok' ? 'success' : 'error');
+    toast(r === 'ok' ? notice('studio.driverAdded', [p]) : notice(r === 'exists' ? 'studio.driverExists' : 'studio.driverUnsupported'), r === 'ok' ? 'success' : 'error');
   }
   frame.addEventListener('load', () => {
     const d = frame.contentDocument;
@@ -378,7 +378,7 @@ function studioPage(root, app) {
   });
   const off = td.on['studio:changed'](async (ev) => {
     if (ev.path !== studioFile) return;
-    if (ev.removed) { toast(t('studio.removed', [ev.path]), 'error'); return; }
+    if (ev.removed) { toast(notice('studio.removed', [ev.path]), 'error'); return; }
     if (await confirmDialog(t('studio.changedTitle'), t('studio.changed', [ev.path]), t('studio.reload'))) openFile({ path: ev.path, name: ev.path.split(/[\\/]/).pop(), text: ev.text });
   });
   root.addEventListener('DOMNodeRemoved', () => {}, { once: true });
@@ -436,7 +436,7 @@ async function deleteDeployment(name, app) {
   const ok = await superConfirm({ title: t('deps.deleteTitle'), danger: t('deps.deleteWarn'), word: name, action: t('deps.deleteHold') });
   if (!ok) return;
   await td.invoke['dep:delete'](name, name);
-  toast(t('deps.deleted', [name]), 'success');
+  toast(notice('deps.deleted', [name]), 'success');
   app.render();
 }
 async function exportDeployments(list) {
@@ -446,26 +446,26 @@ async function exportDeployments(list) {
   const rows = clean.map((d) => Core.flatten(d));
   const text = fmt === 'json' ? JSON.stringify({ schema: 'tempdesk-deployments', version: 1, exported: new Date().toISOString(), deployments: clean }, null, 2) + '\n' : fmt === 'csv' ? Core.toCsv(rows) : Core.toHtml(originalText('deps.title'), rows);
   const r = await td.invoke['file:save']({ name: 'tempdesk-deployments.' + fmt, text, filters: [{ name: fmt.toUpperCase(), extensions: [fmt] }] });
-  if (r.ok) toast(t('export.saved', [r.path]), 'success');
+  if (r.ok) toast(notice('export.saved', [r.path]), 'success');
 }
 async function importDeployment() {
   const f = await td.invoke['file:open']({ filters: [{ name: 'JSON', extensions: ['json'] }], maxBytes: 2 * 1024 * 1024 });
   if (!f || f.cancelled) return;
-  if (f.tooLarge) { toast(t('import.tooLarge'), 'error'); return; }
+  if (f.tooLarge) { toast(notice('import.tooLarge'), 'error'); return; }
   let j;
-  try { j = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(f.bytes)); } catch (e) { play('invalid'); toast(t('import.badJson'), 'error'); return; }
+  try { j = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(f.bytes)); } catch (e) { play('invalid'); toast(notice('import.badJson'), 'error'); return; }
   const list = j && j.schema === 'tempdesk-deployments' && Array.isArray(j.deployments) ? j.deployments : [j];
   // Validate every entry first; import nothing if any entry is invalid.
-  for (let i = 0; i < list.length; i++) { const e = Core.validateDeployment(Core.stripSecrets(list[i])); if (Object.keys(e).length) { play('invalid'); toast(t('import.badEntry', [i + 1, Object.keys(e).join(', ')]), 'error'); return; } }
+  for (let i = 0; i < list.length; i++) { const e = Core.validateDeployment(Core.stripSecrets(list[i])); if (Object.keys(e).length) { play('invalid'); toast(notice('import.badEntry', [i + 1, Object.keys(e).join(', ')]), 'error'); return; } }
   for (const d of list) await td.invoke['dep:save'](Core.stripSecrets(d), originalText('hist.importDep', [d.name]));
-  toast(t('import.done', [list.length]), 'success');
+  toast(notice('import.done', [list.length]), 'success');
   window.TempDeskApp.render();
 }
 function agentUrl(d) { const a = d.agent || {}; const host = d.kind === 'lite' ? d.lite.dcIp : d.server.ipAddress; return (a.tls ? 'https' : 'http') + '://' + host + ':' + (a.port || (a.tls ? 8443 : 8080)) + '/api/v1'; }
 async function health(d) {
   const r = await td.invoke['engine:health'](agentUrl(d));
-  if (r.ok) toast(t('health.ok', [d.name, r.version || '?', r.domain || '?', r.backend || '?']), 'success');
-  else toast(t('health.fail', [d.name, r.message || r.error]), 'error');
+  if (r.ok) toast(notice('health.ok', [d.name, r.version || '?', r.domain || '?', r.backend || '?']), 'success');
+  else toast(notice('health.fail', [d.name, r.message || r.error]), 'error');
   return r;
 }
 async function deploymentTab(root, app) {
@@ -485,7 +485,7 @@ async function deploymentTab(root, app) {
     h('div', { class: 'grow' }, [h('div', { class: 'card' }, [h('h2', { text: t('dep.summary') }), listFilter(h('table', { class: 'table' }, [h('tbody', null, rows.map(([k, v]) => h('tr', null, [h('th', { text: k }), h('td', { class: 'mono', text: v || '' })])))]), 'deployment-summary', t('dep.summary'), { items: (l) => [...l.querySelectorAll('tr')] }), healthBox]),
       h('div', { class: 'card' }, [h('h2', { text: t('dep.actions') }), h('div', { class: 'row' }, [
         btn(t('dep.rerun'), () => { draft = JSON.parse(JSON.stringify(d)); delete draft.agent; app.go('deploy'); }, 'btn-ghost'),
-        d.kind === 'server' ? btn(t('dep.updatePayload'), () => { draft = JSON.parse(JSON.stringify(d)); delete draft.agent; draft.server.advanced = true; app.go('deploy'); toast(t('dep.updateHelp')); }, 'btn-ghost') : null,
+        d.kind === 'server' ? btn(t('dep.updatePayload'), () => { draft = JSON.parse(JSON.stringify(d)); delete draft.agent; draft.server.advanced = true; app.go('deploy'); toast(notice('dep.updateHelp')); }, 'btn-ghost') : null,
         d.kind === 'server' ? btn(t('dep.uninstall'), () => uninstallAgent(d), 'btn-danger') : null,
         btn(t('dep.inventory'), () => exportInventory(d, envs), 'btn-ghost')])])]),
     h('div', { class: 'side' }, [h('div', { class: 'card' }, [h('h2', { text: t('dep.files') }), envs.length ? listFilter(h('ul', null, envs.map((e) => h('li', { class: 'mono small', text: e }))), 'deployment-files', t('dep.files')) : h('p', { class: 'muted', text: t('dep.noEnv') }),
@@ -507,7 +507,7 @@ async function exportInventory(d, envs) {
   const rows = Object.entries(Core.flatten(inv)).map(([k, v]) => ({ key: k, value: v }));
   const text = fmt === 'json' ? JSON.stringify(inv, null, 2) + '\n' : fmt === 'csv' ? Core.toCsv(rows, ['key', 'value']) : Core.toHtml(originalText('dep.inventory') + ': ' + d.name, rows, ['key', 'value']);
   const r = await td.invoke['file:save']({ name: 'tempdesk-inventory-' + d.name + '.' + fmt, text, filters: [{ name: fmt.toUpperCase(), extensions: [fmt] }] });
-  if (r.ok) toast(t('export.saved', [r.path]), 'success');
+  if (r.ok) toast(notice('export.saved', [r.path]), 'success');
 }
 
 // ------------------------------------------------------------------------------------------
@@ -531,8 +531,8 @@ async function portalsPage(root, app) {
     try { qrSvg = QR.toSvg(QR.generate(g), { label: t('portals.qr', [g]), dark: '#0B1110', light: '#FFFFFF' }); } catch (e) { qrSvg = ''; }
     const qr = h('div', { class: 'qr', role: 'img', 'aria-label': t('portals.qr', [g]) }); qr.innerHTML = qrSvg;
     urls.replaceChildren(h('div', { class: 'cols' }, [h('div', { class: 'grow stack' }, [
-      h('div', { class: 'item' }, [h('div', { class: 'grow' }, [h('div', { class: 'title', text: t('portals.guest') }), h('div', { class: 'sub mono', text: g })]), btn(t('common.copy'), () => { td.invoke['clipboard:write'](g); toast(t('common.copied')); }, 'btn-ghost btn-sm'), btn(t('portals.openBrowser'), () => td.invoke['shell:open'](g).catch(() => toast(t('portals.openFailed'), 'error')), 'btn-ghost btn-sm')]),
-      h('div', { class: 'item' }, [h('div', { class: 'grow' }, [h('div', { class: 'title', text: t('portals.admin') }), h('div', { class: 'sub mono', text: a })]), btn(t('common.copy'), () => { td.invoke['clipboard:write'](a); toast(t('common.copied')); }, 'btn-ghost btn-sm'), btn(t('portals.openAdmin'), () => td.invoke['shell:open'](a).catch(() => toast(t('portals.openFailed'), 'error')), 'btn-primary btn-sm')]),
+      h('div', { class: 'item' }, [h('div', { class: 'grow' }, [h('div', { class: 'title', text: t('portals.guest') }), h('div', { class: 'sub mono', text: g })]), btn(t('common.copy'), () => { td.invoke['clipboard:write'](g); toast(notice('common.copied')); }, 'btn-ghost btn-sm'), btn(t('portals.openBrowser'), () => td.invoke['shell:open'](g).catch(() => toast(notice('portals.openFailed'), 'error')), 'btn-ghost btn-sm')]),
+      h('div', { class: 'item' }, [h('div', { class: 'grow' }, [h('div', { class: 'title', text: t('portals.admin') }), h('div', { class: 'sub mono', text: a })]), btn(t('common.copy'), () => { td.invoke['clipboard:write'](a); toast(notice('common.copied')); }, 'btn-ghost btn-sm'), btn(t('portals.openAdmin'), () => td.invoke['shell:open'](a).catch(() => toast(notice('portals.openFailed'), 'error')), 'btn-primary btn-sm')]),
       h('p', { class: 'small muted', text: t('portals.httpNote') })]), h('div', { class: 'side' }, [qr, h('p', { class: 'small muted', text: t('portals.qrHelp') })])]));
   }
   hostIn.addEventListener('input', drawUrls);
@@ -567,8 +567,8 @@ export function ACTIONS() {
     { title: t('act.undo'), group: t('palette.actions'), keywords: 'Ctrl+Z', run: () => app.undo() },
     { title: t('act.redo'), group: t('palette.actions'), keywords: 'Ctrl+Y', run: () => app.redo() },
     { title: t('act.notifications'), group: t('palette.actions'), run: () => app.openNotifications() },
-    { title: t('act.backup'), group: t('palette.actions'), run: async () => { const r = await td.invoke['backup:export'](); if (r.ok) toast(t('backup.saved', [r.path]), 'success'); } },
-    { title: t('act.checkUpdates'), group: t('palette.actions'), run: async () => { const r = await td.invoke['update:check'](); toast(t('update.state.' + r.state, [r.version || '']), r.state === 'error' ? 'error' : 'info'); } },
+    { title: t('act.backup'), group: t('palette.actions'), run: async () => { const r = await td.invoke['backup:export'](); if (r.ok) toast(notice('backup.saved', [r.path]), 'success'); } },
+    { title: t('act.checkUpdates'), group: t('palette.actions'), run: async () => { const r = await td.invoke['update:check'](); toast(notice('update.state.' + r.state, [r.version || '']), r.state === 'error' ? 'error' : 'info'); } },
     { title: t('act.changelog'), group: t('palette.actions'), run: () => app.go('help', { tab: 'changelog' }) },
     { title: t('act.docs'), group: t('palette.actions'), run: () => app.go('help', { tab: 'docs' }) },
     tg('set.sounds', () => s.sounds, (v) => st({ sounds: v }, originalText('hist.setField', [originalText('set.sounds'), String(v)]))),

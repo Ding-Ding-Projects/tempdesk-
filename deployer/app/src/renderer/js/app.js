@@ -1,6 +1,6 @@
 // TempDesk Deployer renderer: shell (title bar, navigation rail, tabs), settings application,
 // language and wording, command palette, notifications, updates, onboarding and global shortcuts.
-import { h, t, state, btn, iconBtn, icon, toast, announce, onNotify, dialog, play, celebrate, pulseFocus, searchBox, contextMenu, fmtTime, rxT } from './ui.js';
+import { h, t, state, btn, iconBtn, icon, toast, notice, notificationText, visibleNotifications, refreshToasts, announce, onNotify, dialog, play, refreshSoundPreferences, celebrate, dismissCelebration, pulseFocus, searchBox, contextMenu, fmtTime, rxT } from './ui.js';
 import { busyNames } from './run.js';
 import { PAGES, registerActions, ACTIONS } from './pages.js';
 import { runOnboarding } from './onboarding.js';
@@ -10,7 +10,7 @@ const Wording = window.TempDeskWording;
 const td = window.td;
 
 const app = {
-  info: null, settings: null, catalogs: {}, page: 'deploy', tabs: { open: [], active: null }, wording: null, wordingFile: null, back: false,
+  info: null, settings: null, catalogs: {}, studioCatalogs: {}, page: 'deploy', tabs: { open: [], active: null }, wording: null, wordingFile: null, back: false,
   palette: null, update: null
 };
 window.TempDeskApp = app;
@@ -20,21 +20,27 @@ window.TempDeskHost = {
   settings: () => app.settings,
   motionOff: () => state.motionOff,
   wording: () => (app.wording && !state.school.enabled ? app.wording : null),
-  toast: (m) => toast(m),
+  toast: (m, kind) => toast(m, kind, { catalogue: 'studio' }),
   palette: () => openPalette(),
   historyChanged: () => document.dispatchEvent(new CustomEvent('td:history'))
 };
 
-async function loadCatalog(lang) {
-  const r = await fetch('vendor/i18n/' + lang + '.json');
-  return r.json();
+async function loadCatalogs(directory) {
+  const languages = ['en', 'zh-HK'];
+  const catalogs = await Promise.all(languages.map(async (lang) => {
+    const r = await fetch('vendor/' + directory + '/' + lang + '.json');
+    return [lang, await r.json()];
+  }));
+  return Object.fromEntries(catalogs);
 }
 
 function effectiveLanguage() { return state.school.enabled ? 'en' : app.settings.language; }
 function makeT() {
   const wording = app.wording && !state.school.enabled ? app.wording : null;
   const funny = state.school.enabled ? 0 : app.settings.funny;
-  state.t = Core.makeTranslator({ catalogs: app.catalogs, mode: effectiveLanguage(), funny, wording });
+  const options = { mode: effectiveLanguage(), funny, wording };
+  state.t = Core.makeTranslator({ ...options, catalogs: app.catalogs });
+  state.studioT = Core.makeTranslator({ ...options, catalogs: app.studioCatalogs });
 }
 
 function applyAppearance() {
@@ -69,8 +75,12 @@ function applyAppearance() {
 export async function applySettings(patch, label) {
   if (patch) app.settings = await td.invoke['settings:set'](patch, label);
   state.settings = app.settings;
+  refreshSoundPreferences();
   makeT();
   applyAppearance();
+  dismissCelebration();
+  refreshToasts();
+  refreshNotificationDrawer?.();
   renderChrome();
   render();
   const fr = document.querySelector('iframe.afb');
@@ -83,50 +93,99 @@ function buildWording(text) {
   if (!text) return { fn: null, map: null };
   try { const map = Wording.validate(text); return { fn: Wording.buildTranslator(map), map }; } catch (e) { return { fn: null, map: null }; }
 }
-export async function applyWordingBytes(bytes) {
-  if (state.school.enabled) { toast(t('wording.schoolBlocked'), 'error'); return false; }
+let wordingJobs = Promise.resolve();
+function queueWording(action) {
+  const result = wordingJobs.then(action);
+  wordingJobs = result.catch(() => {});
+  return result;
+}
+function rejectWording(key, args) {
+  dismissCelebration();
+  play('invalid', { wording: true });
+  toast(notice(key, args), 'error', { wording: true, historyMessage: notice('wording.rejected') });
+  return false;
+}
+async function applyWording(bytes) {
+  if (state.school.enabled) return false;
   let map;
   try { map = Wording.validate(bytes); } catch (e) {
-    play('invalid');
-    toast(t('wording.invalid.' + (e.code || 'json'), [e.entry || '']), 'error', { noHistory: false });
-    return false;
+    return rejectWording('wording.invalid.' + (e.code || 'json'), [e.entry || '']);
   }
-  const r = await td.invoke['wording:apply'](bytes);
-  if (!r.ok) { play('invalid'); toast(t('wording.invalid.' + r.code, [r.entry || '']), 'error'); return false; }
+  let result;
+  try { result = await td.invoke['wording:apply'](bytes); }
+  catch { return rejectWording('wording.saveError'); }
+  if (!result?.ok) {
+    if (!result?.code || result.code === 'storage') return rejectWording('wording.saveError');
+    return rejectWording('wording.invalid.' + result.code, [result.entry || '']);
+  }
   app.wording = Wording.buildTranslator(map);
   app.wordingMap = map;
   await applySettings();
-  const headline = map.get('private vocabulary') || t('wording.applied');
-  if (state.settings.sounds) play('tada');
-  celebrate(headline);
+  if (!state.school.enabled) {
+    play('tada', { wording: true });
+    celebrate(map.get('private vocabulary') || t('wording.applied'));
+  }
   return true;
 }
+export function applyWordingBytes(bytes) { return queueWording(() => applyWording(bytes)); }
 app.applyWordingBytes = applyWordingBytes;
-export async function clearWording() {
-  await td.invoke['wording:clear']();
-  app.wording = null; app.wordingMap = null;
-  await applySettings();
-  toast(t('wording.cleared'), 'success');
+app.pickWordingFile = () => queueWording(async () => {
+  if (state.school.enabled) return false;
+  let choice;
+  try { choice = await td.invoke['wording:pick'](); }
+  catch { return rejectWording('wording.readError'); }
+  if (!choice || choice.cancelled || state.school.enabled) return false;
+  if (choice.error) return rejectWording('wording.readError');
+  if (choice.tooLarge) return rejectWording('wording.invalid.size');
+  return applyWording(choice.bytes);
+});
+export function clearWording() {
+  return queueWording(async () => {
+    if (state.school.enabled) return false;
+    let result;
+    try { result = await td.invoke['wording:clear'](); }
+    catch { result = null; }
+    if (!result?.ok) {
+      toast(notice('wording.clearError'), 'error', { wording: true });
+      return false;
+    }
+    app.wording = null; app.wordingMap = null;
+    await applySettings();
+    toast(notice('wording.cleared'), 'success', { wording: true });
+    return true;
+  });
 }
 app.clearWording = clearWording;
 
 // Drag and drop a wording file (or a file for the Base64 toolkit) anywhere on the window.
 function setupDrop() {
   window.addEventListener('dragover', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
-  window.addEventListener('drop', async (e) => {
+  window.addEventListener('drop', (e) => {
     if (!e.dataTransfer || !e.dataTransfer.files.length) return;
     e.preventDefault();
     const f = e.dataTransfer.files[0];
-    if (app.page === 'base64' && app.onBase64Drop) { app.onBase64Drop(f); return; }
-    if (/\.json$/i.test(f.name)) {
-      if (f.size > 256 * 1024) { play('invalid'); toast(t('wording.invalid.size'), 'error'); return; }
-      const bytes = new Uint8Array(await f.arrayBuffer());
-      // A dropped JSON file is treated as personal wording only when it has that schema.
+    const base64Drop = app.page === 'base64' && app.onBase64Drop;
+    const explicitBase64Drop = base64Drop && e.target instanceof Element && e.target.closest('[data-base64-file-drop]');
+    const json = /\.json$/i.test(f.name);
+    if (base64Drop && (!json || state.school.enabled || (explicitBase64Drop && f.size > Wording.MAX_BYTES))) { base64Drop(f); return; }
+    if (state.school.enabled) return;
+    queueWording(async () => {
+      if (state.school.enabled) return false;
+      if (!json) return rejectWording('drop.unknown');
+      if (f.size > Wording.MAX_BYTES) return rejectWording('wording.invalid.size');
+      let bytes;
+      try { bytes = new Uint8Array(await f.arrayBuffer()); }
+      catch { return rejectWording('wording.readError'); }
+      // Leave unrelated files with the Base64 tool. The shared validator decides every accepted import.
       let looks = false;
-      try { const j = JSON.parse(new TextDecoder().decode(bytes)); looks = j && typeof j === 'object' && 'entries' in j; } catch (x) { looks = true; }
-      if (looks) { await applyWordingBytes(bytes); return; }
-      toast(t('drop.notWording'), 'error');
-    } else toast(t('drop.unknown'), 'error');
+      try {
+        const parsed = JSON.parse(new TextDecoder().decode(bytes));
+        looks = Boolean(parsed && typeof parsed === 'object' && Object.hasOwn(parsed, 'entries'));
+      } catch { looks = !explicitBase64Drop; }
+      if (looks) return applyWording(bytes);
+      if (base64Drop) { base64Drop(f); return; }
+      return rejectWording('drop.notWording');
+    });
   });
 }
 
@@ -156,12 +215,12 @@ function renderChrome() {
   document.getElementById('tb-ver').textContent = ver.version;
   document.getElementById('tb-ver').title = t('about.provenance', [ver.version, (ver.commit || '').slice(0, 12), ver.builtUtc]);
   const acts = document.getElementById('tb-actions');
-  const unread = state.notifications.filter((n) => !n.read).length;
+  const unread = visibleNotifications().filter((n) => !n.read).length;
   acts.replaceChildren(
     iconBtn('undo', t('hist.undo') + ' (Ctrl+Z)', () => doUndo(), { class: 'tb-btn', id: 'tb-undo' }),
     iconBtn('redo', t('hist.redo') + ' (Ctrl+Y)', () => doRedo(), { class: 'tb-btn', id: 'tb-redo' }),
     h('button', { type: 'button', class: 'tb-btn', onclick: openPalette, 'aria-label': t('palette.open'), title: t('palette.open') + ' (Ctrl+Shift+F)' }, [icon('search'), h('span', { text: t('palette.short') }), h('span', { class: 'kbd', text: 'Ctrl+Shift+F' })]),
-    h('button', { type: 'button', class: 'tb-btn', onclick: openNotifications, 'aria-label': t('notif.open', [unread]), title: t('notif.title') }, [icon('bell'), unread ? h('span', { class: 'badge', text: String(unread) }) : null])
+    h('button', { type: 'button', id: 'tb-notifications', class: 'tb-btn', onclick: openNotifications, 'aria-label': t('notif.open', [unread]), title: t('notif.title') }, [icon('bell'), unread ? h('span', { class: 'badge', text: String(unread) }) : null])
   );
   renderTabs();
   renderBanner();
@@ -305,7 +364,7 @@ async function refreshUndo() {
 app.refreshUndo = refreshUndo;
 document.addEventListener('td:history', refreshUndo);
 async function afterHistoryMove(r, word) {
-  if (!r) { toast(t(word === 'undo' ? 'hist.nothingUndo' : 'hist.nothingRedo')); return; }
+  if (!r) { toast(notice(word === 'undo' ? 'hist.nothingUndo' : 'hist.nothingRedo')); return; }
   toast(r.title, 'success');
   // Settings come back from the workspace: re-apply them when they changed.
   const snap = await td.invoke['ws:snapshot']();
@@ -402,25 +461,52 @@ function openPalette() {
 app.openPalette = openPalette;
 
 // ---- notification centre ------------------------------------------------------------------
+let refreshNotificationDrawer;
+function closeNotificationDrawer(drawer) {
+  refreshNotificationDrawer = null;
+  drawer.remove();
+  renderChrome();
+  document.getElementById('tb-notifications')?.focus();
+}
 function openNotifications() {
-  const old = document.querySelector('.drawer'); if (old) { old.remove(); return; }
-  state.notifications.forEach((n) => { n.read = true; });
+  const old = document.querySelector('.drawer');
+  if (old) { closeNotificationDrawer(old); return; }
+  visibleNotifications().forEach((n) => { n.read = true; });
   const content = h('div', { class: 'content' });
+  const heading = h('h2', { style: { margin: 0 } });
   let matcher = null;
   function draw() {
-    const items = state.notifications.filter((n) => !matcher || Core.testMatch(n.text, matcher));
-    content.replaceChildren(items.length ? h('div', { class: 'list' }, items.map((n) => h('div', { class: 'item', tabindex: '0' }, [h('div', { class: 'grow' }, [h('div', { class: 'title', text: n.text }), h('div', { class: 'sub', text: fmtTime(n.time) + ' · ' + t('notif.kind.' + (n.kind || 'info')) })])]))) : h('div', { class: 'empty' }, [h('div', { class: 'big', text: t('notif.empty') }), h('p', { text: t('notif.emptyHelp') })]));
+    const focused = document.activeElement?.dataset?.notificationId;
+    const items = visibleNotifications().map((n) => ({ record: n, text: notificationText(n) })).filter((n) => !matcher || Core.testMatch(n.text, matcher));
+    content.replaceChildren(items.length ? h('div', { class: 'list' }, items.map(({ record, text }) => h('div', { class: 'item', tabindex: '0', 'data-notification-id': record.id }, [h('div', { class: 'grow' }, [h('div', { class: 'title', text }), h('div', { class: 'sub', text: fmtTime(record.time) + ' · ' + t('notif.kind.' + record.kind) })])]))) : h('div', { class: 'empty' }, [h('div', { class: 'big', text: t('notif.empty') }), h('p', { text: t('notif.emptyHelp') })]));
+    if (focused) (content.querySelector('[data-notification-id="' + focused + '"]') || sb.input).focus({ preventScroll: true });
   }
-  const sb = searchBox({ label: t('notif.search'), onChange: (m) => { matcher = m.ok && !m.empty ? m : null; draw(); }, count: (m) => Core.countMatches(state.notifications.map((n) => n.text), m) });
-  const d = h('aside', { class: 'drawer', role: 'dialog', 'aria-label': t('notif.title') }, [h('header', null, [h('h2', { text: t('notif.title'), style: { margin: 0 } }), h('div', { class: 'row' }, [
-    btn(t('notif.clear'), () => { state.notifications = []; draw(); renderChrome(); }, 'btn-ghost btn-sm'), iconBtn('close', t('common.close'), () => { d.remove(); renderChrome(); })])]), h('div', { style: { padding: '12px 18px 0' } }, [sb]), content]);
-  d.addEventListener('keydown', (e) => { if (e.key === 'Escape') { d.remove(); renderChrome(); } });
+  const sb = searchBox({ label: t('notif.search'), onChange: (m) => { matcher = m.ok && !m.empty ? m : null; draw(); }, count: (m) => Core.countMatches(visibleNotifications().map(notificationText), m) });
+  const clear = btn('', () => { state.notifications = []; sb.refresh(); renderChrome(); }, 'btn-ghost btn-sm');
+  const close = iconBtn('close', t('common.close'), closeDrawer);
+  const d = h('aside', { class: 'drawer', role: 'dialog' }, [h('header', null, [heading, h('div', { class: 'row' }, [clear, close])]), h('div', { style: { padding: '12px 18px 0' } }, [sb]), content]);
+  function closeDrawer() { closeNotificationDrawer(d); }
+  d.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
   document.body.appendChild(d);
-  draw();
+  refreshNotificationDrawer = () => {
+    heading.textContent = t('notif.title');
+    d.setAttribute('aria-label', heading.textContent);
+    clear.textContent = t('notif.clear');
+    for (const attr of ['aria-label', 'title']) close.setAttribute(attr, t('common.close'));
+    sb.input.setAttribute('aria-label', t('notif.search'));
+    sb.input.placeholder = t('search.placeholder');
+    sb.refresh();
+  };
+  refreshNotificationDrawer();
   sb.input.focus();
 }
 app.openNotifications = openNotifications;
-onNotify(() => { const b = document.querySelector('#tb-actions .badge'); const unread = state.notifications.filter((n) => !n.read).length; if (b) b.textContent = String(unread); else if (unread) renderChrome(); });
+onNotify(() => {
+  const b = document.querySelector('#tb-actions .badge');
+  const unread = visibleNotifications().filter((n) => !n.read).length;
+  if (b) b.textContent = String(unread); else if (unread) renderChrome();
+  refreshNotificationDrawer?.();
+});
 
 // ---- keyboard -----------------------------------------------------------------------------
 function setupKeys() {
@@ -448,7 +534,7 @@ async function init() {
   app.settings = await td.invoke['settings:get']();
   state.settings = app.settings;
   state.school = await td.invoke['school:get']();
-  app.catalogs = { en: await loadCatalog('en'), 'zh-HK': await loadCatalog('zh-HK') };
+  [app.catalogs, app.studioCatalogs] = await Promise.all([loadCatalogs('i18n'), loadCatalogs('site-i18n')]);
   const w = buildWording(await td.invoke['wording:get']());
   app.wording = w.fn; app.wordingMap = w.map;
   app.tabs = await td.invoke['tabs:get']();
@@ -458,12 +544,12 @@ async function init() {
   registerActions(app);
   setupKeys();
   setupDrop();
-  td.on['update:state']((s) => { app.update = s; if (s.state === 'ready') { toast(t('update.ready', [s.version]) + ' ' + t('update.unsigned'), 'success'); renderBanner(); } });
+  td.on['update:state']((s) => { app.update = s; if (s.state === 'ready') { toast([notice('update.ready', [s.version]), ' ', notice('update.unsigned')], 'success'); renderBanner(); } });
   td.on['theme:system']((s) => { app.info.highContrast = s.highContrast; applyAppearance(); });
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyAppearance);
   window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', applyAppearance);
   window.addEventListener('resize', moveIndicator);
-  if (app.info.workspace && app.info.workspace.kind === 'jsonl') toast(t('hist.noGit'), 'info', { ms: 6000 });
+  if (app.info.workspace && app.info.workspace.kind === 'jsonl') toast(notice('hist.noGit'), 'info', { ms: 6000 });
   if (!app.settings.onboarded) { app.page = 'deploy'; renderChrome(); await render(); runOnboarding(app); }
   else go(app.tabs.active && app.tabs.open.includes(app.tabs.active) ? 'deployment' : 'deploy', app.tabs.active ? { name: app.tabs.active } : undefined);
 }
