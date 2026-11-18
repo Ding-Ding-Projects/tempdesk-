@@ -57,6 +57,14 @@ GUEST_ACTIONS: list[dict] = [
     {"id": "act-print", "label": "Print this page", "href": "#print", "capability": None, "group": "Actions", "action": "print"},
 ]
 
+GUEST_WORDING_ACTION = {
+    "id": "act-wording-picker",
+    "label": "Upload personal wording file",
+    "href": "/#picker-wording",
+    "group": "Personal wording",
+    "keywords": "edition json upload replace clear restore",
+}
+
 
 def visible(items: list[dict], capabilities: set[str] | None) -> list[dict]:
     """Filter items by capability. When health is unknown (agent down) every

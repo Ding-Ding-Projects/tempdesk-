@@ -182,7 +182,9 @@ def test_virtual_commons_wording_requires_a_verified_active_guest(tmp_path):
     from app.guest_routes import WORDING_COOKIE
 
     portal = Portal("guest", tmp_path, extra_env={"COMMONS_RDP_GUI": "desktop.example.test"})
-    assert 'id="picker-wording"' not in portal.client.get("/").text
+    anonymous = portal.client.get("/").text
+    assert 'id="picker-wording"' not in anonymous
+    assert '"/#picker-wording"' not in anonymous
     assert portal.post("/create", {"expiryId": "1h"}).status_code == 303
     account = next(iter(portal.state.guests.values()))
     credentials = {"username": account["username"], "password": account["password"]}
@@ -199,6 +201,7 @@ def test_virtual_commons_wording_requires_a_verified_active_guest(tmp_path):
     assert "HttpOnly" in verified.headers["set-cookie"]
     home = portal.client.get("/")
     assert 'id="picker-wording"' in home.text
+    assert '"/#picker-wording"' in home.text
     assert "no-store" in home.headers["cache-control"]
     portal.client.cookies.set(WORDING_COOKIE, "invalid")
     assert 'id="picker-wording"' not in portal.client.get("/").text

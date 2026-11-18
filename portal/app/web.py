@@ -191,6 +191,8 @@ async def base_context(request: Request) -> dict:
         pub = getattr(request.state, "public", None) or {}
         items = [i for i in navmod.GUEST_NAV if i.get("capability") != "self-delete" or pub.get("allowSelfDelete", True)]
         actions = list(navmod.GUEST_ACTIONS)
+        if getattr(request.state, "picker_wording", False):
+            actions.append(navmod.GUEST_WORDING_ACTION)
     school = request.cookies.get(PREF_SCHOOL) == "1"
     if school:
         actions = [a for a in actions if not a["id"].startswith("act-wording")]

@@ -85,7 +85,8 @@ async def home(request: Request):
     values = {}
     if edition and expiry and edition in pub["commonsEditions"] and expiry in {choice.get("id") for choice in pub["commonsExpiryChoices"]}:
         values = {"commons": True, "edition": edition, "expiryId": expiry}
-    seconds = _wording_seconds(request) if pub["commonsEnabled"] else 0
+    seconds = _wording_seconds(request) if pub["commonsEnabled"] and "legacy" not in pub["commonsEditions"] else 0
+    request.state.picker_wording = bool(seconds)
     return await render(request, "guest/home.html",
                         {"pub": pub, "error": None, "values": values, "wording_seconds": seconds},
                         headers=NO_STORE if seconds else None)
