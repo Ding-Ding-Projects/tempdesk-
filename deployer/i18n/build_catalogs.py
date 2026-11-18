@@ -419,6 +419,35 @@ for k, en, zh in [('password', 'Typed passwords stay in memory for this session.
     s('info.' + k, en, zh)
 
 
+s('nav.virtualDisks', 'Virtual disks', '虛擬磁碟')
+s('nav.virtualDisks.short', 'Disks', '磁碟')
+s('vd.lead', 'Inspect image files, create disks, and attach them read-only for this session.', '檢視映像檔、建立磁碟，或以唯讀模式連接至目前工作階段。')
+s('vd.platform', 'This tool requires Windows virtual disk services.', '此工具需要 Windows 虛擬磁碟服務。')
+s('vd.working', 'Working…', '處理中…')
+s('vd.done', 'Ready', '就緒')
+s('vd.yes', 'Yes', '是')
+s('vd.no', 'No', '否')
+s('vd.format', 'Image format', '映像格式')
+s('vd.bytes', 'File size (bytes)', '檔案大小（位元組）')
+s('vd.attached', 'Attached', '已連接')
+s('vd.device', 'Device path', '裝置路徑')
+s('vd.virtualBytes', 'Virtual size (bytes)', '虛擬大小（位元組）')
+s('vd.logicalSector', 'Logical sector size (bytes)', '邏輯磁區大小（位元組）')
+s('vd.attach', 'Attach read-only', '以唯讀模式連接')
+s('vd.detach', 'Release attachment', '解除連接')
+s('vd.attachWarn', 'Attach {0} read-only without assigning a drive letter. Windows may request administrator consent.', '以唯讀模式連接 {0}，不分配磁碟機代號。Windows 可能會要求管理員同意。')
+s('vd.detachWarn', 'Release this session’s attachment to {0}. Close any files you are using first.', '解除目前工作階段對 {0} 的連接。請先關閉使用中的檔案。')
+s('vd.foreign', 'This image was already attached outside this session. Its attachment is preserved.', '此映像已在其他工作階段連接，現有連接會保留。')
+s('vd.empty', 'No matching images. Add files or discover attached images.', '未有相符的映像。請加入檔案或尋找已連接的映像。')
+s('vd.search', 'Search image paths', '搜尋映像路徑')
+s('vd.inventory', 'Image library', '映像庫')
+s('vd.pick', 'Add image files', '加入映像檔案')
+s('vd.discover', 'Discover attached images', '尋找已連接的映像')
+s('vd.create', 'Create an empty virtual disk', '建立空白虛擬磁碟')
+s('vd.capacity', 'Maximum capacity (MiB)', '容量上限（MiB）')
+s('vd.fixed', 'Reserve the full size now', '立即預留全部空間')
+
+
 def main():
     keys = [k for k, _, _ in E]
     dup = sorted({k for k in keys if keys.count(k) > 1})
