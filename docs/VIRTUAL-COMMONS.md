@@ -23,4 +23,6 @@ Open the guest portal after applying the settings. Confirm that the expected edi
 
 ## Verify a checkout
 
-Open the file for each edition on a test client. Confirm that it points to the intended host and that the temporary user can sign in. The file carries the address and username. The password is shown separately on the one-time confirmation page. After the account expires, verify that another sign-in fails.
+1. On each session host, confirm that the TempDesk Session Watcher scheduled task is installed and can look up guest accounts in the domain. The watcher ends existing sessions. Account expiry alone blocks new sign-ins.
+2. Open the file for each configured edition on a test client. Confirm that it points to the intended host and that the temporary user can sign in. The file carries the address and username. The password is shown separately on the one-time confirmation page.
+3. Keep the test session connected through the expiry time. Verify that the watcher signs it out, then verify that the same account cannot sign in again. Record the two results separately for each edition.
