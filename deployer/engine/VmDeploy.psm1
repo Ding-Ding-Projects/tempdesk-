@@ -53,7 +53,7 @@ function New-TdVmwareVmx {
         [Parameter(Mandatory)][string] $Name,
         [Parameter(Mandatory)][string] $DiskFile,
         [Parameter(Mandatory)][string] $WindowsIso,
-        [Parameter(Mandatory)][string] $KitIso,
+        [string] $KitIso, [switch] $KioskWorkstation,
         [ValidateSet('uefi', 'bios')][string] $Firmware = 'uefi',
         [ValidateRange(1, 64)][int] $Cpus = 2,
         [ValidateRange(2048, 1048576)][int] $MemoryMb = 4096,
@@ -68,7 +68,14 @@ function New-TdVmwareVmx {
     & $add 'displayName' $Name
     # Marks the machine as made by TempDesk: the desktop app only lists and manages marked machines.
     & $add 'tempdesk.managed' 'TRUE'
-    & $add 'guestOS' 'windows2019srvnext-64'
+    if ($KioskWorkstation) {
+        if ($Firmware -ne 'uefi' -or $Network -ne 'hostonly' -or $KitIso) { throw 'The workstation requires isolated networking and EFI, without server media.' }
+        & $add 'guestOS' 'windows11-64'
+        & $add 'uefi.secureBoot.enabled' 'TRUE'
+    } else {
+        if (-not $KitIso) { throw 'Server setup requires its answer ISO.' }
+        & $add 'guestOS' 'windows2019srvnext-64'
+    }
     & $add 'firmware' $(if ($Firmware -eq 'bios') { 'bios' } else { 'efi' })
     & $add 'numvcpus' $Cpus
     & $add 'cpuid.coresPerSocket' $Cpus
@@ -97,9 +104,11 @@ function New-TdVmwareVmx {
     & $add 'sata0:0.present' 'TRUE'
     & $add 'sata0:0.deviceType' 'cdrom-image'
     & $add 'sata0:0.fileName' $WindowsIso
+    if ($KitIso) {
     & $add 'sata0:1.present' 'TRUE'
     & $add 'sata0:1.deviceType' 'cdrom-image'
     & $add 'sata0:1.fileName' $KitIso
+    }
     & $add 'ethernet0.present' 'TRUE'
     & $add 'ethernet0.connectionType' $Network
     & $add 'ethernet0.virtualDev' 'e1000e'

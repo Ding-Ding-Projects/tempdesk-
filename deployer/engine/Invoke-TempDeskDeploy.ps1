@@ -99,7 +99,8 @@ try {
             $arguments = @{
                 Name = [string]$kiosk.name
                 WindowsIso = [string]$kiosk.windowsIso
-                PrivateSwitch = [string]$kiosk.privateSwitch
+                Hypervisor = [string](Get-Prop $kiosk 'hypervisor' 'Auto')
+                PrivateNetwork = [string](Get-Prop $kiosk 'privateNetwork' 'CommonsLab')
                 StorageParent = [string]$kiosk.storageParent
             }
             $entrypoint = Join-Path $PayloadRoot 'server/kiosk/New-CommonsKioskVm.ps1'
@@ -111,7 +112,7 @@ try {
                     throw 'To create this separate workstation, set kioskVm.confirmCreate to its exact name.'
                 }
                 $made = & $entrypoint @arguments -Confirm:$false
-                Write-TdResult $true ([ordered]@{ vmId = $made.VmId; name = $made.Name; state = $made.State; enrolled = $false })
+                Write-TdResult $true ([ordered]@{ configuration = $made.Configuration; hypervisor = $made.Hypervisor; name = $made.Name; state = $made.State; enrolled = $false })
             }
         }
         'Trust' {
