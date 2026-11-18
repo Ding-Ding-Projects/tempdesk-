@@ -62,3 +62,10 @@
   .guide-task-options { grid-template-columns: minmax(0, 1fr); }
   .guide-variant-options { display: grid; grid-template-columns: minmax(0, 1fr); }
 }
+
+.capability-reader label { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .35rem .75rem .35rem 0; }
+.capability-reader input, .capability-reader select { max-width: 100%; min-height: 48px; font: inherit; }
+.reader-card { border-block-start: 1px solid currentColor; padding: .4rem 0; overflow-wrap: anywhere; }
+.reader-card summary { cursor: pointer; padding: .8rem .3rem; font-weight: 650; }
+.reader-card section { margin-block: 1rem; }
+.reader-card section[hidden], .reader-card[hidden] { display: none; }
