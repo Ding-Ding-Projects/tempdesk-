@@ -64,6 +64,11 @@
     {% endif %}
     <button type="submit" class="btn filled lg block">{{ t('Virtual Commons: Check out a computer') }}</button>
   </form>
+  {% else %}
+  <section class="card lg stack rise">
+    <h2>{{ t('Virtual Commons') }}</h2>
+    <p>{{ t('Remote checkout is unavailable right now. Ask a member of staff if you need a remote session.') }}</p>
+  </section>
   {% endif %}
   </div>
 </div>
