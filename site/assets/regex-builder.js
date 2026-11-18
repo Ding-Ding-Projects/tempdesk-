@@ -699,7 +699,11 @@
       galDet.appendChild(ul); pop.appendChild(galDet);
       pop.appendChild(el(doc, 'p', { class: 'rxb-foot', text: T('rx.dialect') }));
       pop.addEventListener('keydown', trap);
-      doc.body.appendChild(pop);
+      // Native modal dialogs make everything outside their subtree inert.
+      // Keep the editor alongside its owning field while a modal is open.
+      var dialog = input.closest && input.closest('dialog');
+      (dialog || doc.body).appendChild(pop);
+
     }
     function chip(text, fn) { var b = el(doc, 'button', { type: 'button', class: 'rxb-chip', text: text }); b.addEventListener('click', fn); return b; }
     function checkbox(text, help, fn) {
@@ -837,13 +841,18 @@
       if (!state.pattern && state.query && !state.regex) parts.ta.value = '';
       pop.hidden = false; bbtn.setAttribute('aria-expanded', 'true'); active = api;
       syncPopover(true); position();
+      var dialog = input.closest && input.closest('dialog');
+      if (dialog) dialog.addEventListener('close', ownerClosed);
       doc.addEventListener('pointerdown', outside, true);
       if (win.addEventListener) { win.addEventListener('resize', position); win.addEventListener('scroll', position, true); }
       try { parts.ta.focus({ preventScroll: true }); } catch (e) { parts.ta.focus(); }
     }
+    function ownerClosed() { close(true); }
     function close(noFocus) {
       if (!pop || pop.hidden) return;
       pop.hidden = true; bbtn.setAttribute('aria-expanded', 'false'); if (active === api) active = null;
+      var dialog = pop.closest && pop.closest('dialog');
+      if (dialog) dialog.removeEventListener('close', ownerClosed);
       doc.removeEventListener('pointerdown', outside, true);
       if (win.removeEventListener) { win.removeEventListener('resize', position); win.removeEventListener('scroll', position, true); }
       if (!noFocus) { try { (lastFocus && lastFocus.isConnected ? lastFocus : bbtn).focus(); } catch (e) { /* ignore */ } }

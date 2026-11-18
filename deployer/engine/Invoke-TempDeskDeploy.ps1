@@ -29,7 +29,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string] $Config,
-    [Parameter(Mandatory)][ValidateSet('Media', 'Vm', 'Server', 'Lite', 'Portals', 'Health', 'Trust', 'Uninstall')][string] $Phase,
+    [Parameter(Mandatory)][ValidateSet('Media', 'Vm', 'KioskVmPreview', 'KioskVmCreate', 'Server', 'Lite', 'Portals', 'Health', 'Trust', 'Uninstall')][string] $Phase,
     [string] $PayloadRoot = '',
     [string] $OutDir = '',
     [switch] $Reset,
@@ -92,6 +92,28 @@ try {
         'Vm' {
             $made = Invoke-TdVmDeploy -Config $cfg -Directory $dir
             Write-TdResult $true ([ordered]@{ vmx = $made.Vmx; name = $made.Name; folder = $made.Folder })
+        }
+        { $_ -in @('KioskVmPreview','KioskVmCreate') } {
+            $kiosk = $cfg.kioskVm
+            if (-not $kiosk) { throw 'The kioskVm configuration section is required.' }
+            $arguments = @{
+                Name = [string]$kiosk.name
+                WindowsIso = [string]$kiosk.windowsIso
+                Hypervisor = [string](Get-Prop $kiosk 'hypervisor' 'Auto')
+                PrivateNetwork = [string](Get-Prop $kiosk 'privateNetwork' 'CommonsLab')
+                StorageParent = [string]$kiosk.storageParent
+            }
+            $entrypoint = Join-Path $PayloadRoot 'server/kiosk/New-CommonsKioskVm.ps1'
+            if ($Phase -eq 'KioskVmPreview') {
+                & $entrypoint @arguments -WhatIf 6>$null
+                Write-TdResult $true ([ordered]@{ name = $arguments.Name; state = 'PreviewOnly'; enrolled = $false })
+            } else {
+                if (-not $arguments.Name -or $kiosk.confirmCreate -cne $arguments.Name) {
+                    throw 'To create this separate workstation, set kioskVm.confirmCreate to its exact name.'
+                }
+                $made = & $entrypoint @arguments -Confirm:$false
+                Write-TdResult $true ([ordered]@{ configuration = $made.Configuration; hypervisor = $made.Hypervisor; name = $made.Name; state = $made.State; enrolled = $false })
+            }
         }
         'Trust' {
             Set-TdTrustedHost -Address ([string]$cfg.server.ipAddress)

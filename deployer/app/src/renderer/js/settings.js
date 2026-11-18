@@ -4,6 +4,8 @@
 // mode, sounds, updates, Git remote, import/export and backup.
 import { h, t, originalText, state, btn, toast, notice, dialog, superConfirm, promptDialog, info, searchBox, select, play, listFilter } from './ui.js';
 
+import { narrationControls } from './narration.js';
+
 const td = window.td;
 const Core = window.TempDeskCore;
 
@@ -74,7 +76,23 @@ export async function settingsPage(root, app) {
     row('textScale', t('set.textScale'), t('set.textScaleHelp'), h('div', { class: 'row' }, [(scale.id = 'textScale-in', scale.setAttribute('aria-label', t('set.textScale')), scale), scaleLab])),
     row('highContrast', t('set.highContrast'), t('set.highContrastHelp'), select([['system', t('opt.system')], ['on', t('opt.on')], ['off', t('opt.off')]], s.highContrast, (v) => set({ highContrast: v }, 'set.highContrast', v))),
     row('motion', t('set.motion'), t('set.motionHelp'), select([['system', t('opt.motionSystem')], ['on', t('opt.on')], ['off', t('opt.off')]], s.motion, (v) => set({ motion: v }, 'set.motion', v)), 'animation'),
-    row('appName', t('set.appName'), t('set.appNameHelp'), (() => { const i = h('input', { type: 'text', value: s.appName, maxlength: '40' }); i.addEventListener('change', () => { const v = i.value.trim(); if (!v || /[<>]/.test(v)) { toast(notice('set.appNameBad'), 'error'); i.value = s.appName; return; } set({ appName: v }, 'set.appName', v); }); return i; })(), 'rename title'),
+    row('appName', t('set.appName'), t('set.appNameHelp'), (() => {
+      const input = h('input', { type: 'text', value: s.appName, maxlength: 40, 'aria-label': t('set.appName') });
+      const shippedName = 'TempDesk Deployer';
+      input.addEventListener('change', () => {
+        const name = input.value.trim();
+        if (!name || /[\x00-\x1f<>]/.test(name)) {
+          toast(notice('set.appNameBad'), 'error');
+          input.value = s.appName;
+          return;
+        }
+        if (name !== s.appName) set({ appName: name }, 'set.appName', name);
+      });
+      const language = school.enabled ? 'en' : s.language;
+      const resetLabel = language === 'en' ? 'Restore original name' : language === 'zh-HK' ? '還原原有名稱' : 'Restore original name / 還原原有名稱';
+      const reset = btn(resetLabel, () => set({ appName: shippedName }, 'set.appName', shippedName), 'btn-ghost btn-sm', { disabled: s.appName === shippedName });
+      return h('div', { class: 'row' }, [input, reset]);
+    })(), 'rename title'),
     row('logo', t('set.logo'), t('set.logoHelp'), h('div', { class: 'row' }, [logoPrev, btn(t('set.logoPick'), async () => {
       const f = await td.invoke['file:open']({ filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp'] }], maxBytes: 200 * 1024 });
       if (!f || f.cancelled) return;
@@ -101,6 +119,7 @@ export async function settingsPage(root, app) {
       app.wordingMap ? btn(t('wording.clear'), () => app.clearWording(), 'btn-ghost btn-sm') : null,
       btn(t('wording.schemaBtn'), () => dialog(t('wording.schemaTitle'), () => [h('p', { text: t('wording.schemaHelp') }), h('pre', { class: 'xml', text: '{\n  "schemaVersion": 1,\n  "entries": {\n    "computer": "machine",\n    "private vocabulary": "Wording applied"\n  }\n}' }), h('p', { class: 'small muted', text: t('wording.rules') })]), 'btn-ghost btn-sm')])]), 'vocabulary'));
   }
+  langRows.push(narrationControls());
   sec('language', langRows);
 
   // Sound

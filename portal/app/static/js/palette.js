@@ -38,6 +38,8 @@
     input.addEventListener('keydown', function (e) {
       if (e.key === 'ArrowDown') { e.preventDefault(); move(1); }
       else if (e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
+      else if (e.key === 'Home' && e.ctrlKey && results.length) { e.preventDefault(); setActive(0); }
+      else if (e.key === 'End' && e.ctrlKey && results.length) { e.preventDefault(); setActive(results.length - 1); }
       else if (e.key === 'Enter') { e.preventDefault(); go(results[active]); }
     });
     dlg.addEventListener('close', function () { if (lastFocus && lastFocus.focus) lastFocus.focus(); });
@@ -70,7 +72,6 @@
       if (m) results.push({ it: it, score: m.score, hits: labelMatch ? m.hits : [] });
     });
     results.sort(function (a, b) { return b.score - a.score; });
-    results = results.slice(0, 50);
     active = 0;
     list.textContent = '';
     if (!results.length) { var e = doc.createElement('li'); e.className = 'palette-empty'; e.textContent = copy(t('No matches')); list.appendChild(e); input.removeAttribute('aria-activedescendant'); return; }
@@ -101,7 +102,7 @@
     if (!r) return;
     var it = r.it;
     var here = window.location.pathname;
-    var hash = it.href.indexOf('#');
+    var hash = it.href ? it.href.indexOf('#') : -1;
     var target = !it.action && hash >= 0 && it.href.slice(0, hash) === here
       ? doc.getElementById(it.href.slice(hash + 1)) : null;
     var targetControl = target && (target.matches('input, select, textarea, button, [tabindex]') ? target : target.querySelector('input, select, textarea, button'));
@@ -119,8 +120,11 @@
   }
   function open() {
     if (!dlg) build();
+    if (dlg.open) { input.focus(); return; }
     lastFocus = doc.activeElement;
-    input.value = ''; render();
+    if (pal) pal.builder.set({ query: '', pattern: '' });
+    else input.value = '';
+    render();
     dlg.showModal(); input.focus();
   }
   window.TDPalette = { open: open, items: items };

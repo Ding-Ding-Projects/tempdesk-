@@ -48,3 +48,7 @@ No fonts are vendored. Pages use the system stack (Segoe UI Variable, Segoe UI, 
 ## Privacy
 
 Settings, presets, personal wording and history are stored in the visitor's browser only (localStorage or IndexedDB). Passwords are left out of history and presets unless the visitor ticks the option to keep them. The only network request to a third party is the GitHub API call on the landing page that shows the latest release.
+
+## Publishing under another project path
+
+Set `TEMPDESK_PUBLIC_URL` to the full HTTPS directory URL before building. The builder uses it for shared-link previews, canonical article addresses, the sitemap and navigation from missing pages. Internal guide links stay relative so the documentation companion works offline. The default is the existing TempDesk Pages address.

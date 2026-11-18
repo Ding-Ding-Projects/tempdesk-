@@ -25,9 +25,8 @@
     volatile.hidden = temporary.size === 0;
   }
 
-  function restoreRadio(group, name) {
-    const saved = read(name);
-    const option = [...group.querySelectorAll('input[type="radio"]')].find(input => input.value === saved);
+  function restoreRadio(group, name, selected = read(name)) {
+    const option = [...group.querySelectorAll('input[type="radio"]')].find(input => input.value === selected);
     if (option) option.checked = true;
   }
 
@@ -67,6 +66,15 @@
 
   restoreRadio(taskControls, 'task');
   for (const group of groups) restoreRadio(group, 'variant.' + group.dataset.guideVariants);
+  const params = new URLSearchParams(location.search);
+  const requested = panels.find(panel => panel.dataset.guideTask === params.get('task') &&
+    panel.dataset.guideVariant === params.get('variant'));
+  if (requested) {
+    const { guideTask, guideVariant } = requested.dataset;
+    restoreRadio(taskControls, 'task', guideTask);
+    const group = groups.find(item => item.dataset.guideVariants === guideTask);
+    if (group) restoreRadio(group, 'variant.' + guideTask, guideVariant);
+  }
   for (const panel of panels) {
     for (const step of panel.querySelectorAll(markSelector)) {
       step.checked = read(markKey(panel, step)) === '1';

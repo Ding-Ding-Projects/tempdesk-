@@ -5,10 +5,22 @@ rem delta .nupkg when a previous release exists (set TEMPDESK_REMOTE_RELEASES to
 rem URL to enable deltas). Usage: build-installer.bat [/s]
 setlocal EnableExtensions
 set "ROOT=%~dp0"
-set "ARG=%~1"
-call "%ROOT%build.bat" %ARG% || exit /b %ERRORLEVEL%
 set "QUIET="
-if /I "%ARG%"=="/s" set "QUIET=1"
+set "SKIPTESTS="
+if "%SILENT%"=="1" set "QUIET=/s"
+:installerargs
+if "%~1"=="" goto :build
+if /I "%~1"=="/s" (set "QUIET=/s"& goto :next)
+if /I "%~1"=="--silent" (set "QUIET=/s"& goto :next)
+if /I "%~1"=="--skip-tests" (set "SKIPTESTS=--skip-tests"& goto :next)
+echo Unknown installer option.
+exit /b 2
+:next
+shift
+goto :installerargs
+:build
+call "%ROOT%build.bat" %QUIET% %SKIPTESTS%
+if errorlevel 1 exit /b %ERRORLEVEL%
 if exist "%ROOT%.tools\node\node.exe" set "PATH=%ROOT%.tools\node;%PATH%"
 set "CSC_LINK=" & set "WIN_CSC_LINK=" & set "CSC_KEY_PASSWORD=" & set "WIN_CSC_KEY_PASSWORD="
 set "CSC_IDENTITY_AUTO_DISCOVERY=false"
@@ -29,14 +41,15 @@ popd
 
 set "OUT=%ROOT%deployer\output\squirrel-windows"
 "%PSEXE%" -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$ErrorActionPreference='Stop'; $o='%OUT%';" ^
-  "$setup = Get-ChildItem -LiteralPath $o -Filter '*Setup*.exe' | Select-Object -First 1; if (-not $setup) { throw 'Setup.exe was not produced.' }" ^
-  "Copy-Item $setup.FullName (Join-Path $o 'Setup.exe') -Force;" ^
+  "$ErrorActionPreference='Stop'; $o=$env:OUT;" ^
+  "$setup = Get-ChildItem -LiteralPath $o -Filter '*Setup*.exe' | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1; if (-not $setup) { throw 'Setup.exe was not produced.' }" ^
+  "if ($setup.FullName -ine (Join-Path $o 'Setup.exe')) { Copy-Item -LiteralPath $setup.FullName (Join-Path $o 'Setup.exe') -Force };" ^
   "if (-not (Test-Path (Join-Path $o 'RELEASES'))) { throw 'RELEASES was not produced.' }" ^
   "if (-not (Get-ChildItem -LiteralPath $o -Filter '*-full.nupkg')) { throw 'The full .nupkg was not produced.' }" ^
   "$sig = Get-AuthenticodeSignature -LiteralPath (Join-Path $o 'Setup.exe');" ^
   "if ($sig.Status -ne 'NotSigned') { throw ('Setup.exe must be unsigned (owner decision) but reports ' + $sig.Status) }" ^
   "Write-Host ('Setup.exe signature status: ' + $sig.Status + ' (expected NotSigned)');" ^
+  "Get-FileHash -LiteralPath (Join-Path $o 'Setup.exe') -Algorithm SHA256 | Format-List Algorithm,Hash,Path | Out-String | Write-Host;" ^
   "Get-ChildItem -LiteralPath $o | Format-Table Name, Length -AutoSize | Out-String | Write-Host"
 if errorlevel 1 (echo ERROR: installer verification failed. & exit /b 5)
 if not defined QUIET echo Installer ready in %OUT%

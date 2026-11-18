@@ -6,9 +6,23 @@ setlocal EnableExtensions
 set "ROOT=%~dp0"
 set "QUIET="
 set "DOCSONLY="
-if /I "%~1"=="/docs" set "DOCSONLY=1"
-if /I "%~1"=="/s" set "QUIET=1"
-if /I "%~2"=="/s" set "QUIET=1"
+set "RUNAPP="
+set "SKIPTESTS="
+if "%SILENT%"=="1" set "QUIET=1"
+:args
+if "%~1"=="" goto :parsed
+if /I "%~1"=="/docs" (set "DOCSONLY=1"& goto :nextarg)
+if /I "%~1"=="--run" (set "RUNAPP=1"& goto :nextarg)
+if /I "%~1"=="--skip-tests" (set "SKIPTESTS=1"& goto :nextarg)
+if /I "%~1"=="/s" (set "QUIET=1"& goto :nextarg)
+if /I "%~1"=="--silent" (set "QUIET=1"& goto :nextarg)
+echo Unknown build option.
+exit /b 2
+:nextarg
+shift
+goto :args
+:parsed
+if defined RUNAPP if defined DOCSONLY (echo --run requires a desktop build.& exit /b 2)
 set "PSEXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 rem Started from PowerShell 7, the inherited module path breaks Windows PowerShell 5.1 (Get-FileHash goes missing).
 set "PSModulePath="
@@ -20,7 +34,7 @@ rem Code signing is prohibited: make sure no certificate reaches the packager.
 set "CSC_LINK=" & set "WIN_CSC_LINK=" & set "CSC_KEY_PASSWORD=" & set "WIN_CSC_KEY_PASSWORD="
 set "CSC_IDENTITY_AUTO_DISCOVERY=false"
 
-set "CMD="%PSEXE%" -NoProfile -ExecutionPolicy Bypass -File "%ROOT%scripts\download-dependencies.ps1" -Silent"
+set "CMD=call "%ROOT%download-dependencies.bat" /s"
 call :step "Downloading build tools" || goto :fail
 if exist "%ROOT%.tools\node\node.exe" set "PATH=%ROOT%.tools\node;%PATH%"
 where node >nul 2>&1 || (echo ERROR: Node.js was not found after download.& exit /b 3)
@@ -48,9 +62,14 @@ call :step "Packaging (unpacked + portable)" || (popd & goto :fail)
 set "CMD=cmd /c node scripts\build-docs-companion.js"
 call :step "Packaging the portable documentation" || (popd & goto :fail)
 if defined DOCSONLY goto :finished
+if defined SKIPTESTS goto :finished
 set "CMD=cmd /c node --test test/*.test.js"
 call :step "Running unit tests after packaging" || (popd & goto :fail)
 :finished
+if defined RUNAPP (
+  node "%ROOT%scripts\launch-built.cjs"
+  if errorlevel 1 (popd & exit /b 1)
+)
 popd
 if not defined QUIET echo Build finished: %ROOT%deployer\bin
 exit /b 0

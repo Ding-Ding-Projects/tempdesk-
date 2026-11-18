@@ -61,6 +61,17 @@ const tasks = [
   },
 ];
 
+export function relatedDocumentationWorkflows(file, catalog, escape) {
+  const links = tasks.flatMap(task => task.variants.filter(variant =>
+    variant.links.some(([, source]) => source === file)).map(variant => {
+    const label = catalog['docs.guide.' + task.id + '.' + variant.id + '.title'];
+    const key = 'docs.guide.' + task.id + '.' + variant.id + '.title';
+    return `<a class="hit" href="index.html?task=${task.id}&amp;variant=${variant.id}#guided-workflows" data-i18n="${key}">${escape(label)}</a>`;
+  }));
+  if (!links.length) return '';
+  return `<section><h2 data-i18n="docs.guide.heading">${escape(catalog['docs.guide.heading'])}</h2><div class="hits">${links.join('')}</div></section>`;
+}
+
 export function renderDocumentationWorkflows(docPages, catalogs, escape) {
   const articles = new Map(docPages.map(page => [page.d.file, page]));
   function copy(key, tag = 'span') {
