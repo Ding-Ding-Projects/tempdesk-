@@ -224,3 +224,18 @@ def test_unavailable_commons_edition_stops_before_the_draw(tmp_path, monkeypatch
     result = portal.post("/create", {"expiryId": "1h", "checkout": "commons", "edition": "core"})
     assert result.status_code == 400
     assert not portal.state.guests
+
+
+def test_pending_legacy_commons_checkout_survives_upgrade(tmp_path):
+    from app.security import ONCE_COOKIE
+
+    portal = Portal("guest", tmp_path, extra_env={"COMMONS_RDP_TARGET": "legacy.example.test"})
+    checkout = portal.app.state.once.put({
+        "credentials": {"username": "guest1", "password": "example-password", "domain": "corp.test"},
+        "commons": True,
+    })
+    portal.client.cookies.set(ONCE_COOKIE, checkout, domain="portal.test", path="/")
+    result = portal.client.get("/created")
+    assert result.status_code == 200
+    assert 'download="Virtual-Commons.rdp"' in result.text
+    assert portal.client.get("/created").status_code == 410

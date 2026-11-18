@@ -120,8 +120,12 @@ async def created(request: Request):
     domain = creds.get("domain") or ""
     netbios = domain.split(".")[0].upper() if domain else ""
     rdp = None
+    targets = _commons_targets(request)
     target = result.get("rdpTarget")
-    if target in _commons_targets(request).values():
+    # Older pending checkouts recorded a flag and could only use the legacy destination.
+    if "rdpTarget" not in result and result.get("commons") is True:
+        target = targets.get("legacy")
+    if target in targets.values():
         username = creds.get("upn") or (f"{netbios}\\{creds['username']}" if netbios else creds["username"])
         if RDP_USER.fullmatch(username):
             profile = (f"full address:s:{target}\r\nusername:s:{username}\r\n"
