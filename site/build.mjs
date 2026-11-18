@@ -17,7 +17,7 @@ import { inventoryPath, inventorySummary, readInventory } from './feature-invent
 const SITE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(SITE, '..');
 const DEFAULT_OUT = path.join(SITE, '_site');
-const BASE_URL = 'https://ding-ding-projects.github.io/tempdesk-/';
+const DEFAULT_PUBLIC_URL = 'https://ding-ding-projects.github.io/tempdesk-/';
 
 // ---------------------------------------------------------------------------------------------
 // Markdown renderer (CommonMark subset: headings, paragraphs, lists, code, tables, quotes, links)
@@ -206,6 +206,13 @@ async function docSources() {
 
 async function build({ outputDirectory, referenceRevision = 'main' } = {}) {
   const OUT = outputDirectory ?? DEFAULT_OUT;
+  const address = new URL(process.env.TEMPDESK_PUBLIC_URL || DEFAULT_PUBLIC_URL);
+  if (address.protocol !== 'https:' || address.username || address.password || address.search || address.hash) {
+    throw new Error('TEMPDESK_PUBLIC_URL must be an HTTPS directory URL without credentials, query or fragment.');
+  }
+  if (!address.pathname.endsWith('/')) address.pathname += '/';
+  const publicUrl = address.href;
+  const publicationHtml = html => html.replaceAll(DEFAULT_PUBLIC_URL, () => escapeHtml(publicUrl));
   if (!/^(main|[a-f0-9]{40})$/.test(referenceRevision)) throw new Error('Invalid documentation source reference');
   const sourceBase = 'https://github.com/Ding-Ding-Projects/tempdesk-/blob/' + referenceRevision + '/';
   // 0. CodeMirror bundle: rebuilt with esbuild when the dev dependencies are installed; otherwise the
@@ -216,7 +223,7 @@ async function build({ outputDirectory, referenceRevision = 'main' } = {}) {
     vendor = 'rebuilt with esbuild';
   }
   if (!existsSync(path.join(SITE, 'assets', 'vendor', 'codemirror.js'))) throw new Error('assets/vendor/codemirror.js is missing; run npm ci && node build-vendor.mjs in site/');
-  LAYOUT = await fs.readFile(path.join(SITE, 'templates', 'layout.html'), 'utf8');
+  LAYOUT = publicationHtml(await fs.readFile(path.join(SITE, 'templates', 'layout.html'), 'utf8'));
   if (outputDirectory === undefined) {
     await rmrf(OUT);
     await mkdirp(OUT);
@@ -229,7 +236,14 @@ async function build({ outputDirectory, referenceRevision = 'main' } = {}) {
   // 1. static files
   const STATIC_SKIP = new Set(['_site', 'node_modules', 'tests', 'templates', 'build.mjs', 'docs-workflows.mjs', 'features.json', 'package.json', 'package-lock.json', 'README.md', 'payload', '.gitignore', 'vendor-src', 'build-vendor.mjs']);
   const statics = await walk(SITE, (rel, e) => !STATIC_SKIP.has(rel.split('/')[0]) && !rel.split('/').some((p) => p.startsWith('.')) && !(e.isFile() && /\.(py|mjs\.map)$/.test(rel)));
-  for (const f of statics) await copyFile(path.join(SITE, f), path.join(OUT, f));
+  for (const f of statics) {
+    if (f === 'index.html' || f === 'answer-file.html') {
+      const html = await fs.readFile(path.join(SITE, f), 'utf8');
+      await fs.writeFile(path.join(OUT, f), publicationHtml(html));
+    } else {
+      await copyFile(path.join(SITE, f), path.join(OUT, f));
+    }
+  }
   await copyFile(path.join(REPO, 'design', 'guided-documentation', 'guided-docs.css'), path.join(OUT, 'assets', 'guided-docs.css'));
   await fs.writeFile(path.join(OUT, '.nojekyll'), '');
 
@@ -305,7 +319,9 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
     }
     const dir = path.posix.dirname(d.file);
     const linkMap = (href) => {
-      if (href.startsWith(BASE_URL)) return '../' + href.slice(BASE_URL.length);
+      for (const base of [DEFAULT_PUBLIC_URL, publicUrl]) {
+        if (href.startsWith(base)) return '../' + href.slice(base.length);
+      }
       if (/^(https?:|#|mailto:)/.test(href)) return href;
       const [p, hash] = href.split('#');
       const target = path.posix.normalize(path.posix.join(dir, p)).replace(/^\.\//, '');
@@ -390,13 +406,13 @@ ${docsGuides}
 
   // 7. search index, sitemap, robots
   await fs.writeFile(path.join(OUT, 'search-index.json'), JSON.stringify(index) + '\n');
-  const urls = index.pages.map((p) => BASE_URL + p.url.replace(/index\.html$/, ''));
+  const urls = index.pages.map((p) => publicUrl + p.url.replace(/index\.html$/, ''));
   await fs.writeFile(path.join(OUT, 'sitemap.xml'), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls.map((u) => `  <url><loc>${escapeHtml(u)}</loc></url>`).join('\n') + '\n</urlset>\n');
-  await fs.writeFile(path.join(OUT, 'robots.txt'), 'User-agent: *\nAllow: /\nSitemap: ' + BASE_URL + 'sitemap.xml\n');
+  await fs.writeFile(path.join(OUT, 'robots.txt'), 'User-agent: *\nAllow: /\nSitemap: ' + publicUrl + 'sitemap.xml\n');
   // 404.html is served for any missing path, at any depth, so relative links would break. A tiny script
   // computes the site root at runtime (the first path segment on GitHub Pages project sites, or / when
   // served locally) and sets <base href> before anything else loads.
-  const nfBase = '<script>(function(){var p=location.pathname,b="/";if(/\\.github\\.io$/.test(location.hostname)){var m=p.match(/^\\/[^\\/]+\\//);if(m)b=m[0];}document.write(\'<base href="\'+b+\'">\');})();</script>';
+  const nfBase = '<base href="' + escapeHtml(address.pathname) + '">';
   const nfPage = page({ title: 'Page not found | TempDesk', desc: 'This page does not exist.', root: '', url: '404.html', body: '<div class="content"><h1 data-i18n="nf.title">Page not found</h1><p class="lede" data-i18n="nf.body">This page does not exist. Try the command palette (Ctrl+Shift+F) or go home.</p><a class="btn btn-primary" href="./" data-i18n="nav.home">Home</a></div>' });
   await fs.writeFile(path.join(OUT, '404.html'), nfPage.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + nfBase));
 
