@@ -83,13 +83,15 @@ test('documentation search mounts inside the sidebar on the index and articles',
   const run = await mkdtemp(path.join(tmpdir(), 'tempdesk-sidebar-'));
   t.after(() => rm(run, { recursive: true, force: true }));
   const outputDirectory = path.join(run, 'site');
-  await build({ outputDirectory });
+  const referenceRevision = 'a'.repeat(40);
+  await build({ outputDirectory, referenceRevision });
   for (const file of ['index.html', 'virtual-commons.html', 'wiki-pending-home.html']) {
     const html = await readFile(path.join(outputDirectory, 'docs', file), 'utf8');
     const sidebar = html.match(/<nav class="docs-nav"[\s\S]*?<\/nav>/)?.[0];
     assert.ok(sidebar, 'Missing sidebar in ' + file);
     assert.match(sidebar, /data-search-mount="\[data-docs-nav-filter\]"/);
     assert.match(sidebar, /<span data-docs-nav-filter hidden><\/span>/);
+    if (file !== 'index.html') assert.ok(html.includes('/blob/' + referenceRevision + '/docs/'));
   }
 });
 

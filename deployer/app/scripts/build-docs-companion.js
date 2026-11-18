@@ -10,12 +10,48 @@ const appPackage = require('../package.json');
 function sourceRevision(cwd) {
   const gitOptions = { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] };
   try {
+    const root = execFileSync('git', ['rev-parse', '--show-toplevel'], gitOptions).trim();
     const commit = execFileSync('git', ['rev-parse', 'HEAD'], gitOptions).trim();
+    if (path.relative(cwd, root) !== '' || !/^[a-f0-9]{40}$/.test(commit)) throw new Error('Unexpected source identity');
     const modified = !!execFileSync('git', ['status', '--porcelain', '--untracked-files=all'], gitOptions).trim();
     return { commit, modified };
   } catch {
-    return { commit: null, modified: null };
+    throw new Error('Build TempDesk Docs from the top of a versioned source checkout so its file inventory can be verified');
   }
+}
+
+async function snapshotSource(root, staging, source) {
+  const destination = path.join(staging, 'source');
+  await fs.mkdir(destination);
+  if (source.modified === false) {
+    const archive = path.join(staging, 'source.tar');
+    execFileSync('git', ['archive', '--format=tar', '-o', archive, source.commit], { cwd: root });
+    execFileSync('tar.exe', ['-xf', archive, '-C', destination]);
+    return destination;
+  }
+
+  // A development build can include local changes to project files. Ignore runtime
+  // state and use only regular files contained in the source directory.
+  const names = execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], {
+    cwd: root, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
+  }).split('\0').filter(Boolean);
+  const canonicalRoot = await fs.realpath(root);
+  for (const name of new Set(names)) {
+    const input = path.join(canonicalRoot, name);
+    let attributes;
+    try { attributes = await fs.lstat(input); } catch (error) {
+      if (error.code === 'ENOENT') continue;
+      throw error;
+    }
+    const relative = path.relative(canonicalRoot, await fs.realpath(input));
+    if (!attributes.isFile() || relative.startsWith('..' + path.sep) || relative === '..' || path.isAbsolute(relative)) {
+      throw new Error('The documentation source contains a file outside the project inventory');
+    }
+    const target = path.join(destination, name);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.copyFile(input, target);
+  }
+  return destination;
 }
 
 async function main() {
@@ -31,9 +67,10 @@ async function main() {
   await fs.mkdir(bundle, { recursive: true });
   const staging = await fs.mkdtemp(path.join(bundle, 'docs-companion-'));
   try {
-    const { build } = await import(pathToFileURL(path.join(root, 'site', 'build.mjs')).href);
+    const input = await snapshotSource(root, staging, source);
+    const { build } = await import(pathToFileURL(path.join(input, 'site', 'build.mjs')).href);
     const website = path.join(staging, 'website');
-    await build({ outputDirectory: website });
+    await build({ outputDirectory: website, referenceRevision: source.modified === false ? source.commit : 'main' });
     const index = JSON.parse(await fs.readFile(path.join(website, 'search-index.json'), 'utf8'));
     const pages = new Set(index.pages.map(page => page.url));
     for (const url of ['docs/index.html', 'docs/virtual-commons.html', 'docs/wiki-pending-home.html']) {
@@ -41,7 +78,7 @@ async function main() {
     }
     const info = { version, ...source, builtUtc: new Date().toISOString() };
     await fs.writeFile(path.join(website, 'build-info.json'), JSON.stringify(info) + '\n');
-    await fs.copyFile(path.join(root, 'deployer', 'docs-companion', 'main.cjs'), path.join(staging, 'main.cjs'));
+    await fs.copyFile(path.join(input, 'deployer', 'docs-companion', 'main.cjs'), path.join(staging, 'main.cjs'));
     await fs.writeFile(path.join(staging, 'package.json'), JSON.stringify({
       name: 'tempdesk-docs', productName: 'TempDesk Docs', version, main: 'main.cjs',
       description: 'Offline documentation for TempDesk', author: appPackage.author, license: appPackage.license,
@@ -67,8 +104,7 @@ async function main() {
     });
     const artifact = path.join(output, 'TempDeskDocs-' + version + '-portable.exe');
     if (!(await fs.stat(artifact)).size) throw new Error('The portable documentation executable is empty');
-    const revision = source.commit ?? 'an unversioned source export';
-    console.log('Built TempDesk Docs ' + version + ' from ' + revision + (source.modified ? ' with local changes' : ''));
+    console.log('Built TempDesk Docs ' + version + ' from ' + source.commit + (source.modified ? ' with local changes' : ''));
   } finally {
     await fs.rm(staging, { recursive: true, force: true });
   }

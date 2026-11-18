@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "release": "v1.0.73",
+  "capturedAt": "2026-11-18T11:54:15.933Z",
+  "state": "Bilingual, dark theme, reduced motion",
+  "verifiedBundledPayloadFiles": 192,
+  "records": [
+    {
+      "id": "portable-docs-search",
+      "active": true,
+      "path": "docs/evidence/standalone-docs-v1.0.73/documentation-search.png",
+      "sourceCommit": "9d5d4ba0a2c200dbb9d83c5b6c0444dab93d7ec9",
+      "artifactSha256": "87b44282d59fcd720e508e8971fd77dfd03efe5d2da9ea770c560143d4db83d1",
+      "captureSha256": "fb6bbb32411d75bed722534a8d8e498605a5a4030bc5e47779d69c2b54c20a1c",
+      "screen": "Documentation search",
+      "state": "Bilingual search results for Configure the destinations",
+      "theme": "dark",
+      "viewportWidth": 1440,
+      "viewportHeight": 900,
+      "scale": 1,
+      "interactionProofId": "portable-documentation-search",
+      "interactionReceiptSha256": "5185d8f3f678bebaa3ac4f5d096ecd18e2be69541230f2b7a1307c68bb413595",
+      "inspectionStatus": "inspected"
+    }
+  ]
+}

@@ -428,7 +428,17 @@ The [capture inventory](docs/evidence/guest-sign-in-inventory.json) records the 
 
 Server Core responded as a synchronized Active Directory domain controller with a ready global catalog. Its native TempDesk agent returned a healthy response for the Windows backend. The kiosk walkthrough used the lab's Samba directory and verified temporary account creation, credential validation, one-time confirmation and self-deletion. The management sign-in page also answered from the test network.
 
+A separate one-hour kiosk account had a configured expiry of 11:47:52 UTC on November 18, 2026. The lab directory confirmed the record was absent at 11:50:37 UTC.
+
 Windows 11 domain membership and desktop sign-in, temporary account creation through the native Windows backend, and Remote Desktop checkout to a session host remain unverified. See [Verify a checkout](docs/VIRTUAL-COMMONS.md#verify-a-checkout).
+
+## Standalone offline documentation
+
+Open **TempDesk Docs** to browse the guides, search the documentation and read the operator wiki offline. The [portable executable in v1.0.73](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.73) ran from an otherwise empty folder. Searching for **Configure the destinations** opened the Virtual Commons guide, and the sidebar opened the prepared wiki.
+
+![TempDesk Docs showing Virtual Commons and operator wiki search results offline](docs/evidence/standalone-docs-v1.0.73/documentation-search.png)
+
+The [evidence inventory](docs/evidence/standalone-docs-inventory.json) records the released executable, capture hash and viewport. See [Read the documentation offline](docs/OFFLINE-GUIDE.md) for navigation and build instructions.
 
 ## Offline checkout guide
 

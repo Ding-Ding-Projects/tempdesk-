@@ -120,11 +120,10 @@ jobs:
           [IO.File]::WriteAllText("$o/RELEASES", ($feed -join "`r`n"))
           Write-Host "RELEASES:"; Get-Content "$o/RELEASES" | Write-Host
           $assets = @("$o/Setup.exe", "$o/RELEASES") + ($mine | ForEach-Object FullName)
-          $portable = Get-ChildItem deployer/bin -Filter '*portable*.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($portable) { $assets += $portable.FullName }
-          $guides = "deployer/bin/docs/TempDeskDocs-$v-portable.exe"
-          if (-not (Test-Path -LiteralPath $guides -PathType Leaf) -or (Get-Item -LiteralPath $guides).Length -eq 0) {
-            throw "Missing portable documentation for $v"
+          foreach ($portable in @("deployer/bin/TempDeskDeployer-$v-portable.exe", "deployer/bin/docs/TempDeskDocs-$v-portable.exe")) {
+            if (-not (Test-Path -LiteralPath $portable -PathType Leaf) -or (Get-Item -LiteralPath $portable).Length -eq 0) {
+              throw "Missing versioned portable file $portable"
+            }
+            $assets += $portable
           }
-          $assets += $guides
           gh release create '${{ steps.ver.outputs.tag }}' @assets --title 'TempDesk Deployer ${{ steps.ver.outputs.tag }}' --notes-file release-notes.md --target '${{ github.sha }}'

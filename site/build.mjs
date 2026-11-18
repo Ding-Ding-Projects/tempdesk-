@@ -165,7 +165,7 @@ export function payloadAllowed(rel, isDir) {
   const name = parts[parts.length - 1];
   if (parts.some((p) => ['tests', 'test', '__pycache__', 'node_modules', '.pytest_cache', '.git', 'bin', 'obj', '.venv', 'venv'].includes(p))) return false;
   if (/^\.env(\..*)?$/i.test(name) || name === '.env') return false;
-  if (!isDir && (/\.(pyc|pyo|log|iso|pfx|key|pem)$/i.test(name) || /^test_.*\.py$/.test(name) || /\.test\.(m?js|ps1)$/i.test(name) || /\.Tests\.ps1$/i.test(name))) return false;
+  if (!isDir && (/\.(pyc|pyo|log|iso|pfx|key|pem|sqlite3(?:-journal|-wal|-shm)?)$/i.test(name) || /^test_.*\.py$/.test(name) || /\.test\.(m?js|ps1)$/i.test(name) || /\.Tests\.ps1$/i.test(name))) return false;
   if (name === '.DS_Store' || name === 'Thumbs.db') return false;
   return true;
 }
@@ -201,8 +201,10 @@ async function docSources() {
   return list;
 }
 
-async function build({ outputDirectory } = {}) {
+async function build({ outputDirectory, referenceRevision = 'main' } = {}) {
   const OUT = outputDirectory ?? DEFAULT_OUT;
+  if (!/^(main|[a-f0-9]{40})$/.test(referenceRevision)) throw new Error('Invalid documentation source reference');
+  const sourceBase = 'https://github.com/Ding-Ding-Projects/tempdesk-/blob/' + referenceRevision + '/';
   // 0. CodeMirror bundle: rebuilt with esbuild when the dev dependencies are installed; otherwise the
   //    committed assets/vendor/codemirror.js is used as is (so the build needs no network).
   let vendor = 'committed bundle';
@@ -287,7 +289,7 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
       const target = path.posix.normalize(path.posix.join(dir, p)).replace(/^\.\//, '');
       const hit = byFile.get(target.toLowerCase()) || byFile.get((target + '/README.md').toLowerCase());
       if (hit) return hit.name + '.html' + (hash ? '#' + hash : '');
-      return 'https://github.com/Ding-Ding-Projects/tempdesk-/blob/main/' + target + (hash ? '#' + hash : '');
+      return sourceBase + target + (hash ? '#' + hash : '');
     };
     const imageMap = (source) => {
       if (/^(https?:|#|\/)/i.test(source)) return source;
@@ -310,7 +312,7 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../" data-i18n="nav.home">Home</a><span aria-hidden="true">/</span><a href="index.html" data-i18n="nav.docs">Docs</a></nav>
 ${toc ? `<details style="margin:12px 0"><summary style="min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700" data-i18n="docs.toc">On this page</summary><div class="hits" data-search-surface="docs-toc" data-search-label="docs.toc">${toc}</div></details>` : ''}
 ${r.html}
-<p class="meter-label" style="margin-top:40px">Source: <a href="https://github.com/Ding-Ding-Projects/tempdesk-/blob/main/${d.file}">${escapeHtml(d.file)}</a></p>
+<p class="meter-label" style="margin-top:40px">Source: <a href="${escapeHtml(sourceBase + d.file)}">${escapeHtml(d.file)}</a></p>
 </article></div></div>`;
     await fs.writeFile(path.join(OUT, 'docs', d.name + '.html'), page({ title: d.title + ' | TempDesk docs', desc: plainText(md).slice(0, 180), root: '../', url: 'docs/' + d.name + '.html', body }));
     index.pages.push({ url: 'docs/' + d.name + '.html', title: d.title, summary: 'Docs: ' + d.file, kind: 'doc', sections: r.headings.filter((x) => x.level <= 3 && x.level > 1).map((x) => ({ id: x.id, title: x.text })), text: plainText(md) });

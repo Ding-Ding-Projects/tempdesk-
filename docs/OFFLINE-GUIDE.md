@@ -14,9 +14,11 @@ The reader bundles the documentation, feature articles, Answer File Studio and B
 
 The reader keeps language, theme and other browsing preferences in its own local profile. Settings and files you open in the bundled tools are processed locally. A selected HTTPS reference or release link opens in your browser, where that destination's network requirements apply.
 
+Release builds bundle the tracked source from the release revision. The generated article source links open that revision.
+
 ## Build and verify
 
-Run `build.bat /docs` from the repository root. The executable appears under `deployer/bin/docs/`. The default `build.bat` and `build-installer.bat` also produce the documentation executable.
+Run `build.bat /docs` from the root of a Git checkout. Its file inventory identifies the inputs for the package. The executable appears under `deployer/bin/docs/`. The default `build.bat` and `build-installer.bat` also produce the documentation executable.
 
 To verify a build, launch the single executable from an otherwise empty directory and open the documentation index, the Virtual Commons guide, and the operator wiki. Search for a phrase from the guide and check that the matches and navigation work offline. The date and version on the home page identify the bundled copy.
 

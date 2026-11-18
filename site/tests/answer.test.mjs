@@ -512,5 +512,5 @@ test('markdown renderer handles headings, lists, code, tables and escapes HTML',
 test('payload exclusions drop tests, caches, env files and node_modules', async () => {
   const { payloadAllowed } = await import('../build.mjs');
   assert.equal(payloadAllowed('server/Install-Forest.ps1', false), true);
-  for (const p of ['portal/tests/test_x.py', 'portal/app/__pycache__/a.pyc', 'portal/.env', 'portal/.env.local', 'agent/node_modules/x.js', 'portal/app/test_y.py']) assert.equal(payloadAllowed(p, false), false, p);
+  for (const p of ['portal/tests/test_x.py', 'portal/app/__pycache__/a.pyc', 'portal/.env', 'portal/.env.local', 'agent/node_modules/x.js', 'portal/app/test_y.py', 'portal/state.sqlite3', 'portal/state.sqlite3-wal', 'portal/state.sqlite3-shm', 'portal/state.sqlite3-journal']) assert.equal(payloadAllowed(p, false), false, p);
 });
