@@ -1,0 +1,7 @@
+# Portable build companion
+
+Create the companion from a clean TempDesk checkout with `build.bat --build-companion`. The portable executable is written to `deployer/bin/build-companion/`. Packaging includes one commit and its complete Git tree, the pinned portable Git distribution (including its licenses), and the desktop runtime. It includes no repository history or remote configuration. The optional workflow version must be three numeric components.
+
+Open the executable and choose **Build**, **Build and run** or **Build installer**. Each action extracts a fresh, private working directory under the current user's application data, checks both embedded payload digests, materializes the exact shallow commit, then invokes the ordinary root batch entrypoint. Build tools are acquired through that checkout's normal bootstrap. Network access is needed for missing dependencies. Build and run opens the real desktop executable only after the packaged revision matches the clean source. Build installer emits the unsigned Squirrel.Windows installer and its SHA-256 through the normal entrypoint.
+
+The job shows child output, exit status, and an **Open result folder** action. Cancelling terminates the active job tree. Results and partially completed jobs stay in their separate build folders for inspection. Close the window after the job finishes or is cancelled. Each attempt is independent, so reopening the tool never overwrites a previous result.

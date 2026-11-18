@@ -6,12 +6,14 @@ setlocal EnableExtensions
 set "ROOT=%~dp0"
 set "QUIET="
 set "DOCSONLY="
+set "BUILDCOMPANION="
 set "RUNAPP="
 set "SKIPTESTS="
 if "%SILENT%"=="1" set "QUIET=1"
 :args
 if "%~1"=="" goto :parsed
 if /I "%~1"=="/docs" (set "DOCSONLY=1"& goto :nextarg)
+if /I "%~1"=="--build-companion" (set "BUILDCOMPANION=1"& goto :nextarg)
 if /I "%~1"=="--run" (set "RUNAPP=1"& goto :nextarg)
 if /I "%~1"=="--skip-tests" (set "SKIPTESTS=1"& goto :nextarg)
 if /I "%~1"=="/s" (set "QUIET=1"& goto :nextarg)
@@ -22,6 +24,8 @@ exit /b 2
 shift
 goto :args
 :parsed
+if defined BUILDCOMPANION if defined RUNAPP (echo Choose one build action.& exit /b 2)
+if defined BUILDCOMPANION if defined DOCSONLY (echo Choose one companion.& exit /b 2)
 if defined RUNAPP if defined DOCSONLY (echo --run requires a desktop build.& exit /b 2)
 set "PSEXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 rem Started from PowerShell 7, the inherited module path breaks Windows PowerShell 5.1 (Get-FileHash goes missing).
@@ -49,6 +53,7 @@ if not defined DOCSONLY (
 pushd "%ROOT%deployer\app"
 set "CMD=cmd /c npm ci --no-audit --no-fund"
 call :step "Installing packages (npm ci)" || (popd & goto :fail)
+if defined BUILDCOMPANION goto :package-build-companion
 if defined DOCSONLY goto :package-docs
 set "CMD=cmd /c node scripts\prepare-bundle.js"
 call :step "Bundling shared modules" || (popd & goto :fail)
@@ -65,6 +70,10 @@ if defined DOCSONLY goto :finished
 if defined SKIPTESTS goto :finished
 set "CMD=cmd /c node --test test/*.test.js"
 call :step "Running unit tests after packaging" || (popd & goto :fail)
+goto :finished
+:package-build-companion
+set "CMD=cmd /c node "%ROOT%scripts\build-companion.cjs""
+call :step "Packaging the portable build companion" || (popd & goto :fail)
 :finished
 if defined RUNAPP (
   node "%ROOT%scripts\launch-built.cjs"
