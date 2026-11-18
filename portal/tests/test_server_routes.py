@@ -134,12 +134,14 @@ class FakeAgent:
         return httpx.Response(404, json={"error": "not_found", "message": "no fixture for " + p})
 
 
-def make_app(fake: FakeAgent):
+def make_app(fake: FakeAgent, tmp_path):
     settings = _config.Settings(
         mode="admin",
         agent_url="http://agent.local/api/v1",
         agent_key="admin-key",
         session_secret="s" * 48,
+        data_dir=str(tmp_path / "data"),
+        state_dir=str(tmp_path / "state"),
     )
     transport = httpx.MockTransport(fake.handler)
     return _main.create_app(settings, transport=transport)
@@ -185,9 +187,9 @@ PAGES = [
 
 
 @pytest.mark.parametrize("path", PAGES)
-def test_pages_render_for_admin(path):
+def test_pages_render_for_admin(path, tmp_path):
     fake = FakeAgent()
-    app = make_app(fake)
+    app = make_app(fake, tmp_path)
     client, _ = admin_client(app)
     resp = client.get(path)
     assert resp.status_code == 200, (path, resp.status_code)
@@ -196,9 +198,9 @@ def test_pages_render_for_admin(path):
 # --------------------------------------------------------------- admin required
 
 @pytest.mark.parametrize("path", ["/server", "/server/services", "/server/console"])
-def test_pages_require_admin(path):
+def test_pages_require_admin(path, tmp_path):
     fake = FakeAgent()
-    app = make_app(fake)
+    app = make_app(fake, tmp_path)
     from fastapi.testclient import TestClient
 
     client = TestClient(app, follow_redirects=False)
@@ -211,9 +213,9 @@ def test_pages_require_admin(path):
 
 # --------------------------------------------------------------- metrics / jobs proxies
 
-def test_metrics_proxy_returns_agent_json():
+def test_metrics_proxy_returns_agent_json(tmp_path):
     fake = FakeAgent()
-    app = make_app(fake)
+    app = make_app(fake, tmp_path)
     client, _ = admin_client(app)
     resp = client.get("/server/metrics")
     assert resp.status_code == 200
@@ -221,9 +223,9 @@ def test_metrics_proxy_returns_agent_json():
     assert any(c[1].endswith("/server/metrics") for c in fake.calls)
 
 
-def test_job_status_proxy():
+def test_job_status_proxy(tmp_path):
     fake = FakeAgent()
-    app = make_app(fake)
+    app = make_app(fake, tmp_path)
     client, _ = admin_client(app)
     resp = client.get("/server/jobs/job123/status")
     assert resp.status_code == 200
@@ -232,26 +234,26 @@ def test_job_status_proxy():
 
 # --------------------------------------------------------------- elevation
 
-def test_console_page_requires_elevation():
+def test_console_page_requires_elevation(tmp_path):
     fake = FakeAgent()
-    app = make_app(fake)
+    app = make_app(fake, tmp_path)
     client, _ = admin_client(app, elevated=False)
     resp = client.get("/server/console")
     assert resp.status_code == 303
     assert "/auth/elevate" in resp.headers.get("location", "")
 
 
-def test_console_page_allowed_when_elevated():
+def test_console_page_allowed_when_elevated(tmp_path):
     fake = FakeAgent()
-    app = make_app(fake)
+    app = make_app(fake, tmp_path)
     client, _ = admin_client(app, elevated=True)
     resp = client.get("/server/console")
     assert resp.status_code == 200
 
 
-def test_console_run_forwards_elevation_token():
+def test_console_run_forwards_elevation_token(tmp_path):
     fake = FakeAgent()
-    app = make_app(fake)
+    app = make_app(fake, tmp_path)
     client, sess = admin_client(app, elevated=True)
     csrf = app.state.csrf
     # Build a valid CSRF pair the way the app expects.
@@ -276,9 +278,9 @@ def test_console_run_forwards_elevation_token():
         assert run_calls and run_calls[-1][2]["elevation"] == "elev-token"
 
 
-def test_console_run_blocked_without_elevation():
+def test_console_run_blocked_without_elevation(tmp_path):
     fake = FakeAgent()
-    app = make_app(fake)
+    app = make_app(fake, tmp_path)
     client, _ = admin_client(app, elevated=False)
     from itsdangerous import URLSafeTimedSerializer
 
@@ -303,9 +305,9 @@ def _csrf_post(app, client, url, data):
     return client.post(url, data=payload)
 
 
-def test_power_forwards_confirm():
+def test_power_forwards_confirm(tmp_path):
     fake = FakeAgent()
-    app = make_app(fake)
+    app = make_app(fake, tmp_path)
     client, _ = admin_client(app)
     resp = _csrf_post(app, client, "/server/power",
                       {"action": "restart", "confirm_name": "restart", "delaySeconds": "30"})
@@ -316,9 +318,9 @@ def test_power_forwards_confirm():
     assert power_calls[-1][2]["json"]["action"] == "restart"
 
 
-def test_file_delete_forwards_confirm():
+def test_file_delete_forwards_confirm(tmp_path):
     fake = FakeAgent()
-    app = make_app(fake)
+    app = make_app(fake, tmp_path)
     client, _ = admin_client(app)
     resp = _csrf_post(app, client, "/server/files/delete",
                       {"path": "C:\\temp\\x.txt", "confirm_name": "x.txt"})
@@ -328,9 +330,9 @@ def test_file_delete_forwards_confirm():
     assert del_calls[-1][2]["params"].get("confirm") == "x.txt"
 
 
-def test_firewall_rule_delete_forwards_confirm():
+def test_firewall_rule_delete_forwards_confirm(tmp_path):
     fake = FakeAgent()
-    app = make_app(fake)
+    app = make_app(fake, tmp_path)
     client, _ = admin_client(app)
     resp = _csrf_post(app, client, "/server/firewall/rules/MyRule/delete",
                       {"confirm_name": "MyRule"})
