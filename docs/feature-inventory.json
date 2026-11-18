@@ -1,0 +1,880 @@
+{
+  "schemaVersion": 1,
+  "surfaces": [
+    {
+      "id": "deployer",
+      "title": "Deployer",
+      "titleZh": "部署程式"
+    },
+    {
+      "id": "management",
+      "title": "Management portal",
+      "titleZh": "管理入口"
+    },
+    {
+      "id": "guest",
+      "title": "Guest portal",
+      "titleZh": "訪客入口"
+    },
+    {
+      "id": "kiosk",
+      "title": "Kiosk deployment",
+      "titleZh": "自助服務站"
+    },
+    {
+      "id": "hosted",
+      "title": "Public website and tools",
+      "titleZh": "公開網站同工具"
+    },
+    {
+      "id": "offline",
+      "title": "Offline documentation reader",
+      "titleZh": "離線文件閱讀器"
+    },
+    {
+      "id": "delivery",
+      "title": "Project delivery",
+      "titleZh": "項目交付"
+    }
+  ],
+  "scopes": {
+    "interfaces": {
+      "appliesTo": [
+        "deployer",
+        "management",
+        "guest",
+        "kiosk",
+        "hosted",
+        "offline"
+      ],
+      "outside": "The requirement is about interactive behavior. The project delivery surface tracks the build and publication contracts."
+    },
+    "applications": {
+      "appliesTo": [
+        "deployer",
+        "management",
+        "guest",
+        "kiosk",
+        "offline"
+      ],
+      "outside": "The requirement applies inside the application. The public reference website and project delivery have their own requirements."
+    },
+    "applicationDelivery": {
+      "appliesTo": [
+        "deployer",
+        "management",
+        "guest",
+        "kiosk",
+        "offline",
+        "delivery"
+      ],
+      "outside": "This workflow concerns applications and their delivery. Publishing the public website uses the website delivery requirements."
+    },
+    "all": {
+      "appliesTo": [
+        "deployer",
+        "management",
+        "guest",
+        "kiosk",
+        "hosted",
+        "offline",
+        "delivery"
+      ],
+      "outside": ""
+    },
+    "hosted": {
+      "appliesTo": [
+        "hosted"
+      ],
+      "outside": "This requirement is specific to the published website. The installed reader and other product surfaces have separate verification."
+    },
+    "documentationDelivery": {
+      "appliesTo": [
+        "hosted",
+        "offline",
+        "delivery"
+      ],
+      "outside": "This requirement governs documentation and its distribution. Application workflows have their own entry points."
+    },
+    "websiteDelivery": {
+      "appliesTo": [
+        "hosted",
+        "delivery"
+      ],
+      "outside": "The published website and its project About field own the address requirements."
+    },
+    "delivery": {
+      "appliesTo": [
+        "delivery"
+      ],
+      "outside": "Project build, publication and maintenance own this obligation."
+    },
+    "authentication": {
+      "appliesTo": [
+        "management",
+        "guest",
+        "kiosk"
+      ],
+      "outside": "This rule controls the authenticated wording surfaces in the portals. The other surfaces use separate local-file or public-content boundaries."
+    },
+    "installer": {
+      "appliesTo": [
+        "deployer",
+        "delivery"
+      ],
+      "outside": "The installer contract covers the Deployer. The offline reader is a standalone download and the portals use container or native hosting."
+    },
+    "jobWorkflow": {
+      "appliesTo": [],
+      "outside": "The requirement covers employment-document workflows. TempDesk manages temporary computer access."
+    },
+    "statusService": {
+      "appliesTo": [],
+      "outside": "These integrations belong to the separate status service. TempDesk tracks its own connection to that service separately."
+    },
+    "maintainerProject": {
+      "appliesTo": [],
+      "outside": "The shared maintainer instructions project owns this task."
+    },
+    "privateSource": {
+      "appliesTo": [],
+      "outside": "TempDesk publishes its source. The private-source build route applies to private projects."
+    },
+    "gameAsset": {
+      "appliesTo": [],
+      "outside": "TempDesk is a sign-in and provisioning application. These assets qualify only for Roblox game projects."
+    }
+  },
+  "features": [
+    {
+      "id": "job-experience-document-label",
+      "scope": "jobWorkflow"
+    },
+    {
+      "id": "language",
+      "scope": "interfaces",
+      "progress": {
+        "deployer": {
+          "state": "partial",
+          "method": "source",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "deployer/README.md",
+          "observation": "The Deployer supplies English and Cantonese catalogs.",
+          "remaining": "Verify bilingual behavior across all Deployer workflows."
+        },
+        "management": {
+          "state": "partial",
+          "method": "source",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "portal/FEATURES.md",
+          "observation": "The portals supply English and Cantonese catalogs.",
+          "remaining": "Verify each management workflow, including dynamic messages."
+        },
+        "guest": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "3a18b69c04ceace56d70d694b5d8181de63ec9b3",
+          "reference": "docs/evidence/guest-sign-in-inventory.json",
+          "observation": "The deployed guest sign-in walkthrough recorded English at desktop and narrow widths.",
+          "remaining": "Verify all three modes on the complete guest route family."
+        },
+        "kiosk": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "3a18b69c04ceace56d70d694b5d8181de63ec9b3",
+          "reference": "docs/evidence/guest-sign-in-inventory.json",
+          "observation": "The kiosk walkthrough includes English at 360 and 1440 CSS pixels.",
+          "remaining": "Verify Cantonese and bilingual checkout on the configured kiosk."
+        },
+        "hosted": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "README.md#guided-checkout-walkthrough",
+          "observation": "English, Cantonese and bilingual checklist paths ran at 360 and 1440 pixels.",
+          "remaining": "Verify article copy, downloads and settings in every mode."
+        },
+        "offline": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.75",
+          "observation": "Bilingual guide selection, search and reader navigation passed in the downloaded reader.",
+          "remaining": "Verify every reader route in all three modes."
+        }
+      }
+    },
+    {
+      "id": "funny-emoji",
+      "scope": "interfaces"
+    },
+    {
+      "id": "personal-vocabulary",
+      "scope": "interfaces",
+      "progress": {
+        "management": {
+          "state": "partial",
+          "method": "source",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "portal/FEATURES.md",
+          "observation": "The management portal supplies upload, validation and restoration.",
+          "remaining": "Verify device-local persistence and the complete authenticated boundary."
+        },
+        "guest": {
+          "state": "partial",
+          "method": "source",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "docs/VIRTUAL-COMMONS.md",
+          "observation": "Verified guest sign-in can unlock local edition wording.",
+          "remaining": "Verify live upload and clear against a real directory and a configured guest checkout."
+        },
+        "kiosk": {
+          "state": "partial",
+          "method": "source",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "portal/FEATURES.md",
+          "observation": "Local wording for the edition picker ran with a simulated account service.",
+          "remaining": "Verify the configured live kiosk with an actual account service."
+        }
+      }
+    },
+    {
+      "id": "vocabulary-drop-apply",
+      "scope": "applications"
+    },
+    {
+      "id": "school-mode",
+      "scope": "interfaces"
+    },
+    {
+      "id": "narration",
+      "scope": "interfaces"
+    },
+    {
+      "id": "action-sound-effects",
+      "scope": "applications"
+    },
+    {
+      "id": "scheduled-settings",
+      "scope": "interfaces"
+    },
+    {
+      "id": "display-name",
+      "scope": "applications"
+    },
+    {
+      "id": "adhd-modes",
+      "scope": "interfaces"
+    },
+    {
+      "id": "dim-sum",
+      "scope": "interfaces"
+    },
+    {
+      "id": "dim-sum-photo-source",
+      "scope": "all"
+    },
+    {
+      "id": "material-design",
+      "scope": "interfaces"
+    },
+    {
+      "id": "workflow-navigation",
+      "scope": "interfaces"
+    },
+    {
+      "id": "motion",
+      "scope": "interfaces"
+    },
+    {
+      "id": "live-charts",
+      "scope": "interfaces"
+    },
+    {
+      "id": "update-coming-soon",
+      "scope": "interfaces"
+    },
+    {
+      "id": "appearance-editor",
+      "scope": "interfaces"
+    },
+    {
+      "id": "color-picker",
+      "scope": "interfaces"
+    },
+    {
+      "id": "logo-customization",
+      "scope": "interfaces"
+    },
+    {
+      "id": "overlay-panels",
+      "scope": "interfaces"
+    },
+    {
+      "id": "collapse-filters",
+      "scope": "interfaces"
+    },
+    {
+      "id": "accessibility-sizing",
+      "scope": "interfaces"
+    },
+    {
+      "id": "functional-ui",
+      "scope": "interfaces"
+    },
+    {
+      "id": "onboarding-wizard",
+      "scope": "applications"
+    },
+    {
+      "id": "extension-support",
+      "scope": "applications"
+    },
+    {
+      "id": "tabs",
+      "scope": "interfaces"
+    },
+    {
+      "id": "regex-search",
+      "scope": "all",
+      "progress": {
+        "management": {
+          "state": "partial",
+          "method": "source",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "portal/FEATURES.md",
+          "observation": "The management portal has local regex controls and a search inventory.",
+          "remaining": "Complete engine parity and verify each control in the built portal."
+        },
+        "guest": {
+          "state": "partial",
+          "method": "source",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "portal/FEATURES.md",
+          "observation": "The guest interface has searchable controls.",
+          "remaining": "Verify independent adjacent regex builders on each eligible guest surface."
+        },
+        "kiosk": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "3a18b69c04ceace56d70d694b5d8181de63ec9b3",
+          "reference": "docs/evidence/guest-sign-in-inventory.json",
+          "observation": "The kiosk language search was checked in wide and narrow layouts.",
+          "remaining": "Verify complete builder behavior in each enabled kiosk flow."
+        },
+        "hosted": {
+          "state": "partial",
+          "method": "source",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "site/search-surfaces.json",
+          "observation": "The search inventory covers documentation and its guided paths.",
+          "remaining": "Verify full regex workbench parity and all published search surfaces."
+        },
+        "offline": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.75",
+          "observation": "The published reader passed a documentation search and article navigation.",
+          "remaining": "Verify independent builder behavior at each local search surface."
+        }
+      }
+    },
+    {
+      "id": "command-palette",
+      "scope": "interfaces"
+    },
+    {
+      "id": "context-menus",
+      "scope": "interfaces"
+    },
+    {
+      "id": "menu-shortcuts",
+      "scope": "interfaces"
+    },
+    {
+      "id": "rich-controls",
+      "scope": "interfaces"
+    },
+    {
+      "id": "guided-forms",
+      "scope": "interfaces"
+    },
+    {
+      "id": "info-icon-guidance",
+      "scope": "interfaces"
+    },
+    {
+      "id": "settings-explanations",
+      "scope": "interfaces"
+    },
+    {
+      "id": "blank-editors",
+      "scope": "interfaces"
+    },
+    {
+      "id": "super-confirmation",
+      "scope": "interfaces"
+    },
+    {
+      "id": "element-locks",
+      "scope": "interfaces"
+    },
+    {
+      "id": "support-tickets",
+      "scope": "interfaces"
+    },
+    {
+      "id": "unlock-ladder",
+      "scope": "interfaces"
+    },
+    {
+      "id": "authenticator",
+      "scope": "interfaces"
+    },
+    {
+      "id": "qr-pairing",
+      "scope": "interfaces"
+    },
+    {
+      "id": "honest-monetization",
+      "scope": "interfaces"
+    },
+    {
+      "id": "local-history",
+      "scope": "interfaces"
+    },
+    {
+      "id": "exports",
+      "scope": "interfaces"
+    },
+    {
+      "id": "bulk-actions",
+      "scope": "interfaces"
+    },
+    {
+      "id": "changelog",
+      "scope": "interfaces"
+    },
+    {
+      "id": "offline-docs",
+      "scope": "applications",
+      "progress": {
+        "deployer": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "a0d2f4473388665339f2783a01a66036b9aacde8",
+          "reference": "docs/evidence/offline-reader-inventory.json",
+          "observation": "The installed reader controls opened and focused the checkout article in a released Deployer build.",
+          "remaining": "Verify the current Deployer reader across every article and locale."
+        },
+        "management": {
+          "state": "partial",
+          "method": "source",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "portal/FEATURES.md",
+          "observation": "The portal image bundles articles and a documentation browser.",
+          "remaining": "Verify navigation in the running management portal."
+        },
+        "offline": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.75",
+          "observation": "The downloadable reader opened the guides, walkthrough images, search and prepared operator wiki without external resources.",
+          "remaining": "Verify the remaining tools, layouts and language settings across the whole companion."
+        }
+      }
+    },
+    {
+      "id": "rendered-provider-text",
+      "scope": "interfaces"
+    },
+    {
+      "id": "notifications",
+      "scope": "interfaces"
+    },
+    {
+      "id": "file-converter",
+      "scope": "interfaces"
+    },
+    {
+      "id": "base64-tools",
+      "scope": "interfaces"
+    },
+    {
+      "id": "quicktype-studio",
+      "scope": "interfaces"
+    },
+    {
+      "id": "virtual-disk-manager",
+      "scope": "interfaces"
+    },
+    {
+      "id": "minecraft-server-manager",
+      "scope": "applications"
+    },
+    {
+      "id": "minecraft-world-generator",
+      "scope": "applications"
+    },
+    {
+      "id": "ollama-suite",
+      "scope": "interfaces"
+    },
+    {
+      "id": "external-editor",
+      "scope": "applications"
+    },
+    {
+      "id": "download-handoff",
+      "scope": "applications"
+    },
+    {
+      "id": "forge-publishing",
+      "scope": "applications"
+    },
+    {
+      "id": "progress-recovery",
+      "scope": "interfaces"
+    },
+    {
+      "id": "drawesome-drawing",
+      "scope": "applications"
+    },
+    {
+      "id": "completeness-parity",
+      "scope": "all"
+    },
+    {
+      "id": "front-provenance",
+      "scope": "interfaces",
+      "progress": {
+        "offline": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.75",
+          "observation": "The downloaded reader reported its version and embedded source revision.",
+          "remaining": "Verify every required visible version and update timestamp field."
+        }
+      }
+    },
+    {
+      "id": "product-evidence",
+      "scope": "all",
+      "progress": {
+        "kiosk": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "3a18b69c04ceace56d70d694b5d8181de63ec9b3",
+          "reference": "docs/evidence/guest-sign-in-inventory.json",
+          "observation": "Source-bound captures show a real kiosk account workflow.",
+          "remaining": "Capture tested edition checkout and sign-out after the lab is ready."
+        },
+        "offline": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "docs/evidence/guided-docs-inventory.json",
+          "observation": "The walkthrough has four inspected source-bound captures with hashes.",
+          "remaining": "Cover remaining reader workflows and supported appearance settings."
+        }
+      }
+    },
+    {
+      "id": "screen-recording",
+      "scope": "applicationDelivery"
+    },
+    {
+      "id": "design-reference-parity",
+      "scope": "interfaces"
+    },
+    {
+      "id": "design-folder",
+      "scope": "delivery"
+    },
+    {
+      "id": "layout-verification-matrix",
+      "scope": "interfaces"
+    },
+    {
+      "id": "public-screenshot-gallery",
+      "scope": "websiteDelivery"
+    },
+    {
+      "id": "landing-site",
+      "scope": "hosted"
+    },
+    {
+      "id": "mobile-website",
+      "scope": "hosted"
+    },
+    {
+      "id": "installer-download-button",
+      "scope": "hosted"
+    },
+    {
+      "id": "feature-articles",
+      "scope": "hosted"
+    },
+    {
+      "id": "vendored-fonts",
+      "scope": "all"
+    },
+    {
+      "id": "shared-link-embed",
+      "scope": "websiteDelivery"
+    },
+    {
+      "id": "homepage-link",
+      "scope": "websiteDelivery",
+      "progress": {
+        "hosted": {
+          "state": "verified",
+          "method": "deployment",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "https://ding-ding-projects.github.io/tempdesk-/",
+          "observation": "The deployed home page returned HTTP 200 and matched the stored About URL.",
+          "observedOn": "2026-11-18"
+        },
+        "delivery": {
+          "state": "verified",
+          "method": "deployment",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "https://github.com/Ding-Ding-Projects/tempdesk-",
+          "observation": "The public project About field contained the exact deployed home URL.",
+          "observedOn": "2026-11-18"
+        }
+      }
+    },
+    {
+      "id": "vocabulary-unlock-boundary",
+      "scope": "authentication"
+    },
+    {
+      "id": "documentation-companion",
+      "scope": "documentationDelivery",
+      "progress": {
+        "offline": {
+          "state": "verified",
+          "method": "release",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.75",
+          "observation": "The normal release provides a standalone executable that opened guides, search, images and the prepared wiki offline.",
+          "observedOn": "2026-11-18"
+        },
+        "delivery": {
+          "state": "verified",
+          "method": "release",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.75",
+          "observation": "The release tag and verified portable executable both identify the published source.",
+          "observedOn": "2026-11-18"
+        },
+        "hosted": {
+          "state": "partial",
+          "method": "source",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "docs/OFFLINE-GUIDE.md",
+          "observation": "The hosted documentation explains how to launch the portable reader.",
+          "remaining": "Verify the download path from the hosted documentation after each release."
+        }
+      }
+    },
+    {
+      "id": "status-hub",
+      "scope": "all"
+    },
+    {
+      "id": "discord-status-bridge",
+      "scope": "statusService"
+    },
+    {
+      "id": "panic-webhooks",
+      "scope": "statusService"
+    },
+    {
+      "id": "tidbyt-displays",
+      "scope": "statusService"
+    },
+    {
+      "id": "build-entrypoints",
+      "scope": "delivery",
+      "progress": {
+        "delivery": {
+          "state": "partial",
+          "method": "release",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.75",
+          "observation": "The tagged release built the installer and both portable executables.",
+          "remaining": "Verify all required entry points on a fresh supported host."
+        }
+      }
+    },
+    {
+      "id": "fresh-build-run-command",
+      "scope": "delivery"
+    },
+    {
+      "id": "dependency-fetcher",
+      "scope": "delivery"
+    },
+    {
+      "id": "bundled-dependencies",
+      "scope": "applications"
+    },
+    {
+      "id": "squirrel-installer",
+      "scope": "installer"
+    },
+    {
+      "id": "self-signing",
+      "scope": "delivery"
+    },
+    {
+      "id": "auto-updates",
+      "scope": "applications"
+    },
+    {
+      "id": "app-icon",
+      "scope": "applicationDelivery"
+    },
+    {
+      "id": "release-workflow",
+      "scope": "delivery"
+    },
+    {
+      "id": "release-timing",
+      "scope": "delivery"
+    },
+    {
+      "id": "release-line-counts",
+      "scope": "delivery"
+    },
+    {
+      "id": "release-dim-sum-photo",
+      "scope": "delivery"
+    },
+    {
+      "id": "dim-sum-code-names",
+      "scope": "all"
+    },
+    {
+      "id": "ci-bootstrap",
+      "scope": "delivery"
+    },
+    {
+      "id": "runner-selection",
+      "scope": "delivery"
+    },
+    {
+      "id": "encrypted-public-builder",
+      "scope": "privateSource"
+    },
+    {
+      "id": "tabbed-readme",
+      "scope": "delivery"
+    },
+    {
+      "id": "human-time-estimate",
+      "scope": "delivery"
+    },
+    {
+      "id": "sanitized-instruction-copy",
+      "scope": "delivery"
+    },
+    {
+      "id": "agents-md-vocabulary-block",
+      "scope": "delivery"
+    },
+    {
+      "id": "vocabulary-hash-lock",
+      "scope": "delivery"
+    },
+    {
+      "id": "roadmap-checklist",
+      "scope": "delivery",
+      "progress": {
+        "delivery": {
+          "state": "partial",
+          "method": "source",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "ROADMAP.md",
+          "observation": "The roadmap uses checklist items for lab and documentation acceptance.",
+          "remaining": "Keep every current completion criterion in sync with exact evidence."
+        }
+      }
+    },
+    {
+      "id": "feature-docs",
+      "scope": "delivery"
+    },
+    {
+      "id": "postman-collections",
+      "scope": "delivery"
+    },
+    {
+      "id": "published-documentation-wiki",
+      "scope": "websiteDelivery",
+      "progress": {
+        "hosted": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "https://ding-ding-projects.github.io/tempdesk-/docs/wiki-pending-home.html",
+          "observation": "The prepared operator wiki is available inside the hosted documentation.",
+          "remaining": "Verify the complete dedicated wiki publication and synchronization."
+        },
+        "delivery": {
+          "state": "partial",
+          "method": "source",
+          "revision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+          "reference": "docs/wiki/pending/Home.md",
+          "observation": "The prepared operator wiki is tracked in the source inventory.",
+          "remaining": "Publish the dedicated wiki when its repository is initialized."
+        }
+      }
+    },
+    {
+      "id": "handoff-record",
+      "scope": "delivery"
+    },
+    {
+      "id": "closeout-prompt",
+      "scope": "delivery"
+    },
+    {
+      "id": "discussion-records",
+      "scope": "delivery"
+    },
+    {
+      "id": "project-board",
+      "scope": "delivery"
+    },
+    {
+      "id": "operational-skill",
+      "scope": "delivery"
+    },
+    {
+      "id": "readme-prompt-banner",
+      "scope": "maintainerProject"
+    },
+    {
+      "id": "portable-maintainer-instructions",
+      "scope": "maintainerProject"
+    },
+    {
+      "id": "project-profile",
+      "scope": "maintainerProject"
+    },
+    {
+      "id": "roblox-model-catalogue",
+      "scope": "gameAsset"
+    },
+    {
+      "id": "roblox-visual-realism",
+      "scope": "gameAsset"
+    }
+  ]
+}

@@ -7,6 +7,7 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
 
 ### Added
 
+- The documentation includes a source-bound feature verification inventory for all seven TempDesk surfaces.
 - The documentation index has guided checklists for deployment, guest sign-in, and Virtual Commons. Each path saves its marks locally.
 - TempDesk Docs packages the documentation website, operator wiki and local tools in a portable offline reader.
 - Deployer: **VMware virtual machine** step on the Deploy page. Choose or drop the Windows Server ISO
@@ -18,6 +19,7 @@ All notable changes to TempDesk. Release builds of TempDesk Deployer are numbere
 
 ### Fixed
 
+- The Virtual Commons edition picker applies a local mapping for the full operating-system name and retains eligible wording access after checkout validation.
 - The documentation sidebar contains its search field, so articles keep their reading column on wide screens.
 - Deployer: edits on the Deploy page are all kept. After the first saved change every later change was
   written to a stale copy and lost, so the media and the deployment used the old values.

@@ -203,8 +203,13 @@ def test_virtual_commons_wording_requires_a_verified_active_guest(tmp_path):
     assert 'id="picker-wording"' in home.text
     assert '"/#picker-wording"' in home.text
     assert "no-store" in home.headers["cache-control"]
+    invalid_checkout = {"expiryId": "1h", "checkout": "commons", "edition": "gui", "displayName": "[invalid]"}
+    recovery = portal.post("/create", invalid_checkout)
+    assert recovery.status_code == 400 and 'id="picker-wording"' in recovery.text
+    assert "no-store" in recovery.headers["cache-control"]
     portal.client.cookies.set(WORDING_COOKIE, "invalid")
     assert 'id="picker-wording"' not in portal.client.get("/").text
+    assert 'id="picker-wording"' not in portal.post("/create", invalid_checkout).text
 
 
 def test_virtual_commons_dim_sum_does_not_allocate_an_account(tmp_path, monkeypatch):

@@ -1,4 +1,18 @@
 (() => {
+  function withEditionProductName(entries) {
+    const keys = Array.from(entries.keys());
+    if (keys.some(key => key.toLowerCase() === "windows")) return entries;
+    const productName = "Microsoft Windows";
+    const sourceKey = entries.has(productName)
+      ? productName : keys.find(key => key.toLowerCase() === productName.toLowerCase());
+    if (!sourceKey) return entries;
+    const pickerEntries = new Map(entries);
+    pickerEntries.set("Windows", entries.get(sourceKey));
+    return pickerEntries;
+  }
+
+  if (typeof module === "object" && module.exports) module.exports = withEditionProductName;
+  if (typeof document === "undefined") return;
   const panel = document.querySelector("#picker-wording");
   if (!panel) return;
   const file = panel.querySelector("input");
@@ -30,7 +44,7 @@
       if (selected.size > wording.MAX_BYTES) throw new Error("File size");
       const entries = wording.validate(new Uint8Array(await selected.arrayBuffer()));
       if (file.files[0] !== selected || Date.now() >= expires) return;
-      apply(wording.buildTranslator(entries));
+      apply(wording.buildTranslator(withEditionProductName(entries)));
       show("applied");
     } catch {
       if (file.files[0] === selected) show("invalid");

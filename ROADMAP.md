@@ -13,11 +13,12 @@
 
 ## Documentation and delivery
 
-- [ ] Complete the required-feature inventory and runtime verification for each interface.
+- [x] Inventory the required features across the Deployer, management portal, guest portal, kiosk, public documentation, offline reader, and project delivery. [Verification inventory](docs/FEATURE-INVENTORY.md)
+- [ ] Complete the remaining feature implementation and runtime verification on every applicable surface.
 - [ ] Publish the operator wiki when its repository is available. [Prepared wiki entry point](docs/wiki/pending/Home.md)
 - [x] Build and launch the standalone documentation reader locally. Verify offline search, the Virtual Commons guide, and the prepared operator wiki.
 - [x] Verify the standalone documentation executable from a normal release. [Offline documentation walkthrough](README.md#standalone-offline-documentation)
 - [x] Verify the source-bound documentation executable downloaded from the v1.0.74 release.
 - [x] Record the guest checklist and both Virtual Commons guide paths from a source-bound local offline build. [Illustrated steps](README.md#guided-checkout-walkthrough)
-- [ ] Verify the guided documentation on GitHub Pages and in the downloadable offline reader.
+- [x] Verify the guided documentation on GitHub Pages and in the downloadable v1.0.75 offline reader.
 - [ ] Verify the remaining delivery forms.

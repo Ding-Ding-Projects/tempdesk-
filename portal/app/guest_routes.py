@@ -77,6 +77,14 @@ def _limit(request: Request, limiter) -> None:
         raise HTTPException(status_code=429, detail=retry)
 
 
+async def _render_home(request: Request, pub: dict, values: dict, *, status: int = 200, **context):
+    seconds = _wording_seconds(request) if pub["commonsEnabled"] and "legacy" not in pub["commonsEditions"] else 0
+    request.state.picker_wording = bool(seconds)
+    return await render(request, "guest/home.html",
+                        {"pub": pub, "values": values, "wording_seconds": seconds, **context},
+                        status=status, headers=NO_STORE if seconds else None)
+
+
 @router.get("/")
 async def home(request: Request):
     pub = await public_settings(request)
@@ -85,11 +93,7 @@ async def home(request: Request):
     values = {}
     if edition and expiry and edition in pub["commonsEditions"] and expiry in {choice.get("id") for choice in pub["commonsExpiryChoices"]}:
         values = {"commons": True, "edition": edition, "expiryId": expiry}
-    seconds = _wording_seconds(request) if pub["commonsEnabled"] and "legacy" not in pub["commonsEditions"] else 0
-    request.state.picker_wording = bool(seconds)
-    return await render(request, "guest/home.html",
-                        {"pub": pub, "error": None, "values": values, "wording_seconds": seconds},
-                        headers=NO_STORE if seconds else None)
+    return await _render_home(request, pub, values)
 
 
 @router.post("/create", dependencies=[Depends(csrf_protect)])
@@ -118,7 +122,7 @@ async def create(request: Request):
     elif not isinstance(raw_display, str) or len(display) > 64 or any(ord(c) < 32 or c in '"/\\[]:;|=,+*?<>@' for c in display):
         error = "The display name can be up to 64 characters and cannot contain special symbols."
     if error:
-        return await render(request, "guest/home.html", {"pub": pub, "error_key": error, "values": values}, status=400)
+        return await _render_home(request, pub, values, status=400, error_key=error)
     _limit(request, request.app.state.create_limiter)
     if commons and secrets.randbelow(100) == 0:
         dish = secrets.choice(("Har gow", "Siu mai", "Char siu bao"))
@@ -131,9 +135,8 @@ async def create(request: Request):
         created = await request.app.state.agent.post("/guest/users", json=body, client_ip=_ip(request))
     except AgentError as exc:
         if exc.code in ("rate_limited", "conflict", "bad_request", "forbidden"):
-            return await render(request, "guest/home.html",
-                                {"pub": pub, "error_text": agent_message(request, exc), "values": values},
-                                status=exc.status if exc.status < 500 else 502)
+            return await _render_home(request, pub, values, status=exc.status if exc.status < 500 else 502,
+                                      error_text=agent_message(request, exc))
         raise
     # Keep the credentials server side; the browser only gets a random id.
     once_id = request.app.state.once.put({"credentials": created, "rdpTarget": target, "rdpEdition": edition if target else None})

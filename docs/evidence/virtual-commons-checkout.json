@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "observedOn": "2026-11-18",
+  "sourceRevision": "3f6133e972f5c892f520fc4558d0079278a4c9c7",
+  "portalImage": "sha256:30b64e47525376623a6d60a04096f215c9c758b0931e17152adc2c609e15f3c7",
+  "directoryImage": "sha256:8d894d23212b15e19f3618d0b36dd0a2c383ac52032af472d6f71827d0c4bd31",
+  "method": "HTTP checkout requests against a source-bound loopback guest portal and a fresh Samba Active Directory fixture.",
+  "scope": "Both edition configurations used distinct fixture destinations. Windows session sign-in and expiry acceptance remain open.",
+  "results": [
+    {
+      "edition": "desktop-experience",
+      "fileSha256": "38de955c863f450e5f07bb167a25b8d06efb212621e8bd4b52d2ccb056f9ca9c",
+      "destinationMatched": true,
+      "passwordFieldAbsent": true,
+      "oneTimeConfirmation": true,
+      "directoryAccountValidatedAndRemoved": true
+    },
+    {
+      "edition": "server-core",
+      "fileSha256": "0d285962133d68252f44c0071311c7b6de009b2b3e42c088268a7c72aee71021",
+      "destinationMatched": true,
+      "passwordFieldAbsent": true,
+      "oneTimeConfirmation": true,
+      "directoryAccountValidatedAndRemoved": true
+    }
+  ]
+}

@@ -12,6 +12,7 @@ import { promises as fs, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderDocumentationWorkflows } from './docs-workflows.mjs';
+import { inventoryPath, inventorySummary, readInventory } from './feature-inventory.mjs';
 
 const SITE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(SITE, '..');
@@ -188,6 +189,7 @@ async function docSources() {
   const add = (file, name, title) => { let n = name, k = 2; while (used.has(n)) n = name + '-' + (k++); used.add(n); list.push({ file, name: n, title }); };
   if (existsSync(path.join(REPO, 'README.md'))) add('README.md', 'overview', 'Overview');
   for (const f of await walk(path.join(REPO, 'docs'), (rel, e) => e.isDirectory() || /\.md$/i.test(rel))) add('docs/' + f, f.replace(/\.md$/i, '').toLowerCase().replace(/[^a-z0-9]+/g, '-'), null);
+  add('portal/FEATURES.md', 'portal-features', 'Portal feature status');
   const readmes = await walk(REPO, (rel, e) => {
     if (rel === 'deployer/output') return false; // Packaged copies are not documentation sources.
     const parts = rel.split('/');
@@ -276,6 +278,8 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
 
   // 4. docs
   const docs = await docSources();
+  const inventory = await readInventory(new URL('../', import.meta.url));
+  await copyFile(path.join(REPO, inventoryPath), path.join(OUT, inventoryPath));
   const byFile = new Map(docs.map((d) => [d.file.toLowerCase(), d]));
   const docImages = new Set((await walk(path.join(REPO, 'docs'),
     (rel, entry) => entry.isDirectory() || (entry.isFile() && /\.(png|jpe?g|webp|gif)$/i.test(rel))))
@@ -283,13 +287,18 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
   const usedImages = new Set();
   const docPages = [];
   for (const d of docs) {
-    const md = await fs.readFile(path.join(REPO, d.file), 'utf8');
+    let md = await fs.readFile(path.join(REPO, d.file), 'utf8');
+    if (d.file === 'docs/FEATURE-INVENTORY.md' || d.file === 'docs/FEATURE-INVENTORY.zh-HK.md') {
+      const locale = d.file.endsWith('.zh-HK.md') ? 'zh-HK' : 'en';
+      md = md.replace('<!-- feature-inventory-summary -->', inventorySummary(inventory, locale));
+    }
     const dir = path.posix.dirname(d.file);
     const linkMap = (href) => {
       if (href.startsWith(BASE_URL)) return '../' + href.slice(BASE_URL.length);
       if (/^(https?:|#|mailto:)/.test(href)) return href;
       const [p, hash] = href.split('#');
       const target = path.posix.normalize(path.posix.join(dir, p)).replace(/^\.\//, '');
+      if (target === inventoryPath) return path.posix.basename(target);
       const hit = byFile.get(target.toLowerCase()) || byFile.get((target + '/README.md').toLowerCase());
       if (hit) return hit.name + '.html' + (hash ? '#' + hash : '');
       return sourceBase + target + (hash ? '#' + hash : '');
