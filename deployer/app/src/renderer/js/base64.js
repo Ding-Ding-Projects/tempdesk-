@@ -31,6 +31,7 @@ export async function base64Page(root, app) {
   let coalesce = null;
   function convert(commit) {
     err.textContent = ''; st.input = inArea.value;
+    st.lastBytes = null; st.lastType = null; preview.hidden = true; preview.replaceChildren();
     try {
       if (st.mode === 'encode') {
         st.output = B.encode(B.textToBytes(st.input, st.enc), encodeOpts());
@@ -59,7 +60,7 @@ export async function base64Page(root, app) {
     preview.hidden = false; preview.replaceChildren();
     if (type.kind === 'image' && type.mime !== 'image/svg+xml') {
       const url = URL.createObjectURL(new Blob([bytes], { type: type.mime }));
-      const img = h('img', { src: url, alt: t('b64.imageAlt', [type.mime]) }); img.onload = () => URL.revokeObjectURL(url);
+      const img = h('img', { src: url, alt: t('b64.imageAlt', [type.mime]) }); img.onload = img.onerror = () => URL.revokeObjectURL(url);
       preview.appendChild(img);
       st.output = t('b64.binaryOut', [fmtBytes(bytes.length)]);
     } else if (type.kind === 'text') {
@@ -84,12 +85,13 @@ export async function base64Page(root, app) {
     btn(t('b64.copy'), () => { td.invoke['clipboard:write'](outArea.value); toast(notice('common.copied')); record('copy'); }, 'btn-ghost btn-sm'),
     btn(t('b64.dataUrl'), () => { const bytes = st.mode === 'encode' ? B.textToBytes(st.input, st.enc) : st.lastBytes; if (!bytes) return; const mime = st.mode === 'encode' ? 'text/plain' : (st.lastType || {}).mime; const u = B.buildDataUrl(bytes, mime, st.mode === 'encode' && st.enc === 'utf-8' ? { charset: 'utf-8' } : null); td.invoke['clipboard:write'](u); toast(notice('b64.dataUrlCopied')); record('dataUrl'); }, 'btn-ghost btn-sm'),
     btn(t('b64.saveOut'), async () => {
-      const isBin = st.mode === 'decode' && st.lastBytes && (st.lastType || {}).kind !== 'text';
+      const isBin = st.mode === 'decode';
+      if (isBin && !st.lastBytes) return;
       const name = isBin ? B.suggestName('decoded', st.lastType) : st.mode === 'encode' ? 'encoded.b64' : 'decoded.txt';
       const r = await td.invoke['file:save'](isBin ? { name, base64: B.encode(st.lastBytes) } : { name, text: st.output });
       if (r.ok) { toast(notice('export.saved', [r.path]), 'success'); record('saveFile'); }
     }, 'btn-ghost btn-sm'),
-    btn(t('b64.json'), async () => { const r = await td.invoke['file:save']({ name: 'base64-record.json', text: JSON.stringify({ schema: 'tempdesk-base64-record', version: 1, created: new Date().toISOString(), mode: st.mode, variant: st.variant, padding: st.pad, lineLength: st.lineLength, encoding: st.enc, input: st.input, output: st.output }, null, 2) + '\n' }); if (r.ok) toast(notice('export.saved', [r.path]), 'success'); }, 'btn-ghost btn-sm'),
+    btn(t('b64.json'), async () => { const r = await td.invoke['file:save']({ name: 'base64-record.json', text: JSON.stringify({ schema: 'tempdesk-base64-record', version: 1, created: new Date().toISOString(), mode: st.mode, variant: st.variant, padding: st.pad, lineLength: st.lineLength, encoding: st.enc, inputLength: st.input.length, outputLength: st.output.length, ...(st.keepPayloads ? { input: st.input, output: st.output } : {}) }, null, 2) + '\n' }); if (r.ok) toast(notice('export.saved', [r.path]), 'success'); }, 'btn-ghost btn-sm'),
     btn(t('b64.swap'), () => { inArea.value = st.mode === 'encode' ? st.output : st.input; st.mode = st.mode === 'encode' ? 'decode' : 'encode'; st.input = inArea.value; app.render(); }, 'btn-ghost btn-sm')
   ]);
   root.appendChild(h('div', { class: 'card' }, [h('div', { class: 'row between' }, [h('h2', { text: t('b64.text'), style: { margin: 0 } }), modeSeg]), opts,
@@ -108,16 +110,15 @@ export async function base64Page(root, app) {
     st.file = f;
     const type = B.detectType(f.head);
     fileInfo.textContent = t('b64.fileInfo', [f.name, fmtBytes(f.size), type.mime]);
-    if (/\.(b64|base64|txt)$/i.test(f.name)) { st.mode = 'decode'; }
+
   }
   app.onBase64Drop = async (file) => { const p = td.pathForFile(file); if (!p) { toast(notice('b64.dropFailed'), 'error'); return; } await useFile(await td.invoke['b64:stat'](p)); };
-  async function startJob(overwrite) {
+  async function startJob() {
     if (!st.file) { toast(notice('b64.noFile'), 'error'); return; }
-    const opts = { source: st.file.path, mode: st.mode, variant: st.variant === 'mime' ? 'standard' : st.variant, pad: st.pad, lineLength: st.variant === 'mime' ? (st.lineLength || 76) : st.lineLength, strict: st.strict, outDir, overwrite: !!overwrite };
+    const opts = { source: st.file.path, mode: st.mode, variant: st.variant === 'mime' ? 'standard' : st.variant, pad: st.pad, lineLength: st.variant === 'mime' ? (st.lineLength || 76) : st.lineLength, strict: st.strict, outDir, overwrite: false };
     const r = await td.invoke['b64:start'](opts);
     if (r.exists) {
-      const ok = await superConfirm({ title: t('b64.overwriteTitle'), danger: t('b64.overwriteWarn', [r.dest]), word: r.dest.split(/[\\/]/).pop(), action: t('b64.overwriteHold') });
-      if (ok) startJob(true);
+      toast(notice('b64.err.generic', [t('b64.overwriteWarn', [r.dest])]), 'error');
       return;
     }
     st.job = r.id; st.started = Date.now();
@@ -143,7 +144,7 @@ export async function base64Page(root, app) {
   const dirLine = h('span', { class: 'small muted', text: t('b64.outNext') });
   root.appendChild(h('div', { class: 'card', 'data-base64-file-drop': true }, [h('h2', { text: t('b64.files') }), h('p', { class: 'small muted', text: t('b64.filesLead') }), fileInfo,
     h('div', { class: 'row' }, [btn(t('b64.pick'), async () => useFile(await td.invoke['b64:pick']()), 'btn-ghost'), btn(t('b64.outDir'), async () => { outDir = await td.invoke['file:pickFolder'](); dirLine.textContent = outDir ? t('b64.outIn', [outDir]) : t('b64.outNext'); }, 'btn-ghost'), dirLine]),
-    h('div', { class: 'row' }, [btn(st.mode === 'encode' ? t('b64.encodeFile') : t('b64.decodeFile'), () => startJob(false), 'btn-primary'), pauseB, cancelB]), barWrap, jobStatus]));
+    h('div', { class: 'row' }, [btn(st.mode === 'encode' ? t('b64.encodeFile') : t('b64.decodeFile'), () => startJob(), 'btn-primary'), pauseB, cancelB]), barWrap, jobStatus]));
 
   // History with search, undo/redo through the workspace, and bulk export
   const hist = (await td.invoke['ws:get']('tools/base64.json')) || { entries: [] };

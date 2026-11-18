@@ -1,9 +1,7 @@
 // Streaming Base64 conversion of files of any size in constant memory, with progress, pause,
 // resume, cancel and SHA-256 round-trip verification. Uses the shared codec (site/assets/base64.js
 // copied into src/shared/base64.js at build time). Output is written to a temporary file next to
-// the destination and renamed only after verification, so a half-written file never appears.
-// The source is never overwritten; overwriting another existing file requires overwrite: true
-// (the renderer asks for the two-key super confirmation first).
+// the destination and linked into place after verification. Existing files are always preserved.
 'use strict';
 
 const fs = require('fs');
@@ -17,8 +15,36 @@ const DECODE_CHUNK = B64.DECODE_CHUNK || 4 * 256 * 1024; // multiple of 4
 
 function outputPath(src, mode, outDir, name) {
   const dir = outDir || path.dirname(src);
-  const base = name || (mode === 'encode' ? path.basename(src) + '.b64' : path.basename(src).replace(/\.(b64|base64|txt)$/i, '') || 'decoded.bin');
-  return path.join(dir, base);
+  const filename = path.basename(src);
+  const restored = filename.replace(/(?:\.base64\.txt|\.b64|\.base64|\.txt)$/i, '');
+  const base = name || (mode === 'encode' ? filename + '.base64.txt'
+    : restored && restored !== filename ? restored : filename + '.bin');
+  return availablePath(path.join(dir, base));
+}
+
+function numberedPath(file, number) {
+  const { dir, name, ext } = path.parse(file);
+  return path.join(dir, name + ' (' + number + ')' + ext);
+}
+
+function availablePath(file) {
+  let candidate = file;
+  for (let n = 1; fs.existsSync(candidate); n++) candidate = numberedPath(file, n);
+  return candidate;
+}
+
+// Publish the complete verified file without replacing a concurrently created destination.
+async function publishVerified(temp, file) {
+  let candidate = file;
+  for (let n = 1; ; n++) {
+    try {
+      await fs.promises.link(temp, candidate);
+      return candidate;
+    } catch (err) {
+      if (err.code !== 'EEXIST') throw err;
+      candidate = numberedPath(file, n);
+    }
+  }
 }
 
 class Job {
@@ -40,8 +66,6 @@ class Job {
     const o = this.o;
     const src = path.resolve(o.source);
     const dst = path.resolve(o.dest || outputPath(src, o.mode, o.outDir));
-    if (dst === src) throw new Error('The output would overwrite the source file.');
-    if (fs.existsSync(dst) && !o.overwrite) { const e = new Error('The output file already exists.'); e.code = 'exists'; e.path = dst; throw e; }
     const total = fs.statSync(src).size;
     const tmp = dst + '.part-' + crypto.randomBytes(4).toString('hex');
     this.dest = dst;
@@ -84,9 +108,10 @@ class Job {
       this.emit({ type: 'verifying' });
       const verified = await this.verify(tmp, srcHash.digest('hex'), o.mode === 'decode' ? outHash.digest('hex') : null);
       if (!verified.ok) throw new Error('Round-trip verification failed: the SHA-256 of the result does not match the source.');
-      if (fs.existsSync(dst) && o.overwrite) fs.rmSync(dst, { force: true });
-      fs.renameSync(tmp, dst);
-      const r = { type: 'done', dest: dst, bytesIn: total, bytesOut: fs.statSync(dst).size, sha256: verified.sha256 };
+      const published = await publishVerified(tmp, dst);
+      fs.unlinkSync(tmp);
+      this.dest = published;
+      const r = { type: 'done', dest: published, bytesIn: total, bytesOut: fs.statSync(published).size, sha256: verified.sha256 };
       this.emit(r);
       this.resolve(r);
       return r;
