@@ -42,7 +42,7 @@ export function kioskVmCard(draft, onChange = () => {}) {
   if (!profile.privateNetwork) profile.privateNetwork = 'CommonsLab';
   let job = sessions.get(draft);
   if (!job) {
-    job = { busy: false, preview: '', status: 'kioskVm.idle', details: '', logs: [] };
+    job = { busy: false, preview: '', digest: '', receipt: '', status: 'kioskVm.idle', details: '', logs: [] };
     sessions.set(draft, job);
   }
   const controls = [];
@@ -52,13 +52,16 @@ export function kioskVmCard(draft, onChange = () => {}) {
   const spec = () => ({
     name: String(profile.name || '').trim(),
     windowsIso: String(profile.windowsIso || '').trim(),
+    windowsIsoSha256: String(profile.windowsIsoSha256 || '').trim(),
     storageParent: String(profile.storageParent || '').trim(),
     hypervisor: profile.hypervisor,
-    privateNetwork: profile.privateNetwork.trim(),
+    privateNetwork: profile.hypervisor === 'VMware' ? 'CommonsLab' : String(profile.privateNetwork || '').trim(),
   });
   function update(key, value) {
     profile[key] = value;
     job.preview = '';
+    job.digest = '';
+    job.receipt = '';
     job.status = 'kioskVm.idle';
     job.details = '';
     job.logs = [];
@@ -88,6 +91,7 @@ export function kioskVmCard(draft, onChange = () => {}) {
   controls.push(engine);
   const name = entry('name', 'vm.name');
   const iso = entry('windowsIso', 'vm.iso', 'file:pickIso');
+  const digest = entry('windowsIsoSha256', 'kioskVm.inputDigest');
   const storage = entry('storageParent', 'vm.folder', 'file:pickFolder');
   const network = entry('privateNetwork', 'kioskVm.network');
   function log(text) {
@@ -110,8 +114,10 @@ export function kioskVmCard(draft, onChange = () => {}) {
         });
         if (answer !== snapshot.name) return;
         snapshot.confirmCreate = answer;
+        snapshot.windowsIsoSha256 = job.digest;
       }
       job.status = create ? 'kioskVm.creating' : 'kioskVm.previewing';
+      job.receipt = '';
       job.details = '';
       job.logs = [];
       job.preview = '';
@@ -120,13 +126,17 @@ export function kioskVmCard(draft, onChange = () => {}) {
         name: draft.name || 'lab', kioskVm: snapshot,
       }, log);
       if (data.name !== snapshot.name || data.enrolled !== false) throw new Error(t('kioskVm.incomplete'));
-      if (!create && data.state === 'PreviewOnly') {
+      if (!create && data.state === 'PreviewOnly' && /^[0-9a-f]{64}$/i.test(data.windowsIsoSha256) && Number.isSafeInteger(data.windowsIsoBytes) && data.windowsIsoBytes > 0) {
+        job.digest = data.windowsIsoSha256;
+        job.details = t('kioskVm.previewPin', [data.windowsIsoBytes.toLocaleString(), job.digest]);
         job.preview = key;
         job.status = 'kioskVm.previewed';
       } else if (create && data.configuration && data.hypervisor === 'VMware' && data.state === 'RequiresWorkstationEncryptionAndTpm') {
+        job.receipt = typeof data.guestMediaReceipt === 'string' ? data.guestMediaReceipt : '';
         job.details = data.configuration;
         job.status = 'kioskVm.vmwareNext';
       } else if (create && data.configuration && data.hypervisor === 'VirtualBox' && data.state === 'RequiresSecureBootVerification') {
+        job.receipt = typeof data.guestMediaReceipt === 'string' ? data.guestMediaReceipt : '';
         job.details = data.configuration;
         job.status = 'kioskVm.boxNext';
       } else {
@@ -142,15 +152,18 @@ export function kioskVmCard(draft, onChange = () => {}) {
   }
   const preview = btn(t('kioskVm.preview'), () => run(false), 'btn-primary');
   const create = btn(t('kioskVm.create'), () => run(true), 'btn-ghost');
+  const reveal = btn(t('kioskVm.revealReceipt'), () => window.td.invoke['file:reveal'](job.receipt), 'btn-ghost');
   job.render = () => {
     const settings = spec();
     const valid = machineName.test(settings.name) && /\.iso$/i.test(settings.windowsIso) && settings.storageParent
+      && (!settings.windowsIsoSha256 || /^[A-Fa-f0-9]{64}$/.test(settings.windowsIsoSha256))
       && /^[A-Za-z0-9_-]{1,48}$/.test(settings.privateNetwork);
     for (const control of controls) control.disabled = job.busy;
     network.hidden = settings.hypervisor === 'VMware';
     preview.disabled = job.busy || !valid;
     create.disabled = job.busy || !valid || job.preview !== JSON.stringify(settings);
     status.textContent = t(job.status);
+    reveal.hidden = !job.receipt;
     details.textContent = job.details;
     details.hidden = !job.details;
     output.textContent = job.logs.join('\n');
@@ -159,7 +172,7 @@ export function kioskVmCard(draft, onChange = () => {}) {
   job.render();
   return h('section', { class: 'card', 'aria-label': t('kioskVm.title'), 'data-kiosk-vm': '1' }, [
     h('h2', { text: t('kioskVm.title') }), h('p', { class: 'muted', text: t('kioskVm.lead') }),
-    h('div', { class: 'fields2' }, [name, field({ label: t('kioskVm.provider'), control: engine }), iso, storage, network]),
-    h('div', { class: 'row' }, [preview, create]), status, details, output,
+    h('div', { class: 'fields2' }, [name, field({ label: t('kioskVm.provider'), control: engine }), iso, storage, digest, network]),
+    h('div', { class: 'row' }, [preview, create]), status, details, reveal, output,
   ]);
 }
