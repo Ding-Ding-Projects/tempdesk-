@@ -1,0 +1,21 @@
+{
+  "records": [
+    {
+      "theme": "dark",
+      "state": "checkout-heading-focused",
+      "active": true,
+      "sourceCommit": "a0d2f4473388665339f2783a01a66036b9aacde8",
+      "interactionReceiptSha256": "a8464301fd803038048871cb76863dafd0573d82e859c83f1bb002ef2704c617",
+      "screen": "offline-reader",
+      "scale": 1,
+      "id": "offline-reader-checkout-focus-1440",
+      "inspectionStatus": "inspected",
+      "viewportWidth": 1440,
+      "artifactSha256": "b857f09cad2ba266065867feb7afba7b4e35285a3cd6d4c43cf6aeab4bcf14c9",
+      "interactionProofId": "offline-reader-checkout-focus-1440",
+      "path": "docs/evidence/deployer-v1.0.65/checkout-guide.png",
+      "viewportHeight": 1000,
+      "captureSha256": "77e319edd8d4ec291bd62d8df7364824ee17dba07af7b11bf89c01191eb85975"
+    }
+  ]
+}

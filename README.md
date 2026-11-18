@@ -411,6 +411,12 @@ The kiosk below shows the Virtual Commons unavailable message alongside ordinary
 
 ![Narrow guest kiosk showing the Virtual Commons unavailable notice](docs/evidence/portal-e097ba7/kiosk-commons-unavailable.png)
 
+## Offline checkout guide
+
+TempDesk Deployer [v1.0.65](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.65) opened the bundled operator wiki and moved focus to **Verify a checkout** in the bundled Virtual Commons guide. The image was captured on November 18, 2026 at 10:06:09 UTC on an isolated desktop, using a 1440 × 1000 viewport at emulated device scale 1 in dark mode. The [evidence inventory](docs/evidence/offline-reader-inventory.json) records the released executable and capture hashes. The image shows the guide and heading focus. Guest session acceptance is tracked separately.
+
+![Offline TempDesk Deployer reader focused on Verify a checkout](docs/evidence/deployer-v1.0.65/checkout-guide.png)
+
 ## Fresh VMware lab provisioning
 
 These captures show the fresh Server 2025 Core and Windows 11 client during unattended setup for source revision `5fb4e0235d1d0a8fe2d428e0af1cdd4ad34677f5`. Both were captured from their VMware consoles at 1024 × 768. Domain enrollment, management portal and kiosk operation remain pending.
