@@ -20,6 +20,19 @@ docker compose up -d --build
 
 The build context is the repository root, so the image also bundles `docs/*.md` (offline docs page) and `CHANGELOG.md` when present.
 
+### Enable a dedicated workstation broker on an existing Linux deployment
+
+Configure the guest service with its workstation DNS name in `COMMONS_RDP_KIOSK` and its private HTTPS broker origin in `COMMONS_KIOSK_BROKER_URL` in `.env.guest`. Keep the broker credential outside the repository, build context and environment files. The broker must already be configured with the matching credential. Prepare a restricted regular file readable by the portal identity (UID/GID 10001), for example a root-owned file with group 10001 and mode 0440 in a root-owned directory. If needed, prepare a separate PEM trust bundle readable by the same identity. Use this procedure on the Docker daemon host with normal Linux UID mapping.
+
+From the existing portal Compose project, using its usual project name and previously built image, run one of the following commands. Each argument is an absolute host file path. The second form supplies a private CA.
+
+```sh
+bash compose-kiosk.sh /etc/tempdesk/kiosk/broker.key
+bash compose-kiosk.sh /etc/tempdesk/kiosk/broker.key /etc/tempdesk/kiosk/ca.pem
+```
+
+The helper checks file types, paths and access modes, validates the combined Compose model silently, and recreates only the guest service, briefly interrupting it. Compose mounts the files read-only. With no CA argument the guest uses its normal TLS trust store. Re-run with the same paths after rotation so the guest receives the replacement files. Run subsequent guest updates with the same overlay selection. To remove the mounts, reconcile only the guest service with the base file using `docker compose -f compose.yaml up --no-build --no-deps -d tempdesk-guest`. A running container is not proof of broker connectivity or RDP admission. Check the guest seat availability and the end-to-end assignment and expiry procedure in [Virtual Commons](../docs/VIRTUAL-COMMONS.md).
+
 ## Configuration
 
 | Variable | Meaning |
