@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "source": "76ccdfaa72058065c07a4f58d8cf714c4f0b2dc0",
+  "version": "1.0.111",
+  "publicationRun": 44478728433,
+  "portalImage": {
+    "indexDigest": "sha256:4b26fd170767f049f83a68f046646b0f37f14e5f5ce401a46d839e4c58806be5",
+    "nativeAmd64Manifest": "sha256:7a2b5fedd6caff0fb2cc34a626c97ac9a00ea2f9dbdcfb0b4872924c852b0c77",
+    "nativeArm64Manifest": "sha256:1f3b3c1f0d9e3aabcdf5ec27ccd52437fd74082e46ddd1d86dfe00710dc12a95"
+  },
+  "labDeployment": {
+    "previousVersion": "1.0.107",
+    "configurationChange": "image reference only",
+    "separateLanClientVerified": true,
+    "storageAndPortIdentitiesVerified": true,
+    "directoryContainerKept": true,
+    "roles": [
+      {
+        "mode": "guest",
+        "startedUtc": "2026-11-19T07:48:08.960350796Z",
+        "verifiedUtc": "2026-11-19T07:48:16.1805781+00:00",
+        "healthHttpStatus": 200,
+        "entryHttpStatus": 200
+      },
+      {
+        "mode": "management",
+        "startedUtc": "2026-11-19T07:49:15.61457609Z",
+        "verifiedUtc": "2026-11-19T07:49:22.9332648+00:00",
+        "healthHttpStatus": 200,
+        "entryHttpStatus": 200
+      }
+    ]
+  },
+  "guestSignIn": {
+    "directory": "The running lab Samba directory",
+    "browser": "Isolated headless Chromium on Linux with loopback to the running guest portal",
+    "browserImageId": "sha256:a7f6cf3ae520c9d670ad956572c13747ed5abdbba5123a01526f873ed1662528",
+    "browserViewport": {
+      "width": 1440,
+      "height": 1000,
+      "deviceScaleFactor": 1
+    },
+    "language": "en",
+    "theme": "dark",
+    "selectedMinutes": 60,
+    "activeAfterCreation": true,
+    "deletedThroughPortal": true,
+    "beforeDirectoryGuestCount": 0,
+    "afterDirectoryGuestCount": 0,
+    "completedBrowserObservationUtc": "2026-11-19T08:07:27.681594+00:00",
+    "directoryReadbackUtc": "2026-11-19T08:07:29.1360986+00:00",
+    "captureScope": "Raw browser element captures of the selected form, timer, status rows and confirmation banner. Per-image timestamps were not recorded.",
+    "captures": [
+      {
+        "path": "docs/evidence/guest-sign-in-v111/01-create-one-hour-sign-in.png",
+        "alt": "Guest form with the one-hour duration selected",
+        "sha256": "0d15bd360a33b54c75ec7001781c0959092642e980f87e22964682cdf6068ea3",
+        "width": 476,
+        "height": 496,
+        "state": "duration selection"
+      },
+      {
+        "path": "docs/evidence/guest-sign-in-v111/02-confirmed-one-hour-deadline.png",
+        "alt": "The one-hour countdown on the guest confirmation",
+        "sha256": "7968a59eb7ef8d92489c4c366b41b4fadbdf558f95e1480ea175001a09f24a51",
+        "width": 343,
+        "height": 416,
+        "state": "confirmation deadline"
+      },
+      {
+        "path": "docs/evidence/guest-sign-in-v111/03-active-sign-in-status.png",
+        "alt": "Status panel showing an active guest sign-in and its deadline",
+        "sha256": "37d4510b58823c9c8d42743f7a2b0d354c0306a93692a777481f0e392e7dc520",
+        "width": 418,
+        "height": 58,
+        "state": "active guest status"
+      },
+      {
+        "path": "docs/evidence/guest-sign-in-v111/04-deletion-confirmed.png",
+        "alt": "Guest portal banner confirming sign-in deletion",
+        "sha256": "d36f6159e5ad3e13a6ddc569f95dce8f2938820df2adc841f03d2c28749aa183",
+        "width": 992,
+        "height": 55,
+        "state": "confirmed self-deletion"
+      }
+    ],
+    "privacy": {
+      "rawBytesPreserved": true,
+      "inspectedBeforeAndAfterCopy": true,
+      "credentialsAndAddressesAbsent": true
+    }
+  },
+  "portalHostWizard": {
+    "publishedAsset": "TempDeskPortalHost-1.0.111-portable.exe",
+    "publishedSha256": "67716fd1d84121aca22094a8cdfc7ea70174dd8b568487ab18d08425100b0950",
+    "nativeLaunchRoute": "Lowlevel off-screen desktop on Windows",
+    "syntheticSettingsLoaded": true,
+    "cancelledBeforeStartWithoutContainers": true,
+    "bothPortalsStarted": true,
+    "independentEndpointResults": 2,
+    "healthRecheckPreservedContainerIdentitiesAndStartTimes": true,
+    "appAndProfileClosed": true,
+    "temporaryFixtureCleanupComplete": false,
+    "limitations": "File chooser, cancellation during startup, and visual comparison across all display modes remain unverified."
+  },
+  "limitations": "The guest lifecycle verified a finite account and operator-requested self-deletion. Automatic session termination at expiry and native Remote Desktop sign-in remain unverified."
+}

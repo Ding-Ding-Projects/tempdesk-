@@ -307,6 +307,7 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}`;
   const inventory = await readInventory(new URL('../', import.meta.url));
   const localAttachments = new Set([
     inventoryPath,
+    'docs/evidence/guest-sign-in-v111/receipt.json',
     'docs/evidence/management-notifications.json',
     'docs/evidence/management-sounds.json',
     'docs/evidence/management-wording-walkthrough.json',

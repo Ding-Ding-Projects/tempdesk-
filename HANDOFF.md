@@ -1,5 +1,11 @@
 # TempDesk verification handoff
 
+## v1.0.111 portal delivery
+
+Both lab portals run the immutable v1.0.111 image from `76ccdfa`. A separate LAN client verified the expected version and source, and the rollout retained the existing storage and ports. The guest kiosk created and checked a one-hour account against the running Samba directory, then removed it through self-service. The directory returned to zero guest accounts. [Illustrated walkthrough](README.md#guest-sign-in-walkthrough)
+
+The downloaded Portal Host wizard cancelled once before creating any portal containers. It then started both portals in a separate synthetic configuration and reported each healthy endpoint. Its health recheck returned both endpoints with the same container IDs and start times. The standalone executable closed and its isolated profile was removed. The wizard fixture teardown, native chooser verification and cancellation during startup remain open. [Deployment and wizard receipt](docs/evidence/guest-sign-in-v111/receipt.json)
+
 ## Phone documentation edition
 
 The Windows documentation build composes one source snapshot for both the

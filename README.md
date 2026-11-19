@@ -438,29 +438,25 @@ See `AGENTS.md` for repository rules. License: MIT.
 
 1. Open the guest kiosk. Select **1 hour** and choose **Create my sign-in**.
 
-   ![Guest kiosk with the one-hour duration selected](docs/evidence/guest-sign-in-3a18b69/01-choose-duration.png)
+   ![Guest form with the one-hour duration selected](docs/evidence/guest-sign-in-v111/01-create-one-hour-sign-in.png)
 
-   ![Guest kiosk with the one-hour duration selected at 360 pixels wide](docs/evidence/guest-sign-in-3a18b69/01-choose-duration-narrow.png)
+2. Read the one-time confirmation and note the expiry. The countdown shows the time remaining.
 
-2. Read the one-time confirmation and note the expiry. The images show the confirmation heading and timer outside the credential panel.
-
-   ![Your sign-in is ready confirmation](docs/evidence/guest-sign-in-3a18b69/02-sign-in-ready.png)
-
-   ![One-hour test account expiry countdown](docs/evidence/guest-sign-in-3a18b69/03-expiry-countdown.png)
+   ![The one-hour countdown on the guest confirmation](docs/evidence/guest-sign-in-v111/02-confirmed-one-hour-deadline.png)
 
 3. Open **Check my sign-in** and enter the credentials from the confirmation. The example account returned **Active** with its expiry time.
 
-   ![Check my sign-in shows the test account is active](docs/evidence/guest-sign-in-3a18b69/04-active-sign-in.png)
+   ![Status panel showing an active guest sign-in and its deadline](docs/evidence/guest-sign-in-v111/03-active-sign-in-status.png)
 
 4. To end the sign-in early, open **Delete my sign-in**, enter the credentials and confirm. The kiosk showed the deletion confirmation and the lab directory lookup confirmed that the test account was gone.
 
-   ![Guest kiosk confirms deletion of the test account](docs/evidence/guest-sign-in-3a18b69/05-test-sign-in-deleted.png)
+   ![Guest portal banner confirming sign-in deletion](docs/evidence/guest-sign-in-v111/04-deletion-confirmed.png)
 
-The [capture inventory](docs/evidence/guest-sign-in-inventory.json) records the running container image, source revision, viewports, timestamps and file hashes. The [prior portal captures](docs/evidence/portal-history.md) retain their original provenance.
+The [v1.0.111 verification receipt](docs/evidence/guest-sign-in-v111/receipt.json) records the running container image, directory readback, viewports and file hashes. The four images show selected interface elements with credentials out of view. The [prior portal captures](docs/evidence/portal-history.md) retain their original provenance.
 
 ### Lab verification
 
-Server Core responded as a synchronized Active Directory domain controller with a ready global catalog. Its native TempDesk agent returned a healthy response for the Windows backend. The kiosk walkthrough used the lab's Samba directory and verified temporary account creation, credential validation, one-time confirmation and self-deletion. The management sign-in page also answered from the test network.
+Server Core responded as a synchronized Active Directory domain controller with a ready global catalog. Its native TempDesk agent returned a healthy response for the Windows backend. The v1.0.111 kiosk and management portal answered from a separate LAN client. The kiosk created a one-hour account in the running Samba directory, confirmed its active status, and deleted it. The directory returned to zero guest accounts.
 
 A separate one-hour kiosk account had a configured expiry of 11:47:52 UTC on November 18, 2026. The lab directory confirmed the record was absent at 11:50:37 UTC.
 

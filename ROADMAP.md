@@ -31,7 +31,8 @@
 - [x] Boot the x86_64 image through UEFI and check that it waits for credentials with both portal endpoints closed. [Boot receipt](docs/evidence/appliance-x86-6d7718d.json)
 - [ ] Verify the x86_64 UEFI appliance image and Raspberry Pi 4 arm64 image, including configured startup, separate LAN checks, and restart persistence. [Appliance build and configuration](portal/README.md#build-a-bootable-appliance)
 - [ ] Release both verified appliance images and connect them to the virtual machine and physical-media deployment workflows.
-- [ ] Verify the standalone Portal Host wizard on the supported Windows host, including both endpoint results, health-only recheck and safe cancellation.
+- [x] Use the published Portal Host wizard on the supported Windows host to cancel before startup, start both portals, and recheck health with the same container identities and start times. [Verification receipt](docs/evidence/guest-sign-in-v111/receipt.json)
+- [ ] Verify the Portal Host native file chooser, cancellation during startup, and visual parity at the supported display settings.
 - [x] Inventory the required features across the Deployer, management portal, guest portal, kiosk, public documentation, offline reader, and project delivery. [Verification inventory](docs/FEATURE-INVENTORY.md)
 - [x] Record how to select, apply, reload and clear personal wording in the built management portal. [Illustrated steps](README.md#personal-wording-walkthrough)
 - [ ] Verify local wording and outcome cues across the Deployer notification drawer, its search, and the remaining dynamic surfaces.
