@@ -363,11 +363,13 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}`;
     'docs/evidence/portal-host-reopen-ff5b6b4/receipt.json',
     'docs/evidence/portal-rollout-v120.json',
     'docs/evidence/portal-rollout-v123.json',
+    'docs/evidence/portal-rollout-v126.json',
     'docs/evidence/virtual-commons-attachments.json',
     'docs/evidence/virtual-commons-checkout.json',
     'docs/evidence/virtual-commons-dim-sum-6f6cb7f/receipt.json',
     'docs/evidence/virtual-commons-picker-outcomes-c2aec2e/receipt.json',
     'docs/evidence/virtual-commons-picker-wording.json',
+    'docs/evidence/workstation-guide-fbb81ce/receipt.json',
   ]);
   for (const attachment of localAttachments) {
     await copyFile(path.join(REPO, attachment), path.join(OUT, attachment));

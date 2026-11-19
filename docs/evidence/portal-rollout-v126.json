@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "release": "v1.0.126",
+  "sourceRevision": "fbb81cea5b769603bddb76cde13182f922c862f1",
+  "publishedUtc": "2026-11-19T15:35:57Z",
+  "imageIndex": "sha256:58d46b60c3088465c3370b7e5edf6b4d6a94df2a932704e11fc8840fdf40f3db",
+  "imageChildAmd64": "sha256:f025364f285365cc40da1ca5f219e1c6a66d274c7b3ad4538b631e3c2105337c",
+  "imageChildArm64": "sha256:29b3cc5ec39f7fcdf1ee59f20314c1fc1114f0830829b6ca5c0abb8ff9d38bef",
+  "releaseManifestAttachmentsMatched": 9,
+  "workflow": "https://github.com/Ding-Ding-Projects/tempdesk-/actions/runs/44553496297",
+  "roles": {
+    "guest": {
+      "startedUtc": "2026-11-19T15:44:05.212416099Z",
+      "verifiedUtc": "2026-11-19T15:44:13.5127914Z",
+      "status": 200,
+      "separateLanClient": true,
+      "storagePortsAndTrustVerified": true
+    },
+    "management": {
+      "startedUtc": "2026-11-19T15:44:54.302853149Z",
+      "verifiedUtc": "2026-11-19T15:45:02.1740266Z",
+      "status": 200,
+      "separateLanClient": true,
+      "storagePortsAndTrustVerified": true
+    }
+  },
+  "guestSettings": {
+    "httpStatus": 200,
+    "managementExportStatus": 404,
+    "separateLanClient": true,
+    "verifiedUtc": "2026-11-19T15:45:51.3798995Z",
+    "layout": {
+      "widthsCssPx": [
+        360,
+        1440
+      ],
+      "emulatedScales": [
+        1,
+        1.25,
+        1.5,
+        2
+      ],
+      "languages": [
+        "en",
+        "zh-HK",
+        "bi"
+      ],
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "combinations": 48,
+      "narrowCombinations": 24,
+      "visibleKeyboardFocusCombinations": 48,
+      "minimumMeasuredNarrowTouchTargetCssPx": 48,
+      "horizontalOverflowCombinations": 0
+    },
+    "keyboardRegexBuilder": true,
+    "muteAndLanguageRetained": true,
+    "schoolPreferenceIsolated": true,
+    "knownHttpOpenerWarnings": 11,
+    "unexpectedDiagnostics": 0,
+    "browserClosed": true
+  },
+  "guestLifecycle": {
+    "method": "Ordinary guest forms over container loopback",
+    "verifiedUtc": "2026-11-19T15:46:29.486Z",
+    "durationMinutes": 60,
+    "created": true,
+    "activeConfirmed": true,
+    "selfRemovalConfirmed": true,
+    "directoryGuestCountBefore": 0,
+    "directoryGuestCountAfter": 0
+  },
+  "offlineReader": {
+    "executableSha256": "dd937780dc1edd8910c1024df0cbee7bbc4ec22300cc31383201ad4ad7066b98",
+    "bundledBytesMatched": 15,
+    "sourceInventoryPathsMatched": 236,
+    "narrowSettingsImagesAndReceiptMatched": true,
+    "ownedReaderClosed": true,
+    "isolatedProfileRemoved": true
+  },
+  "nativeReadiness": {
+    "setupMediaSource": "3cbacc5868ba5829333efe220fd99b8801ce45b9",
+    "setupDvdSha256": "d01ea285e58505f002c3508b3d82df47b9ed5c34d24848c06b60da5d0469b465",
+    "attachedMediaVerified": true,
+    "payloadFilesMatched": 11,
+    "pinnedInstallerDigestMatched": true,
+    "credentialFreeAnswerFieldsVerified": true,
+    "secureBoot": true,
+    "virtualTpmPresent": false,
+    "observedUtc": "2026-11-19T15:26:30.847676Z"
+  },
+  "scope": "The live lab uses Samba. The browser matrix uses emulated display scale and touch. Trusted HTTPS delivery, native Windows sign-in, RDP session expiry, and seat release remain separate acceptance steps."
+}

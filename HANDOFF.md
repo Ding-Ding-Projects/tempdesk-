@@ -4,7 +4,7 @@
 
 The isolated image from `6e7e0001a1eb0db3d04bb0d5a035362bd653bd11` increased the seven measured undersized controls to at least 48 CSS px and added a visible localized label associated with the Settings search input. All 48 viewport, language, theme, and emulated scale combinations retained the expected column count, named controls, visible keyboard focus, and zero horizontal page overflow. The measured narrow controls owned their outer pointer areas in the bilingual check. The synthetic School mode cookie hid the language control and preserved the previous choice and mute state. Both inspected views are linked from the [walkthrough](README.md#use-settings-on-a-narrow-screen).
 
-The live v1.0.123 baseline still showed the smaller targets. The browser repeated a diagnostic about ignoring the cross-origin opener header on the live HTTP origin. The locally built candidate ran on isolated loopback. Live rollout and trusted HTTPS delivery remain open.
+The live v1.0.126 rollout repeated the 48 Settings combinations. All 24 narrow combinations measured at least 48 CSS px for the inspected controls. The browser reported eleven instances of the cross-origin opener header diagnostic on the HTTP origin. Trusted HTTPS delivery remains open. [Live rollout receipt](docs/evidence/portal-rollout-v126.json)
 
 The downloaded v1.0.125 reader from `ebfd7af1b3d95594cc4d6789a510de8111f3d03a` opened the workstation checklist, guest Settings guidance, and prepared wiki. Twelve bundled files matched their source bytes, including the v1.0.123 rollout receipt. The reader closed and its isolated profile was removed. [Release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.125)
 
@@ -34,7 +34,9 @@ The portal accepts one agent key from an explicit `AGENT_KEY_FILE` path or its l
 
 ## Live portal delivery
 
-Both lab portals run the immutable v1.0.123 image from `6985c92531079abb28fab1424528261cea417289`. Each role retained its storage, port, and trust settings. A separate LAN client read back the healthy endpoints and the expected source. The guest Settings page returned 200 and management export returned 404 on the guest listener. The kiosk issued, verified, and removed a one-hour guest sign-in. The Samba directory returned to zero guest accounts. The matching portable reader opened the workstation checklist, restored its local mark after switching choices, and verified eleven attachments. [Current rollout and reader receipt](docs/evidence/portal-rollout-v123.json) · [Earlier v1.0.120 rollout](docs/evidence/portal-rollout-v120.json)
+Both lab portals run the immutable v1.0.126 image from `fbb81cea5b769603bddb76cde13182f922c862f1`. A separate LAN client verified both running endpoints. Guest Settings returned 200 and management export returned 404 on the guest listener. The kiosk issued, checked, and removed a one-hour sign-in in the Samba directory. The count returned to zero. The downloaded reader matched fifteen source attachments, including the Settings images and measurement receipt. [Current rollout and reader evidence](docs/evidence/portal-rollout-v126.json) · [Earlier v1.0.123 rollout](docs/evidence/portal-rollout-v123.json) · [Earlier v1.0.120 rollout](docs/evidence/portal-rollout-v120.json)
+
+The powered-off workstation's two attached discs matched their recorded digests. Eleven setup DVD payload files matched the tracked workstation source. The answer file contained the intended machine name, TLS, and network-level authentication settings. Secure Boot is enabled. The supported virtual TPM setup, guest installation, and broker enrollment remain open.
 
 The updated guest route assertion passed in the hosted run at `640295e857a257003d324bf97a301020ee23d2e1`, which recorded 253 passing portal checks. The live image uses the earlier source revision shown above. [Hosted run](https://github.com/Ding-Ding-Projects/tempdesk-/actions/runs/44544851672)
 

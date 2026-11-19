@@ -212,6 +212,14 @@
       "id": "personal-vocabulary",
       "scope": "interfaces",
       "progress": {
+        "hosted": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "fbb81cea5b769603bddb76cde13182f922c862f1",
+          "reference": "docs/evidence/workstation-guide-fbb81ce/receipt.json",
+          "observation": "The published workstation guide applied sample wording, held it after an invalid replacement, and restored the shipped label on clear. The file actions generated zero browser requests.",
+          "remaining": "Verify file drop, cross-route persistence, and the remaining text and outcome surfaces."
+        },
         "management": {
           "state": "partial",
           "method": "source",
@@ -353,6 +361,14 @@
           "reference": "docs/evidence/guest-settings-touch-6e7e000/receipt.json",
           "observation": "The built guest Settings page recorded 48 layout combinations with visible keyboard focus. Its measured narrow search, adjacent regex actions, sliders, and checkbox labels met the 48 CSS px target.",
           "remaining": "Verify the updated live kiosk, physical touch input, dialog and header controls, and remaining guest pages."
+        },
+        "kiosk": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "fbb81cea5b769603bddb76cde13182f922c862f1",
+          "reference": "docs/evidence/portal-rollout-v126.json",
+          "observation": "The deployed kiosk Settings passed 48 combinations at two widths and four emulated scales. Its measured narrow controls met 48 CSS px and keyboard focus remained visible.",
+          "remaining": "Verify physical touch input, dialog and header controls, and remaining kiosk pages."
         }
       }
     },
@@ -838,9 +854,9 @@
         "hosted": {
           "state": "partial",
           "method": "deployment",
-          "revision": "17f80f7668d84d8c12f6f8696155a3d7e2d9a51d",
-          "reference": "docs/evidence/workstation-guide-17f80f7.json",
-          "observation": "Three inspected captures cover the hosted Virtual Commons workstation guide, keyboard marking and narrow reload.",
+          "revision": "fbb81cea5b769603bddb76cde13182f922c862f1",
+          "reference": "docs/evidence/workstation-guide-fbb81ce/receipt.json",
+          "observation": "Inspected views show the hosted workstation guide at desktop and 320 CSS px. The receipt records the deployment archive, keyboard mark, reload, article link, and local wording actions.",
           "remaining": "Capture the other applicable hosted states and the real native checkout lifecycle."
         }
       },

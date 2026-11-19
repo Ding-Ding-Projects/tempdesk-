@@ -456,7 +456,7 @@ The [v1.0.111 verification receipt](docs/evidence/guest-sign-in-v111/receipt.jso
 
 ### Lab verification
 
-Server Core responded as a synchronized Active Directory domain controller with a ready global catalog. Its native TempDesk agent returned a healthy response for the Windows backend. Both v1.0.123 portals answered from a separate LAN client with the published source revision. The guest kiosk created a one-hour account in the running Samba directory, confirmed it was active, and removed it through self-service. The directory returned to zero guest accounts. [Live rollout receipt](docs/evidence/portal-rollout-v123.json)
+Server Core responded as a synchronized Active Directory domain controller with a ready global catalog. Its native TempDesk agent returned a healthy response for the Windows backend. Both v1.0.126 portals answered from a separate LAN client with the published source revision. The guest kiosk created a one-hour account in the running Samba directory, confirmed it was active, and removed it through self-service. The directory returned to zero guest accounts. [Live rollout receipt](docs/evidence/portal-rollout-v126.json)
 
 A separate one-hour kiosk account had a configured expiry of 11:47:52 UTC on November 18, 2026. The lab directory confirmed the record was absent at 11:50:37 UTC.
 
@@ -529,6 +529,18 @@ These three screenshots show the [published workstation guide](https://ding-ding
 
 The [hosted capture inventory](docs/evidence/workstation-guide-17f80f7.json) records the actual build archive, screenshot hashes, viewport and browser actions. See [Lab verification](#lab-verification) for the native workstation and real checkout status.
 
+### Reopen the live workstation guide
+
+1. In the [published workstation guide](https://ding-ding-projects.github.io/tempdesk-/docs/?task=commons&variant=workstation#guided-workflows), focus a checklist item and press Space. This example marks the broker step to demonstrate how the guide records reader progress.
+
+   ![Published workstation guide showing the keyboard-marked broker step and one of eight steps marked](docs/evidence/workstation-guide-fbb81ce/01-published-workstation-guide.png)
+
+2. Open the linked workstation article and return to the guide. Reloading retains the mark. The narrow example shows the same selected workstation in bilingual mode.
+
+   ![Bilingual workstation checklist at 320 CSS pixels with the single-seat workstation selected](docs/evidence/workstation-guide-fbb81ce/02-published-workstation-guide-narrow.png)
+
+The [hosted interaction receipt](docs/evidence/workstation-guide-fbb81ce/receipt.json) also records a personal wording upload, an invalid replacement, and restoration of the shipped text. These actions ran locally in the browser.
+
 </details>
 
 ## Browser attachment walkthrough
@@ -593,7 +605,7 @@ The built guest portal was exercised in English at desktop and emulated 360 px v
 3. Focus the **Action sounds** checkbox and press Space to mute the cues. The browser saves the choice across reloads. School mode pauses cues and keeps the saved switch position.
 4. Return to **Virtual Commons** after verifying a temporary sign-in. Choosing a valid personal wording file shows the applied result. Choosing an invalid replacement preserves the active wording and shows the rejection message. The visible result works with sound muted.
 
-The [browser receipt](docs/evidence/guest-settings-3407f84/receipt.json) covers an isolated portal build in English. The cues were observed in the browser with its audio output muted. The [v1.0.123 deployment receipt](docs/evidence/portal-rollout-v123.json) records the live guest Settings response and its management export boundary. Live cue playback and additional language and layout checks remain open.
+The [browser receipt](docs/evidence/guest-settings-3407f84/receipt.json) covers an isolated portal build in English. The cues were observed in the browser with its audio output muted. The [v1.0.126 deployment receipt](docs/evidence/portal-rollout-v126.json) records the live guest Settings response, keyboard and wording preferences, and its management export boundary. Live cue playback and the remaining Settings surfaces need separate acceptance.
 
 ### Use Settings on a narrow screen
 
@@ -605,7 +617,7 @@ The [browser receipt](docs/evidence/guest-settings-3407f84/receipt.json) covers 
 
    ![Guest Settings at desktop width with two display columns and visible keyboard focus on the regex builder](docs/evidence/guest-settings-touch-6e7e000/02-desktop-display-controls.png)
 
-The [layout and interaction receipt](docs/evidence/guest-settings-touch-6e7e000/receipt.json) records 48 combinations of language, theme, viewport width, and emulated display scale from the isolated build at `6e7e0001a1eb0db3d04bb0d5a035362bd653bd11`. The updated live deployment and physical touch input remain open.
+The [layout and interaction receipt](docs/evidence/guest-settings-touch-6e7e000/receipt.json) records 48 combinations of language, theme, viewport width, and emulated display scale from the isolated build at `6e7e0001a1eb0db3d04bb0d5a035362bd653bd11`. The [live rollout receipt](docs/evidence/portal-rollout-v126.json) records the same layout checks on v1.0.126. Physical touch input remains open.
 
 ## Personal wording walkthrough
 

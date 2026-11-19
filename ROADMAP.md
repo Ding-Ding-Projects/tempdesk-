@@ -8,6 +8,7 @@
 - [x] Roll out v1.0.102 to both lab portals. Verify their live source revision, health, volume identities and published port mappings.
 - [x] Roll out v1.0.120 to both lab portals. Read back both roles from a separate LAN client and verify creation, active status, and self-removal of a temporary sign-in. [Live rollout receipt](docs/evidence/portal-rollout-v120.json)
 - [x] Roll out v1.0.123 to both lab portals. Verify guest Settings and its management export boundary from a separate LAN client. Repeat the temporary sign-in lifecycle against the running release. [Live rollout receipt](docs/evidence/portal-rollout-v123.json)
+- [x] Roll out v1.0.126 to both lab portals. Verify the live Settings layout and the temporary sign-in lifecycle. [Live rollout receipt](docs/evidence/portal-rollout-v126.json)
 - [x] Verify that the kiosk language search label and its regex controls fit at 360 px and 1440 px.
 - [x] Verify both connection files and guest account checks against an isolated Samba directory. [Checkout receipt](docs/evidence/virtual-commons-checkout.json)
 - [x] Verify scoped confirmations, both attachment destinations, retry and temporary account removal against a real isolated directory. [Attachment receipt](docs/evidence/virtual-commons-attachments.json)
@@ -29,6 +30,8 @@
 - [ ] Validate a supported guest-session route for Server Core. Its administrative Remote Desktop capability is insufficient for guest sessions.
 
 ## Documentation and delivery
+
+- [x] Exercise the published workstation guide with keyboard marking, reload, article navigation, and local wording restoration. Inspect the desktop and 320 CSS px views. [Hosted guide verification](README.md#reopen-the-live-workstation-guide)
 
 - [x] Verify the compiled guest sign-in disclosure at desktop and 360 px widths. Open the walkthrough in the built portable reader and confirm the full printed content. [Verification receipt](docs/evidence/documentation-disclosures-edcf827.json)
 - [x] Verify the deployed disclosure and the matching released offline package. [Release readback](docs/evidence/documentation-disclosures-v114.json)
@@ -52,7 +55,8 @@
 - [x] Verify the management action-sound switch and wording outcomes in the built portal, including a rejected file, a blocked save, browser restart and school mode. [Illustrated steps and receipt](README.md#management-action-sounds-walkthrough)
 - [x] Add guest Settings with independent search, display controls and a mute switch. Exercise the Tools route, cue outcomes and mute across a reload in an isolated build. [Guest walkthrough](README.md#guest-settings-and-action-sounds)
 - [x] Enlarge the measured narrow Settings targets and verify the rebuilt layout across 48 language, theme, width and emulated scale combinations. [Illustrated and measured evidence](README.md#use-settings-on-a-narrow-screen)
-- [ ] Deploy the published Settings sizing update and verify the live interaction and trusted HTTPS delivery separately.
+- [x] Deploy the published Settings sizing update and verify the live interaction. [Live rollout receipt](docs/evidence/portal-rollout-v126.json)
+- [ ] Verify trusted HTTPS delivery on the lab portals.
 - [ ] Verify the deployed guest and kiosk Settings flows, including the full language, theme, scale, accessibility and School mode coverage.
 - [ ] Complete management personal-wording verification across the remaining dynamic copy surfaces.
 - [x] Verify the rebuilt management notification centre with filtered bulk actions, guarded deletion, account-scoped history and reversible local wording. [Illustrated steps and receipt](README.md#management-notification-walkthrough)
@@ -64,6 +68,7 @@
 - [x] Verify the published v1.0.122 documentation reader preserves the exact bytes of its bundled evidence and feature inventory. [Release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.122)
 - [x] Open the released v1.0.123 reader, exercise the dedicated workstation checklist, and verify the bundled guest Settings image and receipt. [Release and reader evidence](docs/evidence/portal-rollout-v123.json)
 - [x] Open the released v1.0.125 reader and verify the bundled v1.0.123 rollout receipt alongside the workstation checklist and prepared wiki. [Release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.125)
+- [x] Open the released v1.0.126 reader and verify its bundled narrow and desktop Settings images and measurement receipt. [Live and offline evidence](docs/evidence/portal-rollout-v126.json)
 - [x] Verify the source-bound documentation executable downloaded from the v1.0.74 release.
 - [x] Record the guest checklist and both Virtual Commons guide paths from a source-bound local offline build. [Illustrated steps](README.md#guided-checkout-walkthrough)
 - [x] Verify the guided documentation on GitHub Pages and in the downloadable v1.0.75 offline reader.

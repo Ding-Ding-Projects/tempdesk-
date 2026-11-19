@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "source": "fbb81cea5b769603bddb76cde13182f922c862f1",
+  "buildRun": "44553496184",
+  "url": "https://ding-ding-projects.github.io/tempdesk-/docs/?task=commons&variant=workstation#guided-workflows",
+  "artifactSha256": "6e419b7cee08155b50684a7409b9235615e73a4ca54291159e2af3367984c27d",
+  "liveFileDigests": {
+    "index.html": "7a3800aa9c8baf924bd41a21e5f5e79158de5381d9dd54530bbb0f64a7593c83",
+    "docs/index.html": "9e5e0ba77c991444e364d738d5ef214b15e0af8759eacbeb54317ea44a3051fe",
+    "docs/virtual-commons.html": "705db68593d873f7410c97bc5e3b32c04c00ef97cd4078d6db31a158dd3e8a18",
+    "assets/docs-workflows.js": "79d8b99342a090a73f17f284eae44996d56b9c13f5386c94d480e9cfee41217d",
+    "assets/site.js": "65b85ea58b64f887ca5a7c4d5d0f31a6b16e78bae5ff92de5a7fe56d85d493e6"
+  },
+  "checks": {
+    "checklistKeyboardAndReload": true,
+    "articleOpened": true,
+    "wordingAppliedRejectedCleared": true,
+    "uploadNetworkRequests": 0,
+    "bilingualLightVerified": true,
+    "accessibleDocumentRoot": true,
+    "consoleErrors": 0,
+    "failedResources": 0,
+    "desktopClosed": true,
+    "profileRemoved": true
+  },
+  "scope": "The desktop example uses a reader-owned checklist mark. The narrow example uses an emulated viewport after restoring shipped wording. Native workstation setup and sign-in have separate acceptance.",
+  "records": [
+    {
+      "id": "hosted-keyboard-checklist",
+      "active": true,
+      "path": "docs/evidence/workstation-guide-fbb81ce/01-published-workstation-guide.png",
+      "sourceCommit": "fbb81cea5b769603bddb76cde13182f922c862f1",
+      "artifactSha256": "6e419b7cee08155b50684a7409b9235615e73a4ca54291159e2af3367984c27d",
+      "captureSha256": "2676b31b8969274891077ec8df9eaa5213ca33de687108292d0e45fbcdec8a51",
+      "screen": "Virtual Commons workstation guide",
+      "state": "hosted-keyboard-checklist",
+      "theme": "dark",
+      "language": "en",
+      "viewportWidth": 1440,
+      "viewportHeight": 1080,
+      "scale": 1,
+      "interactionProofId": "hosted-keyboard-checklist",
+      "interactionReceiptSha256": "dd15f4d5eb84165ca761beb118e3016e6f2f8b97fcacbe8314446fb783c2fdd8",
+      "inspectionStatus": "inspected",
+      "capturedAt": "2026-11-19T15:34:23.404Z"
+    },
+    {
+      "id": "hosted-narrow-guide",
+      "active": true,
+      "path": "docs/evidence/workstation-guide-fbb81ce/02-published-workstation-guide-narrow.png",
+      "sourceCommit": "fbb81cea5b769603bddb76cde13182f922c862f1",
+      "artifactSha256": "6e419b7cee08155b50684a7409b9235615e73a4ca54291159e2af3367984c27d",
+      "captureSha256": "5e6e4ebcdc5c74840bcc50bf042c09959a35702f274976630324684d9a73fa3c",
+      "screen": "Virtual Commons workstation guide",
+      "state": "hosted-narrow-guide",
+      "theme": "light",
+      "language": "bi",
+      "viewportWidth": 320,
+      "viewportHeight": 900,
+      "scale": 2,
+      "interactionProofId": "hosted-narrow-guide",
+      "interactionReceiptSha256": "dd15f4d5eb84165ca761beb118e3016e6f2f8b97fcacbe8314446fb783c2fdd8",
+      "inspectionStatus": "inspected",
+      "capturedAt": "2026-11-19T15:34:25.252Z"
+    }
+  ]
+}
