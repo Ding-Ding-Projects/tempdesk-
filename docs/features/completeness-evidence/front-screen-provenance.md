@@ -6,10 +6,16 @@ For each candidate, observe the initial screen before navigation or sign-in. Rec
 
 ## Guest, management and kiosk portals
 
-Both portal modes read the same build record from the deployed application directory, before sign-in. A source build stages approved files from a known clean revision and writes the record before Compose calls the builder. The image preserves a validated record when one is present. The isolated build context contains the staged source and receipt. Git metadata is excluded. The Deployer bundle and the public installer payload generate the same record before delivery. The public payload includes the record in its existing file integrity manifest. The native install copies it with the application and clears the previous package's record on an upgrade.
+Both portal modes read the same build record from the deployed application directory, before sign-in. A source build stages approved files from a known clean revision and writes the record before the container builder runs. The image preserves a validated record when one is present. The isolated build context contains the staged source and receipt. Git metadata is excluded. The Deployer bundle and the public installer payload generate the same record before delivery. The public payload includes the record in its existing file integrity manifest. The native install copies it with the application and clears the previous package's record on an upgrade.
 
 The portal checks the supplied version, full source revision, UTC date and time with seconds, and digest of the application files. This is an integrity check on packaged application bytes. Image identity and installer delivery still have their own artifact digests and verification. Portal preferences, process environment and install or service start time cannot supply the displayed version or timestamp.
 
 The provenance is unavailable for a manual container build from loose source, a legacy payload without a receipt, or an installation whose application bytes disagree with its record. Build from a clean checkout using the documented staging command or deploy a current packaged payload. The portals keep working when the provenance is unavailable.
 
-This records the producer and consumer wiring. Live guest, management and kiosk front-screen behavior remains unverified for this change.
+## Deployed readback
+
+On November 19, 2026, the lab guest and management services started from a local image built from ae428baf01f33bce9128784ef508d76859baf47b. Both initial responses returned HTTP 200 and included version 1.0.0, that source revision, and the packaged build timestamp 00:45:47 UTC. The guest service supplied the kiosk screen. The preceding service configurations were compared against the new configuration, with only the image selection changing.
+
+The public documentation home page deployed from the same revision exposed build 100.1 and the embedded time 00:45:17.684 UTC. The deployment and readback records establish the initial markup. Viewer-local formatting, all language and minimum-width combinations, missing-record behavior, and the packaged offline display remain separate checks.
+
+[Source revision](https://github.com/Ding-Ding-Projects/tempdesk-/commit/ae428baf01f33bce9128784ef508d76859baf47b) · [Documentation deployment](https://github.com/Ding-Ding-Projects/tempdesk-/actions/runs/44431518932)

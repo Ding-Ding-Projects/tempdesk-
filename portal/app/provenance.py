@@ -70,7 +70,7 @@ def load_build_provenance(root: Path = APP_ROOT) -> dict[str, str] | None:
         return None
 
 
-def prepare_container(source: Path, bundled_docs: Path) -> None:
+def prepare_container(source: Path, bundled_docs: Path, *shared_assets: str) -> None:
     """Called only by the image producer after copying the portal application."""
     bundled_docs.mkdir(exist_ok=True)
     if (source / "docs").is_dir():
@@ -82,13 +82,16 @@ def prepare_container(source: Path, bundled_docs: Path) -> None:
     if load_build_provenance(APP_ROOT) is not None:
         return
     (APP_ROOT / FILENAME).unlink(missing_ok=True)
-    for name in ("base64.js", "zip.js", "regex-builder.js"):
-        asset = source / "site" / "assets" / name
+    for shared_asset in shared_assets:
+        relative = Path(shared_asset)
+        if relative.parent != Path("site/assets") or relative.suffix != ".js":
+            raise ValueError("Shared portal assets must be JavaScript files in site/assets")
+        asset = source / relative
         if asset.is_file():
-            shutil.copyfile(asset, APP_ROOT / "static" / "js" / name)
+            shutil.copyfile(asset, APP_ROOT / "static" / "js" / relative.name)
 
 
 if __name__ == "__main__":
     import sys
 
-    prepare_container(Path(sys.argv[1]), Path(sys.argv[2]))
+    prepare_container(Path(sys.argv[1]), Path(sys.argv[2]), *sys.argv[3:])

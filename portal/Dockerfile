@@ -25,7 +25,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY portal/app ./app
 # Copy optional docs and assets from the source checkout, or use an already stamped packaged app.
-RUN --mount=type=bind,source=.,target=/source python -m app.provenance /source /app/bundled-docs
+RUN --mount=type=bind,source=.,target=/source python -m app.provenance /source /app/bundled-docs \
+    site/assets/base64.js site/assets/zip.js site/assets/regex-builder.js
 
 RUN mkdir -p /data /state && chown tempdesk:tempdesk /data /state && chmod 700 /data /state
 USER tempdesk

@@ -686,6 +686,42 @@
           "reference": "https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.75",
           "observation": "The downloaded reader reported its version and embedded source revision.",
           "remaining": "Verify every required visible version and update timestamp field."
+        },
+        "management": {
+          "state": "partial",
+          "method": "deployment",
+          "revision": "ae428baf01f33bce9128784ef508d76859baf47b",
+          "reference": "docs/features/completeness-evidence/front-screen-provenance.md#deployed-readback",
+          "observation": "The management sign-in page returned build 1.0.0, the running source revision, and its 00:45:47 UTC build time.",
+          "observedOn": "2026-11-19",
+          "remaining": "Check the viewer-local formatted time, bilingual and narrow layouts, and absent or stale build records in the real surface."
+        },
+        "guest": {
+          "state": "partial",
+          "method": "deployment",
+          "revision": "ae428baf01f33bce9128784ef508d76859baf47b",
+          "reference": "docs/features/completeness-evidence/front-screen-provenance.md#deployed-readback",
+          "observation": "The guest front screen returned build 1.0.0, the running source revision, and its 00:45:47 UTC build time.",
+          "observedOn": "2026-11-19",
+          "remaining": "Check the viewer-local formatted time, bilingual and narrow layouts, and absent or stale build records in the real surface."
+        },
+        "kiosk": {
+          "state": "partial",
+          "method": "deployment",
+          "revision": "ae428baf01f33bce9128784ef508d76859baf47b",
+          "reference": "docs/features/completeness-evidence/front-screen-provenance.md#deployed-readback",
+          "observation": "The deployed kiosk uses the guest front screen, which returned the running build 1.0.0, source revision, and UTC build time.",
+          "observedOn": "2026-11-19",
+          "remaining": "Check the viewer-local formatted time, bilingual and narrow layouts, and absent or stale build records in the real surface."
+        },
+        "hosted": {
+          "state": "partial",
+          "method": "deployment",
+          "revision": "ae428baf01f33bce9128784ef508d76859baf47b",
+          "reference": "docs/features/completeness-evidence/front-screen-provenance.md#deployed-readback",
+          "observation": "The published home page returned build 100.1, the deployed source revision, and the embedded UTC build timestamp.",
+          "observedOn": "2026-11-19",
+          "remaining": "Check the viewer-local formatted time, bilingual and narrow layouts, and absent or stale build records in the real surface."
         }
       },
       "coverage": {
