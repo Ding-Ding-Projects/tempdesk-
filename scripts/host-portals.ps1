@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([ValidateSet('menu','detached','logs')][string]$Mode = 'menu')
+param([ValidateSet('menu','detached','logs','verify')][string]$Mode = 'menu')
 
 $ErrorActionPreference = 'Stop'
 $registryImage = 'ghcr.io/ding-ding-projects/tempdesk-portal'
@@ -95,6 +95,13 @@ function Watch-PortalLogs {
     }
 }
 
+function Stop-BeforeStartup {
+    if ($env:TEMPDESK_PORTAL_CANCEL_FILE -and (Test-Path -LiteralPath $env:TEMPDESK_PORTAL_CANCEL_FILE -PathType Leaf)) {
+        Write-Host 'Deployment cancelled before startup.'
+        exit 3
+    }
+}
+
 try {
     if ($Mode -eq 'menu') {
         if ([Console]::IsInputRedirected) { throw 'Use host.bat --detached when input is redirected.' }
@@ -179,17 +186,32 @@ try {
         }
     }
 
-    Write-Host ('Pulling TempDesk '+$receipt.version+' by digest...')
-    $null = Invoke-Docker ($compose+@('pull','tempdesk-guest','tempdesk-admin')) 'Cannot pull the published portal image. Check registry access and the receipt.'
+    if ($Mode -ne 'verify') {
+        Stop-BeforeStartup
+        Write-Host ('Pulling TempDesk '+$receipt.version+' by digest...')
+        $null = Invoke-Docker ($compose+@('pull','tempdesk-guest','tempdesk-admin')) 'Cannot pull the published portal image. Check registry access and the receipt.'
+        Stop-BeforeStartup
+    }
     $labels = Invoke-Docker @('image','inspect',$receipt.immutableReference,'--format','{{json .Config.Labels}}') 'Cannot inspect the pulled digest.' | ConvertFrom-Json
     if ($labels.'org.opencontainers.image.source' -cne $sourceUrl -or
         $labels.'org.opencontainers.image.revision' -cne $receipt.revision -or
         $labels.'org.opencontainers.image.version' -cne $receipt.version) { throw 'The pulled image differs from the accepted receipt.' }
     $imageId = Invoke-Docker @('image','inspect',$receipt.immutableReference,'--format','{{.Id}}') 'Cannot read the pulled image identity.'
 
-    Write-Host 'Starting both portals and waiting for health...'
-    $null = Invoke-Docker ($compose+@('up','-d','--no-build','--pull','never','--wait','--wait-timeout','90','tempdesk-guest','tempdesk-admin')) 'Portal startup or health verification failed. Review the configured project and Docker logs.'
+    $operationPassed = $true
+    if ($Mode -ne 'verify') {
+        Stop-BeforeStartup
+        Write-Host 'Starting both portals and waiting for health...'
+        try {
+            $null = Invoke-Docker ($compose+@('up','-d','--no-build','--pull','never','--wait','--wait-timeout','90','tempdesk-guest','tempdesk-admin')) 'Portal startup or health verification failed. Review the configured project and Docker logs.'
+        } catch {
+            $operationPassed = $false
+            [Console]::Error.WriteLine($_.Exception.Message)
+        }
+    }
+    Write-Host 'Checking the published portal endpoints...'
     foreach ($name in $services.Keys) {
+      try {
         $service = $services[$name]
         $ids = @(Invoke-Docker ($compose+@('ps','-q',$name)) 'Cannot identify the running portal.')
         if ($ids.Count -ne 1) { throw 'Expected one container for each configured portal.' }
@@ -215,9 +237,14 @@ try {
         }
         $startedAt = [DateTimeOffset]::Parse($fields[2]).UtcDateTime.ToString('yyyy-MM-dd HH:mm:ss')
         Write-Host ('{0} {1} | {2} | Started {3} UTC | Verified {4} UTC' -f $service.label,$receipt.version,$url,$startedAt,[DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm:ss'))
+      } catch {
+        $operationPassed = $false
+        [Console]::Error.WriteLine($_.Exception.Message)
+      }
     }
     $deploymentLock.ReleaseMutex()
     $lockHeld = $false
+    if (!$operationPassed) { exit 1 }
     if ($Mode -eq 'logs') { Watch-PortalLogs $compose $protectedValues }
     exit 0
 } catch {

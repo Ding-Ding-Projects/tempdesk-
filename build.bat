@@ -1,12 +1,13 @@
 @echo off
 rem Builds TempDesk Deployer (the desktop app) into deployer\bin\ as an unpacked app and a
 rem portable .exe, plus the standalone documentation in deployer\bin\docs\.
-rem Usage: build.bat [/docs] [/s]   /docs = documentation only, /s = silent.
+rem Usage: build.bat [/docs or --portal-host] [/s]   /s = silent.
 setlocal EnableExtensions
 set "ROOT=%~dp0"
 set "QUIET="
 set "DOCSONLY="
 set "BUILDCOMPANION="
+set "PORTALHOST="
 set "RUNAPP="
 set "SKIPTESTS="
 if "%SILENT%"=="1" set "QUIET=1"
@@ -14,6 +15,7 @@ if "%SILENT%"=="1" set "QUIET=1"
 if "%~1"=="" goto :parsed
 if /I "%~1"=="/docs" (set "DOCSONLY=1"& goto :nextarg)
 if /I "%~1"=="--build-companion" (set "BUILDCOMPANION=1"& goto :nextarg)
+if /I "%~1"=="--portal-host" (set "PORTALHOST=1"& goto :nextarg)
 if /I "%~1"=="--run" (set "RUNAPP=1"& goto :nextarg)
 if /I "%~1"=="--skip-tests" (set "SKIPTESTS=1"& goto :nextarg)
 if /I "%~1"=="/s" (set "QUIET=1"& goto :nextarg)
@@ -27,6 +29,9 @@ goto :args
 if defined BUILDCOMPANION if defined RUNAPP (echo Choose one build action.& exit /b 2)
 if defined BUILDCOMPANION if defined DOCSONLY (echo Choose one companion.& exit /b 2)
 if defined RUNAPP if defined DOCSONLY (echo --run requires a desktop build.& exit /b 2)
+if defined PORTALHOST if defined BUILDCOMPANION (echo Choose one companion.& exit /b 2)
+if defined PORTALHOST if defined DOCSONLY (echo Choose one companion.& exit /b 2)
+if defined PORTALHOST if defined RUNAPP (echo Choose one build action.& exit /b 2)
 set "PSEXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 rem Started from PowerShell 7, the inherited module path breaks Windows PowerShell 5.1 (Get-FileHash goes missing).
 set "PSModulePath="
@@ -55,6 +60,7 @@ pushd "%ROOT%deployer\app"
 set "CMD=cmd /c npm ci --no-audit --no-fund"
 call :step "Installing packages (npm ci)" || goto :fail-in-app
 if defined BUILDCOMPANION goto :package-build-companion
+if defined PORTALHOST goto :package-portal-host
 if defined DOCSONLY goto :package-docs
 set "CMD=cmd /c node scripts\prepare-bundle.js"
 call :step "Bundling shared modules" || goto :fail-in-app
@@ -75,6 +81,10 @@ goto :finished
 :package-build-companion
 set "CMD=cmd /c node "%ROOT%scripts\build-companion.cjs""
 call :step "Packaging the portable build companion" || goto :fail-in-app
+goto :finished
+:package-portal-host
+set "CMD=cmd /c node "%ROOT%scripts\build-portal-host.cjs""
+call :step "Packaging the portable portal host" || goto :fail-in-app
 :finished
 if defined RUNAPP (
   node "%ROOT%scripts\launch-built.cjs"

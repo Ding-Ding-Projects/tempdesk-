@@ -1,0 +1,13 @@
+{
+  "v":3,"title":"TempDesk Portal Host","launch":{"view":"canvas","page":"portal-host"},
+  "pages":[{"id":"portal-host","title":"Host two portals"}],
+  "boards":{
+    "Desktop.dc.html":{"page":"portal-host","x":0,"y":0,"w":1120,"h":820,"title":"Portal Host / Desktop"},
+    "Narrow.dc.html":{"page":"portal-host","x":0,"y":1120,"w":360,"h":800,"title":"Portal Host / Narrow"}
+  },
+  "order":["Desktop.dc.html","Narrow.dc.html"],
+  "notes":{
+    "desktop":{"page":"portal-host","x":1160,"y":0,"maxW":300,"text":"Walk from engine discovery to both revision-matched checks. Try an unaccepted receipt and stop observing after startup. Adjust accent and motion. System results are design fixtures. Native behavior and visual parity await verification."},
+    "narrow":{"page":"portal-host","x":400,"y":1120,"maxW":300,"text":"At 360 px, try bilingual labels, keyboard-only selection and the health failure. All actions wrap. Check the full digest and both result paths. Accent and motion match the desktop board. Runtime and scale evidence are pending."}
+  },"designSystems":[]
+}

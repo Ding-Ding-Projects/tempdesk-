@@ -106,6 +106,13 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: build.bat --build-companion /s --skip-tests
 
+      - name: Build the portable portal host (unsigned)
+        shell: cmd
+        env:
+          TEMPDESK_VERSION: ${{ steps.ver.outputs.version }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: build.bat --portal-host /s --skip-tests
+
       - name: Publish and read back the source-bound release
         id: publish
         shell: pwsh

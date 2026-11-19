@@ -18,6 +18,7 @@ The approved visual design for TempDesk, as a design canvas export. Each `.dc.ht
 | `Answer-Disk.dc.html` | Disk layout canvas and command timeline |
 | `Base64.dc.html` / `Base64-Phone.dc.html` | Base64 toolkit on desktop and phone |
 | `History.dc.html` / `History-Phone.dc.html` | History with unlimited undo and redo |
+| [Portal Host boards](portal-host/HANDOFF.md) | Portable hosting wizard at desktop and narrow widths, with independent result and recovery states |
 
 ## Tokens
 

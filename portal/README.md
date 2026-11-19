@@ -13,6 +13,8 @@ Both services use Python 3.12, FastAPI and server-rendered Jinja2. Directory req
 
 Download the `tempdesk-portal-publication.json` artifact from the portal publication job in the **Release TempDesk Deployer** run for the version you intend to deploy. Choose a receipt with state `published` or `already-published`, and read its `releaseTag`, `revision`, and `digest` together. The publisher verifies the normal release and its tag before building the image. Obtain registry read access through your normal protected sign-in when the package requires authentication.
 
+The multi-platform publisher records both Linux architecture digests in `platforms`. Use the top-level `immutableReference` on either amd64 or arm64 so Docker selects the correct image for the host. Existing single-platform receipts can continue to be used on their original architecture.
+
 In this folder, prepare `.env.guest` and `.env.admin` from their examples. Supply the bound portal digest as the Compose interpolation variable `TEMPDESK_PORTAL_DIGEST`. In PowerShell, use `$env:TEMPDESK_PORTAL_DIGEST`. On a shell with `export`, use `export TEMPDESK_PORTAL_DIGEST`. The value is the receipt's complete `sha256:` digest.
 
 ```sh
@@ -32,6 +34,12 @@ Run `host.bat --detached` from the repository root to pull, start and verify bot
 Use the original configuration directory, Compose project name and overlays when updating an existing deployment. Set `TEMPDESK_PORTAL_COMPOSE_OVERRIDES` to the existing override file paths separated by semicolons and supply the protected mount configuration those overlays require. When several network adapters are available, set `TEMPDESK_LAN_ADDRESS` to the intended local IPv4 address. The launcher checks the published port, pulled image identity, container health and visible source revision before reporting success.
 
 The launcher reads the native Compose exit code for each operation. A failed pull or startup yields a nonzero exit status so it can be handled by a calling script.
+
+### Portable Portal Host wizard
+
+Open `TempDeskPortalHost-<version>-portable.exe` from the normal release. The wizard checks the local Docker Desktop Linux engine and reads the accepted publication receipt. Select the protected configuration directory and, if the deployment needs one, a separate reviewed Compose overlay. Choose the local LAN address, the two host ports, and the Compose project name. The project name selects that project's named storage volumes.
+
+Review the digest and the proposed bindings before starting. The launcher verifies project ownership before reusing resources. The wizard reports the guest and management results independently and enables each link after its corresponding health check. You can request cancellation before startup. If startup is already underway, the wizard lets that operation settle and reports its actual outcome. **Recheck health** reads the endpoints for the selected deployment without repeating the pull or startup.
 
 ## Run from source
 
