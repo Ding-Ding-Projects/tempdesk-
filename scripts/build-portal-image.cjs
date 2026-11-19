@@ -64,7 +64,12 @@ function buildPortalImage(image) {
       '--label', 'org.opencontainers.image.revision=' + revision,
       '--label', 'org.opencontainers.image.version=' + version,
     ];
-    execFileSync('docker', ['build', '--file', path.join(context, 'portal', 'Dockerfile'),
+    const layout = process.env.TEMPDESK_PORTAL_OCI_LAYOUT;
+    const target = layout
+      ? ['buildx', 'build', '--platform', 'linux/amd64,linux/arm64', '--provenance=false', '--sbom=false',
+        '--output', 'type=oci,tar=false,dest=' + path.resolve(layout)]
+      : ['build'];
+    execFileSync('docker', [...target, '--file', path.join(context, 'portal', 'Dockerfile'),
       ...labels, '--tag', image, context], { cwd: repository, stdio: 'inherit' });
   } finally {
     fs.rmSync(temporary, { recursive: true, force: true });

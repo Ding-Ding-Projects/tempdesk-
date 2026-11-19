@@ -25,7 +25,7 @@ jobs:
   publish:
     if: github.repository == 'Ding-Ding-Projects/tempdesk-' && github.event.repository.private == false && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 55
     env:
       IMAGE: ghcr.io/ding-ding-projects/tempdesk-portal
       SOURCE_URL: https://github.com/Ding-Ding-Projects/tempdesk-
@@ -43,7 +43,11 @@ jobs:
       - name: Verify publisher dependencies and source
         shell: bash
         run: |
-          for dependency in docker gh git jq node tar timeout; do
+          if ! command -v skopeo >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends skopeo
+          fi
+          for dependency in docker gh git jq node sha256sum skopeo tar timeout; do
             command -v "$dependency" >/dev/null || { echo "Missing publisher dependency: $dependency"; exit 1; }
           done
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
@@ -70,6 +74,12 @@ jobs:
             { echo 'The release tag does not point directly to the checked-out source.'; exit 1; }
           printf 'tag=%s\nversion=%s\n' "$RELEASE_TAG" "${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
 
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+        with:
+          platforms: arm64
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
       - name: Build, publish, and verify the portal image
         id: publish
         shell: bash
@@ -81,36 +91,50 @@ jobs:
           [[ "$GITHUB_SHA" =~ ^[a-f0-9]{40}$ ]]
           tag="sha-$GITHUB_SHA"
           ref="$IMAGE:$tag"
-          registry_config="$(mktemp -d "$RUNNER_TEMP/tempdesk-registry.XXXXXX")"
-          trap 'rm -r -- "$registry_config"' EXIT
+          work="$(mktemp -d "$RUNNER_TEMP/tempdesk-registry.XXXXXX")"
+          trap 'rm -r -- "$work"' EXIT
+          auth="$work/auth.json"
           printf '%s' "$REGISTRY_TOKEN" |
-            docker --config "$registry_config" login ghcr.io --username "$GITHUB_ACTOR" --password-stdin >/dev/null 2>&1 ||
+            skopeo login --authfile "$auth" --username "$GITHUB_ACTOR" --password-stdin ghcr.io >/dev/null 2>&1 ||
             { echo 'Registry authentication failed.'; exit 1; }
           unset REGISTRY_TOKEN
 
           probe() {
-            local output result
-            if output="$(timeout 120 docker --config "$registry_config" pull "$ref" 2>&1)"; then
+            if timeout 90 skopeo inspect --authfile "$auth" --raw "docker://$ref" >"$work/remote.json" 2>"$work/probe.log"; then
               return 0
-            else
-              result=$?
-              if [[ "$result" != 124 && "$output" =~ (manifest[[:space:]]unknown|name[[:space:]]unknown|manifest.*not[[:space:]]found) ]] ||
-                 [[ "$output" == *"failed to resolve reference"* && "$output" == *"$ref"* && "$output" == *"not found"* ]]; then
-                return 1
-              fi
-              return 2
             fi
+            if grep -Eiq 'manifest unknown|name unknown|manifest.*not found' "$work/probe.log"; then
+              return 1
+            fi
+            return 2
+          }
+
+          index_platforms() {
+            jq -ce '
+              select(.schemaVersion == 2 and .mediaType == "application/vnd.oci.image.index.v1+json")
+              | .manifests
+              | select(length == 2)
+              | map(select(.mediaType == "application/vnd.oci.image.manifest.v1+json")
+                | {os: .platform.os, architecture: .platform.architecture, digest})
+              | sort_by(.architecture)
+              | select(map([.os, .architecture]) == [["linux", "amd64"], ["linux", "arm64"]])
+              | select(all(.[]; .digest | test("^sha256:[a-f0-9]{64}$")))
+              | select(.[0].digest != .[1].digest)
+            ' "$1"
           }
 
           verify_identity() {
-            local candidate="$1" labels container stamp
-            labels="$(docker image inspect "$candidate" --format '{{json .Config.Labels}}')" || return 1
-            jq -e --arg source "$SOURCE_URL" --arg revision "$GITHUB_SHA" --arg version "$TEMPDESK_PORTAL_VERSION" \
-              '.["org.opencontainers.image.source"] == $source and .["org.opencontainers.image.revision"] == $revision
-                and .["org.opencontainers.image.version"] == $version' <<< "$labels" >/dev/null || return 1
-
-            container="$(docker create --network none "$candidate")" || return 1
-            stamp="$(mktemp "$registry_config/provenance.XXXXXX")" || return 1
+            local candidate="$1" arch="$2" config container stamp
+            config="$(docker image inspect "$candidate" --format '{{json .}}')" || return 1
+            jq -e --arg source "$SOURCE_URL" --arg revision "$GITHUB_SHA" \
+              --arg version "$TEMPDESK_PORTAL_VERSION" --arg arch "$arch" '
+              .Os == "linux" and .Architecture == $arch
+              and .Config.Labels["org.opencontainers.image.source"] == $source
+              and .Config.Labels["org.opencontainers.image.revision"] == $revision
+              and .Config.Labels["org.opencontainers.image.version"] == $version
+            ' <<< "$config" >/dev/null || return 1
+            stamp="$(mktemp "$work/provenance.XXXXXX")" || return 1
+            container="$(docker create --platform "linux/$arch" --network none "$candidate")" || return 1
             if ! timeout 15 docker cp "$container:/app/app/build-provenance.json" "$stamp" ||
                 ! docker rm --volumes "$container" >/dev/null; then
               docker rm --volumes "$container" >/dev/null 2>&1 || true
@@ -121,24 +145,39 @@ jobs:
               '.schema == 1 and .version == $version and .revision == $revision' "$stamp" >/dev/null
           }
 
-          verify() {
-            digest="$(docker image inspect "$ref" --format '{{json .RepoDigests}}' |
-              jq -er --arg prefix "$IMAGE@" 'map(select(startswith($prefix))) | if length == 1 then .[0] | split("@")[1] else empty end')" || return 1
-            [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]] || return 1
-            verify_identity "$IMAGE@$digest"
+          verify_platforms() {
+            local mode="$1" entries="$2" arch child candidate
+            for arch in amd64 arm64; do
+              child="$(jq -er --arg arch "$arch" '.[] | select(.architecture == $arch) | .digest' <<< "$entries")" || return 1
+              candidate="tempdesk-portal-verify:$tag-$arch"
+              if [[ "$mode" == registry ]]; then
+                timeout 180 skopeo copy --src-authfile "$auth" "docker://$IMAGE@$child" "docker-daemon:$candidate" >/dev/null || return 1
+              else
+                timeout 180 skopeo --override-os linux --override-arch "$arch" copy \
+                  "oci:$work/image" "docker-daemon:$candidate" >/dev/null || return 1
+              fi
+              verify_identity "$candidate" "$arch" || return 1
+              docker image rm "$candidate" >/dev/null || return 1
+            done
           }
 
           state=
-          built_id=
+          local_digest=
           push_confirmed=false
           for attempt in 1 2 3 4; do
             if probe; then
-              verify || { echo 'The existing tag disagrees with the verified release identity. Its digest was preserved.'; exit 1; }
-              published_id="$(docker image inspect "$IMAGE@$digest" --format '{{.Id}}')"
-              if [[ -n "$built_id" && "$published_id" == "$built_id" ]]; then
+              platforms="$(index_platforms "$work/remote.json")" ||
+                { echo 'The existing tag is not the expected OCI index. Its digest was preserved.'; exit 1; }
+              digest="sha256:$(sha256sum "$work/remote.json" | cut -d' ' -f1)"
+              timeout 90 skopeo inspect --authfile "$auth" --raw "docker://$IMAGE@$digest" > "$work/immutable.json"
+              cmp -s "$work/remote.json" "$work/immutable.json" ||
+                { echo 'Immutable readback differs from the source tag index.'; exit 1; }
+              verify_platforms registry "$platforms" ||
+                { echo 'Architecture readback failed. The existing index was preserved.'; exit 1; }
+              if [[ "$digest" == "$local_digest" ]]; then
                 state=published
               elif [[ "$push_confirmed" == true ]]; then
-                echo 'The digest does not match the locally built image.'
+                echo 'The registry index does not match the locally built index.'
                 exit 1
               else
                 state=already-published
@@ -148,16 +187,19 @@ jobs:
               result=$?
             fi
             if [[ "$result" == 1 && "$push_confirmed" == false && "$attempt" -lt 4 ]]; then
-              if [[ -z "$built_id" ]]; then
-                local_ref="tempdesk-portal-build:$tag"
-                node scripts/build-portal-image.cjs "$local_ref"
-                verify_identity "$local_ref" || { echo 'The local build does not match the verified release.'; exit 1; }
-                built_id="$(docker image inspect "$local_ref" --format '{{.Id}}')"
-                # Recheck the tag after the build and before the first upload.
+              if [[ -z "$local_digest" ]]; then
+                TEMPDESK_PORTAL_OCI_LAYOUT="$work/image" node scripts/build-portal-image.cjs "$ref"
+                skopeo inspect --raw "oci:$work/image" > "$work/local.json"
+                local_platforms="$(index_platforms "$work/local.json")" ||
+                  { echo 'Local build did not produce the required OCI index.'; exit 1; }
+                verify_platforms local "$local_platforms" ||
+                  { echo 'Local architecture identity verification failed.'; exit 1; }
+                local_digest="sha256:$(sha256sum "$work/local.json" | cut -d' ' -f1)"
+                # Recheck the source tag after building and before uploading.
                 continue
               fi
-              docker tag "$local_ref" "$ref"
-              if timeout 300 docker --config "$registry_config" push "$ref" >/dev/null 2>&1; then
+              if timeout 480 skopeo copy --all --preserve-digests --dest-authfile "$auth" \
+                  "oci:$work/image" "docker://$ref" >/dev/null 2>&1; then
                 push_confirmed=true
               fi
             fi
@@ -168,6 +210,7 @@ jobs:
             printf 'digest=%s\n' "$digest"
             printf 'version=%s\n' "$TEMPDESK_PORTAL_VERSION"
             printf 'state=%s\n' "$state"
+            printf 'platforms=%s\n' "$platforms"
           } >> "$GITHUB_OUTPUT"
           printf 'Verified %s@%s (%s).\n' "$IMAGE" "$digest" "$state"
 
@@ -181,12 +224,14 @@ jobs:
           PUBLISH_VERSION: ${{ steps.publish.outputs.version }}
           ACCEPTED_RELEASE_TAG: ${{ steps.release.outputs.tag }}
           PUBLISH_DIGEST: ${{ steps.publish.outputs.digest }}
+          PUBLISH_PLATFORMS: ${{ steps.publish.outputs.platforms }}
         run: |
           jq -n --arg image "$IMAGE" --arg source "$SOURCE_URL" --arg revision "$GITHUB_SHA" \
             --arg state "$PUBLISH_STATE" --arg version "$PUBLISH_VERSION" --arg digest "$PUBLISH_DIGEST" \
-            --arg releaseTag "$ACCEPTED_RELEASE_TAG" --arg outcome "$PUBLISH_OUTCOME" --arg run "$GITHUB_RUN_ID" --arg attempt "$GITHUB_RUN_ATTEMPT" \
+            --argjson platforms "${PUBLISH_PLATFORMS:-[]}" --arg releaseTag "$ACCEPTED_RELEASE_TAG" --arg outcome "$PUBLISH_OUTCOME" --arg run "$GITHUB_RUN_ID" --arg attempt "$GITHUB_RUN_ATTEMPT" \
             '{schemaVersion: 1, image: $image, source: $source, revision: $revision, tag: ("sha-" + $revision),
               state: (if $state == "" then $outcome else $state end), runId: $run, runAttempt: $attempt,
+              platforms: $platforms,
               releaseTag: (if $releaseTag == "" then null else $releaseTag end),
               version: (if $version == "" then null else $version end),
               digest: (if $digest == "" then null else $digest end),
