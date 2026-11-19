@@ -14,18 +14,50 @@ compose() {
 
 load_network() {
     IFS= read -r TEMPDESK_PORTAL_DIGEST < /opt/tempdesk/portal-digest || return 1
+    IFS= read -r TEMPDESK_APPLIANCE_IMAGE < /opt/tempdesk/portal-child || return 1
     {
         IFS= read -r TEMPDESK_LAN_ADDRESS && IFS= read -r source_network
     } < /run/tempdesk-appliance/network || return 1
-    export TEMPDESK_PORTAL_DIGEST TEMPDESK_LAN_ADDRESS
+    export TEMPDESK_PORTAL_DIGEST TEMPDESK_APPLIANCE_IMAGE TEMPDESK_LAN_ADDRESS
+}
+
+wait_for_firewall() {
+    local attempts=0
+    until timeout 2 docker info >/dev/null 2>&1 &&
+          iptables -w 2 -S DOCKER-USER >/dev/null 2>&1; do
+        attempts=$((attempts + 1))
+        if [ "$attempts" -ge 20 ]; then
+            eerror "Docker and its DOCKER-USER firewall chain did not become ready."
+            return 1
+        fi
+        sleep 1
+    done
+}
+
+portal_image_matches() {
+    local loaded
+    loaded="$(timeout 5 docker image inspect --format '{{.Id}}' "$TEMPDESK_APPLIANCE_IMAGE" 2>/dev/null)" || return 1
+    [ "$loaded" = "$TEMPDESK_APPLIANCE_IMAGE" ]
+}
+
+load_portal_image() {
+    if portal_image_matches; then return 0; fi
+    if ! timeout 90 sha256sum -c /opt/tempdesk/portal-image.sha256 >/dev/null; then
+        eerror "The embedded portal archive does not match its build fingerprint."
+        return 1
+    fi
+    if ! timeout 150 docker image load --quiet --input /opt/tempdesk/portal-image.tar || ! portal_image_matches; then
+        eerror "Docker did not load the expected published portal image."
+        return 1
+    fi
 }
 
 protect_ports() {
     for port in 8080 8081; do
         set -- -p tcp ! -s "$source_network" -m conntrack --ctdir ORIGINAL \
             --ctorigdst "$TEMPDESK_LAN_ADDRESS" --ctorigdstport "$port" -j DROP
-        if ! iptables -w -C DOCKER-USER "$@" 2>/dev/null; then
-            iptables -w -I DOCKER-USER 1 "$@" || return 1
+        if ! iptables -w 2 -C DOCKER-USER "$@" 2>/dev/null; then
+            iptables -w 2 -I DOCKER-USER 1 "$@" || return 1
         fi
     done
 }
@@ -62,7 +94,7 @@ start() {
         *) eend 1; return 1 ;;
     esac
     ebegin "Starting the published TempDesk portals"
-    load_network && protect_ports && compose pull --quiet && \
+    load_network && wait_for_firewall && protect_ports && load_portal_image && \
         compose up -d --no-build --pull never --wait --wait-timeout 120 || {
         compose stop --timeout 10 >/dev/null 2>&1
         eend 1

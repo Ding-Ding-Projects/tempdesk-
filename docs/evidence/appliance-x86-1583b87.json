@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "applianceSource": "1583b8718eaeda093ede791c6774c6922ed3524b",
+  "portalSource": "a613c4c1f8a48ab1b573e0457c1ea03758c4475f",
+  "portalVersion": "1.0.109",
+  "portalIndexDigest": "sha256:661f61681978afce59767226c9a0e2392b8fb4ef4180c77cd9667de4d5d9866c",
+  "portalChildDigest": "sha256:2143e7d66e6ecee0b70237c8aa84ae14ba5c52f02e7a057fa68f37dddc074154",
+  "embeddedArchiveSha256": "2ee2271e4bce4bc91a5ba680306de44d8bf5844a51f521e9a4f5b692061713bc",
+  "artifact": {
+    "filename": "TempDesk-Appliance-1.0.109-x86_64.img.gz",
+    "bytes": 315286968,
+    "sha256": "0c0a7162ea77662aee57724b8d0a407e843f1b8d7527ac3c1eeeb5ac8c02fc9a"
+  },
+  "environment": {
+    "firmware": "UEFI",
+    "machine": "QEMU 11.0.3 q35 with KVM enabled",
+    "kernel": "Linux 6.18.64-0-virt",
+    "memoryMiB": 1280,
+    "virtualCpus": 2,
+    "bundledDockerPackage": "29.5.2-r0",
+    "network": "Internal test network with a separate client container and a local relay into the guest"
+  },
+  "firstBoot": {
+    "startedUtc": "2026-11-19T10:58:42.350468Z",
+    "configurationDiskAttachedReadOnly": true,
+    "matchingEmbeddedImageLoaded": true,
+    "verifiedUtc": "2026-11-19T10:59:19.423473Z",
+    "guestPortalHealthy": true,
+    "managementPortalHealthy": true,
+    "finiteGuestSignInConfirmed": true
+  },
+  "secondBoot": {
+    "startedUtc": "2026-11-19T10:59:26.757348Z",
+    "reusedApplianceDisk": true,
+    "configurationDiskAttached": false,
+    "localImageReused": true,
+    "verifiedUtc": "2026-11-19T10:59:45.838384Z",
+    "guestPortalHealthy": true,
+    "managementPortalHealthy": true,
+    "finiteGuestSignInConfirmed": true
+  },
+  "isolation": {
+    "registryRouteAvailableToGuest": false,
+    "directory": "Disposable Samba fixture",
+    "emulatorExit": "QMP quit after the bounded ACPI shutdown wait",
+    "fixtureRetiredUtc": "2026-11-19T11:01:02.294375Z"
+  },
+  "limitations": "Verification covers this x86_64 artifact, the embedded image, and configuration persistence across an emulated stop and boot. Physical LAN delivery, production shutdown, Raspberry Pi 4 startup, Remote Desktop sign-in, and credential expiry remain separate acceptance items."
+}

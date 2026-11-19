@@ -10,7 +10,7 @@ case "$platform:$(apk --print-arch)" in
 esac
 
 # All filesystem constructors below operate on new regular files in the container.
-apk add --no-cache coreutils e2fsprogs dosfstools mtools sfdisk uuidgen mkinitfs jq $boot_tools
+apk add --no-cache coreutils e2fsprogs dosfstools mtools sfdisk uuidgen mkinitfs jq skopeo $boot_tools
 work="$(mktemp -d)"
 trap 'rm -rf -- "$work"' EXIT
 root="$work/root"
@@ -34,10 +34,13 @@ esac
 tee "$root/etc/fstab" >/dev/null <<EOF
 UUID=$root_uuid / ext4 rw,noatime 0 1
 UUID=$state_uuid /var/lib/tempdesk ext4 rw,noatime,nodev,nosuid 0 2
+/var/lib/tempdesk/containerd /var/lib/containerd none bind 0 0
 EOF
 printf '%s\n' 'tempdesk' > "$root/etc/hostname"
 printf '%s\n' '127.0.0.1 localhost tempdesk' '::1 localhost' > "$root/etc/hosts"
-mkdir -p "$root/opt/tempdesk" "$root/etc/docker" "$root/etc/network" "$root/var/lib/tempdesk"
+state_files="$work/state"
+mkdir -p "$root/opt/tempdesk" "$root/etc/docker" "$root/etc/network" \
+    "$root/var/lib/tempdesk" "$root/var/lib/containerd" "$state_files/containerd"
 tee "$root/etc/network/interfaces" >/dev/null <<'EOF'
 auto lo
 iface lo inet loopback
@@ -54,6 +57,15 @@ cp /inputs/appliance/compose.appliance.yaml /inputs/appliance/appliance-config.p
 cp /inputs/publication.json "$root/opt/tempdesk/publication.json"
 jq -er '.portalIndex | split("@")[1] | select(test("^sha256:[0-9a-f]{64}$"))' \
     /inputs/publication.json > "$root/opt/tempdesk/portal-digest"
+portal_repo="$(jq -er '.portalIndex | split("@")[0] | select(. == "ghcr.io/ding-ding-projects/tempdesk-portal")' /inputs/publication.json)"
+portal_child="$(jq -er '.portalChild | select(test("^sha256:[0-9a-f]{64}$"))' /inputs/publication.json)"
+archive="$root/opt/tempdesk/portal-image.tar"
+skopeo copy --preserve-digests --retry-times 2 "docker://$portal_repo@$portal_child" "oci-archive:$archive"
+tar -xOf "$archive" index.json | jq -e --arg child "$portal_child" \
+    '.manifests | length == 1 and .[0].digest == $child' >/dev/null
+archive_hash="$(sha256sum "$archive" | cut -d ' ' -f1)"
+printf '%s\n' "$portal_child" > "$root/opt/tempdesk/portal-child"
+printf '%s  /opt/tempdesk/portal-image.tar\n' "$archive_hash" > "$root/opt/tempdesk/portal-image.sha256"
 install -m 0755 /inputs/appliance/tempdesk-appliance.rc "$root/etc/init.d/tempdesk-appliance"
 
 # Credentials arrive only on a separately prepared configuration volume.
@@ -112,7 +124,7 @@ truncate -s 4194M "$disk"
 mkfs.vfat -F 32 -n TDBOOT "$esp"
 mcopy -i "$esp" -s "$boot"/* ::/
 mkfs.ext4 -q -F -m 0 -L TDROOT -U "$root_uuid" -d "$root" "$rootfs"
-mkfs.ext4 -q -F -m 0 -L TDSTATE -U "$state_uuid" "$statefs"
+mkfs.ext4 -q -F -m 0 -L TDSTATE -U "$state_uuid" -d "$state_files" "$statefs"
 if [ "$platform" = x86_64 ]; then
     sfdisk "$disk" <<EOF
 label: gpt
@@ -135,6 +147,7 @@ dd if="$esp" of="$disk" bs=1M seek=1 conv=notrunc,sparse status=none
 dd if="$rootfs" of="$disk" bs=1M seek=97 conv=notrunc,sparse status=none
 dd if="$statefs" of="$disk" bs=1M seek=1121 conv=notrunc,sparse status=none
 apk --root "$root" info -v | sort > /output/packages.txt
+printf '%s\n' "$archive_hash" > /output/portal-archive.sha256
 artifact="/output/TempDesk-Appliance-$version-$platform.img.gz"
 gzip -1 -n -c "$disk" > "$artifact.part"
 mv "$artifact.part" "$artifact"

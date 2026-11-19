@@ -10,7 +10,7 @@ The normal v1.0.114 release matches the deployed documentation source. The downl
 
 The wizard records the project, binding, and accepted publication receipt locally when startup begins. A reopened wizard can use the saved project for a fresh endpoint check after verifying the local engine. The source-bound portable build reopened against an isolated v1.0.114 project with a different setup draft. The downloaded normal v1.0.115 wizard also restored a saved project with a different draft. Native background Tab moved focus to the recheck action and Enter triggered it. Both v1.0.115 endpoints verified with the same container IDs and start times. The released offline reader opened the walkthrough and matched both images. The phone PDF contains the workflow on pages 77 through 79. Native Remote Desktop acceptance remains open. [Illustrated walkthrough](README.md#recheck-a-hosted-deployment) · [Verification receipt](docs/evidence/portal-host-reopen-ff5b6b4/receipt.json)
 
-The documentation build includes the reviewed Portal Host receipt beside the walkthrough images. The offline reader resolves the evidence link to that bundled file. The normal v1.0.115 reader opened the walkthrough and images, while its evidence link used the source repository. Verify the local route in the next downloaded documentation package.
+The documentation build includes the reviewed Portal Host receipt beside the walkthrough images. The downloaded normal v1.0.117 reader opened the evidence link from the bundled file and matched its SHA-256. The hosted article serves the same receipt. [v1.0.117 release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.117)
 
 ## Protected portal agent key files
 
@@ -49,6 +49,16 @@ Raspberry Pi 4 build ran out of space while copying duplicate boot files.
 The revised Pi build selects its firmware pair and board device tree while
 retaining one kernel and one generated initramfs. Verify the next native
 arm64 output before using it.
+The embedded x86_64 candidate at `1583b8718eaeda093ede791c6774c6922ed3524b`
+booted through UEFI with KVM enabled. On an isolated network, a separate
+client verified both v1.0.109 portals and a finite guest sign-in. The same
+disk booted again with its configuration disk detached and passed the same
+checks. That run used the verified local image during both boots. The Pi 4
+receipt covers its earlier direct kernel and OpenRC boot in board emulation.
+Physical LAN, configured Pi 4 startup, and appliance release acceptance are
+open. [x86 receipt](docs/evidence/appliance-x86-1583b87.json) ·
+[Pi 4 receipt](docs/evidence/appliance-rpi4-a613c4c.json)
+
 Track each boot, configured portal start, LAN check and release separately in
 the [delivery checklist](ROADMAP.md). [Appliance guide](portal/README.md#build-a-bootable-appliance)
 

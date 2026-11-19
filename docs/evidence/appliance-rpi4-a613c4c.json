@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "applianceSource": "a613c4c1f8a48ab1b573e0457c1ea03758c4475f",
+  "portalSource": "a613c4c1f8a48ab1b573e0457c1ea03758c4475f",
+  "portalVersion": "1.0.109",
+  "portalIndexDigest": "sha256:661f61681978afce59767226c9a0e2392b8fb4ef4180c77cd9667de4d5d9866c",
+  "nativeWorkflowRun": "44467106905",
+  "artifact": {
+    "name": "TempDesk-Appliance-1.0.109-rpi4-arm64.img.gz",
+    "bytes": 204795008,
+    "sha256": "ac36d5c5b6afd48b9a3a5c12cb34e032f4511c427d81c3ef75e6f7646d9943da"
+  },
+  "boot": {
+    "observedAtUtc": "2026-11-19T06:24:50.4861384Z",
+    "machine": "QEMU 10.1.5 raspi4b, direct Linux boot",
+    "kernel": "6.12.115-0-rpi",
+    "fileScope": "The verified disk supplied the kernel, initramfs, device tree and partitions. A copy of the device tree enabled the emulated PL011 console on ttyAMA1. The regular-file disk copy was padded for the emulator's SD model.",
+    "mountedLocalFilesystems": true,
+    "configurationWaitReached": true,
+    "evidenceScope": "Board-model Linux and OpenRC boot. Physical EEPROM and firmware boot, board Ethernet, configured portal startup and intended LAN performance remain unverified."
+  }
+}

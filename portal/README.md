@@ -84,10 +84,12 @@ and retains disk candidates for boot verification.
 The builder uses files from the current Git commit. It prints the new
 `.img.gz` path, SHA-256, and build receipt. The receipt identifies the image
 layout, appliance source, portal release source, OCI index and platform
-manifest, and installed package versions. Record the digest before copying
-or extracting the image. The x86_64 route requires UEFI. The arm64 layout
-targets a Pi 4 with Ethernet. Inspect the [delivery checklist](../ROADMAP.md)
-for current boot and release evidence before using an image.
+manifest, installed package versions, and the embedded OCI archive SHA-256.
+Record the digest before copying or extracting the image. The x86_64 route
+requires UEFI. The arm64 layout targets a Pi 4 with Ethernet. Read the
+[x86 configured boot and restart receipt](../docs/evidence/appliance-x86-1583b87.json),
+the [Pi 4 board emulation receipt](../docs/evidence/appliance-rpi4-a613c4c.json),
+and the [delivery checklist](../ROADMAP.md) for the current verification scope.
 
 ### Configure the appliance
 
@@ -113,6 +115,10 @@ persisted configuration. Keep the credential volume in protected storage.
 With no protected configuration, the console reports that setup is
 required and the portal ports remain closed. If the reserved LAN address is
 unavailable, review DHCP before restarting the appliance.
+
+The appliance verifies and loads the embedded portal archive on first start.
+It reuses the verified local image on later starts. Portal startup needs a
+route to the configured agent. The image is already on the appliance disk.
 
 The console prints the guest and management links when both services are
 healthy. On a separate client in the selected subnet, open the guest
