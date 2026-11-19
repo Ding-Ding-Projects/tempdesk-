@@ -105,6 +105,8 @@ def test_guest_mode_has_no_admin_pages(guest):
         assert guest.client.get(path).status_code in (404, 405), path
 
     for path in (
+        "/api/wording",
+        "/history/settings/restore",
         "/settings",
         "/settings/import",
         "/settings/import/apply",
