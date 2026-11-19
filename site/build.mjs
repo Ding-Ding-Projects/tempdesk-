@@ -209,7 +209,7 @@ async function docSources() {
   return list;
 }
 
-async function build({ outputDirectory, referenceRevision = 'main', provenance } = {}) {
+async function build({ outputDirectory, referenceRevision = 'main', provenance, includeDocumentEdition = false } = {}) {
   const OUT = outputDirectory ?? DEFAULT_OUT;
   const address = new URL(process.env.TEMPDESK_PUBLIC_URL || DEFAULT_PUBLIC_URL);
   if (address.protocol !== 'https:' || address.username || address.password || address.search || address.hash) {
@@ -217,6 +217,7 @@ async function build({ outputDirectory, referenceRevision = 'main', provenance }
   }
   if (!address.pathname.endsWith('/')) address.pathname += '/';
   const publicUrl = address.href;
+  const edition = includeDocumentEdition ? { publicUrl, articles: [] } : null;
   const buildInfo = provenance ?? (outputDirectory === undefined ? hostedProvenance(REPO) : {});
   const stamp = renderProvenance(buildInfo, escapeHtml);
   if (referenceRevision === 'main' && /^[a-f0-9]{40}$/.test(buildInfo.revision || '')) referenceRevision = buildInfo.revision;
@@ -271,19 +272,21 @@ async function build({ outputDirectory, referenceRevision = 'main', provenance }
     const facts = (ft.facts || []).map(([k, v]) => `<div class="fact"><b>${inline(k)}</b><span>${inline(v)}</span></div>`).join('');
     const links = (ft.links || []).map(([label, href]) => `<a class="btn btn-ghost" href="${escapeHtml(fixLink(href))}">${escapeHtml(label)}</a>`).join('');
     const others = features.filter((o) => o.id !== ft.id).map((o) => `<a class="hit" href="${o.id}.html">${escapeHtml(o.title)}<small>${escapeHtml(o.summary)}</small></a>`).join('');
-    const body = `<article class="content">
-<nav class="crumbs" aria-label="Breadcrumb"><a href="../" data-i18n="nav.home">Home</a><span aria-hidden="true">/</span><a href="../#features" data-i18n="nav.features">Features</a><span aria-hidden="true">/</span><span>${escapeHtml(ft.title)}</span></nav>
+    const article = `
 <h1>${escapeHtml(ft.title)}</h1>
 <p class="lede">${inline(ft.summary)}</p>
 <div class="facts" data-search-surface="feature-facts" data-search-label="nav.features">${facts}</div>
 ${secs.map((s) => s.html).join('\n')}
-${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}
+${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}`;
+    const body = `<article class="content">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../" data-i18n="nav.home">Home</a><span aria-hidden="true">/</span><a href="../#features" data-i18n="nav.features">Features</a><span aria-hidden="true">/</span><span>${escapeHtml(ft.title)}</span></nav>${article}
 <h2 id="more-features" data-i18n="feat.more">More features</h2>
 <div class="hits" data-search-surface="feature-more" data-search-label="feat.more">${others}</div>
 </article>`;
     await mkdirp(path.join(OUT, 'features'));
     await fs.writeFile(path.join(OUT, 'features', ft.id + '.html'), page({ title: ft.title + ' | TempDesk', desc: ft.summary, root: '../', url: 'features/' + ft.id + '.html', body }));
     index.pages.push({ url: 'features/' + ft.id + '.html', title: ft.title, summary: ft.summary, kind: 'feature', sections: secs.map((s) => ({ id: s.id, title: s.title })), text: plainText(ft.sections.map((s) => s.title + ' ' + s.body).join(' ')) });
+    edition?.articles.push({ url: 'features/' + ft.id + '.html', title: ft.title, kind: 'feature', lang: 'en', html: article });
   }
   // feature list on the landing page
   const tiles = features.map((ft) => `<a class="tile" href="features/${ft.id}.html"><h3>${escapeHtml(ft.title)}</h3><p>${escapeHtml(ft.summary)}</p><span class="more" data-i18n="common.readMore">Read more</span></a>`).join('\n      ');
@@ -368,6 +371,14 @@ ${relatedDocumentationWorkflows(d.file, guideCatalogs[0], escapeHtml)}
 </article></div></div>`;
     await fs.writeFile(path.join(OUT, 'docs', d.name + '.html'), page({ title: d.title + ' | TempDesk docs', desc: plainText(md).slice(0, 180), root: '../', url: 'docs/' + d.name + '.html', body }));
     index.pages.push({ url: 'docs/' + d.name + '.html', title: d.title, summary: 'Docs: ' + d.file, kind: 'doc', sections: r.headings.filter((x) => x.level <= 3 && x.level > 1).map((x) => ({ id: x.id, title: x.text })), text: plainText(md) });
+    edition?.articles.push({
+      url: 'docs/' + d.name + '.html',
+      title: d.title,
+      kind: d.file.startsWith('docs/wiki/') ? 'wiki' : 'doc',
+      lang: language ? 'yue-HK' : 'en',
+      html: r.html,
+      source: sourceBase + d.file,
+    });
   }
   const readerUrl = 'docs/capabilities.html';
   const readerTitle = guideCatalogs[0]['reader.title'];
@@ -440,7 +451,7 @@ ${docsGuides}
   const nfPage = page({ title: 'Page not found | TempDesk', desc: 'This page does not exist.', root: '', url: '404.html', body: '<div class="content"><h1 data-i18n="nf.title">Page not found</h1><p class="lede" data-i18n="nf.body">This page does not exist. Try the command palette (Ctrl+Shift+F) or go home.</p><a class="btn btn-primary" href="./" data-i18n="nav.home">Home</a></div>' });
   await fs.writeFile(path.join(OUT, '404.html'), nfPage.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + nfBase));
 
-  return { vendor, features: features.length, docs: docs.length, payload: manifest.files.length, answerfile: af, pages: index.pages.length };
+  return { vendor, features: features.length, docs: docs.length, payload: manifest.files.length, answerfile: af, pages: index.pages.length, ...(edition ? { edition } : {}) };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

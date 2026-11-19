@@ -71,16 +71,39 @@ async function main() {
     const { build } = await import(pathToFileURL(path.join(input, 'site', 'build.mjs')).href);
     const website = path.join(staging, 'website');
     const info = { version, ...source, builtUtc: new Date().toISOString() };
-    await build({
+    const { edition, docs: guideCount, features: featureCount } = await build({
       outputDirectory: website,
       referenceRevision: source.modified === false ? source.commit : 'main',
       provenance: { version, updatedUtc: info.builtUtc, revision: source.modified ? null : source.commit },
+      includeDocumentEdition: true,
     });
     const index = JSON.parse(await fs.readFile(path.join(website, 'search-index.json'), 'utf8'));
     const pages = new Set(index.pages.map(page => page.url));
     for (const url of ['docs/index.html', 'docs/virtual-commons.html', 'docs/wiki-pending-home.html']) {
       if (!pages.has(url)) throw new Error('The bundled document index is missing ' + url);
     }
+    const printed = new Set();
+    for (const article of edition.articles) {
+      if (!pages.has(article.url) || printed.has(article.url)) throw new Error('Unexpected PDF article: ' + article.url);
+      printed.add(article.url);
+    }
+    if (printed.size !== guideCount + featureCount || !edition.articles.some(article => article.kind === 'wiki')) {
+      throw new Error('The PDF must include every published article and the operator wiki');
+    }
+    const labels = JSON.parse(await fs.readFile(path.join(input, 'site', 'i18n', 'en.json'), 'utf8'));
+    const pdf = path.join(staging, 'edition.pdf');
+    const options = path.join(staging, 'print-options.json');
+    const profile = path.join(staging, 'pdf-profile');
+    await fs.mkdir(profile);
+    await fs.writeFile(options, JSON.stringify({
+      website, edition, info, labels, output: pdf,
+      style: path.join(input, 'design', 'guided-documentation', 'phone-edition.css'),
+    }));
+    const printEnvironment = { ...process.env };
+    delete printEnvironment.ELECTRON_RUN_AS_NODE;
+    execFileSync(require('electron'), [path.join(input, 'deployer', 'app', 'scripts', 'print-docs-pdf.cjs'), options], {
+      windowsHide: true, stdio: 'inherit', env: printEnvironment, timeout: 180000,
+    });
     await fs.writeFile(path.join(website, 'build-info.json'), JSON.stringify(info) + '\n');
     await fs.copyFile(path.join(input, 'deployer', 'docs-companion', 'main.cjs'), path.join(staging, 'main.cjs'));
     await fs.writeFile(path.join(staging, 'package.json'), JSON.stringify({
@@ -108,6 +131,7 @@ async function main() {
     });
     const artifact = path.join(output, 'TempDeskDocs-' + version + '-portable.exe');
     if (!(await fs.stat(artifact)).size) throw new Error('The portable documentation executable is empty');
+    await fs.rename(pdf, path.join(output, 'TempDeskDocs-' + version + '-phone.pdf'));
     console.log('Built TempDesk Docs ' + version + ' from ' + source.commit + (source.modified ? ' with local changes' : ''));
   } finally {
     await fs.rm(staging, { recursive: true, force: true });

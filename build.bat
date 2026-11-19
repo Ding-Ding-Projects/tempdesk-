@@ -1,6 +1,6 @@
 @echo off
 rem Builds TempDesk Deployer (the desktop app) into deployer\bin\ as an unpacked app and a
-rem portable .exe, plus the standalone documentation in deployer\bin\docs\.
+rem portable .exe, plus the standalone reader and phone PDF in deployer\bin\docs\.
 rem Usage: build.bat [/docs or --portal-host or --appliance] [/s]   /s = silent.
 setlocal EnableExtensions
 set "ROOT=%~dp0"
@@ -79,7 +79,7 @@ set "CMD=cmd /c npx electron-builder --win dir portable --x64 --publish never -c
 call :step "Packaging (unpacked + portable)" || goto :fail-in-app
 :package-docs
 set "CMD=cmd /c node scripts\build-docs-companion.js"
-call :step "Packaging the portable documentation" || goto :fail-in-app
+call :step "Packaging the documentation reader and phone PDF" || goto :fail-in-app
 if defined DOCSONLY goto :finished
 if defined SKIPTESTS goto :finished
 set "CMD=cmd /c node --test test/*.test.js"

@@ -1,5 +1,14 @@
 # TempDesk verification handoff
 
+## Phone documentation edition
+
+The Windows documentation build composes one source snapshot for both the
+portable reader and the phone-sized PDF. The PDF uses all published guide,
+feature and prepared wiki articles, with internal chapter and section links.
+The normal release publisher requires the PDF in its manifest. Verify the
+rendered pages, internal destinations and published asset for the exact
+release before closing the roadmap item. [Offline documentation](docs/OFFLINE-GUIDE.md#read-the-phone-pdf)
+
 ## Bootable appliance producer
 
 The Windows build entrypoint can assemble an x86_64 UEFI disk layout or a

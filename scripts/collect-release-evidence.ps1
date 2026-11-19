@@ -17,6 +17,7 @@ $paths = @(
     "$squirrel/RELEASES"
     "deployer/bin/TempDeskDeployer-$version-portable.exe"
     "deployer/bin/docs/TempDeskDocs-$version-portable.exe"
+    "deployer/bin/docs/TempDeskDocs-$version-phone.pdf"
     "deployer/bin/build-companion/TempDeskBuild-$version-portable.exe"
     "deployer/bin/portal-host/TempDeskPortalHost-$version-portable.exe"
 )
