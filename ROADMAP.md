@@ -14,6 +14,7 @@
 - [ ] Exercise edition wording on the configured live kiosk alongside a verified checkout session.
 - [x] Prepare a separate powered-off VMware workstation and verify the installer and credential-free setup DVD hashes.
 - [x] Verify the dedicated powered-off workstation is configured on the private lab directory segment.
+- [x] Verify the attached workstation setup DVD contains the source-matched seat broker and startup registration files.
 - [ ] Install and enroll the dedicated Kiosk Windows 11 workstation. Verify its reservation, exact guest grant, connection file, sign-in, expiry, and release before another guest can reserve it.
 - [ ] Verify the Virtual Commons dim sum result with a published photo and with the catalogue unavailable, including retry without a seat or account and suppression in School mode.
 - [ ] Connect a kiosk to the native Windows agent through an authenticated configuration and prove temporary account creation there.
@@ -29,6 +30,7 @@
 - [x] Verify a registry-backed LAN deployment whose image version matches v1.0.104. Exercise the corrected Windows launcher with detached startup, the keyboard menu and live log controls.
 - [x] Verify the published amd64 and arm64 portal image entries by immutable digest.
 - [x] Boot the x86_64 image through UEFI and check that it waits for credentials with both portal endpoints closed. [Boot receipt](docs/evidence/appliance-x86-6d7718d.json)
+- [x] Boot the native Pi 4 arm64 candidate through Linux and record the protected setup wait in board emulation. [Pi 4 boot receipt](docs/evidence/appliance-rpi4-a613c4c.json)
 - [ ] Verify the x86_64 UEFI appliance image and Raspberry Pi 4 arm64 image, including configured startup, separate LAN checks, and restart persistence. [Appliance build and configuration](portal/README.md#build-a-bootable-appliance)
 - [ ] Release both verified appliance images and connect them to the virtual machine and physical-media deployment workflows.
 - [ ] Verify the standalone Portal Host wizard on the supported Windows host, including both endpoint results, health-only recheck and safe cancellation.
@@ -40,7 +42,7 @@
 - [x] Verify the rebuilt management notification centre with filtered bulk actions, guarded deletion, account-scoped history and reversible local wording. [Illustrated steps and receipt](README.md#management-notification-walkthrough)
 - [ ] Complete the remaining feature implementation and runtime verification on every applicable surface.
 - [ ] Publish the operator wiki when its repository is available. [Prepared wiki entry point](docs/wiki/pending/Home.md)
-- [ ] Generate a phone-sized PDF from the complete documentation and wiki, verify its contents and internal links, and attach it to the normal release.
+- [x] Verify that the normal v1.0.110 release contains the phone-sized PDF with the complete documentation and prepared wiki, and check its manifest and internal links.
 - [x] Build and launch the standalone documentation reader locally. Verify offline search, the Virtual Commons guide, and the prepared operator wiki.
 - [x] Verify the standalone documentation executable from a normal release. [Offline documentation walkthrough](README.md#standalone-offline-documentation)
 - [x] Verify the source-bound documentation executable downloaded from the v1.0.74 release.

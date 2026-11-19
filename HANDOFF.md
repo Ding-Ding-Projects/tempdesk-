@@ -5,9 +5,11 @@
 The Windows documentation build composes one source snapshot for both the
 portable reader and the phone-sized PDF. The PDF uses all published guide,
 feature and prepared wiki articles, with internal chapter and section links.
-The normal release publisher requires the PDF in its manifest. Verify the
-rendered pages, internal destinations and published asset for the exact
-release before closing the roadmap item. [Offline documentation](docs/OFFLINE-GUIDE.md#read-the-phone-pdf)
+The normal v1.0.110 release from `6f6cb7f` contains the PDF. The downloaded
+file matched its release manifest and contained 304 pages, 44 articles and
+180 internal links, including the prepared operator wiki. The review
+checked the chapter and section links and inspected the cover, table and
+Cantonese pages. [Offline documentation](docs/OFFLINE-GUIDE.md#read-the-phone-pdf)
 
 ## Bootable appliance producer
 
@@ -25,13 +27,17 @@ attached, both portal health endpoints stayed closed. [Boot receipt](docs/eviden
 The appliance build embeds an archive of the exact published platform
 manifest. Configured startup waits for Docker and its LAN firewall chain,
 then loads the verified archive locally. The system keeps containerd storage
-on the persistent state partition. Verify both configured endpoints and
-restart persistence using the rebuilt image.
+on the persistent state partition. The configured x86_64 candidate from
+`1583b87` loaded the embedded platform image in a network-restricted QEMU
+fixture and reached the Compose health wait. The observer window ended
+before it verified both portal endpoints. Configured guest sign-in, restart
+persistence and physical LAN operation remain open.
 The native x86_64 worker assembled a candidate for v1.0.108. The first native
 Raspberry Pi 4 build ran out of space while copying duplicate boot files.
 The revised Pi build selects its firmware pair and board device tree while
-retaining one kernel and one generated initramfs. Verify the next native
-arm64 output before using it.
+retaining one kernel and one generated initramfs. The v1.0.109 native arm64
+candidate booted through Linux and OpenRC in QEMU. Physical firmware, board
+Ethernet and configured startup remain open. [Pi 4 boot receipt](docs/evidence/appliance-rpi4-a613c4c.json)
 Track each boot, configured portal start, LAN check and release separately in
 the [delivery checklist](ROADMAP.md). [Appliance guide](portal/README.md#build-a-bootable-appliance)
 
@@ -97,7 +103,7 @@ The VMware Workstation provisioner created a separate powered-off Windows 11 che
 
 The documentation and offline reader share the new capability browser source. Deployer includes a searchable tab catalog, retained Base64 compatibility and a virtual disk workspace. The portal now includes specific search and regular-expression controls in its recovery and appearance panels. Operational verification stays pending. [Feature inventory](docs/FEATURE-INVENTORY.md) · [Virtual disk workspace](docs/features/built-in-tools/virtual-disks.md)
 
-The dedicated Windows 11 workstation is a Virtual Commons Remote Desktop destination for one guest at a time. Its confirmation now identifies it as a computer edition. The 1% checkout branch keeps the retry and the published-photo fallback separate from account creation and seat allocation. The workstation remains powered off awaiting a virtual TPM and guest setup. An actual workstation checkout and browser verification of the photo outcomes remain pending. [Checkout and enrollment guide](docs/VIRTUAL-COMMONS.md#add-a-kiosk-windows-11-workstation)
+The dedicated Windows 11 workstation is a Virtual Commons Remote Desktop destination for one guest at a time. Its confirmation identifies it as a computer edition. The 1% checkout branch keeps the retry and the published-photo fallback separate from account creation and seat allocation. Verification of the attached setup DVD matched all 11 manifest files to the current source, including seat broker registration. The workstation remains powered off awaiting encryption, a virtual TPM, guest setup and authenticated broker enrollment. The lab portal currently leaves the workstation choice unavailable. An actual workstation checkout and browser verification of the photo outcomes remain pending. [Checkout and enrollment guide](docs/VIRTUAL-COMMONS.md#add-a-kiosk-windows-11-workstation)
 
 Both lab portals were updated to v1.0.102, source `e90c483ea9863057bf133e49dfadc2a9e7ac365b`. The LAN pages and health endpoints responded with the running source, and the rollout retained both services' existing storage and port mappings. The deployment uses the locally built image. The new published-image workflow and Compose route carry a digest and source receipt. Pull and start the exact published digest before counting registry-backed hosting as verified. [Published image guide](portal/README.md#run-a-published-image)
 
