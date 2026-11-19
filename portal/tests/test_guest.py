@@ -99,8 +99,25 @@ def test_check_and_delete(guest):
 
 
 def test_guest_mode_has_no_admin_pages(guest):
-    for path in ("/login", "/guests", "/directory", "/gpo", "/settings", "/cmdlets", "/history", "/api/wording"):
+    for path in (
+        "/login", "/guests", "/directory", "/gpo", "/cmdlets", "/history", "/api/wording", "/settings/export",
+    ):
         assert guest.client.get(path).status_code in (404, 405), path
+
+    for path in (
+        "/settings",
+        "/settings/import",
+        "/settings/import/apply",
+        "/settings/logo",
+        "/settings/wording",
+        "/settings/wording/clear",
+    ):
+        assert guest.client.post(path).status_code in (404, 405), path
+
+    settings = guest.client.get("/settings")
+    assert settings.status_code == 200
+    assert 'data-search-surface="guest-settings"' in settings.text
+    assert 'data-search-surface="settings"' not in settings.text
 
 
 def test_guest_key_cannot_reach_admin_routes_in_agent(tmp_path):

@@ -2,6 +2,8 @@
 
 ## Guest Settings and wording feedback
 
+The hosted portal check at `6985c92531079abb28fab1424528261cea417289` recorded 252 passes and one failure. Its guest-route assertion still expected `GET /settings` to return 404. The updated assertion requires the guest Settings page and checks that management Settings mutations and export remain unavailable on the guest listener. [Original run](https://github.com/Ding-Ding-Projects/tempdesk-/actions/runs/44542289026)
+
 The isolated portal image from `3407f84bd7538bc16a370bfe6087300e9fc02c62` opened guest Settings through Tools. The Settings search matched its localized group and control labels, and Escape returned focus to the opened regex builder's trigger. The browser started a cue for each applied and rejected wording file. A saved mute survived reload, and a valid file still showed its result without starting another cue. The browser's audio output was muted during verification. The synthetic sign-in was removed. The [walkthrough](README.md#guest-settings-and-action-sounds) links the inspected desktop image and records the scope. Live deployment and additional layout and language acceptance remain open.
 
 The downloaded normal v1.0.122 documentation executable matches the manifest and release digest from `7cf2ec7954dc7482c2e0aa163b5ea5f405c0a35f`. The isolated run opened the home, search, Virtual Commons guide, prepared wiki and feature inventory. Nine bundled files matched the source bytes. The reader closed and its disposable profile was removed. [Release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.122)

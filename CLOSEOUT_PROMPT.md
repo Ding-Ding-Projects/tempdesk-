@@ -1,6 +1,8 @@
 # Continue TempDesk lab verification
 
 ```text
+The hosted portal suite on 6985c92531079abb28fab1424528261cea417289 recorded 252 passes and one stale assertion about GET /settings. The updated assertion requires the new guest page while checking that the management Settings mutations and export are unavailable on the guest listener. Read back the hosted verdict on the new revision. The portal code and built behavior are unchanged by this assertion update.
+
 The guest Settings build at 3407f84bd7538bc16a370bfe6087300e9fc02c62 provides searchable display controls and a persistent mute switch for Virtual Commons wording outcomes. The isolated browser opened Settings through Tools, exercised the adjacent regex builder, observed the applied and rejected cues, and retained mute after reload. See the guest Settings walkthrough and its evidence receipt in README.md. Qualify the deployed guest and kiosk separately. The published v1.0.122 documentation reader at 7cf2ec7954dc7482c2e0aa163b5ea5f405c0a35f opened the guides and prepared wiki with exact source bytes for nine checked files.
 
 The Kiosk Windows 11 choice assigns a dedicated single-seat Remote Desktop workstation. Finish the supported VMware encryption and virtual TPM setup, install a supported edition, join the domain, and enroll the trusted seat broker. Verify the connection file, native temporary sign-in, expiry, and seat release before enabling that destination. Keep the directory controller separate from the session hosts. Product test suites remain deferred.
