@@ -5,3 +5,5 @@
    browser uses the colour input; keep unresolved template values out of CSS. */
 .board[style*="#"]{--accent:var(--board-accent)}
 .board[data-board-motion=off] *{animation:none!important;transition:none!important}
+.narrow-reference{max-width:360px;margin-inline:auto;container-type:inline-size}
+@container(max-width:680px){.shell{display:block;margin-top:10px}aside ol{display:flex;flex-wrap:wrap}aside li{display:none}aside [aria-current]{display:block;padding:4px 8px;border:0;border-radius:8px}.line{grid-template-columns:1fr}.field button,.field input,.field select{width:100%}header{align-items:flex-start}main{padding:14px}}
