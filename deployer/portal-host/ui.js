@@ -25,6 +25,13 @@
     succeeded:['Both portals verified','兩個入口網站已驗證'],partial:['Partially available','部分可用'],failed:['Deployment failed','部署失敗'],cancelled:['Observation stopped','監察已停止'],
     code:['Exit code','結束代碼'],elapsed:['Elapsed seconds','經過秒數'],phase:['Operation','操作狀態'],verified:['Verified','已驗證'],
     started:['Started, health unverified','已啟動，健康狀態未驗證'],unverified:['Unverified','未驗證'],cancelling:['Stopping observation…','正在停止監察…'],
+    ownership:['Project ownership','專案擁有權'],ownershipUnknown:['Ownership has not been verified. Startup checks the selected project before changing it.','尚未驗證擁有權。啟動前會先檢查所選專案。'],
+    cancelSetup:['Cancel setup','取消設定'], reasonReceipt:['The publication receipt is missing or was not accepted. Choose a valid release receipt.','缺少發佈憑證或憑證未獲接納。請選擇有效的發佈憑證。'],
+    reasonDependency:['Docker or Compose is unavailable. Check the engine and try again.','Docker 或 Compose 未能使用。請檢查引擎後再試。'],
+    reasonRuntime:['The bundled hosting runtime is unavailable. Reopen the matching published wizard.','隨附的託管元件未能使用。請重新開啟對應的已發佈精靈。'],
+    reasonPull:['The immutable image could not be pulled. Check registry access and retry.','未能下載所選固定映像。請檢查登錄庫存取權後再試。'],
+    reasonStartup:['The hosting operation did not start successfully. Review the selected configuration.','未能成功啟動託管操作。請覆核所選設定。'],
+    reasonVerify:['Endpoint verification did not complete. Recheck health when the service is ready.','端點驗證未完成。服務就緒後請重新檢查。'],
     conflict:['Project ownership or configuration conflict. Review the configuration and project before retrying.','專案擁有權或設定有衝突。請覆核設定及專案後再試。'],
     operationError:['The operation could not be completed.','未能完成操作。'], invalid:['Select a LAN address, a project name and distinct ports from 1 to 65535.','請選擇區域網絡位址、填寫專案名稱及兩個不同的連接埠（1 至 65535）。'],
     candidate:['Candidate','預定位址'],engine:['Docker and Compose','Docker 及 Compose'], evidence:['Engine detail','引擎資料'],
@@ -34,7 +41,7 @@
   function save(key,value) { try { localStorage.setItem('td.host.' + key,String(value)); } catch { /* Choices remain active for this window. */ } }
   let lang = read('lang','en');
   if (!['en','zh-HK','bi'].includes(lang)) lang = 'en';
-  let step = Math.max(0, Math.min(5, Number(read('step','0')) || 0));
+  let step = Math.max(0, Math.min(5, Math.trunc(Number(read('step','0'))) || 0));
   let snapshot, form, pending = false, error = '', lastPhase = '';
   const active = run => ['preparing','pulling','starting','checking'].includes(run?.phase);
   function t(key) {
@@ -49,7 +56,7 @@
   function details(container,entries) {
     const list=element('dl');
     for (const [key,value] of entries) {
-      const row=element('div'); row.append(element('dt',t(key)),element('dd',String(value ?? t('unavailable')))); list.append(row);
+      const row=element('div'); const dd=element('dd',String(value ?? t('unavailable'))); if(key==='elapsed')dd.id='elapsed'; row.append(element('dt',t(key)),dd); list.append(row);
     }
     container.append(list);
   }
@@ -126,7 +133,7 @@
         form ||= {project:d.project,address:d.address,guestPort:d.guestPort,managementPort:d.managementPort};
         for(const key of ['project','address','guestPort','managementPort'])field(body,key,form[key],key==='address'?snapshot.addresses:null);
       } else if (step===4) {
-        details(body,[['release',d.receipt?.releaseTag],['revision',d.receipt?.revision],['digest',d.receipt?.digest],['directory',basename(d.configuration)],['overlay',basename(d.overlay)||t('none')],['project',d.project],['guest',d.address+':'+d.guestPort+' ('+t('candidate')+')'],['management',d.address+':'+d.managementPort+' ('+t('candidate')+')']]);
+        details(body,[['release',d.receipt?.releaseTag],['revision',d.receipt?.revision],['digest',d.receipt?.digest],['directory',basename(d.configuration)],['overlay',basename(d.overlay)||t('none')],['project',d.project],['ownership',t('ownershipUnknown')],['guest',d.address+':'+d.guestPort+' ('+t('candidate')+')'],['management',d.address+':'+d.managementPort+' ('+t('candidate')+')']]);
       } else {
         details(body,[['phase',t(r.phase)],['code',r.code],...(r.startedAt && active(r)?[['elapsed',Math.max(0,Math.floor((Date.now()-r.startedAt)/1000))]]:[])]);
         for(const endpoint of r.endpoints || []) {
@@ -148,10 +155,12 @@
           if(value.run.reason!=='configuration' && Object.keys(form).every(key=>value.draft[key]===form[key])){form=null;go(4);}
         },'heading');
       },true,step===0?snapshot.docker!=='ready':step===1?!d.receipt:step===2?!d.configuration:false);
+      if(step>0 && step<5)button(actions,'cancel-setup','cancelSetup',()=>{ form=null;go(0); });
       if(step===4)button(actions,'start','start',()=>{go(5);call('start');},true);
       if (!error && r.reason) {
-        if(r.reason==='configuration')error='conflict';
-        else if(r.phase==='failed'||r.phase==='partial'||snapshot.docker==='unavailable') body.append(element('p',t('evidence')+': '+r.reason));
+        const reasons={configuration:'conflict',receipt:'reasonReceipt',startup:'reasonStartup',dependency:'reasonDependency',runtime:'reasonRuntime',pull:'reasonPull',verify:'reasonVerify'};
+        body.append(element('p',t('evidence')+': '+t(reasons[r.reason] || 'operationError')));
+        if (r.reason==='configuration') byId('live').textContent=t('conflict');
       }
     }
     if (pending) actions.append(element('span',t('busy')));
@@ -162,5 +171,9 @@
   function motion() { document.documentElement.dataset.motion=byId('motion').checked?'on':'off'; }
   byId('motion').checked=read('motion','on')!=='off';motion();
   byId('motion').addEventListener('change',()=>{motion();save('motion',document.documentElement.dataset.motion);});
+  window.setInterval(()=>{
+    const clock=byId('elapsed');
+    if(clock && snapshot?.run.startedAt && active(snapshot.run))clock.textContent=String(Math.max(0,Math.floor((Date.now()-snapshot.run.startedAt)/1000)));
+  },1000);
   if(api) {api.onState(value=>{received(value);render();});call('state');} else render();
 })();
