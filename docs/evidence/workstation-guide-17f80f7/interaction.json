@@ -1,0 +1,90 @@
+{
+  "sourceCommit": "17f80f7668d84d8c12f6f8696155a3d7e2d9a51d",
+  "workflowRun": 44432810963,
+  "route": "linux-container-playwright-firefox",
+  "playwright": "1.56.0",
+  "renderer": "Firefox",
+  "startedAt": "2026-11-19T01:03:44.108Z",
+  "records": [
+    {
+      "id": "01-open-workstation-guide",
+      "filename": "01-open-workstation-guide.png",
+      "bytes": 299092,
+      "sha256": "58ac18ab878fd04c8cc69044d719868fa83dd3ccc576ae9556423d4c8efce20f",
+      "width": 1440,
+      "height": 1080,
+      "scale": 1,
+      "startedAt": "2026-11-19T01:03:46.156Z",
+      "capturedAt": "2026-11-19T01:03:46.232Z",
+      "observed": {
+        "innerWidth": 1440,
+        "documentWidth": 1440,
+        "scrollWidth": 1440,
+        "steps": 8,
+        "checked": 0,
+        "progress": "0 of 8 steps marked",
+        "language": "en",
+        "theme": "dark",
+        "focusedOnStep": false
+      }
+    },
+    {
+      "id": "02-mark-network-review",
+      "filename": "02-mark-network-review.png",
+      "bytes": 299458,
+      "sha256": "cf548b9eb38f6ca32211f0e55654a962600b3667fd51c9f83d4d348996f75854",
+      "width": 1440,
+      "height": 1080,
+      "scale": 1,
+      "startedAt": "2026-11-19T01:03:46.284Z",
+      "capturedAt": "2026-11-19T01:03:46.341Z",
+      "observed": {
+        "innerWidth": 1440,
+        "documentWidth": 1440,
+        "scrollWidth": 1440,
+        "steps": 8,
+        "checked": 1,
+        "progress": "1 of 8 steps marked",
+        "language": "en",
+        "theme": "dark",
+        "focusedOnStep": true
+      }
+    },
+    {
+      "id": "03-workstation-guide-360",
+      "filename": "03-workstation-guide-360.png",
+      "bytes": 87415,
+      "sha256": "eb09b0b74cdce4415ce97befc68db523931d1d31afaafbdd05d5dbeae6c106cb",
+      "width": 360,
+      "height": 844,
+      "scale": 1,
+      "startedAt": "2026-11-19T01:03:46.697Z",
+      "capturedAt": "2026-11-19T01:03:46.718Z",
+      "observed": {
+        "innerWidth": 360,
+        "documentWidth": 360,
+        "scrollWidth": 360,
+        "steps": 8,
+        "checked": 1,
+        "progress": "1 of 8 steps marked",
+        "language": "en",
+        "theme": "dark",
+        "focusedOnStep": false
+      }
+    }
+  ],
+  "errors": {
+    "console": 0,
+    "exceptions": 0,
+    "failedResources": 0,
+    "http": 0,
+    "thirdParty": 0
+  },
+  "ownedContextClosed": true,
+  "ownedBrowserClosed": true,
+  "browserVersion": "142.0.1",
+  "documentSha256": "65d09989c04db0d0c784367e5117dd74edddd081f8a5706c284a4814ff3b9f80",
+  "persistedAfterReload": true,
+  "completed": true,
+  "finishedAt": "2026-11-19T01:03:47.189Z"
+}

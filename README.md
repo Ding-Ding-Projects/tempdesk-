@@ -493,6 +493,24 @@ Open [the documentation guide](https://ding-ding-projects.github.io/tempdesk-/do
 
 The [capture inventory](docs/evidence/guided-docs-inventory.json) lists the exact source and executable hashes, image hashes, timestamps and viewport.
 
+### Workstation checklist on the hosted guide
+
+These three screenshots show the [published workstation guide](https://ding-ding-projects.github.io/tempdesk-/docs/?task=commons&variant=workstation#guided-workflows) built from `17f80f7668d84d8c12f6f8696155a3d7e2d9a51d`. The guide records each reader's progress on that device.
+
+1. Open **Verify Virtual Commons** and choose **Prepare a single-seat Windows 11 workstation**. Its eight steps cover the network, installation media, guest setup, broker and checkout.
+
+   ![Hosted Virtual Commons guide with the Windows 11 workstation selected and zero of eight steps marked](docs/evidence/workstation-guide-17f80f7/01-open-workstation-guide.png)
+
+2. After reviewing the network instructions, mark that step. The guide shows **1 of 8 steps marked**.
+
+   ![Hosted workstation checklist showing one of eight steps marked and keyboard focus on the network checkbox](docs/evidence/workstation-guide-17f80f7/02-mark-network-review.png)
+
+3. Reopen the guide. The mark persists, including at a 360-pixel viewport.
+
+   ![Narrow workstation guide at 360 pixels with the selected workstation and one of eight steps marked after reload](docs/evidence/workstation-guide-17f80f7/03-workstation-guide-360.png)
+
+The [hosted capture inventory](docs/evidence/workstation-guide-17f80f7.json) records the actual build archive, screenshot hashes, viewport and browser actions. See [Lab verification](#lab-verification) for the native workstation and real checkout status.
+
 </details>
 
 ## Browser attachment walkthrough

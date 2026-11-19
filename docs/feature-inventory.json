@@ -816,6 +816,14 @@
           "reference": "docs/evidence/guided-docs-inventory.json",
           "observation": "The walkthrough has four inspected source-bound captures with hashes.",
           "remaining": "Cover remaining reader workflows and supported appearance settings."
+        },
+        "hosted": {
+          "state": "partial",
+          "method": "deployment",
+          "revision": "17f80f7668d84d8c12f6f8696155a3d7e2d9a51d",
+          "reference": "docs/evidence/workstation-guide-17f80f7.json",
+          "observation": "Three inspected captures cover the hosted Virtual Commons workstation guide, keyboard marking and narrow reload.",
+          "remaining": "Capture the other applicable hosted states and the real native checkout lifecycle."
         }
       },
       "coverage": {
@@ -870,8 +878,8 @@
           "localization": null,
           "persistence": null,
           "focusedCheck": null,
-          "interaction": null,
-          "captures": null,
+          "interaction": "docs/evidence/workstation-guide-17f80f7.json",
+          "captures": "docs/evidence/workstation-guide-17f80f7.json",
           "remaining": "Exercise each applicable route and state in the candidate, then retain inspected captures and their interaction receipts."
         },
         "offline": {
@@ -1599,6 +1607,17 @@
         "choose-server-core",
         "02-checkout-confirmation",
         "03-download-again"
+      ]
+    },
+    {
+      "manifest": "docs/evidence/workstation-guide-17f80f7.json",
+      "surfaces": [
+        "hosted"
+      ],
+      "records": [
+        "01-open-workstation-guide",
+        "02-mark-network-review",
+        "03-workstation-guide-360"
       ]
     }
   ]
