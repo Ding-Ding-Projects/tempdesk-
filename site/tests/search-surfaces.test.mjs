@@ -96,9 +96,17 @@ test('documentation search mounts inside the sidebar on the index and articles',
   const index = await readFile(path.join(outputDirectory, 'docs', 'index.html'), 'utf8');
   const checklistFilters = [...index.matchAll(/data-search-surface="(docs-guide-steps-[^"]+)"/g)].map(match => match[1]).sort();
   const declaredFilters = catalog.surfaces.filter(entry => entry.file === 'docs-workflows.mjs').map(entry => entry.id).sort();
-  assert.equal(declaredFilters.length, 5);
+  const expectedFilters = [
+    'docs-guide-steps-commons-core',
+    'docs-guide-steps-commons-desktop',
+    'docs-guide-steps-commons-workstation',
+    'docs-guide-steps-deploy-samba',
+    'docs-guide-steps-deploy-server',
+    'docs-guide-steps-guest-kiosk',
+  ];
+  assert.deepEqual(declaredFilters, expectedFilters);
   assert.deepEqual(checklistFilters, declaredFilters);
-  assert.equal([...index.matchAll(/<section[^>]+data-guide-task="[^"]+"[^>]*>/g)].length, 5);
+  assert.equal([...index.matchAll(/<section[^>]+data-guide-task="[^"]+"[^>]*>/g)].length, expectedFilters.length);
   assert.doesNotMatch(index, /<section[^>]+data-guide-task="[^"]+"[^>]*\bhidden\b/);
   assert.match(index, /href="overview\.html#guest-sign-in-walkthrough"/);
   assert.match(index, /href="virtual-commons\.html#verify-a-checkout"/);
