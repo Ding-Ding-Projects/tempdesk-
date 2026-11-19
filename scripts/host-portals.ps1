@@ -126,8 +126,12 @@ function Invoke-PortalHttps {
         '--max-time','10','--resolve',$mapping,'--write-out','\n%{http_code}')
     if ($Service.issuer) { $arguments += @('--cacert',$Service.issuer) }
     $ErrorActionPreference = 'Continue'
-    $response = @(& $curlPath @arguments $Url 2>$null)
-    if ($LASTEXITCODE -ne 0 -or $response.Count -lt 2 -or $response[-1] -ne '200') {
+    $response = @(& $curlPath @arguments $Url 2>&1)
+    $curlExit = $LASTEXITCODE
+    if ($curlExit -eq 60 -and @($response | Where-Object { ([string]$_) -match '(?i)revocation status is unknown|CRYPT_E_(NO_REVOCATION_CHECK|REVOCATION_OFFLINE)' }).Count) {
+        throw 'HTTPS certificate revocation status is unknown.'
+    }
+    if ($curlExit -ne 0 -or $response.Count -lt 2 -or $response[-1] -ne '200') {
         throw 'The HTTPS endpoint did not return a trusted response.'
     }
     return @{ StatusCode=200; Content=($response[0..($response.Count-2)] -join "`n") }
@@ -305,6 +309,9 @@ try {
                 $health = Invoke-WebRequest -Uri ($origin+'/healthz') -UseBasicParsing -TimeoutSec 10
             }
         } catch {
+            if ($_.Exception.Message -ceq 'HTTPS certificate revocation status is unknown.') {
+                throw ('HTTPS certificate revocation status is unknown for '+$service.label+' at '+$url+'.')
+            }
             if ($service.https) { throw ('Trusted HTTPS verification did not succeed for '+$service.label+' at '+$url+'.') }
             throw ('The LAN endpoint did not respond for '+$service.label+'.')
         }

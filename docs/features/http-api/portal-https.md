@@ -13,7 +13,7 @@ Use Docker Compose 2.24.4 or later for named port replacement. Choose a LAN addr
 3. Choose **Verify certificates and continue**. The wizard checks both names and validity periods, matches each private key, and verifies the chains against the selected issuer bundle or the operating system roots. If a file changes or becomes unavailable, choose the correct file again before starting.
 4. Select the LAN address and two distinct ports. Review shows the proposed guest address at `/` and the management address at `/login`. Each link becomes available after its own running service, version, and HTTPS check succeed. A saved project can recheck both endpoints without starting containers.
 
-The wizard keeps the selected file paths in its local profile. It displays selection status in place of certificate and key paths. **Clear issuer bundle** switches verification back to system trust. Browsers on the LAN need their own trust in the issuer before they can open the links. HTTP is the default for a new configuration. HTTPS will fail if its selected transport or credentials cannot be used.
+The wizard keeps the selected file paths in its local profile. It displays selection status in place of certificate and key paths. **Clear issuer bundle** switches verification back to system trust. Browsers on the LAN need their own trust in the issuer before they can open the links. HTTP is the default for a new configuration. HTTPS will fail if its selected transport or credentials cannot be used. The Windows endpoint check also verifies revocation. If the wizard reports that revocation status is unknown, make the issuer's revocation information reachable and recheck the existing endpoints.
 
 ## Set the Compose variables
 

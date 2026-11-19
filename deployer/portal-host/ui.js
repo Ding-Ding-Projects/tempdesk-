@@ -47,6 +47,8 @@
     tlsCertificateError:['Check certificate validity and coverage of the configured name.','請核對憑證有效期及所設定的名稱。'],
     tlsPairError:['A certificate and its selected private key do not match. Select the corresponding pair.','憑證與所選私密金鑰不符，請選擇正確的一組。'],
     tlsIssuerError:['The issuer could not validate the chain. Review the issuer bundle or system trust.','簽發機構未能驗證憑證鏈，請核對簽發機構憑證組合或系統信任設定。'],
+    tlsTrustError:['The running portal did not pass its HTTPS check. Confirm the certificate name and issuer trust, then recheck the endpoint.','運作中嘅入口網站未通過 HTTPS 檢查。請核對憑證名稱同簽發機構嘅信任設定，再重新檢查端點。'],
+    tlsRevocationError:['Windows could not determine the certificate’s revocation status. Make the issuer’s revocation information reachable, then recheck the endpoint.','Windows 未能確認憑證嘅撤銷狀態。請確保可以存取簽發機構嘅撤銷資料，再重新檢查端點。'],
     refresh:['Reload state','重新載入狀態'], loading:['Reading local host state…','正在讀取本機狀態…'], busy:['Working…','處理中…']
   };
   function read(key, fallback) { try { return localStorage.getItem('td.host.' + key) ?? fallback; } catch { return fallback; } }
@@ -56,7 +58,8 @@
   let step = Math.max(0, Math.min(5, Math.trunc(Number(read('step','0'))) || 0));
   let snapshot, form, pending = false, rechecking = false, error = '', lastPhase = '';
   const tlsKinds=['guestCertificate','guestKey','managementCertificate','managementKey','issuer'];
-  const tlsReasons={'tls-name':'tlsNameError','tls-files':'tlsFilesError','tls-certificate':'tlsCertificateError','tls-pair':'tlsPairError','tls-issuer':'tlsIssuerError'};
+  const tlsReasons={'tls-name':'tlsNameError','tls-files':'tlsFilesError','tls-certificate':'tlsCertificateError','tls-pair':'tlsPairError',
+    'tls-issuer':'tlsIssuerError','tls-trust':'tlsTrustError','tls-revocation':'tlsRevocationError'};
   let transportEnabled, certificateName;
   function validCertificateName(name) {
     if (!name || name.length>253) return false;

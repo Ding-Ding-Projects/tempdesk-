@@ -283,7 +283,9 @@ async function deploy({ draft, job, identity, runtime, bundled, recheck, previou
           else if (/Cannot pull/.test(value)) reason = 'pull';
           else if (/publication receipt|pulled image differs|pulled digest/.test(value)) reason = 'receipt';
           else if (/project has containers|configuration|port mapping|already has a TempDesk/.test(value)) reason = 'configuration';
-          else if (/endpoint|portal health|running portal/.test(value)) reason = 'verify';
+          else if (/HTTPS certificate revocation status is unknown/.test(value)) reason = 'tls-revocation';
+          else if (reason !== 'tls-revocation' && /Trusted HTTPS verification/.test(value)) reason = 'tls-trust';
+          else if (!['tls-revocation', 'tls-trust'].includes(reason) && /endpoint|portal health|running portal/.test(value)) reason = 'verify';
         },
       });
     return { code, endpoints: Array.from(endpoints.values()), reason };
