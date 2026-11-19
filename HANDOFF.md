@@ -2,11 +2,11 @@
 
 ## Documentation walkthrough disclosures
 
-The overview renderer recognizes balanced details blocks and their summary labels. Walkthrough content goes through the existing Markdown renderer. Other HTML stays escaped. The phone PDF opens the disclosures during print assembly so every step and image is included. Verify native keyboard operation, nested article links and printed content in the built documentation.
+The overview renderer recognizes balanced details blocks and their summary labels. Walkthrough content goes through the existing Markdown renderer. Other HTML stays escaped. Enter and Space opened and closed the disclosure at desktop and 360 px widths. The nested Lab verification link opened the containing disclosure. The built portable reader opened the walkthrough and the phone PDF included all four images. [Verification receipt](docs/evidence/documentation-disclosures-edcf827.json)
 
 ## Protected portal agent key files
 
-The portal accepts one agent key from an explicit `AGENT_KEY_FILE` path or its legacy setting. The guest Compose overlay mounts the operator's protected role file for the guest service. The packaged portal used a mounted guest key and trusted TLS with an isolated Samba directory. It created and removed a one-hour account. The guest key was rejected by the protected directory route. The packaged native configuration helper retained a selected role file path. Native directory and Remote Desktop acceptance remain open. [Configuration guide](docs/features/http-api/portal-agent-key-file.md) · [Build and runtime receipt](docs/evidence/protected-agent-key-file-c65b407.json)
+The portal accepts one agent key from an explicit `AGENT_KEY_FILE` path or its legacy setting. The guest Compose overlay mounts the operator's protected role file for the guest service. The packaged portal and the published v1.0.113 image used a mounted guest key and trusted TLS with an isolated Samba directory. Each created and removed a one-hour account. The guest key was rejected by the protected directory route. The packaged native configuration helper retained a selected role file path. Native directory and Remote Desktop acceptance remain open. [Configuration guide](docs/features/http-api/portal-agent-key-file.md) · [Build and runtime receipt](docs/evidence/protected-agent-key-file-c65b407.json)
 
 ## v1.0.111 portal delivery
 

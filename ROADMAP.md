@@ -18,7 +18,7 @@
 - [x] Verify the Virtual Commons dim sum result with a published photo and with the catalogue unavailable, including retry without a seat or account and suppression in School mode. [Browser and directory receipt](docs/evidence/virtual-commons-dim-sum-6f6cb7f/receipt.json)
 - [ ] Connect a kiosk to the native Windows agent through an authenticated configuration and prove temporary account creation there.
 - [x] Verify the packaged portal with a protected guest key file, trusted TLS, directory-backed guest creation and removal, legacy compatibility and startup refusal for unusable settings. [Build and runtime receipt](docs/evidence/protected-agent-key-file-c65b407.json)
-- [ ] Verify the released guest portal with a mounted role key over trusted TLS and confirm normal account creation and legacy key configuration. [Protected agent key file](docs/features/http-api/portal-agent-key-file.md)
+- [x] Verify the released guest portal with a mounted role key over trusted TLS and confirm normal account creation and legacy key configuration. [Verification receipt](docs/evidence/protected-agent-key-file-c65b407.json)
 - [ ] Join the Windows 11 test client to the intended domain and prove desktop sign-in with a temporary account.
 - [x] Verify the Session Watcher's outage, deadline, and account-identity decisions in isolated fixtures. Compile the bundled watcher and read current-session metadata on Windows PowerShell.
 - [ ] Complete setup on the Desktop Experience session host. Verify the App Host watcher's connection to the joined domain, checkout and sign-in, then observe session termination at expiry and a rejected reconnect.
@@ -27,7 +27,8 @@
 
 ## Documentation and delivery
 
-- [ ] Verify the guest sign-in disclosure with keyboard input in the hosted guides and offline reader, and confirm the phone PDF contains the full walkthrough.
+- [x] Verify the compiled guest sign-in disclosure at desktop and 360 px widths. Open the walkthrough in the built portable reader and confirm the full printed content. [Verification receipt](docs/evidence/documentation-disclosures-edcf827.json)
+- [ ] Verify the deployed disclosure and the matching released offline package.
 
 - [x] Publish and read back the source-bound container digest at `99d580a`. Verify an isolated Compose pull, startup and health against the lab directory.
 - [x] Verify a registry-backed LAN deployment whose image version matches v1.0.104. Exercise the corrected Windows launcher with detached startup, the keyboard menu and live log controls.

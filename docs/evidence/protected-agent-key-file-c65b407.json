@@ -51,5 +51,18 @@
     "matchingResourcesRemaining": 0,
     "verifiedAtUtc": "2026-11-19T08:40:38.1670312+00:00"
   },
+  "publishedImage": {
+    "version": "1.0.113",
+    "sourceRevision": "6f7bb136fcba66343f82fbe3d71b927c577acfbb",
+    "digest": "sha256:6344bb275427158e68f8eaa8eab3e8f808feb500b00add30c306f2ecc10bb8b4",
+    "registryPlatformsVerified": ["linux/amd64", "linux/arm64"],
+    "runtimePlatform": "linux/amd64",
+    "trustedTlsAndMountedKeyVerified": true,
+    "legacyInlineSettingAccepted": true,
+    "activeGuestAndSelfDeletionVerified": true,
+    "directoryGuestsAfter": 0,
+    "verifiedAtUtc": "2026-11-19T09:04:21.192886+00:00",
+    "matchingFixtureResourcesRemaining": 0
+  },
   "limitations": "No installed native Windows agent or Remote Desktop session host was used. The tested artifact is the packaged application code, with published runtime dependencies."
 }

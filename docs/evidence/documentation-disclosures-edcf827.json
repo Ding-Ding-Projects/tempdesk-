@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "edcf8273780c22d4a30240baa65074cbef99296f",
+  "build": {
+    "entrypoint": "build.bat /docs /s --skip-tests",
+    "portableSha256": "a997937b6b3473a79d000133da45bd8a933b7f5e4b33bd387030f9345aac82f2"
+  },
+  "browser": {
+    "route": "Isolated headless Chromium on Linux against the compiled site",
+    "article": "docs/overview.html#guest-sign-in-walkthrough",
+    "check": "Tab and Shift+Tab returned visible focus, Enter opened the disclosure, and Space closed it.",
+    "viewports": [
+      {
+        "width": 1440,
+        "height": 1000,
+        "scale": 1,
+        "summaryHeight": 50,
+        "visibleImages": 4,
+        "nestedAnchorRevealed": true,
+        "horizontalOverflow": false
+      },
+      {
+        "width": 360,
+        "height": 844,
+        "scale": 1,
+        "summaryHeight": 74,
+        "visibleImages": 4,
+        "nestedAnchorRevealed": true,
+        "horizontalOverflow": false
+      }
+    ]
+  },
+  "renderer": {
+    "relatedParserRevision": "c7f5686dcbcff950239aeb4308df41ad8540a839",
+    "nestedBlocks": true,
+    "unsupportedMarkupEscaped": true,
+    "fencedTagsEscaped": true,
+    "headingIdsPreserved": true
+  },
+  "offlineReader": {
+    "route": "Portable executable on a Windows Lowlevel off-screen desktop",
+    "articleOpened": true,
+    "bundledWalkthroughImages": 4,
+    "localReceiptLoaded": true,
+    "trackedPayloadPathsVerified": 234,
+    "inspectedFrameSha256": "dd73afcca3c08fd20d1367993cfeb60f3fe748b44d17c321e5fdc97e869bc2e1",
+    "profileGone": true,
+    "desktopReleased": true,
+    "debugPortClosed": true
+  },
+  "phonePdf": {
+    "pages": 308,
+    "articles": 45,
+    "internalLinks": 189,
+    "allWalkthroughImagesIncluded": true,
+    "walkthroughImagePages": [
+      53,
+      54,
+      54,
+      55
+    ]
+  },
+  "limitations": "The browser controls were exercised against compiled output. The portable package is the local source-bound build."
+}
