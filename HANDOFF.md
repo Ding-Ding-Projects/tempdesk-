@@ -1,5 +1,11 @@
 # TempDesk verification handoff
 
+## Guest Settings and wording feedback
+
+The isolated portal image from `3407f84bd7538bc16a370bfe6087300e9fc02c62` opened guest Settings through Tools. The Settings search matched its localized group and control labels, and Escape returned focus to the opened regex builder's trigger. The browser started a cue for each applied and rejected wording file. A saved mute survived reload, and a valid file still showed its result without starting another cue. The browser's audio output was muted during verification. The synthetic sign-in was removed. The [walkthrough](README.md#guest-settings-and-action-sounds) links the inspected desktop image and records the scope. Live deployment and additional layout and language acceptance remain open.
+
+The downloaded normal v1.0.122 documentation executable matches the manifest and release digest from `7cf2ec7954dc7482c2e0aa163b5ea5f405c0a35f`. The isolated run opened the home, search, Virtual Commons guide, prepared wiki and feature inventory. Nine bundled files matched the source bytes. The reader closed and its disposable profile was removed. [Release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.122)
+
 ## Documentation walkthrough disclosures
 
 The overview renderer recognizes balanced details blocks and their summary labels. Walkthrough content goes through the existing Markdown renderer. Other HTML stays escaped. Enter and Space opened and closed the disclosure at desktop and 360 px widths. The nested Lab verification link opened the containing disclosure. The built portable reader opened the walkthrough and the phone PDF included all four images. [Verification receipt](docs/evidence/documentation-disclosures-edcf827.json)

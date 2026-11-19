@@ -583,6 +583,18 @@ The built guest portal was exercised in English at desktop and emulated 360 px v
 
 </details>
 
+## Guest Settings and action sounds
+
+1. In the guest portal, select **Tools**, then **Settings**. Display and accessibility includes language, theme, motion, density, text size, contrast, focus and corner roundness.
+
+   ![Guest Settings at desktop width showing the Settings search and the display controls](docs/evidence/guest-settings-3407f84/01-guest-settings.png)
+
+2. Search for **Action sounds** or **Feedback**. The adjacent regex builder belongs to this search. Escape closes it and returns focus to its opener.
+3. Focus the **Action sounds** checkbox and press Space to mute the cues. The browser saves the choice across reloads. School mode pauses cues and keeps the saved switch position.
+4. Return to **Virtual Commons** after verifying a temporary sign-in. Choosing a valid personal wording file shows the applied result. Choosing an invalid replacement preserves the active wording and shows the rejection message. The visible result works with sound muted.
+
+The [verification receipt](docs/evidence/guest-settings-3407f84/receipt.json) covers an isolated portal build in English. The cues were observed in the browser with its audio output muted. The live kiosk workflow and additional language and layout checks remain open.
+
 ## Personal wording walkthrough
 
 <details>

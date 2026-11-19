@@ -26,6 +26,12 @@ See the [illustrated wording walkthrough](../README.md#virtual-commons-wording-w
 
 In the edition picker, a file entry for `Microsoft Windows` also supplies wording for the `Windows` product name in the shipped labels. Explicit entries for `Windows` or a complete edition label take precedence. You can reopen the upload control after a checkout validation message while your original wording access is still active.
 
+### Change display and wording feedback
+
+From the guest portal, choose **Tools**, then **Settings**. Use the Settings search or its adjacent regex builder to find a display control or **Action sounds**. Turn the checkbox off under **Feedback** to mute the cues for applied and rejected wording files. The browser keeps the choice after a reload and still displays each outcome. School mode pauses cues while retaining the saved choice.
+
+Follow the [illustrated Settings walkthrough](../README.md#guest-settings-and-action-sounds) for the keyboard controls and the [isolated browser receipt](evidence/guest-settings-3407f84/receipt.json) for the verified scope.
+
 ## Configure the destinations
 
 For a kiosk using a remote native agent, use the agent's approved HTTPS trust settings and configure its guest key. See [Read the agent key from a protected file](features/http-api/portal-agent-key-file.md) for the read-only guest mount.

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "3407f84bd7538bc16a370bfe6087300e9fc02c62",
+  "image": "sha256:cb0219d714d45974e5e26e757ec0ac12c7f21ff50fcb275087670391b29e3948",
+  "localImageArchiveSha256": "e80325fda7106635ff85bce5fee9ca09aa33466f74bab59108fac3445ac8473f",
+  "browser": "Microsoft Edge 157.0.4341.46",
+  "captureRoute": "cheap-lowlevel-headless",
+  "language": "en",
+  "theme": "dark",
+  "reducedMotion": true,
+  "records": [
+    {
+      "id": "guest-settings-desktop",
+      "active": true,
+      "path": "docs/evidence/guest-settings-3407f84/01-guest-settings.png",
+      "sourceCommit": "3407f84bd7538bc16a370bfe6087300e9fc02c62",
+      "artifactSha256": "e80325fda7106635ff85bce5fee9ca09aa33466f74bab59108fac3445ac8473f",
+      "captureSha256": "1efe634041248ac699a183a26a2f9658944d69726b70bc240c7bbb3f6ab099e0",
+      "screen": "Guest Settings",
+      "state": "guest-settings-desktop",
+      "theme": "dark",
+      "viewportWidth": 1440,
+      "viewportHeight": 1000,
+      "scale": 1,
+      "interactionProofId": "guest-settings-desktop",
+      "interactionReceiptSha256": "1077a7d22b98ce6b457b81c30cedbe37e9506a2e6b2bb81dae78873f82abfdf3",
+      "inspectionStatus": "inspected",
+      "capturedAt": "2026-11-19T14:05:54.448Z"
+    }
+  ],
+  "isolatedInteraction": {
+    "toolsNavigation": true,
+    "settingsSearchAndRegexKeyboard": true,
+    "appliedAndRejectedOscillators": 2,
+    "mutePersistsAndKeepsVisibleResult": true,
+    "syntheticSignInRetired": true
+  },
+  "checks": {
+    "exceptions": 0,
+    "consoleErrors": 0,
+    "otherOrigins": 0,
+    "unexpectedHttp": 0
+  },
+  "limits": "The desktop screenshot records only the opening and layout of Settings. A separate isolated session exercised the narrow controls and observed browser audio sources with audio output muted. The hosted kiosk and native Remote Desktop sign-in require separate verification."
+}

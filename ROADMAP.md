@@ -49,6 +49,8 @@
 - [x] Record how to select, apply, reload and clear personal wording in the built management portal. [Illustrated steps](README.md#personal-wording-walkthrough)
 - [ ] Verify local wording and outcome cues across the Deployer notification drawer, its search, and the remaining dynamic surfaces.
 - [x] Verify the management action-sound switch and wording outcomes in the built portal, including a rejected file, a blocked save, browser restart and school mode. [Illustrated steps and receipt](README.md#management-action-sounds-walkthrough)
+- [x] Add guest Settings with independent search, display controls and a mute switch. Exercise the Tools route, cue outcomes and mute across a reload in an isolated build. [Guest walkthrough](README.md#guest-settings-and-action-sounds)
+- [ ] Verify the deployed guest and kiosk Settings flows, including the full language, theme, scale, accessibility and School mode coverage.
 - [ ] Complete management personal-wording verification across the remaining dynamic copy surfaces.
 - [x] Verify the rebuilt management notification centre with filtered bulk actions, guarded deletion, account-scoped history and reversible local wording. [Illustrated steps and receipt](README.md#management-notification-walkthrough)
 - [ ] Complete the remaining feature implementation and runtime verification on every applicable surface.
@@ -56,6 +58,7 @@
 - [x] Generate a phone-sized PDF from the documentation and prepared wiki, verify its contents and internal links, and attach it to the normal release. [Release readback](docs/evidence/documentation-disclosures-v114.json)
 - [x] Build and launch the standalone documentation reader locally. Verify offline search, the Virtual Commons guide, and the prepared operator wiki.
 - [x] Verify the standalone documentation executable from a normal release. [Offline documentation walkthrough](README.md#standalone-offline-documentation)
+- [x] Verify the published v1.0.122 documentation reader preserves the exact bytes of its bundled evidence and feature inventory. [Release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.122)
 - [x] Verify the source-bound documentation executable downloaded from the v1.0.74 release.
 - [x] Record the guest checklist and both Virtual Commons guide paths from a source-bound local offline build. [Illustrated steps](README.md#guided-checkout-walkthrough)
 - [x] Verify the guided documentation on GitHub Pages and in the downloadable v1.0.75 offline reader.

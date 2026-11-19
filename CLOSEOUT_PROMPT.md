@@ -1,6 +1,10 @@
 # Continue TempDesk lab verification
 
 ```text
+The guest Settings build at 3407f84bd7538bc16a370bfe6087300e9fc02c62 provides searchable display controls and a persistent mute switch for Virtual Commons wording outcomes. The isolated browser opened Settings through Tools, exercised the adjacent regex builder, observed the applied and rejected cues, and retained mute after reload. See the guest Settings walkthrough and its evidence receipt in README.md. Qualify the deployed guest and kiosk separately. The published v1.0.122 documentation reader at 7cf2ec7954dc7482c2e0aa163b5ea5f405c0a35f opened the guides and prepared wiki with exact source bytes for nine checked files.
+
+The Kiosk Windows 11 choice assigns a dedicated single-seat Remote Desktop workstation. Finish the supported VMware encryption and virtual TPM setup, install a supported edition, join the domain, and enroll the trusted seat broker. Verify the connection file, native temporary sign-in, expiry, and seat release before enabling that destination. Keep the directory controller separate from the session hosts. Product test suites remain deferred.
+
 The deployed documentation and normal v1.0.114 release match source revision a6dc6470648de286e80f62aa578e9a72eaa77d2d. The released portable executable opened the guest walkthrough and verified four bundled images. The matching phone PDF has 45 articles and 189 internal links. See docs/evidence/documentation-disclosures-v114.json.
 
 The normal v1.0.115 Portal Host wizard at source 433fe5280e3f890b2c40edd55c75888ba3e896b8 reopened the saved project with a different setup draft. Native background Tab and Enter triggered the recheck. Both isolated endpoints verified with their original container IDs and start times. The matching released offline reader opened the guide and matched both bundled images. The phone PDF includes the walkthrough on pages 77 through 79. See docs/evidence/portal-host-reopen-ff5b6b4/receipt.json. Continue native Virtual Commons setup and expiry verification while preserving the existing portal deployment. Product test suites remain deferred.

@@ -24,5 +24,6 @@ The project README includes a guest sign-in walkthrough for verifying account cr
 
 - [Configure the destinations](../../VIRTUAL-COMMONS.md#configure-the-destinations) to make each edition available.
 - [Add a Kiosk Windows 11 workstation](../../VIRTUAL-COMMONS.md#add-a-kiosk-windows-11-workstation) for a single-seat Remote Desktop checkout.
+- [Change display and wording feedback](../../VIRTUAL-COMMONS.md#change-display-and-wording-feedback) in guest Settings.
 - [Apply the settings](../../VIRTUAL-COMMONS.md#apply-the-settings) using the instructions for the portal host.
 - [Verify a checkout](../../VIRTUAL-COMMONS.md#verify-a-checkout) from the client network.
