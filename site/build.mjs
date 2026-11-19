@@ -351,6 +351,7 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}`;
   const inventory = await readInventory(new URL('../', import.meta.url));
   const localAttachments = new Set([
     inventoryPath,
+    'docs/evidence/appliance-candidates-v119.json',
     'docs/evidence/appliance-rpi4-a613c4c.json',
     'docs/evidence/appliance-x86-1583b87.json',
     'docs/evidence/guest-sign-in-v111/receipt.json',
@@ -361,6 +362,7 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}`;
     'docs/evidence/virtual-commons-attachments.json',
     'docs/evidence/virtual-commons-checkout.json',
     'docs/evidence/virtual-commons-dim-sum-6f6cb7f/receipt.json',
+    'docs/evidence/virtual-commons-picker-outcomes-c2aec2e/receipt.json',
     'docs/evidence/virtual-commons-picker-wording.json',
   ]);
   for (const attachment of localAttachments) {

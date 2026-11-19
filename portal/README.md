@@ -86,10 +86,12 @@ The builder uses files from the current Git commit. It prints the new
 layout, appliance source, portal release source, OCI index and platform
 manifest, installed package versions, and the embedded OCI archive SHA-256.
 Record the digest before copying or extracting the image. The x86_64 route
-requires UEFI. The arm64 layout targets a Pi 4 with Ethernet. Read the
+requires UEFI. The arm64 layout targets a Pi 4 with Ethernet. The
+[v1.0.119 candidate and boot receipt](../docs/evidence/appliance-candidates-v119.json)
+records both native builds and the two configured Pi 4 emulator boots. The
 [x86 configured boot and restart receipt](../docs/evidence/appliance-x86-1583b87.json),
-the [Pi 4 board emulation receipt](../docs/evidence/appliance-rpi4-a613c4c.json),
-and the [delivery checklist](../ROADMAP.md) for the current verification scope.
+[earlier Pi 4 board emulation receipt](../docs/evidence/appliance-rpi4-a613c4c.json),
+and [delivery checklist](../ROADMAP.md) document the remaining verification scope.
 
 ### Configure the appliance
 
