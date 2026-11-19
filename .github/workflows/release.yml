@@ -22,14 +22,10 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
       - name: Check release source and tools
         shell: pwsh
         run: |
-          foreach ($tool in @('gh', 'git', 'python', 'cmd')) {
+          foreach ($tool in @('gh', 'git', 'cmd')) {
             if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) { throw "Missing release tool $tool on windows-2025." }
           }
           if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Publish from the main branch.' }
@@ -52,32 +48,53 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.ver.outputs.version }}
         run: |
-          # Squirrel makes a delta against the newest previous full package. Syncing the whole
-          # GitHub feed downloads every old package in parallel and fails on file locks, so only
-          # the newest full package and a one-line RELEASES are served to it from a local folder.
-          $prev = gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName'
-          if ($LASTEXITCODE -ne 0) { throw 'Cannot list previous releases.' }
-          if (-not $prev) { Write-Host 'No previous release: full package only.'; exit 0 }
-          $seed = Join-Path $env:RUNNER_TEMP 'squirrel-seed'
-          New-Item -ItemType Directory -Force -Path $seed | Out-Null
-          gh release download $prev --pattern RELEASES --dir $seed --clobber
-          $lines = Get-Content (Join-Path $seed 'RELEASES') | Where-Object { $_ -match '-full\.nupkg' }
-          if (-not $lines) { Write-Host 'Previous release has no full package: full package only.'; exit 0 }
-          $newest = $lines | Sort-Object { [version](($_ -split ' ')[1] -replace '^.*-(\d+\.\d+\.\d+)-full\.nupkg$', '$1') } | Select-Object -Last 1
-          $name = ($newest -split ' ')[1]
-          gh release download $prev --pattern $name --dir $seed --clobber
-          [IO.File]::WriteAllText((Join-Path $seed 'RELEASES'), $newest.TrimStart([char]0xFEFF))
-          Start-Process -FilePath python -ArgumentList '-m', 'http.server', '8765', '--bind', '127.0.0.1', '--directory', $seed -WindowStyle Hidden
-          Start-Sleep -Seconds 2
-          "remote=http://127.0.0.1:8765" >> $env:GITHUB_OUTPUT
-          Write-Host "Delta base: $name from $prev"
+          $PSNativeCommandUseErrorActionPreference = $true
+          $current = [version]$env:RELEASE_VERSION
+          $tags = gh release list --exclude-drafts --exclude-pre-releases --limit 100 --json tagName --jq '.[].tagName'
+          $older = foreach ($tag in $tags) {
+            if ($tag -cmatch '^v(\d+\.\d+\.\d+)$') {
+              $number = [version]$Matches[1]
+              if ($number -lt $current) { $number }
+            }
+          }
+          $selected = $null
+          foreach ($previous in ($older | Sort-Object -Descending)) {
+            $tag = "v$previous"
+            $name = "TempDeskDeployer-$previous-full.nupkg"
+            $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" | ConvertFrom-Json
+            $package = $release.assets | Where-Object { $_.name -ceq $name -and $_.state -ceq 'uploaded' }
+            $manifest = $release.assets | Where-Object { $_.name -ceq 'RELEASES' -and $_.state -ceq 'uploaded' }
+            if (!$release.draft -and !$release.prerelease -and $package -and $manifest) {
+              $selected = @($package, $manifest)
+              break
+            }
+          }
+          if (!$selected) { Write-Host 'No older compatible release: full package only.'; exit 0 }
+
+          $seed = Join-Path $env:RUNNER_TEMP ('squirrel-seed-' + [guid]::NewGuid().ToString('N'))
+          New-Item -ItemType Directory -Path $seed | Out-Null
+          gh release download $tag --pattern RELEASES --pattern $name --dir $seed
+          foreach ($asset in $selected) {
+            $file = Get-Item -LiteralPath (Join-Path $seed $asset.name)
+            if ($file.Length -le 0 -or $file.Length -ne $asset.size) { throw 'Previous release asset size mismatch.' }
+            if ($asset.digest -and ('sha256:' + (Get-FileHash -LiteralPath $file.FullName).Hash.ToLowerInvariant()) -cne $asset.digest) {
+              throw 'Previous release asset digest mismatch.'
+            }
+          }
+          $feed = Join-Path $seed 'RELEASES'
+          $rows = @(Get-Content -LiteralPath $feed | Where-Object { ($_ -split '\s+')[1] -ceq $name })
+          if ($rows.Count -ne 1) { throw 'Previous release feed does not name exactly one matching full package.' }
+          [IO.File]::WriteAllLines($feed, [string[]]$rows)
+          "directory=$seed" >> $env:GITHUB_OUTPUT
+          Write-Host "Delta base: $name from $tag"
 
       - name: Build and package the installer (unsigned)
         shell: cmd
         env:
           TEMPDESK_VERSION: ${{ steps.ver.outputs.version }}
-          TEMPDESK_REMOTE_RELEASES: ${{ steps.prev.outputs.remote }}
+          TEMPDESK_SQUIRREL_SEED: ${{ steps.prev.outputs.directory }}
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: build-installer.bat /s
 

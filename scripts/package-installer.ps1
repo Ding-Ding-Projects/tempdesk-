@@ -28,13 +28,49 @@ try {
         if (-not $uri.IsAbsoluteUri -or $uri.Scheme -ne 'https' -or $uri.UserInfo -or $uri.Query -or $uri.Fragment) { throw 'Unsafe previous-release URL.' }
         $arguments += "-c.squirrelWindows.remoteReleases=$($uri.AbsoluteUri)"
     }
+    $new = Join-Path $stage 'squirrel-windows'
+    if ($env:TEMPDESK_SQUIRREL_SEED) {
+        if ($env:TEMPDESK_REMOTE_RELEASES) { throw 'Configure only one previous-release source.' }
+        if ($env:TEMPDESK_SQUIRREL_SEED -notmatch '^[a-zA-Z]:[\\/]') {
+            throw 'The Squirrel seed must be a local directory.'
+        }
+        $seed = Get-Item -LiteralPath $env:TEMPDESK_SQUIRREL_SEED
+        if (!$seed.PSIsContainer -or ($seed.Attributes -band [IO.FileAttributes]::ReparsePoint) -or
+            [IO.DriveInfo]::new($seed.PSDrive.Root).DriveType -ne [IO.DriveType]::Fixed) {
+            throw 'The Squirrel seed must be a regular directory on a fixed drive.'
+        }
+        $seedFeed = Get-Item -LiteralPath (Join-Path $seed.FullName 'RELEASES')
+        if ($seedFeed.PSIsContainer -or ($seedFeed.Attributes -band [IO.FileAttributes]::ReparsePoint) -or $seedFeed.Length -gt 512) {
+            throw 'Expected a small regular Squirrel seed feed.'
+        }
+        $entry = (Get-Content -LiteralPath $seedFeed.FullName -Raw).Trim()
+        if ($entry -cnotmatch '^([a-fA-F0-9]{40})\s+(TempDeskDeployer-(\d+\.\d+\.\d+)-full\.nupkg)\s+(\d+)$') {
+            throw 'Expected one previous TempDesk full package in the Squirrel seed feed.'
+        }
+        $hash, $name, $previousVersion, $size = $Matches[1], $Matches[2], [version]$Matches[3], [long]$Matches[4]
+        if ($previousVersion -ge [version]$version) { throw 'The Squirrel seed must be older than this build.' }
+        $seedPackage = Get-Item -LiteralPath (Join-Path $seed.FullName $name)
+        if ($seedPackage.PSIsContainer -or ($seedPackage.Attributes -band [IO.FileAttributes]::ReparsePoint) -or
+            $seedPackage.Length -le 0 -or $seedPackage.Length -ne $size -or
+            (Get-FileHash -LiteralPath $seedPackage.FullName -Algorithm SHA1).Hash -ine $hash) {
+            throw 'The Squirrel seed package does not match its feed.'
+        }
+        [IO.Directory]::CreateDirectory($new) | Out-Null
+        $stagedSeed = Join-Path $new $name
+        Copy-Item -LiteralPath $seedPackage.FullName -Destination $stagedSeed
+        if ((Get-FileHash -LiteralPath $stagedSeed -Algorithm SHA1).Hash -ine $hash) { throw 'The copied Squirrel seed does not match its feed.' }
+        [IO.File]::WriteAllLines((Join-Path $new 'RELEASES'), [string[]]@($entry))
+    }
     Push-Location -LiteralPath $app
     try {
         & $nodeExe @arguments
         $code=$LASTEXITCODE
     } finally { Pop-Location }
     if ($code -ne 0) { exit $code }
-    $new=Join-Path $stage 'squirrel-windows'
+    if ($env:TEMPDESK_SQUIRREL_SEED) {
+        $delta = Get-Item -LiteralPath (Join-Path $new "TempDeskDeployer-$version-delta.nupkg")
+        if ($delta.Length -le 0) { throw 'Squirrel did not create the expected delta from the local seed.' }
+    }
     $setup=Get-Item -LiteralPath (Join-Path $new "TempDeskDeployer-Setup-$version.exe")
     if ($setup.Length -le 0 -or (Get-AuthenticodeSignature -LiteralPath $setup.FullName).Status -ne 'NotSigned') { throw 'Expected a non-empty unsigned installer.' }
     $full=Get-Item -LiteralPath (Join-Path $new "TempDeskDeployer-$version-full.nupkg")
