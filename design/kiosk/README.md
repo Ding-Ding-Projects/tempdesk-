@@ -23,3 +23,5 @@ The ISO picker has an adjacent optional publisher-digest field. Preview reports 
 ## Guest checkout result
 
 Use the existing guest confirmation card. Label the workstation **Computer edition** and leave the connection-file action in place. The dim sum result uses the existing stacked guest card. Place the dish, outcome and retry before the photo so the retry stays in the same position while the photo resolves. Display the photo up to 480 pixels wide, limited by the card width, with a localized dish description. If the photo is unavailable, use the existing hint style below the retry.
+
+The wording control uses the existing picker and its status line. A valid file changes the picker labels and application messages in place. A rejected replacement keeps the current labels and uses the same wording for the rejection message. Clearing the file restores the original copy in place.

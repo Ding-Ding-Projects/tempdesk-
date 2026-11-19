@@ -11,6 +11,7 @@
 - [x] Verify scoped confirmations, both attachment destinations, retry and temporary account removal against a real isolated directory. [Attachment receipt](docs/evidence/virtual-commons-attachments.json)
 - [x] Verify automatic downloads and keyboard retries for both editions. Check the checkout label across 48 layout combinations. Capture edition selection, confirmation, and retry from the built kiosk. [Browser walkthrough](README.md#browser-attachment-walkthrough)
 - [x] Verify local edition wording, invalid file handling, clear and validation recovery in a built guest portal. [Picker receipt](docs/evidence/virtual-commons-picker-wording.json)
+- [ ] Verify picker controls, unavailable choices, application validation and upload results while replacing or clearing the local wording file. [Picker guide](docs/VIRTUAL-COMMONS.md#use-virtual-commons)
 - [ ] Exercise edition wording on the configured live kiosk alongside a verified checkout session.
 - [x] Prepare a separate powered-off VMware workstation and verify the installer and credential-free setup DVD hashes.
 - [x] Verify the dedicated powered-off workstation is configured on the private lab directory segment.

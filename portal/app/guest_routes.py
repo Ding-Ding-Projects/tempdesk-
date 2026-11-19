@@ -15,7 +15,7 @@ from .agent_client import AgentError, AgentUnavailable
 from . import commons_handoff
 from .kiosk_seat import KioskSeatBroker, KioskSeatUnavailable, parse_expiry
 from .security import CSP_COMMONS_DIM_SUM, ONCE_COOKIE, client_ip
-from .web import PREF_SCHOOL, agent_message, csrf_protect, redirect, render, set_cookie, translator_for
+from .web import PREF_SCHOOL, agent_message, agent_notice, csrf_protect, redirect, render, set_cookie, translator_for
 
 router = APIRouter()
 USERNAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,20}$")
@@ -211,8 +211,10 @@ async def create(request: Request):
         return await _render_home(request, pub, values, status=503, error_key=KIOSK_UNAVAILABLE)
     except AgentError as exc:
         if exc.code in ("rate_limited", "conflict", "bad_request", "forbidden"):
+            error_context = ({"error_notice": agent_notice(request, exc)} if commons
+                             else {"error_text": agent_message(request, exc)})
             return await _render_home(request, pub, values, status=exc.status if exc.status < 500 else 502,
-                                      error_text=agent_message(request, exc))
+                                      **error_context)
         raise
     if commons:
         path = commons_handoff.confirmation_path(commons_handoff.new_reference())

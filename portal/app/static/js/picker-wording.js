@@ -18,6 +18,9 @@
   const file = panel.querySelector("input");
   const clear = panel.querySelector("[data-wording-clear]");
   const status = panel.querySelector("[data-wording-status]");
+  const outcomes = Object.fromEntries(["empty", "applied", "invalid"].map(kind => [
+    kind, panel.querySelector(`[data-wording-${kind}]`).content.textContent.trim()
+  ]));
   const wording = window.TempDeskWording;
   const expires = Date.now() + Number(panel.dataset.wordingSeconds) * 1000;
   const labels = [];
@@ -25,17 +28,18 @@
     const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT);
     while (walker.nextNode()) labels.push([walker.currentNode, walker.currentNode.data]);
   }
-  const show = (state) => {
-    status.textContent = panel.querySelector(`[data-wording-${state}]`).content.textContent.trim();
-  };
-  const apply = (translate) => {
-    for (const [node, original] of labels) node.data = translate ? translate(original) : original;
-    clear.disabled = !translate;
+  let translate = null;
+  const render = (kind, next = translate) => {
+    const message = next ? next(outcomes[kind]) : outcomes[kind];
+    const text = labels.map(([, original]) => next ? next(original) : original);
+    labels.forEach(([node], index) => { node.data = text[index]; });
+    translate = next;
+    status.textContent = message;
+    clear.disabled = next === null;
   };
   const reset = () => {
     file.value = "";
-    apply(null);
-    show("empty");
+    render("empty", null);
   };
   file.addEventListener("change", async () => {
     const selected = file.files[0];
@@ -44,10 +48,9 @@
       if (selected.size > wording.MAX_BYTES) throw new Error("File size");
       const entries = wording.validate(new Uint8Array(await selected.arrayBuffer()));
       if (file.files[0] !== selected || Date.now() >= expires) return;
-      apply(wording.buildTranslator(withEditionProductName(entries)));
-      show("applied");
+      render("applied", wording.buildTranslator(withEditionProductName(entries)));
     } catch {
-      if (file.files[0] === selected) show("invalid");
+      if (file.files[0] === selected && Date.now() < expires) render("invalid");
     }
   });
   clear.addEventListener("click", reset);

@@ -36,16 +36,16 @@
   {% if pub.commonsEnabled %}
   <form id="virtual-commons" class="card lg stack rise" method="post" action="/create">
     {{ csrf() }}
-    <h2>{{ t('Virtual Commons') }}</h2>
+    <h2 data-picker-wording>{{ t('Virtual Commons') }}</h2>
     <input type="hidden" name="checkout" value="commons">
-    {% if error_key and values.get("commons") %}<p class="alert error" role="alert">{{ tr.html(error_key, serious=True) }}</p>{% endif %}
-    {% if error_text and values.get("commons") %}<p class="alert error" role="alert">{{ error_text }}</p>{% endif %}
+    {% if error_key and values.get("commons") %}<p class="alert error" role="alert" data-picker-wording>{{ tr.html(error_key, serious=True) }}</p>{% endif %}
+    {% if error_notice and values.get("commons") %}<p class="alert error" role="alert"><span data-picker-wording>{{ tr.plain(error_notice.key, serious=True) }}</span>{% if error_notice.detail %} {{ error_notice.detail }}{% endif %}</p>{% endif %}
     <div class="field">
-      <label for="commons-name">{{ t('Your name') }} <span class="optional">({{ t('optional') }})</span></label>
+      <label for="commons-name" data-picker-wording>{{ t('Your name') }} <span class="optional">({{ t('optional') }})</span></label>
       <input id="commons-name" name="displayName" maxlength="64" autocomplete="name" value="{{ values.get('displayName', '') if values.get('commons') else '' }}">
     </div>
     <fieldset>
-      <legend>{{ t('How long do you need it?') }}</legend>
+      <legend data-picker-wording>{{ t('How long do you need it?') }}</legend>
       <div class="choice-grid">
         {% for c in pub.commonsExpiryChoices %}
         <label class="choice"><input type="radio" name="expiryId" value="{{ c.id }}" {% if values.get('commons') and values.get('expiryId') == c.id %}checked{% endif %} required> {{ c.label }}</label>
@@ -54,22 +54,22 @@
     </fieldset>
     {% if pub.commonsPickEdition %}
     <fieldset>
-      <legend>{{ t('Computer edition' if pub.commonsHasKiosk else 'Server edition') }}</legend>
+      <legend data-picker-wording>{{ t('Computer edition' if pub.commonsHasKiosk else 'Server edition') }}</legend>
       <div class="choice-grid">
         {% for value, label in pub.commonsEditionLabels.items() %}
-        <label class="choice"><input type="radio" name="edition" value="{{ value }}" {% if value in pub.commonsEditions %}required{% if values.get('commons') and values.get('edition') == value %} checked{% endif %}{% else %}disabled{% endif %}> <span data-picker-wording>{{ t(label) }}</span>{% if value not in pub.commonsEditions %} ({{ t('Unavailable') }}){% endif %}</label>
+        <label class="choice"><input type="radio" name="edition" value="{{ value }}" {% if value in pub.commonsEditions %}required{% if values.get('commons') and values.get('edition') == value %} checked{% endif %}{% else %}disabled{% endif %}> <span data-picker-wording>{{ t(label) }}</span>{% if value not in pub.commonsEditions %} <span data-picker-wording>({{ t('Unavailable') }})</span>{% endif %}</label>
         {% endfor %}
       </div>
     </fieldset>
     {% endif %}
-    <button type="submit" class="btn filled lg block">{{ t('Virtual Commons: Check out a computer') }}</button>
+    <button type="submit" class="btn filled lg block" data-picker-wording>{{ t('Virtual Commons: Check out a computer') }}</button>
   </form>
   {% if wording_seconds and not school and pub.commonsPickEdition %}
   <section class="card lg stack" id="picker-wording" data-wording-seconds="{{ wording_seconds }}">
-    <label for="picker-wording-file">{{ t('Upload personal wording file') }}</label>
+    <label for="picker-wording-file" data-picker-wording>{{ t('Upload personal wording file') }}</label>
     <input id="picker-wording-file" type="file" accept=".json,application/json">
     <p role="status" data-wording-status>{{ t('No file loaded. The original wording is used.') }}</p>
-    <button class="btn" type="button" data-wording-clear>{{ t('Clear personal wording (restore original wording)') }}</button>
+    <button class="btn" type="button" data-wording-clear data-picker-wording>{{ t('Clear personal wording (restore original wording)') }}</button>
     <template data-wording-applied>{{ t('Personal wording applied') }}</template>
     <template data-wording-invalid>{{ t('This file was not applied') }}</template>
     <template data-wording-empty>{{ t('No file loaded. The original wording is used.') }}</template>

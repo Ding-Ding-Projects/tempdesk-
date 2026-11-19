@@ -20,6 +20,8 @@ If the photo catalogue is unavailable, the dish name and **Try again** stay avai
 
 To use personal wording for the edition labels, verify an active guest sign-in under **Check my sign-in**, then return to **Virtual Commons**. Upload a wording JSON file or use **Clear personal wording** to restore the shipped labels. The file is processed in the current page and is never uploaded to the server. Wording clears when you leave the page or when the temporary wording access expires, whichever comes first.
 
+The active file also applies to the picker controls, unavailable labels, built-in validation messages, and the wording upload result. If a replacement is rejected, the picker and the message continue to use the last valid file. Account data, operator-defined duration labels, and agent diagnostics retain their original text.
+
 In the edition picker, a file entry for `Microsoft Windows` also supplies wording for the `Windows` product name in the shipped labels. Explicit entries for `Windows` or a complete edition label take precedence. You can reopen the upload control after a checkout validation message while your original wording access is still active.
 
 ## Configure the destinations
