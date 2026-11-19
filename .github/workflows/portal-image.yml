@@ -1,9 +1,17 @@
 name: Publish TempDesk portal image
 
 on:
-  push:
-    branches: [main]
+  workflow_call:
+    inputs:
+      release_tag:
+        required: true
+        type: string
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Normal release tag for the selected main revision
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -35,17 +43,39 @@ jobs:
       - name: Verify publisher dependencies and source
         shell: bash
         run: |
-          for dependency in docker git jq node tar timeout; do
+          for dependency in docker gh git jq node tar timeout; do
             command -v "$dependency" >/dev/null || { echo "Missing publisher dependency: $dependency"; exit 1; }
           done
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main
+
+      - name: Accept the source-bound normal release
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ && "${#RELEASE_TAG}" -le 65 ]] ||
+            { echo 'Expected an exact versioned release tag.'; exit 1; }
+          route="repos/$GITHUB_REPOSITORY"
+          gh api "$route/releases/tags/$RELEASE_TAG" |
+            jq -e --arg tag "$RELEASE_TAG" \
+              '.tag_name == $tag and .draft == false and .prerelease == false and (.published_at | type == "string")' >/dev/null ||
+            { echo 'The requested normal release could not be verified.'; exit 1; }
+          gh api "$route/git/ref/tags/$RELEASE_TAG" |
+            jq -e --arg tag "refs/tags/$RELEASE_TAG" --arg sha "$GITHUB_SHA" \
+              '.ref == $tag and .object.type == "commit" and .object.sha == $sha' >/dev/null ||
+            { echo 'The release tag does not point directly to the checked-out source.'; exit 1; }
+          printf 'tag=%s\nversion=%s\n' "$RELEASE_TAG" "${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
 
       - name: Build, publish, and verify the portal image
         id: publish
         shell: bash
         env:
           REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TEMPDESK_PORTAL_VERSION: ${{ steps.release.outputs.version }}
         run: |
           set -euo pipefail
           [[ "$GITHUB_SHA" =~ ^[a-f0-9]{40}$ ]]
@@ -72,21 +102,30 @@ jobs:
             fi
           }
 
+          verify_identity() {
+            local candidate="$1" labels container stamp
+            labels="$(docker image inspect "$candidate" --format '{{json .Config.Labels}}')" || return 1
+            jq -e --arg source "$SOURCE_URL" --arg revision "$GITHUB_SHA" --arg version "$TEMPDESK_PORTAL_VERSION" \
+              '.["org.opencontainers.image.source"] == $source and .["org.opencontainers.image.revision"] == $revision
+                and .["org.opencontainers.image.version"] == $version' <<< "$labels" >/dev/null || return 1
+
+            container="$(docker create --network none "$candidate")" || return 1
+            stamp="$(mktemp "$registry_config/provenance.XXXXXX")" || return 1
+            if ! timeout 15 docker cp "$container:/app/app/build-provenance.json" "$stamp" ||
+                ! docker rm --volumes "$container" >/dev/null; then
+              docker rm --volumes "$container" >/dev/null 2>&1 || true
+              return 1
+            fi
+            [[ -f "$stamp" && ! -L "$stamp" ]] || return 1
+            jq -e --arg version "$TEMPDESK_PORTAL_VERSION" --arg revision "$GITHUB_SHA" \
+              '.schema == 1 and .version == $version and .revision == $revision' "$stamp" >/dev/null
+          }
+
           verify() {
-            local labels
             digest="$(docker image inspect "$ref" --format '{{json .RepoDigests}}' |
               jq -er --arg prefix "$IMAGE@" 'map(select(startswith($prefix))) | if length == 1 then .[0] | split("@")[1] else empty end')" || return 1
             [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]] || return 1
-            labels="$(docker image inspect "$IMAGE@$digest" --format '{{json .Config.Labels}}')" || return 1
-            jq -e --arg source "$SOURCE_URL" --arg revision "$GITHUB_SHA" \
-              '.["org.opencontainers.image.source"] == $source and .["org.opencontainers.image.revision"] == $revision' \
-              <<< "$labels" >/dev/null || return 1
-            version="$(jq -er '.["org.opencontainers.image.version"] | select(type == "string")' <<< "$labels")" || return 1
-            [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)([-+][0-9A-Za-z.-]+)?$ && "${#version}" -le 64 ]] || return 1
-            docker --config "$registry_config" run --rm --network none --read-only \
-              --entrypoint python "$IMAGE@$digest" \
-              -c 'import json, sys; from pathlib import Path; stamp = json.loads(Path("/app/app/build-provenance.json").read_text()); sys.exit((stamp["revision"], stamp["version"]) != tuple(sys.argv[1:]))' \
-              "$GITHUB_SHA" "$version"
+            verify_identity "$IMAGE@$digest"
           }
 
           state=
@@ -94,7 +133,7 @@ jobs:
           push_confirmed=false
           for attempt in 1 2 3 4; do
             if probe; then
-              verify || { echo 'The source tag failed provenance verification.'; exit 1; }
+              verify || { echo 'The existing tag disagrees with the verified release identity. Its digest was preserved.'; exit 1; }
               published_id="$(docker image inspect "$IMAGE@$digest" --format '{{.Id}}')"
               if [[ -n "$built_id" && "$published_id" == "$built_id" ]]; then
                 state=published
@@ -112,6 +151,7 @@ jobs:
               if [[ -z "$built_id" ]]; then
                 local_ref="tempdesk-portal-build:$tag"
                 node scripts/build-portal-image.cjs "$local_ref"
+                verify_identity "$local_ref" || { echo 'The local build does not match the verified release.'; exit 1; }
                 built_id="$(docker image inspect "$local_ref" --format '{{.Id}}')"
                 # Recheck the tag after the build and before the first upload.
                 continue
@@ -126,7 +166,7 @@ jobs:
           [[ -n "$state" ]] || { echo 'The registry did not confirm publication within the retry limit.'; exit 1; }
           {
             printf 'digest=%s\n' "$digest"
-            printf 'version=%s\n' "$version"
+            printf 'version=%s\n' "$TEMPDESK_PORTAL_VERSION"
             printf 'state=%s\n' "$state"
           } >> "$GITHUB_OUTPUT"
           printf 'Verified %s@%s (%s).\n' "$IMAGE" "$digest" "$state"
@@ -139,13 +179,15 @@ jobs:
           PUBLISH_OUTCOME: ${{ job.status }}
           PUBLISH_STATE: ${{ steps.publish.outputs.state }}
           PUBLISH_VERSION: ${{ steps.publish.outputs.version }}
+          ACCEPTED_RELEASE_TAG: ${{ steps.release.outputs.tag }}
           PUBLISH_DIGEST: ${{ steps.publish.outputs.digest }}
         run: |
           jq -n --arg image "$IMAGE" --arg source "$SOURCE_URL" --arg revision "$GITHUB_SHA" \
             --arg state "$PUBLISH_STATE" --arg version "$PUBLISH_VERSION" --arg digest "$PUBLISH_DIGEST" \
-            --arg outcome "$PUBLISH_OUTCOME" --arg run "$GITHUB_RUN_ID" --arg attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg releaseTag "$ACCEPTED_RELEASE_TAG" --arg outcome "$PUBLISH_OUTCOME" --arg run "$GITHUB_RUN_ID" --arg attempt "$GITHUB_RUN_ATTEMPT" \
             '{schemaVersion: 1, image: $image, source: $source, revision: $revision, tag: ("sha-" + $revision),
               state: (if $state == "" then $outcome else $state end), runId: $run, runAttempt: $attempt,
+              releaseTag: (if $releaseTag == "" then null else $releaseTag end),
               version: (if $version == "" then null else $version end),
               digest: (if $digest == "" then null else $digest end),
               immutableReference: (if $digest == "" then null else $image + "@" + $digest end)}' \
