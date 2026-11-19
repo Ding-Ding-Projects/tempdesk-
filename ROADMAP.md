@@ -38,7 +38,7 @@
 - [ ] Release both verified appliance images and connect them to the virtual machine and physical-media deployment workflows.
 - [x] Use the published Portal Host wizard on the supported Windows host to cancel before startup, start both portals, and recheck health with the same container identities and start times. [Verification receipt](docs/evidence/guest-sign-in-v111/receipt.json)
 - [x] Reopen the rebuilt wizard and recheck a saved deployment from the opening step. Verify both endpoint results and unchanged container identities and start times. [Verification receipt](docs/evidence/portal-host-reopen-ff5b6b4/receipt.json)
-- [ ] Verify the saved-project recheck in the next published wizard and exercise physical keyboard navigation.
+- [x] Verify the saved-project recheck in the published v1.0.115 wizard through native Tab and Enter. [Release verification](docs/evidence/portal-host-reopen-ff5b6b4/receipt.json)
 - [ ] Verify the Portal Host native file chooser, cancellation during startup, and visual parity at the supported display settings.
 - [x] Inventory the required features across the Deployer, management portal, guest portal, kiosk, public documentation, offline reader, and project delivery. [Verification inventory](docs/FEATURE-INVENTORY.md)
 - [x] Record how to select, apply, reload and clear personal wording in the built management portal. [Illustrated steps](README.md#personal-wording-walkthrough)

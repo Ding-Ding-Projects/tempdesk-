@@ -8,7 +8,7 @@ The normal v1.0.114 release matches the deployed documentation source. The downl
 
 ## Portal Host recovery
 
-The wizard records the project, binding, and accepted publication receipt locally when startup begins. A reopened wizard can use the saved project for a fresh endpoint check after verifying the local engine. The source-bound portable build reopened against an isolated v1.0.114 project with a different setup draft. Fresh checks verified both endpoints with the same container IDs and start times. The English desktop and bilingual 360 px captures show the opening action. Published-wizard verification, physical keyboard delivery, and native Remote Desktop acceptance remain open. [Illustrated walkthrough](README.md#recheck-a-hosted-deployment) · [Verification receipt](docs/evidence/portal-host-reopen-ff5b6b4/receipt.json)
+The wizard records the project, binding, and accepted publication receipt locally when startup begins. A reopened wizard can use the saved project for a fresh endpoint check after verifying the local engine. The source-bound portable build reopened against an isolated v1.0.114 project with a different setup draft. The downloaded normal v1.0.115 wizard also restored a saved project with a different draft. Native background Tab moved focus to the recheck action and Enter triggered it. Both v1.0.115 endpoints verified with the same container IDs and start times. The released offline reader opened the walkthrough and matched both images. The phone PDF contains the workflow on pages 77 through 79. Native Remote Desktop acceptance remains open. [Illustrated walkthrough](README.md#recheck-a-hosted-deployment) · [Verification receipt](docs/evidence/portal-host-reopen-ff5b6b4/receipt.json)
 
 ## Protected portal agent key files
 

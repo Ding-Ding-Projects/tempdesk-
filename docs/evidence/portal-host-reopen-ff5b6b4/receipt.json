@@ -63,5 +63,43 @@
     "captureDesktopReleased": true,
     "captureDebugPortClosed": true
   },
-  "limitations": "The pictures show the saved project action with the synthetic project selected. Live checks for the two fixture roles are recorded separately. Product test suites, physical keyboard delivery and the native Remote Desktop workstation were outside this run."
+  "releasedVerification": {
+    "tag": "v1.0.115",
+    "sourceRevision": "433fe5280e3f890b2c40edd55c75888ba3e896b8",
+    "publishedUtc": "2026-11-19T10:14:39Z",
+    "releaseWorkflowRun": "44500921493",
+    "verifiedManifestEntries": 9,
+    "manifestSha256": "6155c614b23781e7eddcbdd29ef47510c58c15f400ea5cbbcaa30953698fcad3",
+    "wizard": {
+      "filename": "TempDeskPortalHost-1.0.115-portable.exe",
+      "sha256": "e253d9110a3e4a8ce4630c7cb267e560d66174ff023cab1155e865dd46fd16f6",
+      "portalIndexDigest": "sha256:6731b133fb83ed274ffb1c6375e6cdd0e08097bc3096a52820407de04b270406",
+      "restoredWithDifferentDraft": true,
+      "keyboardRoute": "Background Win32 key messages to the verified renderer window",
+      "trustedTabMovedFocus": true,
+      "trustedEnterStartedRecheck": true,
+      "observedRecheckPhases": ["preparing", "checking", "succeeded"],
+      "containerIdentitiesAndStartTimesMatched": true,
+      "guestVerifiedUtc": "2026-11-19T10:25:21Z",
+      "managementVerifiedUtc": "2026-11-19T10:25:22Z",
+      "fixtureServicesRemoved": true,
+      "wizardExited": true
+    },
+    "offlineReader": {
+      "filename": "TempDeskDocs-1.0.115-portable.exe",
+      "sha256": "1c98205e69b2d58d3a7a80b3389685bad6eed1ec330bcff8a4e9f7a2cfb765e1",
+      "walkthroughOpened": true,
+      "bundledWalkthroughImagesMatched": 2
+    },
+    "phonePdf": {
+      "filename": "TempDeskDocs-1.0.115-phone.pdf",
+      "sha256": "379939d654b1f40560fb5023cf9235c30278c4ad30d905ac82e8e87db331ed8d",
+      "pages": 311,
+      "articles": 45,
+      "internalLinks": 189,
+      "walkthroughPages": [77, 78, 79],
+      "walkthroughImagePages": [78, 79]
+    }
+  },
+  "limitations": "The screenshots show the locally built wizard with a synthetic project. The published wizard and documentation artifacts were exercised separately. The keyboard evidence covers native background messages to the wizard. Physical keyboard hardware, product test suites and the native Remote Desktop workstation were outside these checks."
 }
