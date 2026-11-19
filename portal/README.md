@@ -31,6 +31,8 @@ Run `host.bat --detached` from the repository root to pull, start and verify bot
 
 Use the original configuration directory, Compose project name and overlays when updating an existing deployment. Set `TEMPDESK_PORTAL_COMPOSE_OVERRIDES` to the existing override file paths separated by semicolons and supply the protected mount configuration those overlays require. When several network adapters are available, set `TEMPDESK_LAN_ADDRESS` to the intended local IPv4 address. The launcher checks the published port, pulled image identity, container health and visible source revision before reporting success.
 
+The launcher reads the native Compose exit code for each operation. A failed pull or startup yields a nonzero exit status so it can be handled by a calling script.
+
 ## Run from source
 
 ```sh

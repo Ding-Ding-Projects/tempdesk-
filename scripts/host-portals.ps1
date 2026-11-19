@@ -14,6 +14,8 @@ $services = [ordered]@{
 
 function Invoke-Docker {
     param([string[]]$Arguments, [string]$Failure)
+    # Windows PowerShell treats native standard error as error records. Compose also sends progress there.
+    $ErrorActionPreference = 'Continue'
     $result = & $dockerPath --host $linuxEngine @Arguments 2>$null
     if ($LASTEXITCODE -ne 0) { throw $Failure }
     return $result
@@ -57,6 +59,7 @@ function Read-Publication {
 
 function Watch-PortalLogs {
     param([string[]]$Compose, [string[]]$ProtectedValues)
+    $ErrorActionPreference = 'Continue'
     $selected = 'tempdesk-guest'
     $paused = $false
     $lines = @()
