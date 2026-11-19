@@ -9,6 +9,7 @@
 - [x] Roll out v1.0.120 to both lab portals. Read back both roles from a separate LAN client and verify creation, active status, and self-removal of a temporary sign-in. [Live rollout receipt](docs/evidence/portal-rollout-v120.json)
 - [x] Roll out v1.0.123 to both lab portals. Verify guest Settings and its management export boundary from a separate LAN client. Repeat the temporary sign-in lifecycle against the running release. [Live rollout receipt](docs/evidence/portal-rollout-v123.json)
 - [x] Roll out v1.0.126 to both lab portals. Verify the live Settings layout and the temporary sign-in lifecycle. [Live rollout receipt](docs/evidence/portal-rollout-v126.json)
+- [x] Roll out v1.0.133 to both lab portals. Verify both roles from a separate LAN client and confirm creation, active status, removal, and rejection after removal for a finite guest sign-in. [Live rollout receipt](docs/evidence/portal-rollout-v133.json)
 - [x] Verify that the kiosk language search label and its regex controls fit at 360 px and 1440 px.
 - [x] Verify both connection files and guest account checks against an isolated Samba directory. [Checkout receipt](docs/evidence/virtual-commons-checkout.json)
 - [x] Verify scoped confirmations, both attachment destinations, retry and temporary account removal against a real isolated directory. [Attachment receipt](docs/evidence/virtual-commons-attachments.json)
@@ -49,6 +50,7 @@
 - [x] Reopen the rebuilt wizard and recheck a saved deployment from the opening step. Verify both endpoint results and unchanged container identities and start times. [Verification receipt](docs/evidence/portal-host-reopen-ff5b6b4/receipt.json)
 - [x] Verify the saved-project recheck in the published v1.0.115 wizard through native Tab and Enter. [Release verification](docs/evidence/portal-host-reopen-ff5b6b4/receipt.json)
 - [ ] Verify the Portal Host native file chooser, cancellation during startup, and visual parity at the supported display settings.
+- [x] Verify native replacement of a certificate, preserved selection and focus after cancellation, and independent issuer clearing. [Native chooser receipt](docs/evidence/portal-rollout-v133.json)
 - [x] Verify direct HTTPS in an isolated deployment through the built Portal Host wizard, including both certificate pairs, a private issuer, independent endpoint links, and saved-project recheck. [Setup and verification](docs/features/http-api/portal-https.md#use-the-portal-host-wizard) · [Runtime receipt](docs/evidence/portal-host-https-a8fce85/receipt.json)
 - [x] Inventory the required features across the Deployer, management portal, guest portal, kiosk, public documentation, offline reader, and project delivery. [Verification inventory](docs/FEATURE-INVENTORY.md)
 - [x] Record how to select, apply, reload and clear personal wording in the built management portal. [Illustrated steps](README.md#personal-wording-walkthrough)

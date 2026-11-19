@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "release": "v1.0.133",
+  "sourceRevision": "cb8e00a64e45f3674a090bbc134a1d08bfb9eb6c",
+  "publishedUtc": "2026-11-19T19:21:44Z",
+  "workflow": "https://github.com/Ding-Ding-Projects/tempdesk-/actions/runs/44594778530",
+  "imageIndex": "sha256:2349366a215b51f2d8d39984bae81b3c9226cc187035f7861b05972e42bba6a0",
+  "imagePlatforms": [
+    {
+      "os": "linux",
+      "architecture": "amd64",
+      "digest": "sha256:2ee5d80b869674cba963994111db38ecc8699a86f7423c49dd5e5822106e3a83"
+    },
+    {
+      "os": "linux",
+      "architecture": "arm64",
+      "digest": "sha256:9ac76f0666a2b0decee1ca86fb6b65a547b2adea72d69520f70dd6deb5449e82"
+    }
+  ],
+  "releaseManifestAttachmentsMatched": 9,
+  "transport": "HTTP",
+  "roles": {
+    "guest": {
+      "startedUtc": "2026-11-19T19:33:15.838852054Z",
+      "verifiedUtc": "2026-11-19T19:33:29.338357Z",
+      "status": 200,
+      "separateLanClient": true,
+      "storagePortsAndTrustVerified": true,
+      "otherServiceIdentitiesDuringUpdateVerified": true
+    },
+    "management": {
+      "startedUtc": "2026-11-19T19:34:16.270846878Z",
+      "verifiedUtc": "2026-11-19T19:34:27.545244Z",
+      "status": 200,
+      "separateLanClient": true,
+      "storagePortsAndTrustVerified": true,
+      "otherServiceIdentitiesDuringUpdateVerified": true
+    }
+  },
+  "guestLifecycle": {
+    "method": "Ordinary guest forms over container loopback",
+    "finiteDurationSelected": true,
+    "created": true,
+    "active": true,
+    "removed": true,
+    "rejectedAfterRemoval": true,
+    "verifiedUtc": "2026-11-19T19:35:19.961298Z",
+    "directoryGuestCountBefore": 0,
+    "directoryGuestCountAfter": 0
+  },
+  "phonePdf": {
+    "sha256": "8d04524fea5cbb142c08b169c7e7307cea57ae68a571f0bd873a57f74f60055b",
+    "pages": 334,
+    "widthMm": 105.16,
+    "heightMm": 186.94,
+    "articleCount": 46,
+    "wikiCount": 1,
+    "tappableRectanglesVerified": 203,
+    "allInternalDestinationsResolved": true
+  },
+  "portableReaderAttachmentRepair": {
+    "sourceRevision": "44e4e2ebd278bb644ed8d24994044f9090fa8c04",
+    "sha256": "839fc5e2a357a506d8e195b8a7c29082a2b714d9d92abde3c946695fc2068c9b",
+    "missingInReleasedReader": [
+      "docs/evidence/portal-host-https-a8fce85/receipt.json",
+      "docs/evidence/portal-host-https-a8fce85/views.json"
+    ],
+    "repairedFilesReadAndByteMatched": [
+      "docs/evidence/portal-host-https-a8fce85/receipt.json",
+      "docs/evidence/portal-host-https-a8fce85/views.json"
+    ],
+    "ownedProfileRemoved": true,
+    "ownedReaderClosed": true,
+    "portableExecutable": true,
+    "locallyBuiltVersion": "1.0.134",
+    "buildCommand": "build.bat /docs --skip-tests /s",
+    "bundledFilesReadAndByteMatched": 19,
+    "verifiedNavigation": [
+      "workstation guide",
+      "search",
+      "Virtual Commons article",
+      "prepared wiki",
+      "feature inventory"
+    ]
+  },
+  "nativeCertificateChooser": {
+    "build": "1.0.133",
+    "sourceRevision": "a8fce8554a4a17955c6de843fd1207442f6bdfc2",
+    "exeSha256": "917a5f600024de612408c92bea34a516a4eb284503ac0d1cb9865274eeea5306",
+    "nativeReplacementAccepted": true,
+    "cancelPreservedSelection": true,
+    "focusReturned": true,
+    "clearIssuerPreservedCertificatePairs": true,
+    "rendererOnlyReceivedSelectionFlags": true,
+    "firstFileFromEmptyFieldVerified": false
+  },
+  "scope": "The lab portals use Samba. Checkout with a native session host, session expiry and workstation seat release require separate verification.",
+  "guestSettings": {
+    "revision": "cb8e00a64e45f3674a090bbc134a1d08bfb9eb6c",
+    "cases": 12,
+    "languageModes": [
+      "bi",
+      "en",
+      "zh-HK"
+    ],
+    "themes": [
+      "dark",
+      "light"
+    ],
+    "emulatedDisplayScale": 1,
+    "keyboardRegexBuilder": true,
+    "muteAndLanguageRetained": true,
+    "schoolPreferenceIsolated": true,
+    "measuredPointerTargets": 7,
+    "browserLogDiagnostics": 11,
+    "consoleErrors": 0,
+    "unexpectedResourceFailures": 0,
+    "browserClosed": true,
+    "profileRemoved": true,
+    "runtimeVerdict": "interaction observations verified, browser log diagnostics recorded"
+  }
+}

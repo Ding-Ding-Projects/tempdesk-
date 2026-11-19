@@ -37,6 +37,8 @@ The launcher reads the native Compose exit code for each operation. A failed pul
 
 The [v1.0.120 live rollout receipt](../docs/evidence/portal-rollout-v120.json) records an image update for each role using its existing Compose inputs. Both roles were read back from a separate LAN client. The guest kiosk also completed a temporary sign-in lifecycle against the running directory.
 
+The [v1.0.133 rollout receipt](../docs/evidence/portal-rollout-v133.json) records the current published digest, separate LAN checks, and the temporary sign-in round trip against the running Samba directory.
+
 ### Portable Portal Host wizard
 
 Open `TempDeskPortalHost-<version>-portable.exe` from the normal release. The wizard checks the local Docker Desktop Linux engine and reads the accepted publication receipt. Select the protected configuration directory and, if the deployment needs one, a separate reviewed Compose overlay. Choose the local LAN address, the two host ports, and the Compose project name. The project name selects that project's named storage volumes.
