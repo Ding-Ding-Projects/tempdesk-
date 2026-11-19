@@ -16,9 +16,11 @@ The documentation build includes the reviewed Portal Host receipt beside the wal
 
 The portal accepts one agent key from an explicit `AGENT_KEY_FILE` path or its legacy setting. The guest Compose overlay mounts the operator's protected role file for the guest service. The packaged portal and the published v1.0.113 image used a mounted guest key and trusted TLS with an isolated Samba directory. Each created and removed a one-hour account. The guest key was rejected by the protected directory route. The packaged native configuration helper retained a selected role file path. Native directory and Remote Desktop acceptance remain open. [Configuration guide](docs/features/http-api/portal-agent-key-file.md) · [Build and runtime receipt](docs/evidence/protected-agent-key-file-c65b407.json)
 
-## v1.0.111 portal delivery
+## Live portal delivery
 
-Both lab portals run the immutable v1.0.111 image from `76ccdfa`. A separate LAN client verified the expected version and source, and the rollout retained the existing storage and ports. The guest kiosk created and checked a one-hour account against the running Samba directory, then removed it through self-service. The directory returned to zero guest accounts. [Illustrated walkthrough](README.md#guest-sign-in-walkthrough)
+Both lab portals run the immutable v1.0.120 image from `9191029`. Each role used its existing Compose inputs and the verified image digest. A separate LAN client read back the healthy endpoints and the expected source. The new kiosk issued, verified, and removed a one-hour guest sign-in. The directory returned to zero guest accounts. [Live rollout receipt](docs/evidence/portal-rollout-v120.json)
+
+The earlier v1.0.111 delivery from `76ccdfa` recorded the same guest lifecycle and supplied the original walkthrough images. [Illustrated walkthrough](README.md#guest-sign-in-walkthrough)
 
 The downloaded Portal Host wizard cancelled once before creating any portal containers. It then started both portals in a separate synthetic configuration and reported each healthy endpoint. Its health recheck returned both endpoints with the same container IDs and start times. The standalone executable closed and its isolated profile was removed. The wizard fixture teardown, native chooser verification and cancellation during startup remain open. [Deployment and wizard receipt](docs/evidence/guest-sign-in-v111/receipt.json)
 

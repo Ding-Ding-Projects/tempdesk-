@@ -456,7 +456,7 @@ The [v1.0.111 verification receipt](docs/evidence/guest-sign-in-v111/receipt.jso
 
 ### Lab verification
 
-Server Core responded as a synchronized Active Directory domain controller with a ready global catalog. Its native TempDesk agent returned a healthy response for the Windows backend. The v1.0.111 kiosk and management portal answered from a separate LAN client. The kiosk created a one-hour account in the running Samba directory, confirmed its active status, and deleted it. The directory returned to zero guest accounts.
+Server Core responded as a synchronized Active Directory domain controller with a ready global catalog. Its native TempDesk agent returned a healthy response for the Windows backend. Both v1.0.120 portals answered from a separate LAN client with the published source revision. The guest kiosk created a one-hour account in the running Samba directory, confirmed it was active, and removed it through self-service. The directory returned to zero guest accounts. [Live rollout receipt](docs/evidence/portal-rollout-v120.json)
 
 A separate one-hour kiosk account had a configured expiry of 11:47:52 UTC on November 18, 2026. The lab directory confirmed the record was absent at 11:50:37 UTC.
 

@@ -359,6 +359,7 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}`;
     'docs/evidence/management-sounds.json',
     'docs/evidence/management-wording-walkthrough.json',
     'docs/evidence/portal-host-reopen-ff5b6b4/receipt.json',
+    'docs/evidence/portal-rollout-v120.json',
     'docs/evidence/virtual-commons-attachments.json',
     'docs/evidence/virtual-commons-checkout.json',
     'docs/evidence/virtual-commons-dim-sum-6f6cb7f/receipt.json',

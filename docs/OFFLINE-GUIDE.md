@@ -22,6 +22,8 @@ The reader keeps language, theme and other browsing preferences in its own local
 
 Release builds bundle the tracked source from the release revision. The generated article source links open that revision.
 
+The source archive preserves the committed bytes of the evidence JSON. Its receipt hashes can be compared across the portable reader and hosted documentation.
+
 ## Build and verify
 
 Run `build.bat /docs` from the root of a Git checkout. The executable and phone PDF appear under `deployer/bin/docs/`. The default `build.bat` and `build-installer.bat` produce both files from the same site composition.

@@ -1,1 +1,5 @@
 /build.bat text eol=crlf
+
+# Keep published evidence bytes identical across source archive consumers.
+/docs/evidence/**/*.json -text
+/docs/feature-inventory.json -text

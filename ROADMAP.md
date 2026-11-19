@@ -6,6 +6,7 @@
 - [x] Verify Samba-backed kiosk account creation, credential validation, one-time confirmation and self-deletion. See the [guest sign-in walkthrough](README.md#guest-sign-in-walkthrough).
 - [x] Observe automatic removal of a separate one-hour account after its configured expiry.
 - [x] Roll out v1.0.102 to both lab portals. Verify their live source revision, health, volume identities and published port mappings.
+- [x] Roll out v1.0.120 to both lab portals. Read back both roles from a separate LAN client and verify creation, active status, and self-removal of a temporary sign-in. [Live rollout receipt](docs/evidence/portal-rollout-v120.json)
 - [x] Verify that the kiosk language search label and its regex controls fit at 360 px and 1440 px.
 - [x] Verify both connection files and guest account checks against an isolated Samba directory. [Checkout receipt](docs/evidence/virtual-commons-checkout.json)
 - [x] Verify scoped confirmations, both attachment destinations, retry and temporary account removal against a real isolated directory. [Attachment receipt](docs/evidence/virtual-commons-attachments.json)

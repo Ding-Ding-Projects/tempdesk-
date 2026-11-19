@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "release": "v1.0.120",
+  "sourceRevision": "91910295a5dace255419ba64a16c818fae1a43cd",
+  "imageIndex": "sha256:1b69e1c3c0d115a7a2523a60120c53d6f8de2eca4692f8ac43f8159236b78a95",
+  "imageChildAmd64": "sha256:152fa19f18919652706768b0509f6fa487dafff30e68c638d342fd6dd2614ba2",
+  "publishedUtc": "2026-11-19T13:04:13Z",
+  "releaseManifestAttachmentsMatched": 9,
+  "workflow": "https://github.com/Ding-Ding-Projects/tempdesk-/actions/runs/44527646116",
+  "roles": {
+    "guest": {
+      "startedUtc": "2026-11-19T13:13:23.221180129Z",
+      "verifiedUtc": "2026-11-19T13:13:31.4906343Z",
+      "status": 200,
+      "separateLanClient": true,
+      "storagePortsAndTrustVerified": true
+    },
+    "management": {
+      "startedUtc": "2026-11-19T13:14:40.025442426Z",
+      "verifiedUtc": "2026-11-19T13:14:47.9805547Z",
+      "status": 200,
+      "separateLanClient": true,
+      "storagePortsAndTrustVerified": true
+    }
+  },
+  "guestLifecycle": {
+    "method": "Ordinary portal forms over isolated loopback",
+    "verifiedUtc": "2026-11-19T13:20:17.690677Z",
+    "durationMinutes": 60,
+    "created": true,
+    "activeConfirmed": true,
+    "selfRemovalConfirmed": true,
+    "directoryGuestCountBefore": 0,
+    "directoryGuestCountAfter": 0
+  },
+  "scope": "The live lab uses a Samba directory. Native Windows sign-in, Remote Desktop connectivity, and operating-system session expiry require separate acceptance."
+}
