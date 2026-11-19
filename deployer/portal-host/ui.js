@@ -42,7 +42,7 @@
   let lang = read('lang','en');
   if (!['en','zh-HK','bi'].includes(lang)) lang = 'en';
   let step = Math.max(0, Math.min(5, Math.trunc(Number(read('step','0'))) || 0));
-  let snapshot, form, pending = false, error = '', lastPhase = '';
+  let snapshot, form, pending = false, rechecking = false, error = '', lastPhase = '';
   const active = run => ['preparing','pulling','starting','checking'].includes(run?.phase);
   function t(key) {
     const pair = copy[key] || copy.unavailable;
@@ -63,6 +63,7 @@
   function received(value) {
     if (!value) return;
     snapshot=value;
+    if (!active(value.run)) rechecking=false;
     if (active(value.run)) step=5;
     else if (step!==5 || value.run.phase==='idle') {
       if (value.docker!=='ready') step=0;
@@ -85,7 +86,7 @@
   const basename = value => value ? String(value).split(/[\\/]/).filter(Boolean).pop() : '';
   function valid(values) {
     const port = n => Number.isInteger(n) && n>=1 && n<=65535;
-    return snapshot.addresses.includes(values.address) && /^[a-z0-9][a-z0-9_-]*$/.test(values.project) &&
+    return snapshot.addresses.includes(values.address) && /^[a-z0-9][a-z0-9_-]{0,47}$/.test(values.project) &&
       port(values.guestPort) && port(values.managementPort) && values.guestPort!==values.managementPort;
   }
   function field(box,key,initial,choices) {
@@ -94,7 +95,7 @@
     if (choices) {
       for (const item of ['',...choices]) {const o=element('option',item || t('empty'));o.value=item;input.append(o);}
     } else if (key.endsWith('Port')) {input.type='number';input.min='1';input.max='65535';input.step='1';}
-    else {input.type='text';input.autocomplete='off';}
+    else {input.type='text';input.autocomplete='off';input.maxLength=48;}
     input.value=initial ?? '';input.disabled=pending;
     input.addEventListener('input',()=>{form[key]=key.endsWith('Port')?input.valueAsNumber:input.value;});
     label.append(input);box.append(label);
@@ -144,8 +145,8 @@
             b.textContent=t('open')+' '+t(endpoint.role);
           }
         }
-        if(active(r))button(actions,'stop',r.cancelRequested?'cancelling':'stop',()=>call('cancel'),false,r.cancelRequested);
-        else if (r.phase!=='idle') button(actions,'recheck','recheck',()=>call('recheck'),true);
+        if(active(r) && !rechecking)button(actions,'stop',r.cancelRequested?'cancelling':'stop',()=>call('cancel'),false,r.cancelRequested);
+        else if (!active(r) && r.phase!=='idle') button(actions,'recheck','recheck',()=>{rechecking=true;call('recheck');},true);
       }
       if(step>0 && !active(r)) button(actions,'back','back',()=>go(step-1));
       if(step<4)button(actions,'next','next',()=>{
