@@ -692,9 +692,21 @@ The signed-in management portal at `d986ca134da5c7833f165e7e16fdfba0a0505a8c` wa
 
 </details>
 
-## Recheck a hosted deployment
+## Configure HTTPS in Portal Host
 
-To configure direct HTTPS for either portal in a shared deployment, select **HTTPS** in the Portal Host wizard and supply the two certificate and key pairs. Review both addresses before starting. The wizard offers each link after its own endpoint check succeeds. [HTTPS setup and recovery](docs/features/http-api/portal-https.md#use-the-portal-host-wizard)
+1. Check Docker and Compose, then select an accepted publication receipt and your configuration directory. In **Configuration**, choose **HTTPS** and enter the certificate name.
+
+   ![Portal Host HTTPS setup with separate guest and management certificate controls](docs/evidence/portal-host-https-a8fce85/01-https-configuration.png)
+
+2. Select the certificate and matching private key for each portal. Choose an issuer bundle when using a private issuer. At a narrow width, scroll to reach the same controls and the verification button.
+
+   ![Bilingual Portal Host HTTPS setup at 360 pixels with all certificate selectors in the scrolling form](docs/evidence/portal-host-https-a8fce85/02-https-bilingual-narrow.png)
+
+3. Choose **Verify certificates and continue**, select the LAN address and review both endpoint candidates. Start the deployment. The guest link and management link appear as their respective endpoint checks pass.
+
+The screenshots show the locally built v1.0.133 wizard with an example name and no files selected. A separate isolated deployment verified both HTTPS endpoints, saved-project recheck, and a temporary guest sign-in. [HTTPS setup and recovery](docs/features/http-api/portal-https.md#use-the-portal-host-wizard) · [Runtime receipt](docs/evidence/portal-host-https-a8fce85/receipt.json)
+
+## Recheck a hosted deployment
 
 1. Reopen Portal Host with the local profile that started the deployment. Choose **Check Docker and Compose**.
 2. Confirm the saved project and release on the opening step. Choose **Recheck endpoint health**.

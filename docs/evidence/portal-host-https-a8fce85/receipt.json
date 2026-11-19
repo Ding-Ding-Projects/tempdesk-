@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "portableWizard": {
+    "sourceCommit": "a8fce8554a4a17955c6de843fd1207442f6bdfc2",
+    "artifactSha256": "917a5f600024de612408c92bea34a516a4eb284503ac0d1cb9865274eeea5306",
+    "command": "build.bat --portal-host --skip-tests /s",
+    "completedBuildObservedBeforeCaptureUtc": "2026-11-19T19:00:05.729Z"
+  },
+  "portalImage": {
+    "releaseTag": "v1.0.132",
+    "revision": "e86d1c8ac25534e9fd17bfbc98da101b03b7973b",
+    "digest": "sha256:9a157cafff0053dd1ab75cb258dcae2b8a6b74129b769a6eab78cb1683637477",
+    "platforms": [
+      {
+        "os": "linux",
+        "architecture": "amd64",
+        "digest": "sha256:3894d07f7d7f8f99cf2ae4a7532137fda8d967730595993895620b66c10f8062"
+      },
+      {
+        "os": "linux",
+        "architecture": "arm64",
+        "digest": "sha256:1f6325cffc4b4a7f68221527c83e7335a24fefa2a162cbae2c06328d1b0604c5"
+      }
+    ],
+    "runId": "44587675214"
+  },
+  "wizardChecks": {
+    "httpDefault": true,
+    "matchingCertificateNameAndPairsAccepted": true,
+    "wrongNameRejectedInWizard": true,
+    "issuerVerified": true,
+    "credentialPathsOmittedFromRendererState": true,
+    "candidateLinksWereInert": true,
+    "listeners": [
+      {
+        "role": "guest",
+        "startedUtc": "2026-11-19 18:55:45 UTC",
+        "verifiedUtc": "2026-11-19 18:55:52 UTC"
+      },
+      {
+        "role": "management",
+        "startedUtc": "2026-11-19 18:55:45 UTC",
+        "verifiedUtc": "2026-11-19 18:55:53 UTC"
+      }
+    ],
+    "verifiedHttpsLinksAfterReopen": true,
+    "containerIdentitiesAndStartTimesUnchanged": true,
+    "unavailableRevocationReported": true,
+    "unverifiedLinksWithheld": true,
+    "partialResultVerified": true
+  },
+  "guestAndManagement": {
+    "guest": {
+      "pageStatus": 200,
+      "healthStatus": 200,
+      "trustedNameAndIssuer": true,
+      "expectedLeaf": true,
+      "cookiesSecure": true,
+      "wrongNameRejected": true,
+      "unknownIssuerRejected": true,
+      "plaintextNotServed": true
+    },
+    "management": {
+      "pageStatus": 200,
+      "healthStatus": 200,
+      "trustedNameAndIssuer": true,
+      "expectedLeaf": true,
+      "cookiesSecure": true,
+      "wrongNameRejected": true,
+      "unknownIssuerRejected": true,
+      "plaintextNotServed": true
+    },
+    "temporaryGuest": {
+      "created": true,
+      "verifiedActive": true,
+      "removed": true,
+      "rejectedAfterRemoval": true
+    }
+  },
+  "releasedPhonePdf": {
+    "revision": "e86d1c8ac25534e9fd17bfbc98da101b03b7973b",
+    "sha256": "b3f8f8de9c6d949acfa1402ad13fc4b4bd24388810331e4c0c133072dc8631d0",
+    "pages": 331,
+    "widthMm": 105.16,
+    "heightMm": 186.94,
+    "articleCount": 46,
+    "wikiCount": 1,
+    "contentsLinks": 46,
+    "tappableRectanglesVerified": 202,
+    "missingSectionHeadings": []
+  },
+  "fixtureRemoval": {
+    "portalContainers": 6,
+    "directoryRemoved": true,
+    "syntheticKeyDirectoriesRemoved": 2
+  },
+  "limits": [
+    "Local isolated portal deployment with an issued revocation list.",
+    "Certificate file selection was seeded in a disposable profile.",
+    "Virtual Commons Remote Desktop sign-in and expiration require separate session-host verification.",
+    "Local product suites were deferred."
+  ]
+}

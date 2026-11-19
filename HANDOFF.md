@@ -2,13 +2,17 @@
 
 ## Direct portal HTTPS
 
-The locally built image from `7ceecb3daf043865a07a59fee7f21fa989242f5e` started both portal roles through the TLS Compose overlays. On the isolated loopback ports the client verified the two expected certificate chains and names, secure cookies, rejected issuer and name mismatches, and no plaintext response. A missing key stopped startup and the same image kept the default HTTP mode healthy. The isolated directory issued, checked, and removed a temporary guest account, then returned to zero. All owned fixtures were removed. The existing deployment's approved front-end certificates, a separate LAN client check, and the one-click launcher against a published HTTPS project remain open. [HTTPS verification receipt](docs/evidence/portal-tls-7ceecb3daf.json)
+The locally built image from `7ceecb3daf043865a07a59fee7f21fa989242f5e` started both portal roles through the TLS Compose overlays. On the isolated loopback ports the client verified the two expected certificate chains and names, secure cookies, rejected issuer and name mismatches, and no plaintext response. A missing key stopped startup and the same image kept the default HTTP mode healthy. The isolated directory issued, checked, and removed a temporary guest account, then returned to zero. All owned fixtures were removed. [HTTPS verification receipt](docs/evidence/portal-tls-7ceecb3daf.json)
+
+The local v1.0.133 Portal Host from `a8fce8554a4a17955c6de843fd1207442f6bdfc2` deployed the published v1.0.132 image against a disposable Samba directory and an issuer that supplied a signed revocation list. It rejected a wrong certificate name, verified the guest and management links separately, and reopened both without replacing containers. The guest portal created, checked, and removed a finite sign-in over HTTPS. A recheck with missing revocation information showed the targeted diagnostic and withheld the links. The isolated containers and key directories were removed after verification. The live deployment still requires approved front-end certificates and a separate LAN client check. [Wizard, directory and capture receipt](docs/evidence/portal-host-https-a8fce85/receipt.json)
 
 ## Published phone PDF
 
 The normal v1.0.129 release supplied a 327-page phone PDF bound to `19f4d61cf5b633754bab40db278eb4d9ff4241af`. Its downloaded bytes matched the release manifest and published digest. The PDF contains 45 articles, including the prepared operator wiki. All 193 internal links have usable tap rectangles and resolved destinations. Inspection covered the contents, the overview, and the wiki opening page. [Phone PDF receipt](docs/evidence/phone-edition-v129.json)
 
 The normal v1.0.130 PDF from `fedc5b4a3f7b4015b2de3fdc65c0a53b74294691` matched its own digest, the same 45-article inventory and all 193 tap rectangles. Its prepared wiki opening page rendered identically to the inspected v1.0.129 page. [v1.0.130 release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.130)
+
+The downloaded v1.0.132 phone PDF matched the release digest and embedded revision `e86d1c8ac25534e9fd17bfbc98da101b03b7973b`. Its 331 phone-sized pages contain 46 articles including the prepared wiki. All 202 internal link rectangles resolved. The inspected HTTPS chapter begins on page 169. [v1.0.132 release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.132) · [PDF structure receipt](docs/evidence/portal-host-https-a8fce85/receipt.json)
 
 ## Bilingual offline reader feedback
 

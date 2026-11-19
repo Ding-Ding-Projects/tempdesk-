@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "id": "portal-host-https-desktop",
+      "path": "docs/evidence/portal-host-https-a8fce85/01-https-configuration.png",
+      "sourceCommit": "a8fce8554a4a17955c6de843fd1207442f6bdfc2",
+      "artifactSha256": "917a5f600024de612408c92bea34a516a4eb284503ac0d1cb9865274eeea5306",
+      "captureSha256": "4425849bd71171e3468adb8e9cdf45e587e018268c980b88927fd5d64245d963",
+      "screen": "portal-host-configuration",
+      "state": "https-english",
+      "theme": "dark",
+      "viewportWidth": 1120,
+      "viewportHeight": 1100,
+      "scale": 1,
+      "capturedAtUtc": "2026-11-19T19:00:29.082Z",
+      "interactionProofId": "document-configuration",
+      "interactionReceiptSha256": "109e336c20155161100ce46cd9db5fe09e05aeadc4eeca988d1b0dcb3d8864f2",
+      "inspectionStatus": "inspected",
+      "privacyReviewed": true,
+      "active": true
+    },
+    {
+      "id": "portal-host-https-bilingual-narrow",
+      "path": "docs/evidence/portal-host-https-a8fce85/02-https-bilingual-narrow.png",
+      "sourceCommit": "a8fce8554a4a17955c6de843fd1207442f6bdfc2",
+      "artifactSha256": "917a5f600024de612408c92bea34a516a4eb284503ac0d1cb9865274eeea5306",
+      "captureSha256": "910a0ea904873581ac546eb7a937b9d6857f5cffd841fe4be8b6f91301b625dd",
+      "screen": "portal-host-configuration",
+      "state": "https-bilingual",
+      "theme": "dark",
+      "viewportWidth": 360,
+      "viewportHeight": 1520,
+      "scale": 1,
+      "capturedAtUtc": "2026-11-19T19:00:29.273Z",
+      "interactionProofId": "document-configuration",
+      "interactionReceiptSha256": "109e336c20155161100ce46cd9db5fe09e05aeadc4eeca988d1b0dcb3d8864f2",
+      "inspectionStatus": "inspected",
+      "privacyReviewed": true,
+      "active": true
+    }
+  ]
+}
