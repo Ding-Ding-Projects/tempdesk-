@@ -840,3 +840,12 @@ html[data-motion="reduced"] .rxb-pop, html[data-motion="off"] .rxb-pop { animati
 :root[data-style-notice-font] :is(.toast) { font-family: var(--style-notice-font); }
 :root[data-style-notice-weight] :is(.toast) { font-weight: var(--style-notice-weight); }
 :root[data-style-notice-spacing] :is(.toast) { letter-spacing: var(--style-notice-spacing); }
+
+.build-provenance {
+  display: flex; flex-wrap: wrap; gap: .25rem 1rem; margin: 0 0 .75rem;
+  color: var(--text-muted); font-size: .875rem; line-height: 1.45;
+}
+.build-provenance > div { display: flex; flex-wrap: wrap; gap: 0 .35rem; min-inline-size: 0; }
+.build-provenance dt { font-weight: 600; }
+.build-provenance dd { margin: 0; min-inline-size: 0; overflow-wrap: anywhere; }
+.build-provenance time, .build-provenance code { font-variant-numeric: tabular-nums; }

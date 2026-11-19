@@ -1,5 +1,9 @@
 {
  "strings": {
+    "Running portal build": "Running portal build",
+    "Running version": "Running version",
+    "Build updated": "Build updated",
+    "Source revision": "Source revision",
     "Search animation types": "Search animation types",
     "Search editable elements": "Search editable elements",
     "Transition duration": "Transition duration",
