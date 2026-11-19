@@ -52,4 +52,6 @@ The local x86_64 image from 6d7718d4f19e648d73f7e4dd27d676e0b81ca962 booted in Q
 Release workflow run 44463869152 assembled a native x86_64 candidate for v1.0.108. Its arm64 worker reported a full boot partition when copying duplicate boot files. The Raspberry Pi build now stages the firmware pair, model device tree, kernel and generated initramfs. Verify the next native arm64 build and boot. The configured startup observations and firewall-readiness correction are preserved separately at recovery revision d69e6408154bf63a82d2fc07b5885936ef3a1aae. Track the complete phone-sized documentation PDF and verify it as a separate release deliverable.
 
 The documentation build emits a phone-sized PDF from the same complete article inventory as the portable reader. Before closing it, verify the rendered pages, complete chapter and wiki contents, internal link destinations, and the PDF asset in the matching normal release.
+
+The appliance now embeds the verified platform image archive and waits for Docker and the LAN firewall chain before loading it. Check configured startup, directory-backed guest sign-in and restart persistence against the resulting disk. The protected directory route and full native Remote Desktop acceptance remain separate.
 ```

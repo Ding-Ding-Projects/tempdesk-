@@ -64,8 +64,9 @@ arm64 Linux containers.
 
 Download `tempdesk-portal-publication.json` from the workflow that published the
 desired normal release. The builder checks the immutable registry index and
-both platform manifests before using the selected image. From the repository
-root on a Windows machine with Docker Desktop active, run:
+both platform manifests before adding the selected image to the disk.
+Configured startup verifies and loads the embedded image from local storage.
+From the repository root on a Windows machine with Docker Desktop active, run:
 
 ```powershell
 $env:TEMPDESK_APPLIANCE_RECEIPT = (Resolve-Path 'tempdesk-portal-publication.json').Path

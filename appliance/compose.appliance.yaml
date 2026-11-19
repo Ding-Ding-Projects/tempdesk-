@@ -1,11 +1,13 @@
 services:
   tempdesk-guest:
+    image: "${TEMPDESK_APPLIANCE_IMAGE:?Verified appliance image digest required}"
     env_file: !override
       - path: /run/tempdesk-appliance/guest.env
         format: raw
     ports: !override ["${TEMPDESK_LAN_ADDRESS:?Set by appliance setup}:8080:8080"]
     restart: "no"
   tempdesk-admin:
+    image: "${TEMPDESK_APPLIANCE_IMAGE:?Verified appliance image digest required}"
     env_file: !override
       - path: /run/tempdesk-appliance/management.env
         format: raw

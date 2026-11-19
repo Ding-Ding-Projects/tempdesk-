@@ -91,7 +91,13 @@ $binding['bytes'] = $artifact.Length
 $binding['sha256'] = (Get-FileHash -LiteralPath $artifact.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
 $binding['builtAtUtc'] = [DateTime]::UtcNow.ToString('o')
 $binding['packages'] = @(Get-Content -LiteralPath (Join-Path $output 'packages.txt'))
+$archiveReceipt = Join-Path $output 'portal-archive.sha256'
+$binding['portalArchiveSha256'] = (Get-Content -LiteralPath $archiveReceipt -Raw).Trim()
+if ($binding['portalArchiveSha256'] -cnotmatch '^[0-9a-f]{64}$') {
+    throw 'The embedded portal archive fingerprint is invalid.'
+}
 [IO.File]::WriteAllText($receiptOut, ($binding | ConvertTo-Json -Depth 4), [Text.UTF8Encoding]::new($false))
+Remove-Item -LiteralPath $archiveReceipt
 Write-Output $artifact.FullName
 Write-Output "SHA-256 $($binding.sha256)"
 Write-Output $receiptOut

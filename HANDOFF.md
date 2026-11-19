@@ -22,6 +22,11 @@ package scripts inside the image filesystem.
 The local x86_64 image built from `6d7718d` booted in QEMU, mounted its
 persistent partition and started Docker. With no configuration volume
 attached, both portal health endpoints stayed closed. [Boot receipt](docs/evidence/appliance-x86-6d7718d.json)
+The appliance build embeds an archive of the exact published platform
+manifest. Configured startup waits for Docker and its LAN firewall chain,
+then loads the verified archive locally. The system keeps containerd storage
+on the persistent state partition. Verify both configured endpoints and
+restart persistence using the rebuilt image.
 The native x86_64 worker assembled a candidate for v1.0.108. The first native
 Raspberry Pi 4 build ran out of space while copying duplicate boot files.
 The revised Pi build selects its firmware pair and board device tree while
