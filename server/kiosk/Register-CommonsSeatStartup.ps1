@@ -83,7 +83,13 @@ function Assert-TaskMatches($Task) {
     # current command line happens to be the expected one.
     $scheduler=New-Object -ComObject 'Schedule.Service'
     $scheduler.Connect()
-    $sddl=$scheduler.GetFolder('\').GetTask($taskName).GetSecurityDescriptor(7)
+    $nativeTask=$scheduler.GetFolder('\').GetTask($taskName)
+    $sddl=$nativeTask.GetSecurityDescriptor(7)
+    $settings=$nativeTask.Definition.Settings
+    $trigger=$nativeTask.Definition.Triggers.Item(1)
+    if ($settings.RestartCount -ne 3 -or $settings.RestartInterval -ne 'PT1M' -or $settings.DisallowStartIfOnBatteries -or
+        $settings.StopIfGoingOnBatteries -or $trigger.EndBoundary -or $trigger.Repetition.Interval -or
+        ($trigger.Delay -and $trigger.Delay -ne 'PT0S')) { throw 'The existing task startup or recovery settings differ. It was preserved.' }
     $descriptor=[Security.AccessControl.RawSecurityDescriptor]::new($sddl)
     $trusted=@('S-1-5-18','S-1-5-32-544')
     if ($descriptor.Owner.Value -notin $trusted -or -not $descriptor.DiscretionaryAcl) { throw 'The existing task has an untrusted owner or missing DACL.' }
