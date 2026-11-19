@@ -49,6 +49,7 @@
 - [x] Reopen the rebuilt wizard and recheck a saved deployment from the opening step. Verify both endpoint results and unchanged container identities and start times. [Verification receipt](docs/evidence/portal-host-reopen-ff5b6b4/receipt.json)
 - [x] Verify the saved-project recheck in the published v1.0.115 wizard through native Tab and Enter. [Release verification](docs/evidence/portal-host-reopen-ff5b6b4/receipt.json)
 - [ ] Verify the Portal Host native file chooser, cancellation during startup, and visual parity at the supported display settings.
+- [ ] Verify direct HTTPS in the built Portal Host wizard, including both certificate pairs, optional issuer, independent endpoint links, and saved-project recheck. [Setup and verification](docs/features/http-api/portal-https.md#use-the-portal-host-wizard)
 - [x] Inventory the required features across the Deployer, management portal, guest portal, kiosk, public documentation, offline reader, and project delivery. [Verification inventory](docs/FEATURE-INVENTORY.md)
 - [x] Record how to select, apply, reload and clear personal wording in the built management portal. [Illustrated steps](README.md#personal-wording-walkthrough)
 - [ ] Verify local wording and outcome cues across the Deployer notification drawer, its search, and the remaining dynamic surfaces.

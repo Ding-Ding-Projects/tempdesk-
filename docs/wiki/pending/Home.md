@@ -8,7 +8,7 @@ Start here to deploy shared computers, set up temporary sign-ins, and verify rem
 - [Server management](../../SERVER.md) explains the server console, supported routes, and operational limits.
 - [Run a published portal image](../../../portal/README.md#run-a-published-image) covers the release receipt, configuration, startup and verification.
 - [Host on Windows](../../../portal/README.md#host-on-windows) covers background startup and the keyboard controls for portal logs.
-- [Serve the portals over HTTPS](../../features/http-api/portal-https.md) covers certificates, LAN bindings, and verification from a client.
+- [Serve the portals over HTTPS](../../features/http-api/portal-https.md) covers the Portal Host wizard, certificate selection, LAN bindings, and verification from a client.
 - [Published lab update evidence](../../evidence/portal-rollout-v126.json) records both healthy v1.0.126 portals, the guest Settings matrix and a temporary guest sign-in lifecycle.
 - [Build and configure a bootable appliance](../../../portal/README.md#build-a-bootable-appliance) covers the pinned release receipt, guest configuration volume and LAN checks.
 - [Security](../../SECURITY.md) describes the permissions and credential boundaries.

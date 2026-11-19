@@ -6,8 +6,12 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { StringDecoder } = require('node:string_decoder');
+const { tlsFiles, validateTls } = require('./tls.cjs');
 
-const runtimeFiles = ['scripts/host-portals.ps1', 'portal/compose.yaml', 'portal/compose.published.yaml'];
+const launcher = 'scripts/host-portals.ps1';
+const tlsOverlay = 'portal/compose.tls.yaml';
+const issuerOverlay = 'portal/compose.tls-ca.yaml';
+const runtimeFiles = Object.freeze([launcher, 'portal/compose.yaml', 'portal/compose.published.yaml', tlsOverlay, issuerOverlay]);
 const image = 'ghcr.io/ding-ding-projects/tempdesk-portal';
 const sourceUrl = 'https://github.com/Ding-Ding-Projects/tempdesk-';
 const engine = 'npipe:////./pipe/dockerDesktopLinuxEngine';
@@ -152,10 +156,11 @@ function binding(options) {
 }
 
 function parseEndpoint(line, version, options) {
-  const match = /^(Guest kiosk|Management) (\d+\.\d+\.\d+) \| (http:\/\/[0-9.]+:\d+\/(?:login)?) \| Started ([\d :\-]+ UTC) \| Verified ([\d :\-]+ UTC)$/.exec(line);
+  const match = /^(Guest kiosk|Management) (\d+\.\d+\.\d+) \| (https?:\/\/\S+) \| Started ([\d :\-]+ UTC) \| Verified ([\d :\-]+ UTC)$/.exec(line);
   if (!match || match[2] !== version) return null;
   const guest = match[1] === 'Guest kiosk';
-  const expected = 'http://' + options.address + ':' + (guest ? options.guestPort + '/' : options.managementPort + '/login');
+  const origin = options.tls.enabled ? 'https://' + options.tls.name : 'http://' + options.address;
+  const expected = origin + ':' + (guest ? options.guestPort + '/' : options.managementPort + '/login');
   return match[3] === expected ? { role: guest ? 'guest' : 'management', url: match[3], started: match[4], verified: match[5] } : null;
 }
 
@@ -173,7 +178,7 @@ async function deploymentInputs(draft) {
       (draft.overlay && (!overlay || overlay.includes(';') || !(await fs.stat(overlay).catch(() => null))?.isFile()))) {
     throw new HostError('configuration');
   }
-  return { ...options, configuration, overlay, receiptPath, receipt };
+  return { ...options, configuration, overlay, receiptPath, receipt, tls: await validateTls(draft.tls) };
 }
 
 function bindingFile(runtime, project) {
@@ -194,7 +199,7 @@ async function checkBinding(file, expected) {
 }
 
 async function recoverDeployment(file, runtime) {
-  const saved = await readJson(file, 32768);
+  const saved = await readJson(file, 65536);
   if (saved?.schemaVersion !== 1) throw new HostError('configuration');
   const recovered = await deploymentInputs(saved);
   await checkBinding(bindingFile(runtime, recovered.project), binding(recovered));
@@ -202,10 +207,10 @@ async function recoverDeployment(file, runtime) {
 }
 
 async function saveDeployment(file, selected) {
-  const { project, address, guestPort, managementPort, configuration, overlay, receiptPath } = selected;
+  const { project, address, guestPort, managementPort, configuration, overlay, receiptPath, tls } = selected;
   const { releaseTag, revision, digest } = selected.receipt;
   await writeAtomic(file, JSON.stringify({ schemaVersion: 1, project, address, guestPort, managementPort,
-    configuration, overlay, receiptPath, receipt: { releaseTag, revision, digest } }));
+    configuration, overlay, receiptPath, tls, receipt: { releaseTag, revision, digest } }));
 }
 
 async function deploy({ draft, job, identity, runtime, bundled, recheck, previous, progress }) {
@@ -231,12 +236,24 @@ async function deploy({ draft, job, identity, runtime, bundled, recheck, previou
 
   const env = { ...process.env };
   for (const key of Object.keys(env)) {
-    if (/^(COMPOSE_|DOCKER_(HOST|CONTEXT)|TEMPDESK_PORTAL_|TEMPDESK_LAN_ADDRESS)/i.test(key)) delete env[key];
+    if (/^(COMPOSE_|DOCKER_(HOST|CONTEXT)|TEMPDESK_(PORTAL_|LAN_ADDRESS|(?:GUEST|MANAGEMENT)_TLS_))/i.test(key)) delete env[key];
+  }
+  const overrides = [options.overlay, overlay].filter(Boolean);
+  if (options.tls.enabled) {
+    overrides.push(path.join(runtime, tlsOverlay));
+    if (options.tls.files.issuer) overrides.push(path.join(runtime, issuerOverlay));
+    env.TEMPDESK_PORTAL_TLS_NAME = options.tls.name;
+    env.TEMPDESK_GUEST_TLS_PORT = String(options.guestPort);
+    env.TEMPDESK_MANAGEMENT_TLS_PORT = String(options.managementPort);
+    for (const [kind, name] of Object.entries(tlsFiles)) {
+      if (options.tls.files[kind]) env[name] = options.tls.files[kind];
+    }
   }
   env.COMPOSE_PROJECT_NAME = options.project;
   env.TEMPDESK_PORTAL_CONFIG_DIR = options.configuration;
   env.TEMPDESK_PORTAL_RECEIPT = options.receiptPath;
-  env.TEMPDESK_PORTAL_COMPOSE_OVERRIDES = [options.overlay, overlay].filter(Boolean).join(';');
+  env.TEMPDESK_PORTAL_COMPOSE_OVERRIDES = overrides.join(';');
+  env.TEMPDESK_PORTAL_EXPECTED_TRANSPORT = options.tls.enabled ? 'https' : 'http';
   env.TEMPDESK_LAN_ADDRESS = options.address;
   env.TEMPDESK_PORTAL_CANCEL_FILE = job.marker;
 
@@ -247,7 +264,7 @@ async function deploy({ draft, job, identity, runtime, bundled, recheck, previou
   try {
     if (job.cancelRequested) return { code: 3, endpoints: [], reason: '' };
     const code = await childProcess(path.join(process.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe'),
-      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', path.join(runtime, runtimeFiles[0]),
+      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', path.join(runtime, launcher),
         '-Mode', recheck ? 'verify' : 'detached'], {
         env,
         line(value) {
@@ -278,5 +295,5 @@ async function deploy({ draft, job, identity, runtime, bundled, recheck, previou
   }
 }
 
-module.exports = { HostError, absoluteField, addresses, optionsFrom, readJson, receiptAt, writeAtomic,
+module.exports = { runtimeFiles, HostError, absoluteField, addresses, optionsFrom, readJson, receiptAt, writeAtomic,
   checkDocker, deploy, recoverDeployment, saveDeployment };

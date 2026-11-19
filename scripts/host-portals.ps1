@@ -102,6 +102,37 @@ function Stop-BeforeStartup {
     }
 }
 
+function Read-HttpsIssuer {
+    param($Service)
+    $containerPath = ([string]$Service.environment.TLS_HEALTHCHECK_CA_FILE).Trim()
+    if (!$containerPath) { return '' }
+    $mounts = @($Service.volumes | Where-Object { $_.target -ceq $containerPath })
+    if ($mounts.Count -ne 1 -or $mounts[0].type -ne 'bind' -or $mounts[0].read_only -ne $true) {
+        throw 'Mount the HTTPS issuer bundle as a read-only host file.'
+    }
+    $issuer = Get-Item -LiteralPath $mounts[0].source -ErrorAction SilentlyContinue
+    if (!$issuer -or $issuer.PSIsContainer -or !$issuer.Length -or $issuer.Length -gt 262144) {
+        throw 'The configured HTTPS issuer bundle is unavailable.'
+    }
+    return $issuer.FullName
+}
+
+function Invoke-PortalHttps {
+    param([string]$Url, $Service, [string]$Address)
+    $curlPath = Join-Path ([Environment]::SystemDirectory) 'curl.exe'
+    if (!(Test-Path -LiteralPath $curlPath -PathType Leaf)) { throw 'Windows curl is required to verify HTTPS.' }
+    $mapping = '{0}:{1}:{2}' -f $Service.endpointHost,$Service.publishedPort,$Address
+    $arguments = @('--disable','--silent','--show-error','--globoff','--noproxy','*','--proto','=https',
+        '--max-time','10','--resolve',$mapping,'--write-out','\n%{http_code}')
+    if ($Service.issuer) { $arguments += @('--cacert',$Service.issuer) }
+    $ErrorActionPreference = 'Continue'
+    $response = @(& $curlPath @arguments $Url 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $response.Count -lt 2 -or $response[-1] -ne '200') {
+        throw 'The HTTPS endpoint did not return a trusted response.'
+    }
+    return @{ StatusCode=200; Content=($response[0..($response.Count-2)] -join "`n") }
+}
+
 try {
     if ($Mode -eq 'menu') {
         if ([Console]::IsInputRedirected) { throw 'Use host.bat --detached when input is redirected.' }
@@ -183,6 +214,11 @@ try {
             if ($address -notin $resolved -or $binding[0].host_ip -ne $address -or @($service.ports).Count -ne 1) {
                 throw ('Use the selected LAN address and one HTTPS port mapping for '+$services[$name].label+'.')
             }
+            $services[$name].issuer = Read-HttpsIssuer $service
+            $services[$name].endpointHost = $endpointHost
+        }
+        if ($env:TEMPDESK_PORTAL_EXPECTED_TRANSPORT -and $scheme -cne $env:TEMPDESK_PORTAL_EXPECTED_TRANSPORT) {
+            throw ('The Compose configuration disagrees with the selected transport for '+$services[$name].label+'.')
         }
         $services[$name].origin = '{0}://{1}:{2}' -f $scheme,$endpointHost,$services[$name].publishedPort
         $services[$name].https = [bool]$tlsCert
@@ -191,11 +227,17 @@ try {
         }
     }
 
+    $knownProjectFiles = @($files)
+    if ($env:TEMPDESK_PORTAL_EXPECTED_TRANSPORT -in 'http','https') {
+        # The wizard can replace its own transport overlays while keeping the same project and configuration.
+        $knownProjectFiles += Join-Path $source 'compose.tls.yaml'
+        $knownProjectFiles += Join-Path $source 'compose.tls-ca.yaml'
+    }
     $existing = @(Invoke-Docker @('ps','-a','-q','--filter',('label=com.docker.compose.project='+$model.name)) 'Cannot inspect the selected Compose project.')
     foreach ($id in $existing) {
         $labels = Invoke-Docker @('inspect',$id,'--format','{{json .Config.Labels}}') 'Cannot confirm the ownership of existing containers.' | ConvertFrom-Json
         $existingFiles = ([string]$labels.'com.docker.compose.project.config_files').Split(',')
-        $knownFiles = @($existingFiles | Where-Object { $_ -in $files })
+        $knownFiles = @($existingFiles | Where-Object { $_ -in $knownProjectFiles })
         if ($labels.'com.docker.compose.project.working_dir' -ine $configuration -or
             $labels.'com.docker.compose.service' -notin $services.Keys -or $knownFiles.Count -ne $existingFiles.Count) {
             throw 'The project has containers from another configuration. Supply the original project directory and overlays.'
@@ -244,17 +286,24 @@ try {
             throw 'A running portal differs from the healthy pulled image.'
         }
         $publishedPorts = Invoke-Docker @('inspect',$ids[0],'--format','{{json .NetworkSettings.Ports}}') 'Cannot read the running port mapping.' | ConvertFrom-Json
-        $published = @($publishedPorts.("$($service.port)/tcp") | Where-Object {
-            $_.HostPort -eq [string]$service.publishedPort -and $_.HostIp -in '0.0.0.0',$address
+        $permittedAddresses = if ($service.https) { @($address) } else { @('0.0.0.0',$address) }
+        $runningBindings = @($publishedPorts.("$($service.port)/tcp"))
+        $published = @($runningBindings | Where-Object {
+            $_.HostPort -eq [string]$service.publishedPort -and $_.HostIp -in $permittedAddresses
         })
-        if ($published.Count -ne 1) { throw ('The running port mapping differs for '+$service.label+'.') }
+        if ($published.Count -ne 1 -or ($service.https -and $runningBindings.Count -ne 1)) {
+            throw ('The running port mapping differs for '+$service.label+'.')
+        }
         $origin = $service.origin
         $url = $origin+$service.path
-        $request = @{ UseBasicParsing=$true; TimeoutSec=10 }
-        if ($service.https) { $request.MaximumRedirection = 0 }
         try {
-            $page = Invoke-WebRequest -Uri $url @request
-            $health = Invoke-WebRequest -Uri ($origin+'/healthz') @request
+            if ($service.https) {
+                $page = Invoke-PortalHttps $url $service $address
+                $health = Invoke-PortalHttps ($origin+'/healthz') $service $address
+            } else {
+                $page = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 10
+                $health = Invoke-WebRequest -Uri ($origin+'/healthz') -UseBasicParsing -TimeoutSec 10
+            }
         } catch {
             if ($service.https) { throw ('Trusted HTTPS verification did not succeed for '+$service.label+' at '+$url+'.') }
             throw ('The LAN endpoint did not respond for '+$service.label+'.')

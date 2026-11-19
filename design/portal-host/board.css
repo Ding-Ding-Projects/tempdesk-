@@ -9,3 +9,5 @@
 @container(max-width:680px){.shell{display:block;margin-top:10px}aside ol{display:flex;flex-wrap:wrap}aside li{display:none}aside [aria-current]{display:block;padding:4px 8px;border:0;border-radius:8px}.line{grid-template-columns:1fr}.field button,.field input,.field select{width:100%}header{align-items:flex-start}main{padding:14px}}
 .narrow-reference{margin-inline:0}
 @container(max-width:680px){.toolbar{display:grid;grid-template-columns:1fr;max-width:100%}.toolbar label{display:grid;grid-template-columns:6.4rem minmax(0,1fr);width:100%}.toolbar input[type=checkbox]{justify-self:start}.toolbar select{width:100%}.board,article,.shell{min-width:0}.line strong,h1{overflow-wrap:anywhere}}
+
+fieldset{min-width:0;border:1px solid var(--line);border-radius:14px;margin:16px 0;padding:12px}fieldset label{display:inline-flex;gap:8px;align-items:center;min-height:48px;margin-inline-end:14px}fieldset input{min-height:20px}.line button{overflow-wrap:anywhere}

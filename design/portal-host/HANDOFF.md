@@ -26,3 +26,19 @@ The checked-in boards are design references. The two locally rendered prototype 
 ## Reopen a saved project
 
 Select **Reopen saved project** on either board. Step one shows only the saved project and release. Check Docker and Compose to enable **Recheck endpoint health**. This opens the results step for new health observations without starting containers or requiring a new publication receipt. The board uses example events. The running wizard accepts endpoint evidence only from the native operation.
+
+## HTTPS extension
+
+HTTP remains the default. In Configuration select HTTPS, enter the certificate DNS name and choose the separate guest certificate, guest key, management certificate and management key. The issuer bundle is optional when normal system trust suffices. The local prototype invokes the native chooser and remembers only whether a choice was made. It neither reads contents nor retains names or paths. Cancel preserves the existing selection and returns focus to the originating button. Back retains choices. In production, resolution and validation belong to a narrow native interface; never place key material or private paths in UI, logs, favorites, exports or receipt text.
+
+A native preflight must independently verify each certificate/key pairing, certificate DNS coverage, validity period and the selected issuer or system trust chain. A missing or invalid requirement blocks continuation. Before startup, present HTTPS candidates as plain text using the certificate name with the selected distinct ports, while retaining the selected LAN bind address. Guest uses / and management uses /login. Render each actionable URL only after that endpoint passes TLS trust, name, health and release identity verification. Report partial outcomes independently. Favorite reopen rechecks the engine and endpoints without displaying protected file paths or starting services. Require fresh selections if the protected configuration is no longer available. Never silently downgrade HTTPS to HTTP.
+
+Local stage addresses: ?scene=tls-config, ?scene=tls-review, ?scene=tls-name, ?scene=tls-issuer, ?scene=tls-partial and ?scene=tls-reopen. Combine with &lang=bi for bilingual narrow review. These stage values select synthetic examples; there was no live TLS, runtime or hosted canvas verification.
+
+### Selection and endpoint review
+
+Each choose button and native file input references its own selection-state element with aria-describedby. Cancelling replacement keeps the old choice and returns focus to the initiating button. Clear issuer bundle removes only the optional issuer selection, restores system trust mode, and returns focus to its choose button. Clearing a bundle does not authorize relaxing certificate trust.
+
+Parse each DNS label independently: 1–63 ASCII letters, digits or hyphens, with neither a leading nor trailing hyphen; total name length at most 253. For numeric IPv4 names require exactly four decimal octets from 0 to 255 and reject ambiguous leading zeros. Production matches an IPv4 address against an IP subject alternative name and DNS names against DNS subject alternative names. Syntax validity alone never confirms certificate identity.
+
+Use ?scene=tls-management-only to review a failed guest endpoint alongside the separately verified management /login link; ?scene=tls-partial shows the inverse. Each result stands alone, and health-only recovery must recheck the actual endpoint. Fresh Stageshow source matched the pinned revision 299140f. Hosted canvas sync remains unavailable.

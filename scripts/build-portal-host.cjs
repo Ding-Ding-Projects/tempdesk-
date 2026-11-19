@@ -12,7 +12,7 @@ const requireApp = createRequire(path.join(app, 'package.json'));
 const { build, Arch, Platform } = requireApp('electron-builder');
 const metadata = requireApp('./package.json');
 const ui = path.join(root, 'deployer/portal-host');
-const runtimeFiles = ['scripts/host-portals.ps1', 'portal/compose.yaml', 'portal/compose.published.yaml'];
+const { runtimeFiles } = require(path.join(ui, 'hosting.cjs'));
 const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 
@@ -41,7 +41,8 @@ async function main() {
       runtime[relative] = hash(bytes);
     }
     const rendererFiles = ['index.html', 'ui.js', 'ui.css'];
-    for (const file of [...rendererFiles, 'main.cjs', 'preload.cjs', 'hosting.cjs']) {
+    const mainFiles = ['main.cjs', 'preload.cjs', 'hosting.cjs', 'tls.cjs'];
+    for (const file of [...rendererFiles, ...mainFiles]) {
       fs.copyFileSync(path.join(ui, file), path.join(stage, file));
     }
     const localizations = fs.readdirSync(ui).filter(file => /^(?:en|zh-HK)\.json$/.test(file));
@@ -58,7 +59,7 @@ async function main() {
         appId: 'org.tempdesk.portal-host', productName: 'TempDesk Portal Host', executableName: 'TempDeskPortalHost',
         electronVersion: metadata.devDependencies.electron, npmRebuild: false, publish: null,
         directories: { output: path.join(root, 'deployer/bin/portal-host') },
-        files: [...rendererFiles, ...localizations, 'main.cjs', 'preload.cjs', 'hosting.cjs', 'tokens.css', 'source.json', 'package.json'],
+        files: [...rendererFiles, ...localizations, ...mainFiles, 'tokens.css', 'source.json', 'package.json'],
         extraResources: [{ from: path.join(stage, 'portal-runtime'), to: 'portal-runtime' }],
         win: { icon: path.join(root, 'deployer/assets/tempdesk.ico'), forceCodeSigning: false },
         portable: { artifactName: 'TempDeskPortalHost-${version}-portable.exe' },

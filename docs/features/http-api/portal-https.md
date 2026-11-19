@@ -6,6 +6,17 @@ The optional Docker Compose overlays give the guest kiosk and management console
 
 Use Docker Compose 2.24.4 or later for named port replacement. Choose a LAN address assigned to the host and a client-facing DNS name that resolves to it. Obtain a server certificate for that name for each role. Keep the PEM files in a protected directory outside the checkout and image build context. The role process runs as UID/GID 10001 and needs read access to the files it mounts. If you use a private issuer, arrange trust on the clients through your normal certificate distribution process.
 
+## Use the Portal Host wizard
+
+1. Check Docker and Compose, then select the accepted publication receipt and your existing configuration directory.
+2. In **Configuration**, set **Portal transport** to **HTTPS**. Enter the DNS name from the certificates, or the LAN IPv4 address if both certificates include it as an IP subject alternative name. Choose one PEM certificate chain and its matching PEM private key for each portal. Choose an issuer bundle if this deployment uses a private issuer.
+3. Choose **Verify certificates and continue**. The wizard checks both names and validity periods, matches each private key, and verifies the chains against the selected issuer bundle or the operating system roots. If a file changes or becomes unavailable, choose the correct file again before starting.
+4. Select the LAN address and two distinct ports. Review shows the proposed guest address at `/` and the management address at `/login`. Each link becomes available after its own running service, version, and HTTPS check succeed. A saved project can recheck both endpoints without starting containers.
+
+The wizard keeps the selected file paths in its local profile. It displays selection status in place of certificate and key paths. **Clear issuer bundle** switches verification back to system trust. Browsers on the LAN need their own trust in the issuer before they can open the links. HTTP is the default for a new configuration. HTTPS will fail if its selected transport or credentials cannot be used.
+
+## Set the Compose variables
+
 | Variable | Value |
 | --- | --- |
 | `TEMPDESK_LAN_ADDRESS` | The intended host address. |
@@ -13,7 +24,7 @@ Use Docker Compose 2.24.4 or later for named port replacement. Choose a LAN addr
 | `TEMPDESK_GUEST_TLS_CERT_FILE`, `TEMPDESK_GUEST_TLS_KEY_FILE` | The guest certificate chain and private key paths. |
 | `TEMPDESK_MANAGEMENT_TLS_CERT_FILE`, `TEMPDESK_MANAGEMENT_TLS_KEY_FILE` | The management certificate chain and private key paths. |
 | `TEMPDESK_GUEST_TLS_PORT`, `TEMPDESK_MANAGEMENT_TLS_PORT` | Optional host ports. The defaults are 8080 and 8081. |
-| `TEMPDESK_PORTAL_TLS_CA_FILE` | The issuer CA bundle path when the containers need private CA trust. |
+| `TEMPDESK_PORTAL_TLS_CA_FILE` | The issuer CA bundle path when listener health checks need private CA trust. |
 
 ## Start the published image
 
@@ -24,7 +35,7 @@ docker compose -f compose.yaml -f compose.published.yaml -f compose.tls.yaml pul
 docker compose -f compose.yaml -f compose.published.yaml -f compose.tls.yaml up -d --wait
 ```
 
-On Windows, set `TEMPDESK_PORTAL_COMPOSE_OVERRIDES` to the absolute TLS overlay paths, separated by semicolons, and use `host.bat --detached` or `host.bat --logs`. Retain any existing project overlays. The launcher reads the configured scheme and certificate name and checks both HTTPS pages using the host's normal trust. Keep the certificate and keys outside the role environment files. Only paths and the selected address belong in build or deployment settings.
+On Windows, set `TEMPDESK_PORTAL_COMPOSE_OVERRIDES` to the absolute TLS overlay paths, separated by semicolons, and use `host.bat --detached` or `host.bat --logs`. Retain any existing project overlays. The launcher uses Windows curl to verify each resolved HTTPS endpoint against the selected address and its configured issuer bundle or system trust. Keep the certificate and keys outside the role environment files. Only paths and the selected address belong in build or deployment settings.
 
 For a local source image, run `build.bat --portal-image` using the project’s existing build configuration. Set `TEMPDESK_PORTAL_BUILD_IMAGE` to an isolated local tag when preparing a verification build.
 

@@ -694,6 +694,8 @@ The signed-in management portal at `d986ca134da5c7833f165e7e16fdfba0a0505a8c` wa
 
 ## Recheck a hosted deployment
 
+To configure direct HTTPS for either portal in a shared deployment, select **HTTPS** in the Portal Host wizard and supply the two certificate and key pairs. Review both addresses before starting. The wizard offers each link after its own endpoint check succeeds. [HTTPS setup and recovery](docs/features/http-api/portal-https.md#use-the-portal-host-wizard)
+
 1. Reopen Portal Host with the local profile that started the deployment. Choose **Check Docker and Compose**.
 2. Confirm the saved project and release on the opening step. Choose **Recheck endpoint health**.
 3. Open the guest or management portal when its fresh health check succeeds. The wizard checks the existing containers without pulling an image or starting services.

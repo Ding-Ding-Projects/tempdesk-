@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('portalHost', {
   check: () => ipcRenderer.invoke('portal-host:check'),
   choose: kind => ipcRenderer.invoke('portal-host:choose', kind),
   clearOverlay: () => ipcRenderer.invoke('portal-host:clear-overlay'),
+  configureTls: value => ipcRenderer.invoke('portal-host:configure-tls', value),
+  clearIssuer: () => ipcRenderer.invoke('portal-host:clear-issuer'),
   configure: value => ipcRenderer.invoke('portal-host:configure', value),
   start: () => ipcRenderer.invoke('portal-host:start'),
   recheck: () => ipcRenderer.invoke('portal-host:recheck'),

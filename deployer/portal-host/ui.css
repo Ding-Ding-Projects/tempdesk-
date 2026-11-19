@@ -168,3 +168,12 @@ label.field {
   input:not([type=checkbox]), select { width: 100%; }
   footer button { flex: 1 1 auto; }
 }
+
+.transport{min-width:0;border:1px solid var(--outline, #33453f);border-radius:16px;margin:16px 0;padding:10px 16px}
+.transport label{display:inline-flex;align-items:center;gap:8px;min-height:48px;margin-inline-end:16px}
+.transport input[type=radio]{width:auto;min-height:0;padding:0}
+.certificate-choice{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:8px 0}
+.certificate-choice span{overflow-wrap:anywhere}
+@media(max-width:600px){.certificate-choice{align-items:flex-start;flex-direction:column}.certificate-choice button{max-width:100%;white-space:normal;min-height:48px}}
+
+#body a[id^=open-]{display:inline-flex;align-items:center;min-height:48px;color:var(--primary,#7cf3e6)}

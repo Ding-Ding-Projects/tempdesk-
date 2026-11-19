@@ -7,9 +7,10 @@ const { randomUUID } = require('node:crypto');
 const identity = require('./source.json');
 const { absoluteField, addresses, optionsFrom, readJson, receiptAt, writeAtomic, checkDocker, deploy,
   recoverDeployment, saveDeployment } = require('./hosting.cjs');
+const { tlsFiles, tlsDraft, tlsVisible, tlsPicker, validateSelection, validateTls } = require('./tls.cjs');
 
 const activePhases = new Set(['preparing', 'pulling', 'starting', 'checking']);
-const pickerKinds = new Set(['receipt', 'configuration', 'overlay']);
+const pickerKinds = new Set(['receipt', 'configuration', 'overlay', ...Object.keys(tlsFiles)]);
 let window, root, settingsFile, deploymentFile, runtime, draft, lastDeployment, active, pickerOpen;
 let saving = Promise.resolve();
 let docker = 'unchecked';
@@ -22,11 +23,12 @@ function idleRun() {
 
 function snapshot() {
   const { version, revision } = identity;
-  const { receiptPath, ...visible } = draft;
+  const { receiptPath, tls, ...visible } = draft;
   const recheckTarget = lastDeployment && {
     project: lastDeployment.project, releaseTag: lastDeployment.receipt.releaseTag,
   };
-  return { version, revision, addresses: addresses(), docker, draft: visible, run, recheckTarget, recheckSaveFailed };
+  return { version, revision, addresses: addresses(), docker, draft: { ...visible, tls: tlsVisible(tls) },
+    run, recheckTarget, recheckSaveFailed };
 }
 
 function publish() {
@@ -41,7 +43,7 @@ function updateRun(change) {
 }
 
 async function readSettings() {
-  const found = await readJson(settingsFile, 32768).catch(() => null);
+  const found = await readJson(settingsFile, 65536).catch(() => null);
   const saved = found && typeof found === 'object' && !Array.isArray(found) ? found : {};
   const available = addresses();
   const defaults = { project: 'tempdesk-portals', address: available[0] || '', guestPort: 8080, managementPort: 8081 };
@@ -50,7 +52,7 @@ async function readSettings() {
   const receiptPath = absoluteField(saved.receiptPath);
   const receipt = receiptPath ? await receiptAt(receiptPath).catch(() => null) : null;
   return { ...options, configuration: absoluteField(saved.configuration), overlay: absoluteField(saved.overlay),
-    receipt, receiptPath: receipt ? receiptPath : '' };
+    receipt, receiptPath: receipt ? receiptPath : '', tls: tlsDraft(saved.tls) };
 }
 
 function saveSettings() {
@@ -66,7 +68,9 @@ async function choose(kind) {
   pickerOpen = true;
   try {
     const isDirectory = kind === 'configuration';
-    const filters = kind === 'receipt' ? [{ name: 'Portal publication receipt', extensions: ['json'] }] :
+    const certificateFile = Object.hasOwn(tlsFiles, kind);
+    const filters = certificateFile ? tlsPicker(kind) : kind === 'receipt' ?
+      [{ name: 'Portal publication receipt', extensions: ['json'] }] :
       [{ name: 'Compose configuration', extensions: ['yaml', 'yml'] }];
     const selected = await dialog.showOpenDialog(window, {
       properties: [isDirectory ? 'openDirectory' : 'openFile'],
@@ -74,6 +78,10 @@ async function choose(kind) {
     });
     if (selected.canceled || !selected.filePaths.length) return snapshot();
     const chosen = absoluteField(selected.filePaths[0]);
+    if (certificateFile) {
+      await validateSelection(kind, chosen);
+      return await saveTransport({ ...draft.tls, files: { ...draft.tls.files, [kind]: chosen } });
+    }
     if (!chosen || (kind === 'overlay' && chosen.includes(';'))) {
       return updateRun({ ...idleRun(), reason: 'configuration' });
     }
@@ -87,7 +95,32 @@ async function choose(kind) {
     }
     await saveSettings();
     return updateRun(idleRun());
-  } catch { return updateRun({ ...idleRun(), reason: 'configuration' }); }
+  } catch (error) { return updateRun({ ...idleRun(), reason: error.reason || 'configuration' }); }
+  finally { pickerOpen = false; }
+}
+
+async function saveTransport(tls) {
+  const prior = draft;
+  draft = { ...draft, tls };
+  try {
+    await saveSettings();
+    return updateRun(idleRun());
+  } catch {
+    draft = prior;
+    return updateRun({ ...idleRun(), reason: 'configuration' });
+  }
+}
+
+async function configureTls(value) {
+  if (active || pickerOpen) return snapshot();
+  if (typeof value?.enabled !== 'boolean' || typeof value.name !== 'string') {
+    return updateRun({ ...idleRun(), reason: 'configuration' });
+  }
+  pickerOpen = true;
+  try {
+    const candidate = tlsDraft({ ...draft.tls, enabled: value.enabled, name: value.name });
+    return await saveTransport(value.verify === true ? await validateTls(candidate) : candidate);
+  } catch (error) { return updateRun({ ...idleRun(), reason: error.reason || 'configuration' }); }
   finally { pickerOpen = false; }
 }
 
@@ -169,6 +202,13 @@ else {
       return publish();
     });
     handle('choose', choose);
+    handle('configure-tls', configureTls);
+    handle('clear-issuer', async () => {
+      if (active || pickerOpen) return snapshot();
+      pickerOpen = true;
+      try { return await saveTransport({ ...draft.tls, files: { ...draft.tls.files, issuer: '' } }); }
+      finally { pickerOpen = false; }
+    });
     handle('clear-overlay', async () => {
       if (active || pickerOpen) return snapshot();
       draft = { ...draft, overlay: '' };
