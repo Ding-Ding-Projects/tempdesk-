@@ -41,8 +41,10 @@
 .docs-index-layout { grid-template-areas: "rail reading"; }
 .docs-index-layout > .docs-main { grid-area: reading; }
 .docs-index-layout > .docs-index-rail { grid-area: rail; min-width: 0; position: sticky; top: 16px; align-self: start; }
+.docs-index-rail > summary, .docs-main .markdown-disclosure > summary { min-height: 48px; padding: 12px; border: 1px solid var(--outline); border-radius: 12px; font-weight: 700; cursor: pointer; overflow-wrap: anywhere; }
 .docs-index-rail > summary { display: none; }
 .docs-index-rail .docs-nav { position: static; }
+.docs-main .markdown-disclosure { min-width: 0; margin-block: 16px; }
 
 @media (max-width: 1040px) {
   .guide-sheet { grid-template-columns: minmax(0, 1fr); }
@@ -52,7 +54,7 @@
 @media (max-width: 860px) {
   .docs-index-layout { grid-template-areas: "reading" "rail"; }
   .docs-index-layout > .docs-index-rail { position: static; }
-  .docs-index-rail > summary { display: list-item; min-height: 48px; padding: 12px; border: 1px solid var(--outline); border-radius: 12px; font-weight: 700; cursor: pointer; }
+  .docs-index-rail > summary { display: list-item; }
   .docs-index-rail .docs-nav { margin-top: 8px; }
 }
 

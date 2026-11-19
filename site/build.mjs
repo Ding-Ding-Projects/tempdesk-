@@ -24,7 +24,7 @@ const DEFAULT_OUT = path.join(SITE, '_site');
 const DEFAULT_PUBLIC_URL = 'https://ding-ding-projects.github.io/tempdesk-/';
 
 // ---------------------------------------------------------------------------------------------
-// Markdown renderer (CommonMark subset: headings, paragraphs, lists, code, tables, quotes, links)
+// Markdown renderer (CommonMark subset, plus document disclosure blocks)
 // ---------------------------------------------------------------------------------------------
 export function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 export function slugify(text, used) {
@@ -57,8 +57,41 @@ export function inline(text, linkMap, imageMap) {
   s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => '<code>' + escapeHtml(codes[Number(i)]) + '</code>');
   return s;
 }
+
+const fenceRe = /^(\s*)(\x60{3,}|~{3,})\s*([\w+-]*)/;
+
+function disclosureBlocks(lines) {
+  const blocks = new Map();
+  const stack = [];
+  let fence = '';
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index].trim();
+    if (fence) {
+      if (line.startsWith(fence)) fence = '';
+      continue;
+    }
+    const code = fenceRe.exec(lines[index]);
+    if (code) {
+      fence = code[2];
+      continue;
+    }
+    const open = /^<details(?:\s+(open))?>\s*$/.exec(lines[index]);
+    if (open) {
+      let titleIndex = index + 1;
+      while (titleIndex < lines.length && !lines[titleIndex].trim()) titleIndex++;
+      const title = /^<summary>(.+)<\/summary>$/.exec(lines[titleIndex]?.trim() ?? '');
+      stack.push({ start: index, titleIndex, title: title?.[1], open: Boolean(open[1]) });
+    } else if (/^<\/details>\s*$/.test(lines[index])) {
+      const block = stack.pop();
+      if (block?.title) blocks.set(block.start, { ...block, end: index });
+    }
+  }
+  return blocks;
+}
+
 export function renderMarkdown(md, opts = {}) {
   const lines = String(md).replace(/\r\n?/g, '\n').split('\n');
+  const disclosures = disclosureBlocks(lines);
   const used = new Set();
   const headings = [];
   const out = [];
@@ -84,7 +117,7 @@ export function renderMarkdown(md, opts = {}) {
     const ordered = /\d/.test(base[2]);
     const items = [];
     let j = start;
-    while (j < lines.length) {
+    while (j < lines.length && !disclosures.has(j)) {
       const m = listRe.exec(lines[j]);
       if (m && m[1].length === indent && /\d/.test(m[2]) === ordered) { items.push([m[3]]); j++; continue; }
       if (isBlank(lines[j])) {
@@ -109,13 +142,24 @@ export function renderMarkdown(md, opts = {}) {
     const l = lines[i];
     if (isBlank(l)) { i++; continue; }
     let m;
-    if ((m = /^(\s*)(```+|~~~+)\s*([\w+-]*)/.exec(l))) {
+    if ((m = fenceRe.exec(l))) {
       const fence = m[2], lang = m[3];
       const body = [];
       i++;
       while (i < lines.length && !lines[i].trim().startsWith(fence)) { body.push(lines[i].slice(Math.min(m[1].length, lines[i].search(/\S|$/)))); i++; }
       i++;
       out.push(`<pre tabindex="0"><code${lang ? ` class="language-${escapeHtml(lang)}"` : ''}>${escapeHtml(body.join('\n'))}</code></pre>`);
+      continue;
+    }
+    const disclosure = disclosures.get(i);
+    if (disclosure) {
+      const body = lines.slice(disclosure.titleIndex + 1, disclosure.end).join('\n');
+      const inner = renderMarkdown(body, { ...opts, used: opts.used || used });
+      const title = disclosure.title.replace(/<strong>([^<]*)<\/strong>/g, '**$1**');
+      headings.push(...inner.headings);
+      out.push('<details class="markdown-disclosure"' + (disclosure.open ? ' open' : '') + '>\n<summary>' +
+        inline(title, opts.linkMap, opts.imageMap) + '</summary>\n' + inner.html + '\n</details>');
+      i = disclosure.end + 1;
       continue;
     }
     if ((m = /^(#{1,6})\s+(.*?)\s*#*\s*$/.exec(l))) {
@@ -135,7 +179,7 @@ export function renderMarkdown(md, opts = {}) {
     if (/^\s*\|/.test(l)) { const tb = table(i); if (tb) { out.push(tb.html); i = tb.next; continue; } }
     if (listRe.test(l)) { const ls = list(i); out.push(ls.html); i = ls.next; continue; }
     const para = [];
-    while (i < lines.length && !isBlank(lines[i]) && !/^(#{1,6}\s|```|~~~|\s*>)/.test(lines[i]) && !listRe.test(lines[i]) && !(/^\s*\|/.test(lines[i]) && table(i))) { para.push(lines[i].trim()); i++; }
+    while (i < lines.length && !isBlank(lines[i]) && !disclosures.has(i) && !/^(#{1,6}\s|```|~~~|\s*>)/.test(lines[i]) && !listRe.test(lines[i]) && !(/^\s*\|/.test(lines[i]) && table(i))) { para.push(lines[i].trim()); i++; }
     if (para.length) out.push('<p>' + inline(para.join(' '), opts.linkMap, opts.imageMap).replace(/ {2,}$/gm, '<br>') + '</p>');
     else i++;
   }

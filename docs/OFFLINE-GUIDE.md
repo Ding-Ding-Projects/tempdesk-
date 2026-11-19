@@ -8,6 +8,8 @@ Open `TempDeskDocs-<version>-portable.exe` to use the documentation without a we
 2. Use **Choose a task** to follow a deployment, guest sign-in, or Virtual Commons checklist. For a task with choices, each backend or session host keeps its own marks on this device. Open a guide from the checklist or use the complete article index.
 3. Use **Ctrl+Shift+F** to find a page from any guide. **Alt+Left** and **Alt+Right** move through the pages you visited.
 
+In the overview, select a walkthrough's summary to expand its steps. The phone PDF includes the expanded walkthroughs for offline reading.
+
 The reader bundles the documentation, feature articles, Answer File Studio and Base64 toolkit. The Studio can prepare a local kit. Account creation, deployment and server management use their corresponding TempDesk components.
 
 ## Read the phone PDF

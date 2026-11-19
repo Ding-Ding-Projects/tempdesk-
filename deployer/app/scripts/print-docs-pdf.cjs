@@ -63,6 +63,7 @@ async function populateBook({ edition, labels, info, origin }) {
     template.innerHTML = article.html;
     const content = template.content;
     content.querySelectorAll('script,iframe,object,embed,form,base,link,style,svg,audio,video,input,button').forEach(node => node.remove());
+    for (const disclosure of content.querySelectorAll('details')) disclosure.open = true;
     const anchors = new Map();
     for (const node of content.querySelectorAll('[id]')) {
       if (anchors.has(node.id)) throw new Error('Duplicate section in ' + article.url);

@@ -27,6 +27,8 @@
 
 ## Documentation and delivery
 
+- [ ] Verify the guest sign-in disclosure with keyboard input in the hosted guides and offline reader, and confirm the phone PDF contains the full walkthrough.
+
 - [x] Publish and read back the source-bound container digest at `99d580a`. Verify an isolated Compose pull, startup and health against the lab directory.
 - [x] Verify a registry-backed LAN deployment whose image version matches v1.0.104. Exercise the corrected Windows launcher with detached startup, the keyboard menu and live log controls.
 - [x] Verify the published amd64 and arm64 portal image entries by immutable digest.
