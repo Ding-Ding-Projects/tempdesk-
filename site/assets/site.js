@@ -132,6 +132,10 @@
   var lastFocus = null;
   function openSheet(sheet, focusSel) {
     lastFocus = document.activeElement;
+    if (sheet === settingsSheet && readerFeedback && !readerFeedback.rejection.hidden) {
+      readerFeedback.pendingRejection = true;
+      readerFeedback.rejection.hidden = true;
+    }
     sheet.hidden = false;
     document.body.style.overflow = 'hidden';
     var f = sheet.querySelector(focusSel || 'button, input, select, textarea');
@@ -141,6 +145,7 @@
     sheet.hidden = true;
     document.body.style.overflow = '';
     if (lastFocus && lastFocus.focus) lastFocus.focus();
+    if (sheet === settingsSheet && readerFeedback && readerFeedback.pendingRejection) showReaderRejection();
   }
   function trap(sheet) {
     sheet.addEventListener('keydown', function (e) {
@@ -184,6 +189,7 @@
   }
   function dismissReaderRejection() {
     var noticeHadFocus = readerFeedback.rejection.contains(document.activeElement);
+    readerFeedback.pendingRejection = false;
     readerFeedback.rejection.hidden = true;
     if (!noticeHadFocus) return;
     var target = readerFeedback.returnFocus;
@@ -195,35 +201,56 @@
     clearTimeout(readerFeedback.timer);
     cancelAnimationFrame(readerFeedback.announcementFrame);
     readerFeedback.celebration.hidden = true;
+    readerFeedback.headline.removeAttribute('data-i18n');
     readerFeedback.headline.textContent = '';
     readerFeedback.live.textContent = '';
     if (!keepRejection) dismissReaderRejection();
     stopReaderCue();
   }
+  function copyReaderFeedback(target, source) {
+    target.replaceChildren(...Array.from(source.childNodes, function (child) { return child.cloneNode(true); }));
+    var cantonese = target.querySelector('span.bi-sub');
+    if (cantonese) cantonese.before(' ');
+  }
+  function showReaderRejection() {
+    var focused = document.activeElement;
+    if (focused && focused !== document.body && !readerFeedback.rejection.contains(focused)) {
+      readerFeedback.returnFocus = focused;
+    }
+    copyReaderFeedback(readerFeedback.message, wordingStateEl);
+    readerFeedback.pendingRejection = false;
+    readerFeedback.rejection.hidden = false;
+  }
   function showReaderOutcome(accepted, headline) {
     if (!readerFeedback) return;
     resetReaderFeedback(!accepted && settingsSheet.hidden);
-    var message = headline || wordingStateEl.textContent.trim();
-    if (settingsSheet.hidden) {
-      readerFeedback.announcementFrame = requestAnimationFrame(function () { readerFeedback.live.textContent = message; });
-    }
+    var outcome = wordingStateEl;
     if (accepted) {
       var reduced = prefs.motion !== 'full' || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      readerFeedback.headline.textContent = headline;
+      outcome = readerFeedback.headline;
+      if (headline) {
+        outcome.textContent = headline;
+      } else {
+        outcome.setAttribute('data-i18n', 'wording.applied');
+        render(outcome);
+      }
       readerFeedback.celebration.toggleAttribute('data-static', reduced);
       readerFeedback.celebration.hidden = false;
       readerFeedback.timer = setTimeout(function () {
         readerFeedback.celebration.hidden = true;
+        readerFeedback.headline.removeAttribute('data-i18n');
         readerFeedback.headline.textContent = '';
         readerFeedback.live.textContent = '';
       }, reduced ? 3000 : 3360);
     } else if (settingsSheet.hidden) {
-      var focused = document.activeElement;
-      if (focused && focused !== document.body && !readerFeedback.rejection.contains(focused)) {
-        readerFeedback.returnFocus = focused;
-      }
-      readerFeedback.message.textContent = message;
-      readerFeedback.rejection.hidden = false;
+      showReaderRejection();
+    } else {
+      readerFeedback.pendingRejection = true;
+    }
+    if (settingsSheet.hidden) {
+      readerFeedback.announcementFrame = requestAnimationFrame(function () {
+        copyReaderFeedback(readerFeedback.live, outcome);
+      });
     }
     playReaderCue(accepted);
   }
@@ -253,20 +280,21 @@
     translateAll(); fire();
     wordingMessage(wasLoaded ? 'replaced' : 'loaded', String(wordingCount));
     wordingClearButton.disabled = false;
-    showReaderOutcome(true, entries.get('private vocabulary') || t('wording.applied'));
+    showReaderOutcome(true, entries.get('private vocabulary'));
   }
   function buildReaderFeedback() {
     var live = h('div', { class: 'sr-only', 'aria-live': 'polite', 'aria-atomic': 'true', role: 'status' });
-    var headline = h('p', { class: 'reader-wording-headline' });
+    var headline = h('p', { class: 'reader-wording-headline', 'data-i18n-orig': 'Personal wording applied' });
     var celebration = h('div', { class: 'reader-wording-celebration', 'aria-hidden': 'true', hidden: true }, [headline]);
     var message = h('p');
     var dismiss = h('button', { type: 'button', class: 'btn btn-ghost btn-sm',
       'data-i18n': 'wording.dismiss', onclick: dismissReaderRejection }, ['Dismiss']);
     var rejection = h('div', { class: 'notice warn reader-wording-rejection', hidden: true }, [message, dismiss]);
-    readerFeedback = { live: live, celebration: celebration, headline: headline, message: message, rejection: rejection };
+    readerFeedback = { live: live, celebration: celebration, headline: headline, message: message,
+      rejection: rejection, pendingRejection: false };
     document.body.append(live, celebration, rejection);
     ready.push(function () {
-      if (!rejection.hidden) message.textContent = wordingStateEl.textContent.trim();
+      if (!rejection.hidden) copyReaderFeedback(message, wordingStateEl);
     });
     window.addEventListener('dragover', function (event) {
       if (!event.defaultPrevented && Array.from(event.dataTransfer?.types || []).includes('Files')) event.preventDefault();

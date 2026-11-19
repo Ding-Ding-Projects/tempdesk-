@@ -24,6 +24,8 @@ The reader keeps language, theme and other browsing preferences in its own local
 
 Drop one wording JSON file on the reader or choose **Settings**, then **Choose JSON file**. The Base64 toolkit's own file area accepts files for that tool. The reader applies a valid wording file after saving it locally. The confirmation fades on its own. A rejected file keeps the current wording and displays a dismissible notice. Choose **Clear** in Settings to restore the original wording.
 
+In bilingual mode, the standard confirmation and rejection show English and Cantonese on separate lines. A display name you supply appears as written. If you choose an invalid file in Settings, the rejection remains available to dismiss after you close Settings.
+
 Use **Action sounds** and **Sound volume** in Settings to control the two import cues. With sound off, the reader still shows the result. The reader keeps these preferences in its local profile. System or reader reduced-motion settings make the success confirmation static.
 
 Release builds bundle the tracked source from the release revision. The generated article source links open that revision.
