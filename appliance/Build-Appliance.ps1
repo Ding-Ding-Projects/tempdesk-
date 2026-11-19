@@ -97,7 +97,7 @@ if ($binding['portalArchiveSha256'] -cnotmatch '^[0-9a-f]{64}$') {
     throw 'The embedded portal archive fingerprint is invalid.'
 }
 [IO.File]::WriteAllText($receiptOut, ($binding | ConvertTo-Json -Depth 4), [Text.UTF8Encoding]::new($false))
-Remove-Item -LiteralPath $archiveReceipt
+[IO.File]::Delete($archiveReceipt)
 Write-Output $artifact.FullName
 Write-Output "SHA-256 $($binding.sha256)"
 Write-Output $receiptOut
