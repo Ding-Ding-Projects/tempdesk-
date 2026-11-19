@@ -631,6 +631,23 @@ The signed-in management portal at `d986ca134da5c7833f165e7e16fdfba0a0505a8c` wa
 
 </details>
 
+## Recheck a hosted deployment
+
+1. Reopen Portal Host with the local profile that started the deployment. Choose **Check Docker and Compose**.
+2. Confirm the saved project and release on the opening step. Choose **Recheck endpoint health**.
+3. Open the guest or management portal when its fresh health check succeeds. The wizard checks the existing containers without pulling an image or starting services.
+
+<details>
+<summary>See the saved project on desktop and at 360 px</summary>
+
+![Portal Host showing the saved project and enabled Recheck endpoint health action](docs/evidence/portal-host-reopen-ff5b6b4/portal-host-reopen-desktop.png)
+
+![Narrow bilingual Portal Host view with the saved project and visible health recheck action](docs/evidence/portal-host-reopen-ff5b6b4/portal-host-reopen-narrow.png)
+
+</details>
+
+The screenshots show the locally built wizard with a synthetic project. A separate live replay verified both portal roles after reopening, with the same container IDs and start times. [Build and verification receipt](docs/evidence/portal-host-reopen-ff5b6b4/receipt.json)
+
 ## Standalone offline documentation
 
 <details>

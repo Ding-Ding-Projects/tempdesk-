@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "ff5b6b48e5a2dd45a74d6cd8967aaa86fd4df195",
+  "captureRoute": "Portable wizard on an isolated Windows Lowlevel desktop with page capture",
+  "records": [
+    {
+      "id": "portal-host-reopen-desktop",
+      "active": true,
+      "path": "docs/evidence/portal-host-reopen-ff5b6b4/portal-host-reopen-desktop.png",
+      "sourceCommit": "ff5b6b48e5a2dd45a74d6cd8967aaa86fd4df195",
+      "artifactSha256": "53f811792f65d806bc06da49e9a13c6b0f844bb894582141a39a52efb513b4ac",
+      "captureSha256": "0388255cfb3ea67769806d25b93ac7012c7bdb5e9c0c919476e2409380610a26",
+      "screen": "check-docker",
+      "state": "saved-project-after-engine-check",
+      "theme": "dark",
+      "viewportWidth": 1440,
+      "viewportHeight": 900,
+      "scale": 1,
+      "locale": "en",
+      "capturedUtc": "2026-11-19T09:52:14.276Z",
+      "interactionProofId": "action-is-available",
+      "interactionReceiptSha256": "72a18da867e9481fb10e99c14a319ea8ddd5cf0f0474b6e7db932db436df9b84",
+      "inspectionStatus": "inspected"
+    },
+    {
+      "id": "portal-host-reopen-narrow",
+      "active": true,
+      "path": "docs/evidence/portal-host-reopen-ff5b6b4/portal-host-reopen-narrow.png",
+      "sourceCommit": "ff5b6b48e5a2dd45a74d6cd8967aaa86fd4df195",
+      "artifactSha256": "53f811792f65d806bc06da49e9a13c6b0f844bb894582141a39a52efb513b4ac",
+      "captureSha256": "2e20b92a8e9c4c68af658de65bbb898f24c46923c9fb4d0f05123fe05e517a02",
+      "screen": "check-docker",
+      "state": "saved-project-after-engine-check",
+      "theme": "dark",
+      "viewportWidth": 360,
+      "viewportHeight": 720,
+      "scale": 1,
+      "locale": "bilingual",
+      "capturedUtc": "2026-11-19T09:52:14.357Z",
+      "interactionProofId": "action-is-available",
+      "interactionReceiptSha256": "72a18da867e9481fb10e99c14a319ea8ddd5cf0f0474b6e7db932db436df9b84",
+      "inspectionStatus": "inspected"
+    }
+  ],
+  "runtimeVerification": {
+    "portalRelease": "v1.0.114",
+    "portalSource": "a6dc6470648de286e80f62aa578e9a72eaa77d2d",
+    "savedApprovedTarget": true,
+    "restoredWithDifferentDraft": true,
+    "linksWaitedForFreshChecks": true,
+    "observedRecheckPhases": [
+      "preparing",
+      "checking",
+      "succeeded"
+    ],
+    "bothEndpointsVerified": true,
+    "containerIdentitiesAndStartTimesMatched": true,
+    "lastVerifiedUtc": "2026-11-19T09:43:39Z",
+    "viewportWidth": 360,
+    "locale": "bilingual",
+    "fixtureServicesRemoved": true,
+    "captureLauncherExited": true,
+    "captureDesktopReleased": true,
+    "captureDebugPortClosed": true
+  },
+  "limitations": "The pictures show the saved project action with the synthetic project selected. Live checks for the two fixture roles are recorded separately. Product test suites, physical keyboard delivery and the native Remote Desktop workstation were outside this run."
+}

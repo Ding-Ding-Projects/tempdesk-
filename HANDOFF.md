@@ -8,7 +8,7 @@ The normal v1.0.114 release matches the deployed documentation source. The downl
 
 ## Portal Host recovery
 
-The wizard records the project, binding, and accepted publication receipt locally when startup begins. A reopened wizard can use the saved project for a fresh endpoint check after verifying the local engine. The recovery action leaves containers and volumes in place. It withholds prior results and provides links as fresh checks succeed. Build and live restart verification for the new recovery path are pending.
+The wizard records the project, binding, and accepted publication receipt locally when startup begins. A reopened wizard can use the saved project for a fresh endpoint check after verifying the local engine. The source-bound portable build reopened against an isolated v1.0.114 project with a different setup draft. Fresh checks verified both endpoints with the same container IDs and start times. The English desktop and bilingual 360 px captures show the opening action. Published-wizard verification, physical keyboard delivery, and native Remote Desktop acceptance remain open. [Illustrated walkthrough](README.md#recheck-a-hosted-deployment) · [Verification receipt](docs/evidence/portal-host-reopen-ff5b6b4/receipt.json)
 
 ## Protected portal agent key files
 
