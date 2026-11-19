@@ -18,6 +18,8 @@ The downloaded v1.0.132 phone PDF matched the release digest and embedded revisi
 
 The downloaded v1.0.133 phone PDF matched the release digest and embedded revision `cb8e00a64e45f3674a090bbc134a1d08bfb9eb6c`. All 46 table-of-contents entries and 203 link rectangles resolved across 334 pages. The HTTPS chapter begins on page 171 and the prepared wiki begins on page 332. The released v1.0.133 reader and website served both HTTPS setup images. The runtime receipt and view inventory were missing from both outputs. The shared documentation builder now lists those two reviewed files for local delivery. [v1.0.133 release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.133)
 
+The digest-matched v1.0.134 standalone reader opened its home on an isolated desktop and served the two repaired Portal Host evidence attachments and the previous live rollout receipt byte for byte against source. The owned process, listening port and disposable profile were released.
+
 ## Shared reader focus setting
 
 The reader Settings control uses the existing shared local record and PIN verifier from the Deployer. The reader switches its interface to English while the shared mode is active and suspends the language, personal wording, and action sound controls. Neutral appearance controls stay available. The reader retains its stored preferences for verified unlock. The shared watcher refreshes both native applications. The implemented preference scope and the remaining reader article and index filtering are recorded separately. [Setting guide](docs/OFFLINE-GUIDE.md#use-the-shared-focus-setting) · [Design handoff](design/offline-school/HANDOFF.md)
@@ -31,6 +33,8 @@ The normal v1.0.128 release matches source `ea64e0598663869d772c1624789be7e9d991
 ## Current native lab readiness
 
 On 2026-11-19 at 16:49 UTC, the Core guest reported a synchronized directory and ready global catalog, and its directory-controller DNS record matched the reported host. The agent socket accepted TCP, while the client rejected the certificate before it could read the HTTPS health response. The separate Desktop Experience guest on its host-only segment answered its management listener. Its Remote Desktop port did not answer. The two guests occupied different virtual networks. The Desktop Experience guest still needs its initial credential setup and a private route to the directory. The dedicated Windows 11 workstation still needs its approved virtual TPM, setup, and enrollment. No native checkout or expiry was verified.
+
+The dedicated Virtual Commons workstation remained powered off on 2026-11-19. The operator verified UEFI, Secure Boot and both attached discs against the recorded hashes. The setup disc includes the seat broker registration helper. VMware encryption and a virtual TPM are still required before installation. Guest domain enrollment, broker readiness and sign-in through the downloaded connection file remain pending. [Workstation setup](server/kiosk/README.md)
 
 ## Offline reader personal wording
 
