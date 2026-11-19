@@ -56,5 +56,15 @@ foreach ($file in $names) {
     [IO.File]::Copy((Join-Path $PSScriptRoot $file.Name),$dest)
     if ((Get-FileHash -LiteralPath $dest -Algorithm SHA256).Hash -ine $file.Value) { throw 'Installed broker payload did not match its manifest.' }
 }
+$installedManifest=Join-Path $temp 'GuestFiles.json'
+[IO.File]::Copy($manifestPath,$installedManifest)
+if ((Get-FileHash -LiteralPath $installedManifest -Algorithm SHA256).Hash -ine $ExpectedManifestSha256) { throw 'Installed manifest differs from the trusted receipt.' }
+# An elevated domain user's default object owner can differ between machines.
+# Normalize ownership on the newly created staging inventory before publication.
+foreach ($item in Get-ChildItem -LiteralPath $temp -Force -Recurse) {
+    $itemAcl=Get-Acl -LiteralPath $item.FullName
+    $itemAcl.SetOwner($admins)
+    Set-Acl -LiteralPath $item.FullName -AclObject $itemAcl -ErrorAction Stop
+}
 [IO.Directory]::Move($temp,$destination)
 [pscustomobject]@{ ComputerName=$machine.Name; InstalledPath=$destination; BrokerEntry=Join-Path $destination 'kiosk/Start-CommonsSeatBroker.ps1'; State='FilesInstalledEnrollmentPending'; Enrolled=$false }

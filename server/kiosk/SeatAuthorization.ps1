@@ -45,14 +45,47 @@ function Get-SeatState {
     $state
 }
 
+function Assert-NewSeatFileAcl($Acl) {
+    $trusted=@('S-1-5-18','S-1-5-32-544')
+    if (-not $Acl.AreAccessRulesProtected -or $Acl.GetOwner([Security.Principal.SecurityIdentifier]).Value -notin $trusted) {
+        throw 'New seat file has an unexpected owner or inherited permissions.'
+    }
+    $allowed=@{}
+    foreach ($rule in $Acl.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier])) {
+        if ($rule.AccessControlType -ne 'Allow' -or $rule.IdentityReference.Value -notin $trusted -or
+            $rule.FileSystemRights -ne [Security.AccessControl.FileSystemRights]::FullControl) { throw 'Unexpected new seat file permissions.' }
+        $allowed[$rule.IdentityReference.Value]=$true
+    }
+    if ($allowed.Count -ne 2) { throw 'New seat file permissions are incomplete.' }
+}
+
+function New-PrivateSeatFile([string]$Path) {
+    $admins=[Security.Principal.SecurityIdentifier]::new('S-1-5-32-544')
+    $system=[Security.Principal.SecurityIdentifier]::new('S-1-5-18')
+    $acl=[Security.AccessControl.FileSecurity]::new()
+    $owner=if ([Security.Principal.WindowsIdentity]::GetCurrent().User.Value -eq $system.Value) { $system } else { $admins }
+    $acl.SetOwner($owner)
+    $acl.SetAccessRuleProtection($true,$false)
+    foreach ($sid in $system,$admins) {
+        $acl.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new($sid,'FullControl','Allow'))
+    }
+    $stream=[IO.FileStream]::new($Path,[IO.FileMode]::CreateNew,[Security.AccessControl.FileSystemRights]::FullControl,
+        [IO.FileShare]::None,4096,[IO.FileOptions]::None,$acl)
+    try { Assert-NewSeatFileAcl ($stream.GetAccessControl()) } catch { $stream.Dispose(); throw }
+    $stream
+}
+
 function Save-SeatState($State, [switch]$Initialize) {
     $path = Join-Path $script:SeatDirectory 'state.json'
     $temp = Join-Path $script:SeatDirectory ([guid]::NewGuid().ToString('N') + '.tmp')
     $bytes = [Text.UTF8Encoding]::new($false).GetBytes(($State | ConvertTo-Json -Compress))
-    $file = [IO.File]::Open($temp, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+    $file = New-PrivateSeatFile $temp
     try { $file.Write($bytes,0,$bytes.Length); $file.Flush($true) } finally { $file.Dispose() }
     try {
-        if ($Initialize) { [IO.File]::Move($temp,$path) }
+        if ($Initialize) {
+            [IO.File]::Move($temp,$path)
+            Assert-NewSeatFileAcl (Get-Acl -LiteralPath $path)
+        }
         else { [IO.File]::Replace($temp,$path,[NullString]::Value) }
     } finally { if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp } }
 }
