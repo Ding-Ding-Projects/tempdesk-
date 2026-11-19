@@ -1,0 +1,12 @@
+# Add after compose.kiosk.yaml when the broker uses a private certificate authority.
+services:
+  tempdesk-guest:
+    environment:
+      COMMONS_KIOSK_BROKER_CA_FILE: /run/secrets/commons-kiosk-ca.pem
+    volumes:
+      - type: bind
+        source: ${TEMPDESK_KIOSK_CA_SOURCE:?A broker CA bundle file is required}
+        target: /run/secrets/commons-kiosk-ca.pem
+        read_only: true
+        bind:
+          create_host_path: false

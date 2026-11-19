@@ -1,0 +1,13 @@
+# Optional guest-only mount. Use compose-kiosk.sh on the Linux Docker host.
+services:
+  tempdesk-guest:
+    environment:
+      COMMONS_KIOSK_BROKER_KEY_FILE: /run/secrets/commons-kiosk
+      COMMONS_KIOSK_BROKER_CA_FILE: ""
+    volumes:
+      - type: bind
+        source: ${TEMPDESK_KIOSK_KEY_SOURCE:?A protected broker credential file is required}
+        target: /run/secrets/commons-kiosk
+        read_only: true
+        bind:
+          create_host_path: false

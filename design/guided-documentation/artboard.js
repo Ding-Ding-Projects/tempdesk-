@@ -22,6 +22,11 @@
       ['Check the session host', 'Download the connection file and sign in', 'Verify that expiry ends the session'],
       copy('Use a separate session host and check the route from the guest computer.', '工作階段主機要分開，再用訪客電腦檢查路線。'),
     ],
+    workstation: [
+      copy('Prepare a single-seat Windows 11 workstation', '準備單座 Windows 11 工作站'),
+      [copy('Check the private network and trusted media', '核對私人網絡同安裝媒體'), copy('Verify encryption, TPM and domain enrollment', '確認加密、TPM 同網域登記'), copy('Check the booking, download, sign-in and release', '核對預約、下載、登入同座位釋放')],
+      copy('Keep the seat pending until the live checkout passes.', '實際驗證通過前，座位保持待驗證。'),
+    ],
     core: [
       copy('Check Server Core readiness', '檢查 Server Core 準備情況'),
       [copy('Review supported roles', '睇支援嘅角色'), copy('Verify a standard-user guest sign-in', '驗證一般訪客登入'), copy('Confirm the session ends at expiry', '確認到期會結束工作階段')],
@@ -42,7 +47,8 @@
     choice('task', 'commons', copy('Verify Virtual Commons', '驗證 Virtual Commons'), true) + '</div></fieldset>' +
     '<div><fieldset id="guide-edition"><legend>' + copy('Session host', '工作階段主機') + '</legend><div class="guide-variant-options">' +
     choice('edition', 'desktop', variants.desktop[0], root.dataset.edition === 'desktop') +
-    choice('edition', 'core', variants.core[0], root.dataset.edition === 'core') + '</div></fieldset>' +
+    choice('edition', 'core', variants.core[0], root.dataset.edition === 'core') +
+    choice('edition', 'workstation', variants.workstation[0], root.dataset.edition === 'workstation') + '</div></fieldset>' +
     '<p id="guide-progress" class="guide-status" role="status"></p><div id="guide-preview-panel" class="guide-panel"></div></div></div></section>' +
     '<label>Accent colour <input id="accent-preview" type="color" value="#006A61"></label> ' +
     '<label><input id="motion-preview" type="checkbox" checked> Motion</label></div></div>' +

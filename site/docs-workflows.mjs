@@ -49,6 +49,16 @@ const tasks = [
         ],
       },
       {
+        id: 'workstation',
+        filter: 'docs-guide-steps-commons-workstation',
+        steps: ['network', 'media', 'firmware', 'domain', 'broker', 'download', 'session', 'release'],
+        links: [
+          ['workstation', 'server/kiosk/README.md'],
+          ['configureSeat', 'docs/VIRTUAL-COMMONS.md', 'add-a-kiosk-windows-11-workstation'],
+          ['verify', 'docs/VIRTUAL-COMMONS.md', 'verify-a-checkout'],
+        ],
+      },
+      {
         id: 'core',
         filter: 'docs-guide-steps-commons-core',
         steps: ['role', 'guest', 'expiry'],

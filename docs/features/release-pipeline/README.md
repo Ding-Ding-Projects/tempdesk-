@@ -8,6 +8,6 @@ Notes measure elapsed time from the first job start to release publication using
 
 ## Release job dependencies
 
-The release job uses a hosted Windows 2025 runner with PowerShell, Git, GitHub CLI, the Windows command shell and Windows trust inspection. The workflow provides Python 3.12 for the local delta seed, and the root installer acquires build and packaging dependencies. The build process receives no release credential.
+The release job uses a hosted Windows 2025 runner with PowerShell, Git, GitHub CLI, the Windows command shell and Windows trust inspection. The root installer acquires build and packaging dependencies. GitHub CLI downloads an older release's full package and feed into an isolated runner directory. The packager checks the package against the feed and stages both files for offline Squirrel delta generation. The build process receives no release credential. Without an older compatible package, the installer produces a full package.
 
 The seven-day job artifact records run context and allowlisted outputs available at job end. Fresh-worker bootstrap, actual download and native installation remain distinct verification steps.

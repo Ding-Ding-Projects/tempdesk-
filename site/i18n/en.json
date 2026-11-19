@@ -1468,5 +1468,17 @@
   "reader.kiosk": "Kiosk deployment",
   "reader.hosted": "Public website and tools",
   "reader.offline": "Offline documentation reader",
-  "reader.delivery": "Project delivery"
+  "reader.delivery": "Project delivery",
+ "docs.guide.commons.workstation.title": "Prepare a single-seat Windows 11 workstation",
+ "docs.guide.commons.workstation.summary": "Use this checklist to verify one restricted remote desktop. Checking a box records your own progress only. Keep the destination unavailable until the live seat checks pass.",
+ "docs.guide.commons.workstation.network": "Connect the gateway and directory through the isolated lab network. Check DNS, effective firewall rules and the authorized gateway route before enrollment.",
+ "docs.guide.commons.workstation.media": "Choose licensed, supported media. Compare the installation image SHA-256 with the publisher’s value for that exact edition before creating the powered-off VM.",
+ "docs.guide.commons.workstation.firmware": "In VMware Workstation, enable encryption with an operator-controlled password and add TPM 2.0. On either hypervisor, verify Secure Boot and TPM 2.0 before installing.",
+ "docs.guide.commons.workstation.domain": "Install Pro, Enterprise or Education, assign a unique name, join the lab domain and apply the watcher policy. Verify NLA, trusted server identity and effective redirection restrictions.",
+ "docs.guide.commons.workstation.broker": "Enroll the private HTTPS broker for this exact workstation. Keep readiness pending until the broker identifies an eligible empty seat and confirms its grant to the one booked standard account.",
+ "docs.guide.commons.workstation.download": "Make a finite test booking. Download its RDP attachment in the confirming browser before the ten-minute window or account expiry, whichever comes first. Check the destination and username.",
+ "docs.guide.commons.workstation.session": "Use the confirmation credential to sign in through the trusted gateway. Check that clipboard, drives and printers are unavailable and that a second guest cannot reserve the occupied seat.",
+ "docs.guide.commons.workstation.release": "Stay connected through expiry. Verify the original session ends, the expired account cannot sign in again and the broker revokes its grant before another booking. Record missing results as pending.",
+ "docs.guide.link.workstation": "Workstation preparation and enrollment",
+ "docs.guide.link.configureSeat": "Configure the single-seat destination"
 }

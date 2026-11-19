@@ -442,6 +442,13 @@
    "consumer": "attachListFilter"
   },
   {
+   "id": "docs-guide-steps-commons-workstation",
+   "page": "docs/index.html",
+   "surface": "Windows 11 workstation checkout readiness checklist",
+   "file": "docs-workflows.mjs",
+   "consumer": "attachListFilter"
+  },
+  {
    "id": "docs-guide-steps-commons-core",
    "page": "docs/index.html",
    "surface": "Server Core checkout readiness checklist",
