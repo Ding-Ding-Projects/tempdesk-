@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <title>TempDesk Portal Host</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="ui.css">
+  <script src="ui.js" defer></script>
+</head>
+<body>
+  <header><div><strong>TempDesk Portal Host</strong><small id="build"></small></div>
+    <label><span id="language-label">Language</span>
+      <select id="language"><option value="en">English</option><option value="zh-HK">廣東話</option><option value="bi">English + 廣東話</option></select>
+    </label>
+    <label><input type="checkbox" id="motion"><span id="motion-label"></span></label>
+  </header>
+  <main><nav><ol id="steps"></ol></nav>
+    <article><p class="step" id="position"></p><h1 id="heading" tabindex="-1"></h1>
+      <div id="body"></div><p id="error" role="alert" hidden></p><footer id="actions"></footer>
+    </article>
+  </main>
+  <p class="sr" id="live" role="status"></p>
+</body></html>
