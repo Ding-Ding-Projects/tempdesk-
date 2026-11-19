@@ -1,5 +1,15 @@
 # TempDesk verification handoff
 
+## Bootable appliance producer
+
+The Windows build entrypoint can assemble an x86_64 UEFI disk layout or a
+Raspberry Pi 4 arm64 layout from a verified multi-platform portal publication
+receipt. Both layouts use the existing Compose definition, bind to a selected
+private LAN and wait for credentials provisioned through a separate protected
+volume. The producer writes regular image files and never writes a host drive.
+Track each boot, configured portal start, LAN check and release separately in
+the [delivery checklist](ROADMAP.md). [Appliance guide](portal/README.md#build-a-bootable-appliance)
+
 ## Documentation source handoff
 
 The README now has a quick entry point, a deployment workflow diagram and collapsible walkthroughs. The [operator guides](docs/features/README.md) index the existing articles, and the prepared wiki links to [Postman diagnostics](docs/features/http-api/README.md). The README count comes from the published v1.0.89 release. A classified count, human estimate and current product recording remain open. Postman execution, site rebuild and updated offline-reader verification were deferred.

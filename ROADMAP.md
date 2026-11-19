@@ -27,7 +27,9 @@
 
 - [x] Publish and read back the source-bound container digest at `99d580a`. Verify an isolated Compose pull, startup and health against the lab directory.
 - [x] Verify a registry-backed LAN deployment whose image version matches v1.0.104. Exercise the corrected Windows launcher with detached startup, the keyboard menu and live log controls.
-- [ ] Verify the published amd64 and arm64 portal image entries by immutable digest and use them in the appliance delivery.
+- [x] Verify the published amd64 and arm64 portal image entries by immutable digest.
+- [ ] Verify the x86_64 UEFI appliance image and Raspberry Pi 4 arm64 image, including configured startup, separate LAN checks, and restart persistence. [Appliance build and configuration](portal/README.md#build-a-bootable-appliance)
+- [ ] Release both verified appliance images and connect them to the virtual machine and physical-media deployment workflows.
 - [ ] Verify the standalone Portal Host wizard on the supported Windows host, including both endpoint results, health-only recheck and safe cancellation.
 - [x] Inventory the required features across the Deployer, management portal, guest portal, kiosk, public documentation, offline reader, and project delivery. [Verification inventory](docs/FEATURE-INVENTORY.md)
 - [x] Record how to select, apply, reload and clear personal wording in the built management portal. [Illustrated steps](README.md#personal-wording-walkthrough)

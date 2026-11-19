@@ -1,13 +1,14 @@
 @echo off
 rem Builds TempDesk Deployer (the desktop app) into deployer\bin\ as an unpacked app and a
 rem portable .exe, plus the standalone documentation in deployer\bin\docs\.
-rem Usage: build.bat [/docs or --portal-host] [/s]   /s = silent.
+rem Usage: build.bat [/docs or --portal-host or --appliance] [/s]   /s = silent.
 setlocal EnableExtensions
 set "ROOT=%~dp0"
 set "QUIET="
 set "DOCSONLY="
 set "BUILDCOMPANION="
 set "PORTALHOST="
+set "APPLIANCE="
 set "RUNAPP="
 set "SKIPTESTS="
 if "%SILENT%"=="1" set "QUIET=1"
@@ -16,6 +17,7 @@ if "%~1"=="" goto :parsed
 if /I "%~1"=="/docs" (set "DOCSONLY=1"& goto :nextarg)
 if /I "%~1"=="--build-companion" (set "BUILDCOMPANION=1"& goto :nextarg)
 if /I "%~1"=="--portal-host" (set "PORTALHOST=1"& goto :nextarg)
+if /I "%~1"=="--appliance" (set "APPLIANCE=1"& goto :nextarg)
 if /I "%~1"=="--run" (set "RUNAPP=1"& goto :nextarg)
 if /I "%~1"=="--skip-tests" (set "SKIPTESTS=1"& goto :nextarg)
 if /I "%~1"=="/s" (set "QUIET=1"& goto :nextarg)
@@ -32,9 +34,14 @@ if defined RUNAPP if defined DOCSONLY (echo --run requires a desktop build.& exi
 if defined PORTALHOST if defined BUILDCOMPANION (echo Choose one companion.& exit /b 2)
 if defined PORTALHOST if defined DOCSONLY (echo Choose one companion.& exit /b 2)
 if defined PORTALHOST if defined RUNAPP (echo Choose one build action.& exit /b 2)
+if defined APPLIANCE if defined DOCSONLY (echo Choose one build action.& exit /b 2)
+if defined APPLIANCE if defined BUILDCOMPANION (echo Choose one build action.& exit /b 2)
+if defined APPLIANCE if defined PORTALHOST (echo Choose one build action.& exit /b 2)
+if defined APPLIANCE if defined RUNAPP (echo Choose one build action.& exit /b 2)
 set "PSEXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 rem Started from PowerShell 7, the inherited module path breaks Windows PowerShell 5.1 (Get-FileHash goes missing).
 set "PSModulePath="
+if defined APPLIANCE goto :build-appliance
 set "LOG=%ROOT%deployer\bin\build.log"
 if not exist "%ROOT%deployer\bin" mkdir "%ROOT%deployer\bin"
 if exist "%LOG%" del "%LOG%"
@@ -93,6 +100,10 @@ if defined RUNAPP (
 popd
 if not defined QUIET echo Build finished: %ROOT%deployer\bin
 exit /b 0
+
+:build-appliance
+"%PSEXE%" -NoProfile -File "%ROOT%appliance\Build-Appliance.ps1"
+exit /b %ERRORLEVEL%
 
 :step
 rem Runs %CMD%; in silent mode its output goes to the log file instead of the console.

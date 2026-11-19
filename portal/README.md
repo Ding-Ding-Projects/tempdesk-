@@ -53,6 +53,70 @@ docker compose up -d --no-build
 
 The source command requires Node.js, Git, tar and Docker Compose. It stages the approved portal, docs, changelog and shared browser assets from the checked-out revision. It stamps the application bytes before building the Compose image and removes its temporary staging directory afterward. The staging command builds the image without starting a service and excludes all Git metadata and credentials from the context. Installed Deployer and published portal payloads already carry their own build receipts. A direct `docker compose up -d --build` from a loose checkout still works and reports unavailable build provenance.
 
+## Build a bootable appliance
+
+The appliance build writes a new disk-image file. It assembles Alpine Linux,
+Docker, Compose, and the same portal configuration used by the regular
+container deployment. The system partition and persistent Docker storage are
+separate. Choose the x86_64 UEFI layout for a compatible PC or virtual
+machine, or the Raspberry Pi 4 arm64 layout for a build host that can execute
+arm64 Linux containers.
+
+Download `tempdesk-portal-publication.json` from the workflow that published the
+desired normal release. The builder checks the immutable registry index and
+both platform manifests before using the selected image. From the repository
+root on a Windows machine with Docker Desktop active, run:
+
+```powershell
+$env:TEMPDESK_APPLIANCE_RECEIPT = (Resolve-Path 'tempdesk-portal-publication.json').Path
+$env:TEMPDESK_APPLIANCE_ARCH = 'amd64' # Use arm64 on a builder that supports it.
+.\build.bat --appliance /s --skip-tests
+```
+
+Set `TEMPDESK_APPLIANCE_BUILDER` to an existing Buildx builder name when
+using a separate native ARM builder or an emulated BuildKit worker. The
+builder must be able to run instructions for the selected architecture.
+
+The builder uses files from the current Git commit. It prints the new
+`.img.gz` path, SHA-256, and build receipt. The receipt identifies the image
+layout, appliance source, portal release source, OCI index and platform
+manifest, and installed package versions. Record the digest before copying
+or extracting the image. The x86_64 route requires UEFI. The arm64 layout
+targets a Pi 4 with Ethernet. Inspect the [delivery checklist](../ROADMAP.md)
+for current boot and release evidence before using an image.
+
+### Configure the appliance
+
+Reserve the appliance's IPv4 address on an intended private Ethernet
+network. Prepare a separate ext4 volume labelled `TD-CONFIG` with a
+root-owned `deployment.json` in its root and permissions `0600`. Prepare
+it offline and attach it read-only at first boot. The configuration file
+requires these fields:
+
+| Field | Value |
+| --- | --- |
+| `lanAddress` | The appliance's reserved IPv4 address. |
+| `sourceNetwork` | The intended private client subnet in CIDR notation. |
+| `agentUrl` | The trusted TempDesk agent's HTTPS origin. |
+| `agentCertificateSha256` | The verified SHA-256 certificate pin as 64 hexadecimal digits. |
+| `guestKey` | The agent's separate guest credential. |
+| `managementKey` | The agent's separate management credential. |
+| `sessionSecret` | A fresh independent management session secret of at least 32 characters. |
+
+On boot the appliance imports the configuration into its persistent Linux
+state partition and unmounts the credential volume. Later boots use the
+persisted configuration. Keep the credential volume in protected storage.
+With no protected configuration, the console reports that setup is
+required and the portal ports remain closed. If the reserved LAN address is
+unavailable, review DHCP before restarting the appliance.
+
+The console prints the guest and management links when both services are
+healthy. On a separate client in the selected subnet, open the guest
+link on port 8080 and the management sign-in on port 8081. Verify the
+visible release, sign-in and data persistence across an appliance reboot.
+The image builder creates files only. It has no physical-media write,
+hypervisor import or in-place appliance upgrade action.
+
 ## Optional Virtual Commons workstation broker
 
 ### Enable a dedicated workstation broker on an existing Linux deployment
