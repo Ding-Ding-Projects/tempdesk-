@@ -37,7 +37,7 @@ $utf8=[Text.UTF8Encoding]::new($false)
 [IO.File]::WriteAllText((Join-Path $stage 'Autounattend.xml'),$answer,$utf8)
 $server=Split-Path -Parent $PSScriptRoot
 $files=@('kiosk/Get-CommonsKioskReadiness.ps1','kiosk/Get-CommonsEnrollmentSteps.ps1','kiosk/Set-CommonsKioskRestrictions.ps1',
-    'kiosk/Start-CommonsSeatBroker.ps1','kiosk/SeatAuthorization.ps1','kiosk/SeatTransitions.ps1',
+    'kiosk/Start-CommonsSeatBroker.ps1','kiosk/Register-CommonsSeatStartup.ps1','kiosk/SeatAuthorization.ps1','kiosk/SeatTransitions.ps1',
     'kiosk/SeatSessions.ps1','apphost/VirtualCommonsHost.ps1','apphost/i18n/en.json','apphost/i18n/zh-HK.json')
 $inventory=[ordered]@{}
 foreach ($relative in $files) {

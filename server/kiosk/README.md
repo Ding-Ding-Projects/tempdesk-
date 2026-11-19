@@ -72,3 +72,28 @@ From the protected installation, run the following inside the intended VM. The r
 ```powershell
 .\kiosk\Get-CommonsEnrollmentSteps.ps1 -ComputerName LAB-KIOSK01 -DomainDns lab.example -BrokerPort 9443
 ```
+## Register the verified broker for guest startup
+
+Use the new media revision and its independent hypervisor-side manifest digest. Earlier installations without the registration script and installed manifest require a newly staged revision. Keep any active older task and state intact until the owner schedules its migration.
+
+1. In the dedicated, domain-joined workstation, finish the watcher and RDP policy steps above. Provision the existing protected `broker.key`, credential directory, Active Directory RSAT feature, and private portal network route. Keep the credential in the supported file. Registration accepts no credential parameter.
+2. Use the organization's normal certificate enrollment and HTTP.sys tools to bind the trusted certificate from **Local Computer / Personal (MY)** to the exact workstation FQDN and port using an SNI hostname binding. Include the intended FQDN, server-authentication usage and private key. Certificate trust on the portal and network restrictions still need independent verification. The registration helper neither edits a binding nor opens the firewall.
+3. From an approved elevated 64-bit Windows PowerShell 5.1 console **inside the guest**, run the installed helper with the independent manifest digest, workstation identity, private portal IPv4 address and public certificate thumbprint. Preview first. Specify `-InitializeEmptySeat` only for the first enrollment on an empty workstation.
+
+   ```powershell
+   $arguments = @{
+       ExpectedManifestSha256 = '<digest from the trusted host receipt>'
+       ComputerName = 'LAB-KIOSK01'
+       DomainDns = 'lab.example'
+       PortalAddress = '192.168.50.25'
+       CertificateThumbprint = '<public certificate thumbprint>'
+       Port = 9443
+       InitializeEmptySeat = $true
+   }
+   .\kiosk\Register-CommonsSeatStartup.ps1 @arguments -WhatIf
+   .\kiosk\Register-CommonsSeatStartup.ps1 @arguments
+   ```
+
+4. The helper verifies the protected installed code, domain watcher, effective RDP rights and NLA, storage permissions, credential-file presence, local certificate chain and hostname binding. Under the broker's exclusive lock it initializes an absent record only for a confirmed first enrollment after checking both RDP membership and live sessions. An existing valid record is retained. If registration fails after initialization, re-run the same command; no state reset is necessary.
+5. **RegisteredForStartup** means the exact native boot task was read back. An exact matching registration returns **AlreadyRegistered**. A conflicting task, untrusted task permissions, missing state behind an existing task, or an active broker holding the lock requires operator review. The helper does not start a second broker, restart the guest or modify guest sign-in. The operator can start the reviewed task using Task Scheduler in the guest when the network and trust configuration are ready.
+6. Check the broker using the portal's existing authenticated HTTPS integration. Only a successful target-matched `GET /seat` with `ready: true` indicates a free seat. Local task registration, certificate checks and listener presence do not prove the portal reaches or trusts the broker.
