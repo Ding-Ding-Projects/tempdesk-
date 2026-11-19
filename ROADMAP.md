@@ -28,7 +28,7 @@
 ## Documentation and delivery
 
 - [x] Verify the compiled guest sign-in disclosure at desktop and 360 px widths. Open the walkthrough in the built portable reader and confirm the full printed content. [Verification receipt](docs/evidence/documentation-disclosures-edcf827.json)
-- [ ] Verify the deployed disclosure and the matching released offline package.
+- [x] Verify the deployed disclosure and the matching released offline package. [Release readback](docs/evidence/documentation-disclosures-v114.json)
 
 - [x] Publish and read back the source-bound container digest at `99d580a`. Verify an isolated Compose pull, startup and health against the lab directory.
 - [x] Verify a registry-backed LAN deployment whose image version matches v1.0.104. Exercise the corrected Windows launcher with detached startup, the keyboard menu and live log controls.
@@ -37,6 +37,7 @@
 - [ ] Verify the x86_64 UEFI appliance image and Raspberry Pi 4 arm64 image, including configured startup, separate LAN checks, and restart persistence. [Appliance build and configuration](portal/README.md#build-a-bootable-appliance)
 - [ ] Release both verified appliance images and connect them to the virtual machine and physical-media deployment workflows.
 - [x] Use the published Portal Host wizard on the supported Windows host to cancel before startup, start both portals, and recheck health with the same container identities and start times. [Verification receipt](docs/evidence/guest-sign-in-v111/receipt.json)
+- [ ] Reopen the rebuilt wizard and recheck a saved deployment from the opening step. Verify both endpoint results and unchanged container identities and start times.
 - [ ] Verify the Portal Host native file chooser, cancellation during startup, and visual parity at the supported display settings.
 - [x] Inventory the required features across the Deployer, management portal, guest portal, kiosk, public documentation, offline reader, and project delivery. [Verification inventory](docs/FEATURE-INVENTORY.md)
 - [x] Record how to select, apply, reload and clear personal wording in the built management portal. [Illustrated steps](README.md#personal-wording-walkthrough)
@@ -46,7 +47,7 @@
 - [x] Verify the rebuilt management notification centre with filtered bulk actions, guarded deletion, account-scoped history and reversible local wording. [Illustrated steps and receipt](README.md#management-notification-walkthrough)
 - [ ] Complete the remaining feature implementation and runtime verification on every applicable surface.
 - [ ] Publish the operator wiki when its repository is available. [Prepared wiki entry point](docs/wiki/pending/Home.md)
-- [ ] Generate a phone-sized PDF from the complete documentation and wiki, verify its contents and internal links, and attach it to the normal release.
+- [x] Generate a phone-sized PDF from the documentation and prepared wiki, verify its contents and internal links, and attach it to the normal release. [Release readback](docs/evidence/documentation-disclosures-v114.json)
 - [x] Build and launch the standalone documentation reader locally. Verify offline search, the Virtual Commons guide, and the prepared operator wiki.
 - [x] Verify the standalone documentation executable from a normal release. [Offline documentation walkthrough](README.md#standalone-offline-documentation)
 - [x] Verify the source-bound documentation executable downloaded from the v1.0.74 release.

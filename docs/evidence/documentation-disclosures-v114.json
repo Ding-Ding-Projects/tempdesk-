@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "a6dc6470648de286e80f62aa578e9a72eaa77d2d",
+  "release": {
+    "tag": "v1.0.114",
+    "url": "https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.114",
+    "publishedUtc": "2026-11-19T09:22:30Z",
+    "draft": false,
+    "prerelease": false,
+    "verifiedManifestEntries": 9
+  },
+  "hosted": {
+    "homepage": "https://ding-ding-projects.github.io/tempdesk-/",
+    "article": "https://ding-ding-projects.github.io/tempdesk-/docs/overview.html#guest-sign-in-walkthrough",
+    "statusCode": 200,
+    "aboutHomepageMatched": true,
+    "articleSourceMatched": true,
+    "disclosureServed": true
+  },
+  "offlineReader": {
+    "file": "TempDeskDocs-1.0.114-portable.exe",
+    "sha256": "f73d6a4316c8b6940e9490ad1dc0db3941730ab48347b4207d9b4f0fe11f733f",
+    "route": "Downloaded portable executable on an isolated Windows Lowlevel desktop",
+    "homeOpened": true,
+    "documentationIndexOpened": true,
+    "articleOpened": true,
+    "verifiedBundledWalkthroughImages": 4,
+    "inspectedFrameSha256": "dd73afcca3c08fd20d1367993cfeb60f3fe748b44d17c321e5fdc97e869bc2e1",
+    "profileGone": true,
+    "desktopReleased": true,
+    "debugPortClosed": true
+  },
+  "phonePdf": {
+    "file": "TempDeskDocs-1.0.114-phone.pdf",
+    "sha256": "1d18a5123b5b727f7eb9fec7f6c5ed151b0e904757d6087b36564df3d5cbbfc4",
+    "pages": 308,
+    "articles": 45,
+    "internalLinks": 189
+  }
+}

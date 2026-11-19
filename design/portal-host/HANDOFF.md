@@ -22,3 +22,7 @@ Real guest navigation uses the configured port with **/**. Management uses its c
 Expose step state to assistive technology, move focus to the new task heading on Back/Next, return focus to the original chooser after picker cancellation, and focus a failing field or its diagnostic after validation. Keep stable live regions for meaningful phase changes; do not announce every log line. Use native keyboard controls, visible focus, localized English and Hong Kong Cantonese copy, and bilingual wrapping. At 100%, 125%, 150% and 200%, preserve every action, both URLs and the complete copyable revision/digest. Verify normal, error, partial start, safe cancellation, retry and successful result against the real portable executable.
 
 The checked-in boards are design references. The two locally rendered prototype frames and review notes are in REHEARSAL.md and frames/. Hosted canvas sync, real wizard operation and production visual parity remain unverified.
+
+## Reopen a saved project
+
+Select **Reopen saved project** on either board. Step one shows only the saved project and release. Check Docker and Compose to enable **Recheck endpoint health**. This opens the results step for new health observations without starting containers or requiring a new publication receipt. The board uses example events. The running wizard accepts endpoint evidence only from the native operation.

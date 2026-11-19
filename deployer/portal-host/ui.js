@@ -19,6 +19,7 @@
     directory:['Configuration directory','設定資料夾'], overlay:['Optional overlay','選用覆寫檔'], project:['Compose project','Compose 專案'],
     address:['LAN address','區域網絡位址'], guestPort:['Guest port','訪客連接埠'],managementPort:['Management port','管理連接埠'],none:['None','無'],
     start:['Start portals','啟動入口網站'],recheck:['Recheck endpoint health','重新檢查端點狀態'],stop:['Request cancellation','要求取消'],
+    recheckSaveFailed:['Health recheck is available in this window. Saving the project for reopening failed.','今次開啟期間可以重查端點狀態。儲存專案以便下次開啟時重查失敗。'],
     stopHelp:['Cancellation takes effect before startup. An underway start finishes and reports its outcome.','取消會喺啟動前生效。已開始嘅啟動會完成並報告結果。'],
     guest:['Guest portal','訪客入口網站'],management:['Management portal','管理入口網站'],open:['Open','開啟'],
     unchecked:['Not checked','尚未檢查'],checking:['Checking','檢查中'],ready:['Ready','已就緒'],
@@ -83,6 +84,11 @@
     } catch { error='operationError'; }
     finally { pending=false; render(restore); }
   }
+  function recheckSaved() {
+    if (pending || snapshot.docker !== 'ready' || !snapshot.recheckTarget) return;
+    rechecking = true;
+    call('recheck', [], () => go(5), 'heading');
+  }
   function go(n) { step=n; save('step',n); error=''; render('heading'); }
   function valid(values) {
     const port = n => Number.isInteger(n) && n>=1 && n<=65535;
@@ -124,6 +130,10 @@
       if (step===0) {
         details(body,[['engine',t(snapshot.docker)]]);
         button(body,'check','check',()=>call('check',[],null,'check'));
+        if (snapshot.recheckTarget) {
+          details(body,[['project',snapshot.recheckTarget.project],['release',snapshot.recheckTarget.releaseTag]]);
+          button(body,'recheck-saved','recheck',recheckSaved,false,snapshot.docker!=='ready');
+        }
       } else if (step===1) {
         button(body,'pick-receipt','chooseReceipt',()=>call('choose',['receipt'],null,'pick-receipt'));
         details(body,[['file',d.receipt?.name || t('empty')],['release',d.receipt?.releaseTag],['version',d.receipt?.version],['revision',d.receipt?.revision],['digest',d.receipt?.digest]]);
@@ -147,7 +157,7 @@
           }
         }
         if(active(r) && !rechecking)button(actions,'stop',r.cancelRequested?'cancelling':'stop',()=>call('cancel'),false,r.cancelRequested);
-        else if (!active(r) && r.phase!=='idle') button(actions,'recheck','recheck',()=>{rechecking=true;call('recheck');},true);
+        else if (!active(r) && snapshot.recheckTarget) button(actions,'recheck','recheck',recheckSaved,true,snapshot.docker!=='ready');
       }
       if(step>0 && !active(r)) button(actions,'back','back',()=>go(step-1));
       if(step<4)button(actions,'next','next',()=>{
@@ -159,6 +169,7 @@
       },true,step===0?snapshot.docker!=='ready':step===1?!d.receipt:step===2?!d.configuration:false);
       if(step>0 && step<5)button(actions,'cancel-setup','cancelSetup',()=>{ form=null;go(0); });
       if(step===4)button(actions,'start','start',()=>{go(5);call('start');},true);
+      if (snapshot.recheckSaveFailed && (step===0 || step===5)) body.append(element('p',t('recheckSaveFailed')));
       if (!error && r.reason) {
         const reasons={configuration:'conflict',receipt:'reasonReceipt',startup:'reasonStartup',dependency:'reasonDependency',runtime:'reasonRuntime',pull:'reasonPull',verify:'reasonVerify'};
         body.append(element('p',t('evidence')+': '+t(reasons[r.reason] || 'operationError')));

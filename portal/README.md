@@ -41,6 +41,8 @@ Open `TempDeskPortalHost-<version>-portable.exe` from the normal release. The wi
 
 Review the digest and the proposed bindings before starting. The launcher verifies project ownership before reusing resources. The wizard reports the guest and management results independently and enables each link after its corresponding health check. You can request cancellation before startup. If startup is already underway, the wizard lets that operation settle and reports its actual outcome. **Recheck health** reads the endpoints for the selected deployment without repeating the pull or startup.
 
+When the launcher begins starting a project, the wizard saves its identity and configuration references in your local profile. To check that project after reopening, choose **Check Docker and Compose**, then **Recheck endpoint health** on the opening step. The wizard enables links only after fresh checks. Keep the original configuration, binding, and publication receipt accessible. A project previously started with an older wizard has no saved recheck record until this wizard starts it.
+
 ## Run from source
 
 ```sh

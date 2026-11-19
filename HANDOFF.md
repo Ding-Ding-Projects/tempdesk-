@@ -4,6 +4,12 @@
 
 The overview renderer recognizes balanced details blocks and their summary labels. Walkthrough content goes through the existing Markdown renderer. Other HTML stays escaped. Enter and Space opened and closed the disclosure at desktop and 360 px widths. The nested Lab verification link opened the containing disclosure. The built portable reader opened the walkthrough and the phone PDF included all four images. [Verification receipt](docs/evidence/documentation-disclosures-edcf827.json)
 
+The normal v1.0.114 release matches the deployed documentation source. The downloaded portable reader opened the guest walkthrough offline and verified its four bundled images. The matching phone PDF contains 308 pages, 45 articles, and 189 internal links. The live overview served the disclosure, and the project's About address matched the deployed home. [Release readback](docs/evidence/documentation-disclosures-v114.json)
+
+## Portal Host recovery
+
+The wizard records the project, binding, and accepted publication receipt locally when startup begins. A reopened wizard can use the saved project for a fresh endpoint check after verifying the local engine. The recovery action leaves containers and volumes in place. It withholds prior results and provides links as fresh checks succeed. Build and live restart verification for the new recovery path are pending.
+
 ## Protected portal agent key files
 
 The portal accepts one agent key from an explicit `AGENT_KEY_FILE` path or its legacy setting. The guest Compose overlay mounts the operator's protected role file for the guest service. The packaged portal and the published v1.0.113 image used a mounted guest key and trusted TLS with an isolated Samba directory. Each created and removed a one-hour account. The guest key was rejected by the protected directory route. The packaged native configuration helper retained a selected role file path. Native directory and Remote Desktop acceptance remain open. [Configuration guide](docs/features/http-api/portal-agent-key-file.md) · [Build and runtime receipt](docs/evidence/protected-agent-key-file-c65b407.json)

@@ -5,14 +5,16 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const identity = require('./source.json');
-const { addresses, optionsFrom, readJson, receiptAt, writeAtomic, checkDocker, deploy } = require('./hosting.cjs');
+const { absoluteField, addresses, optionsFrom, readJson, receiptAt, writeAtomic, checkDocker, deploy,
+  recoverDeployment, saveDeployment } = require('./hosting.cjs');
 
 const activePhases = new Set(['preparing', 'pulling', 'starting', 'checking']);
 const pickerKinds = new Set(['receipt', 'configuration', 'overlay']);
-let window, root, settingsFile, draft, lastDeployment, active, pickerOpen;
+let window, root, settingsFile, deploymentFile, runtime, draft, lastDeployment, active, pickerOpen;
 let saving = Promise.resolve();
 let docker = 'unchecked';
 let run = idleRun();
+let recheckSaveFailed = false;
 
 function idleRun() {
   return { phase: 'idle', code: null, reason: '', startedAt: null, cancelRequested: false, endpoints: [] };
@@ -21,7 +23,10 @@ function idleRun() {
 function snapshot() {
   const { version, revision } = identity;
   const { receiptPath, ...visible } = draft;
-  return { version, revision, addresses: addresses(), docker, draft: visible, run };
+  const recheckTarget = lastDeployment && {
+    project: lastDeployment.project, releaseTag: lastDeployment.receipt.releaseTag,
+  };
+  return { version, revision, addresses: addresses(), docker, draft: visible, run, recheckTarget, recheckSaveFailed };
 }
 
 function publish() {
@@ -33,10 +38,6 @@ function publish() {
 function updateRun(change) {
   run = { ...run, ...change };
   return publish();
-}
-
-function absoluteField(value) {
-  return typeof value === 'string' && value.length <= 4096 && path.isAbsolute(value) ? value : '';
 }
 
 async function readSettings() {
@@ -101,12 +102,18 @@ async function start(recheck) {
 
   const job = { marker: path.join(root, 'cancel-' + randomUUID()), cancelRequested: false, recheck };
   active = job;
-  if (!recheck) lastDeployment = selected;
   const state = updateRun({ ...idleRun(), phase: 'preparing', startedAt: Date.now() });
   void (async () => {
+    let saved;
     try {
-      const result = await deploy({ draft: selected, job, identity, runtime: path.join(root, 'hosting-runtime'),
-        bundled: path.join(process.resourcesPath, 'portal-runtime'), recheck, progress: updateRun });
+      const result = await deploy({ draft: selected, job, identity, runtime, previous: lastDeployment,
+        bundled: path.join(process.resourcesPath, 'portal-runtime'), recheck, progress: change => {
+          if (!recheck && !saved && change.phase === 'starting') {
+            lastDeployment = selected;
+            saved = saveDeployment(deploymentFile, selected).then(() => true, () => false);
+          }
+          updateRun(change);
+        } });
       let phase = 'failed';
       if (result.code === 3 && job.cancelRequested) phase = 'cancelled';
       else if (result.code === 0 && result.endpoints.length === 2) phase = 'succeeded';
@@ -116,6 +123,7 @@ async function start(recheck) {
     } catch (error) {
       updateRun({ phase: 'failed', reason: error.reason || 'startup', code: null });
     } finally {
+      if (saved) recheckSaveFailed = !await saved;
       await fs.rm(job.marker, { force: true }).catch(() => {});
       active = null;
       publish();
@@ -142,7 +150,9 @@ else {
     root = app.getPath('userData');
     await fs.mkdir(root, { recursive: true });
     settingsFile = path.join(root, 'hosting-settings.json');
-    draft = await readSettings();
+    deploymentFile = path.join(root, 'hosting-last-deployment.json');
+    runtime = path.join(root, 'hosting-runtime');
+    [draft, lastDeployment] = await Promise.all([readSettings(), recoverDeployment(deploymentFile, runtime).catch(() => null)]);
     window = new BrowserWindow({ width: 1120, height: 820, minWidth: 360, minHeight: 540, useContentSize: true, autoHideMenuBar: true,
       webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));

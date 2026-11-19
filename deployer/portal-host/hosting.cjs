@@ -35,6 +35,10 @@ function optionsFrom(value, available = addresses()) {
   return { project: value.project, address: value.address, guestPort: value.guestPort, managementPort: value.managementPort };
 }
 
+function absoluteField(value) {
+  return typeof value === 'string' && value.length <= 4096 && path.isAbsolute(value) ? value : '';
+}
+
 async function readJson(file, maximum) {
   const handle = await fs.open(file, 'r');
   try {
@@ -155,64 +159,124 @@ function parseEndpoint(line, version, options) {
   return match[3] === expected ? { role: guest ? 'guest' : 'management', url: match[3], started: match[4], verified: match[5] } : null;
 }
 
-async function deploy({ draft, job, identity, runtime, bundled, recheck, progress }) {
+async function deploymentInputs(draft) {
   const options = optionsFrom(draft);
-  const receipt = await receiptAt(draft.receiptPath);
-  const config = await fs.stat(draft.configuration).catch(() => null);
-  if (!config?.isDirectory()) throw new HostError('configuration');
-  if (draft.overlay && (!(await fs.stat(draft.overlay).catch(() => null))?.isFile() || draft.overlay.includes(';'))) {
+  const receiptPath = absoluteField(draft.receiptPath);
+  if (!receiptPath) throw new HostError('receipt');
+  const receipt = await receiptAt(receiptPath);
+  if (draft.receipt?.revision !== receipt.revision || draft.receipt?.digest !== receipt.digest ||
+      draft.receipt?.releaseTag !== receipt.releaseTag) throw new HostError('receipt');
+  const configuration = absoluteField(draft.configuration);
+  const overlay = absoluteField(draft.overlay);
+  if (!(await fs.stat(configuration).catch(() => null))?.isDirectory() ||
+      typeof draft.overlay !== 'string' ||
+      (draft.overlay && (!overlay || overlay.includes(';') || !(await fs.stat(overlay).catch(() => null))?.isFile()))) {
     throw new HostError('configuration');
   }
+  return { ...options, configuration, overlay, receiptPath, receipt };
+}
+
+function bindingFile(runtime, project) {
+  const file = path.join(runtime, 'projects', project, 'binding.yaml');
+  if (file.includes(';')) throw new HostError('configuration');
+  return file;
+}
+
+async function checkBinding(file, expected) {
+  const handle = await fs.open(file, 'r').catch(() => null);
+  if (!handle) throw new HostError('configuration');
+  try {
+    if (!(await handle.stat()).isFile()) throw new HostError('configuration');
+    const buffer = Buffer.alloc(Buffer.byteLength(expected) + 1);
+    const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+    if (buffer.toString('utf8', 0, bytesRead) !== expected) throw new HostError('configuration');
+  } finally { await handle.close(); }
+}
+
+async function recoverDeployment(file, runtime) {
+  const saved = await readJson(file, 32768);
+  if (saved?.schemaVersion !== 1) throw new HostError('configuration');
+  const recovered = await deploymentInputs(saved);
+  await checkBinding(bindingFile(runtime, recovered.project), binding(recovered));
+  return recovered;
+}
+
+async function saveDeployment(file, selected) {
+  const { project, address, guestPort, managementPort, configuration, overlay, receiptPath } = selected;
+  const { releaseTag, revision, digest } = selected.receipt;
+  await writeAtomic(file, JSON.stringify({ schemaVersion: 1, project, address, guestPort, managementPort,
+    configuration, overlay, receiptPath, receipt: { releaseTag, revision, digest } }));
+}
+
+async function deploy({ draft, job, identity, runtime, bundled, recheck, previous, progress }) {
+  const options = await deploymentInputs(draft);
+  const { receipt } = options;
   if (job.cancelRequested) return { code: 3, endpoints: [], reason: '' };
   await prepareRuntime(runtime, bundled, identity);
-  const project = path.join(runtime, 'projects', options.project);
-  const overlay = path.join(project, 'binding.yaml');
-  if (overlay.includes(';')) throw new HostError('configuration');
+  const overlay = bindingFile(runtime, options.project);
+  const expectedBinding = binding(options);
+  let originalBinding;
   if (recheck) {
-    const previous = await fs.readFile(overlay, 'utf8').catch(() => '');
-    if (previous !== binding(options)) throw new HostError('configuration');
+    await checkBinding(overlay, expectedBinding);
   } else {
-    await fs.mkdir(project, { recursive: true });
-    await writeAtomic(overlay, binding(options));
+    await fs.mkdir(path.dirname(overlay), { recursive: true });
+    if (previous?.project === options.project) {
+      const previousBinding = binding(previous);
+      if (previousBinding !== expectedBinding) {
+        originalBinding = await checkBinding(overlay, previousBinding).then(() => previousBinding, () => null);
+      }
+    }
+    await writeAtomic(overlay, expectedBinding);
   }
-  if (job.cancelRequested) return { code: 3, endpoints: [], reason: '' };
 
   const env = { ...process.env };
   for (const key of Object.keys(env)) {
     if (/^(COMPOSE_|DOCKER_(HOST|CONTEXT)|TEMPDESK_PORTAL_|TEMPDESK_LAN_ADDRESS)/i.test(key)) delete env[key];
   }
   env.COMPOSE_PROJECT_NAME = options.project;
-  env.TEMPDESK_PORTAL_CONFIG_DIR = draft.configuration;
-  env.TEMPDESK_PORTAL_RECEIPT = draft.receiptPath;
-  env.TEMPDESK_PORTAL_COMPOSE_OVERRIDES = [draft.overlay, overlay].filter(Boolean).join(';');
+  env.TEMPDESK_PORTAL_CONFIG_DIR = options.configuration;
+  env.TEMPDESK_PORTAL_RECEIPT = options.receiptPath;
+  env.TEMPDESK_PORTAL_COMPOSE_OVERRIDES = [options.overlay, overlay].filter(Boolean).join(';');
   env.TEMPDESK_LAN_ADDRESS = options.address;
   env.TEMPDESK_PORTAL_CANCEL_FILE = job.marker;
-  if (job.cancelRequested) return { code: 3, endpoints: [], reason: '' };
 
   let phase = 'preparing';
+  let starting = false;
   let reason = 'startup';
   const endpoints = new Map();
-  const code = await childProcess(path.join(process.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe'),
-    ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', path.join(runtime, runtimeFiles[0]),
-      '-Mode', recheck ? 'verify' : 'detached'], {
-      env,
-      line(value) {
-        if (value.startsWith('Pulling TempDesk ')) phase = 'pulling';
-        if (value === 'Starting both portals and waiting for health...') phase = 'starting';
-        if (value === 'Checking the published portal endpoints...') phase = 'checking';
-        const endpoint = parseEndpoint(value, receipt.version, options);
-        if (endpoint) endpoints.set(endpoint.role, endpoint);
-        progress({ phase, endpoints: Array.from(endpoints.values()) });
-      },
-      diagnostic(value) {
-        if (/Docker Desktop|Docker Compose plugin/.test(value)) reason = 'dependency';
-        else if (/Cannot pull/.test(value)) reason = 'pull';
-        else if (/publication receipt|pulled image differs|pulled digest/.test(value)) reason = 'receipt';
-        else if (/project has containers|configuration|port mapping|already has a TempDesk/.test(value)) reason = 'configuration';
-        else if (/endpoint|portal health|running portal/.test(value)) reason = 'verify';
-      },
-    });
-  return { code, endpoints: Array.from(endpoints.values()), reason };
+  try {
+    if (job.cancelRequested) return { code: 3, endpoints: [], reason: '' };
+    const code = await childProcess(path.join(process.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe'),
+      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', path.join(runtime, runtimeFiles[0]),
+        '-Mode', recheck ? 'verify' : 'detached'], {
+        env,
+        line(value) {
+          if (value.startsWith('Pulling TempDesk ')) phase = 'pulling';
+          if (value === 'Starting both portals and waiting for health...') {
+            phase = 'starting';
+            starting = true;
+          }
+          if (value === 'Checking the published portal endpoints...') phase = 'checking';
+          const endpoint = parseEndpoint(value, receipt.version, options);
+          if (endpoint) endpoints.set(endpoint.role, endpoint);
+          progress({ phase, endpoints: Array.from(endpoints.values()) });
+        },
+        diagnostic(value) {
+          if (/Docker Desktop|Docker Compose plugin/.test(value)) reason = 'dependency';
+          else if (/Cannot pull/.test(value)) reason = 'pull';
+          else if (/publication receipt|pulled image differs|pulled digest/.test(value)) reason = 'receipt';
+          else if (/project has containers|configuration|port mapping|already has a TempDesk/.test(value)) reason = 'configuration';
+          else if (/endpoint|portal health|running portal/.test(value)) reason = 'verify';
+        },
+      });
+    return { code, endpoints: Array.from(endpoints.values()), reason };
+  } finally {
+    if (!starting && originalBinding) {
+      await checkBinding(overlay, expectedBinding);
+      await writeAtomic(overlay, originalBinding);
+    }
+  }
 }
 
-module.exports = { HostError, addresses, optionsFrom, readJson, receiptAt, writeAtomic, checkDocker, deploy };
+module.exports = { HostError, absoluteField, addresses, optionsFrom, readJson, receiptAt, writeAtomic,
+  checkDocker, deploy, recoverDeployment, saveDeployment };

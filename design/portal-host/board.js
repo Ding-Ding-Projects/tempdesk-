@@ -21,7 +21,7 @@ function render(focus=false){
  document.documentElement.lang=model.lang==='zh-HK'?'zh-HK':'en';
  const texts={
    language:['Language','語言'],fixture:['Example state','範例狀態'],accent:['Accent','主色'],motion:['Motion','動態'],preview:['Design preview','設計預覽'],
-   none:['New project','新專案'],engine:['Engine offline','引擎離線'],receipt:['Receipt rejected','紀錄無效'],health:['Admin offline','管理離線'],reuse:['Reuse','重用'],conflict:['Conflict','衝突']
+   reopen:['Reopen saved project','重新開啟已儲存專案'],none:['New project','新專案'],engine:['Engine offline','引擎離線'],receipt:['Receipt rejected','紀錄無效'],health:['Admin offline','管理離線'],reuse:['Reuse','重用'],conflict:['Conflict','衝突']
  };
  for(const el of document.querySelectorAll('[data-copy]'))el.textContent=tx(...texts[el.dataset.copy]);
  for(const opt of $('fixture').options)opt.textContent=tx(...texts[opt.value]);
@@ -40,9 +40,15 @@ function render(focus=false){
  }
  if(model.step===3){hint('A generated override binds both services to the selected LAN address and distinct ports. Original configuration stays in place.','產生的覆蓋設定會把兩項服務綁定至所選區域網絡位址及兩個不同連接埠，原有設定保留原位。');input(c,'LAN IPv4 address','區域網絡 IPv4 位址','ip');input(c,'Compose project','Compose 專案','project');input(c,'Guest host port','訪客連接埠','guest');input(c,'Management host port','管理連接埠','admin');}
  if(model.step===4){hint('Review the immutable release, generated override and ownership check before starting.','啟動前請核對固定版本、產生的覆蓋設定及資源擁有權。');line(c,'Release','版本',sample.tag);line(c,'Revision','原始碼版本',sample.rev);line(c,'Image','映像檔',sample.image);line(c,'Directory','資料夾',sample.folder);if(model.overlay)line(c,'Optional overlay','選用覆蓋檔',sample.overlay);line(c,'COMPOSE_PROJECT_NAME','COMPOSE_PROJECT_NAME',sample.project);line(c,'Guest','訪客',sample.ip+':'+sample.guest);line(c,'Management','管理',sample.ip+':'+sample.admin+'/login');line(c,'Resource ownership','資源擁有權',model.failure==='conflict'?tx('Conflict: foreign resources','衝突：資源由其他專案擁有'):model.failure==='reuse'?tx('Verified existing project resources','已核實由此專案擁有的現有資源'):tx('New project; no collisions','新專案，未發現衝突'));if(model.failure==='conflict')warn('Startup blocked. Choose another project or ports and repeat the ownership check.','無法啟動。請選擇其他專案名稱或連接埠，再核對擁有權。');}
+ if(model.step===0 && model.failure==='reopen'){
+   line(c,'Compose project','Compose 專案',sample.project);line(c,'Release','版本',sample.tag);
+   const check=button('Check Docker and Compose','檢查 Docker 及 Compose',()=>{model.engineChecked=true;render(true);});
+   const recheck=button('Recheck endpoint health','重新檢查端點狀態',()=>{model.step=5;model.progress=2;model.done=false;model.paused=false;render(true);});
+   recheck.disabled=!model.engineChecked;c.append(check,recheck);
+ }
  if(model.step===5){
    const stages=[['Pull image by digest','按摘要拉取映像檔'],['Start Compose services','啟動 Compose 服務'],['Verify guest health','驗證訪客服務'],['Verify management health','驗證管理服務']];
-   for(let i=0;i<stages.length;i++)line(c,...stages[i],i<model.progress?tx('Confirmed','已確認'):i===3&&model.failure==='health'?tx('Health check failed','健康檢查失敗'):i===model.progress&&!model.paused?tx('In progress','進行中'):tx('Pending','尚待處理'));
+   for(let i=model.failure==='reopen'?2:0;i<stages.length;i++)line(c,...stages[i],i<model.progress?tx('Confirmed','已確認'):i===3&&model.failure==='health'?tx('Health check failed','健康檢查失敗'):i===model.progress&&!model.paused?tx('In progress','進行中'):tx('Pending','尚待處理'));
    if(model.paused)warn('Observation paused. Inspect existing services before retrying. Running services were preserved.','已暫停觀察。重試前請檢查現有服務；執行中的服務已保留。');
    else if(model.failure==='health'&&model.progress===3)warn('Management did not pass its health check. Inspect its logs and port mapping, then recheck health.','管理服務未通過檢查。請檢查記錄及連接埠，再驗證健康狀態。');
    for(const [index,label,zh,port,suffix] of [[2,'Guest URL','訪客網址',sample.guest,'/'],[3,'Management URL','管理網址',sample.admin,'/login']]){
@@ -62,7 +68,7 @@ function render(focus=false){
  if(!model.done&&!model.paused)f.append(button(model.started?'Stop observing':'Cancel setup',model.started?'停止觀察':'取消設定',()=>{if(model.started)model.paused=true;else {model.step=0;model.receipt=false;model.config=false;model.overlay=false;}render(true);}));
  if(focus)$('label').focus();
 }
-$('lang').onchange=e=>{model.lang=e.target.value;render();};$('fixture').onchange=e=>{model.failure=e.target.value;render();};
+$('lang').onchange=e=>{model.lang=e.target.value;render();};$('fixture').onchange=e=>{model.failure=e.target.value;if(model.failure==='reopen'){model.step=0;model.engineChecked=false;model.progress=0;model.done=false;}render();};
 $('accent').oninput=e=>document.querySelector('.board').style.setProperty('--accent',e.target.value);
 $('motion').onchange=e=>document.body.dataset.motion=e.target.checked?'on':'off';
 const query=new URLSearchParams(location.search);

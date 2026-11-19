@@ -1,6 +1,10 @@
 # Continue TempDesk lab verification
 
 ```text
+The deployed documentation and normal v1.0.114 release match source revision a6dc6470648de286e80f62aa578e9a72eaa77d2d. The released portable executable opened the guest walkthrough and verified four bundled images. The matching phone PDF has 45 articles and 189 internal links. See docs/evidence/documentation-disclosures-v114.json.
+
+The Portal Host wizard records the exact approved deployment references after startup begins. Verify reopening from a dedicated local profile, recheck both roles, and compare container identities and start times. Leave the existing portal deployment and saved operator configuration in place. Product tests remain deferred.
+
 The documentation source updates are described in [HANDOFF.md](HANDOFF.md#documentation-source-handoff). Exercise the Postman diagnostics in an isolated directory deployment and check the updated guides and prepared wiki in the generated site and offline reader before calling delivery verified. Keep the historical evidence receipts and record the current source revision separately.
 
 Use the [walkthrough](README.md#guest-sign-in-walkthrough), [capture inventory](docs/evidence/guest-sign-in-inventory.json), and [roadmap](ROADMAP.md) as the current evidence. Preserve the Samba-backed kiosk and verify a separate kiosk configured for the native Windows directory. Finish supported guest setup, confirm Windows 11 domain membership, and verify an actual desktop sign-in using a synthetic temporary account. For each supported remote session destination, verify the downloaded connection file, successful sign-in, and enforced session end at expiry. Update the documentation with inspected captures that show no credentials or deployment details.
