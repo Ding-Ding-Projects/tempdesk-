@@ -6,7 +6,17 @@ Open the downloaded Virtual-Commons.rdp file and enter the password shown on the
 
 The download is an attachment from the guest portal. The browser that opened the confirmation can download it again for up to ten minutes, capped by the account's expiry. Each confirmation has its own download, so switching tabs keeps the selected destination with its checkout. The connection file carries the destination and username. Use the one-time confirmation to read the password.
 
-With School mode off, one in a hundred valid checkout attempts shows a dim sum dish and offers a retry. That outcome creates no account and reserves no seat. The result shows a published catalogue photo when available. The dish name and retry link stay available if the photo cannot load.
+### If you get a dim sum result
+
+With School mode off, one in a hundred valid checkout attempts shows a dim sum dish. The result creates no account and reserves no seat. Choose **Try again**, or press Tab to reach **Try again** and then Enter. The checkout form retains your computer edition and duration.
+
+![Virtual Commons dim sum result with the published har gow photo and keyboard focus on Try again](evidence/virtual-commons-dim-sum-6f6cb7f/published-dish.png)
+
+If the photo catalogue is unavailable, the dish name and **Try again** stay available. School mode takes the ordinary checkout path.
+
+![Narrow Virtual Commons result with the dish photo unavailable message and keyboard focus on Try again](evidence/virtual-commons-dim-sum-6f6cb7f/catalogue-unavailable.png)
+
+[Browser and directory verification](evidence/virtual-commons-dim-sum-6f6cb7f/receipt.json)
 
 To use personal wording for the edition labels, verify an active guest sign-in under **Check my sign-in**, then return to **Virtual Commons**. Upload a wording JSON file or use **Clear personal wording** to restore the shipped labels. The file is processed in the current page and is never uploaded to the server. Wording clears when you leave the page or when the temporary wording access expires, whichever comes first.
 

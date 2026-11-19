@@ -312,6 +312,7 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}`;
     'docs/evidence/management-wording-walkthrough.json',
     'docs/evidence/virtual-commons-attachments.json',
     'docs/evidence/virtual-commons-checkout.json',
+    'docs/evidence/virtual-commons-dim-sum-6f6cb7f/receipt.json',
     'docs/evidence/virtual-commons-picker-wording.json',
   ]);
   for (const attachment of localAttachments) {
