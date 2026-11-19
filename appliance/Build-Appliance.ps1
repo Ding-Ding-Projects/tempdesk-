@@ -90,7 +90,7 @@ $binding['filename'] = $artifact.Name
 $binding['bytes'] = $artifact.Length
 $binding['sha256'] = (Get-FileHash -LiteralPath $artifact.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
 $binding['builtAtUtc'] = [DateTime]::UtcNow.ToString('o')
-$binding['packages'] = @(Get-Content -LiteralPath (Join-Path $output 'packages.txt'))
+$binding['packages'] = [IO.File]::ReadAllLines((Join-Path $output 'packages.txt'), [Text.Encoding]::UTF8)
 $archiveReceipt = Join-Path $output 'portal-archive.sha256'
 $binding['portalArchiveSha256'] = (Get-Content -LiteralPath $archiveReceipt -Raw).Trim()
 if ($binding['portalArchiveSha256'] -cnotmatch '^[0-9a-f]{64}$') {

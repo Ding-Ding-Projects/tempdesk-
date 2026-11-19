@@ -60,6 +60,9 @@ receipt covers its earlier direct kernel and OpenRC boot in board emulation.
 The x86_64 build enables Alpine's ACPI service with a power-button event rule
 for normal guest shutdown. Verify that shutdown stops the portal pair and
 that the persisted configuration works on the next boot.
+The build receipt records package names as JSON strings on both Windows
+PowerShell 5.1 and PowerShell 7. The local inventory stays independent of
+the builder's filesystem path.
 Physical LAN, configured Pi 4 startup, and appliance release acceptance are
 open. [x86 receipt](docs/evidence/appliance-x86-1583b87.json) ·
 [Pi 4 receipt](docs/evidence/appliance-rpi4-a613c4c.json)

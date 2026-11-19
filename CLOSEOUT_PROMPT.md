@@ -65,6 +65,8 @@ The embedded x86 appliance from 1583b8718eaeda093ede791c6774c6922ed3524b passed 
 
 The x86 build now starts Alpine's ACPI service and maps the guest power-button event to normal shutdown. Use the isolated emulator to verify the portal stop hook, completed guest shutdown, and a subsequent boot with the same disk and without the seed disk.
 
+The appliance receipt reads the installed package list as plain UTF-8 strings. Verify the rebuilt receipt contains the ACPI packages and carries no local file metadata before retaining it as delivery evidence.
+
 Both lab portals are now verified on v1.0.111 from source 76ccdfaa72058065c07a4f58d8cf714c4f0b2dc0, including a separate LAN readback. A one-hour kiosk account was created, verified active and self-deleted. The directory again had zero guest accounts. The published Portal Host wizard cancelled before startup, started both endpoints and verified them again without changing the running container identities or start times. See docs/evidence/guest-sign-in-v111/receipt.json. The isolated wizard fixture's teardown remains pending. Continue native Remote Desktop checkout on the actual Windows targets.
 
 The protected agent key file option is implemented for both portal modes. The packaged portal and the released v1.0.113 image used a mounted guest key over trusted TLS, created a one-hour account in isolated Samba, and removed it. The directory returned to zero guests. The guest-only Compose model and legacy setting passed their checks. The built native configuration helper retained the selected role file. See docs/evidence/protected-agent-key-file-c65b407.json. Continue with the authorized native agent credential and actual Remote Desktop sign-in once the target guest is enrolled.
