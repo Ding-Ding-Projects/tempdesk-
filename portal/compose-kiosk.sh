@@ -30,7 +30,24 @@ group=$(stat -c '%g' -- "$1")
 (( (8#$mode & 7137) == 0 && ((8#$mode & 0040) == 0 || group == 10001) && (owner == 0 || owner == 10001 || owner == EUID) )) || die 'The broker credential must have restricted ownership and permissions.'
 (( (owner == 10001 && (8#$mode & 0400)) || (group == 10001 && (8#$mode & 0040)) )) || die 'The portal UID or GID 10001 must already have read access.'
 export TEMPDESK_KIOSK_KEY_SOURCE="$1"
-files=(-f compose.yaml -f compose.kiosk.yaml)
+files=(-f compose.yaml)
+pull_args=()
+published_prefix='ghcr.io/ding-ding-projects/tempdesk-portal@'
+digest=${TEMPDESK_PORTAL_DIGEST:-}
+if [[ -z $digest ]]; then
+  current_guest=$(docker compose "${files[@]}" ps -q tempdesk-guest)
+  if [[ -n $current_guest ]]; then
+    current_image=$(docker inspect --format '{{.Config.Image}}' "$current_guest")
+    if [[ $current_image == "$published_prefix"* ]]; then digest=${current_image#"$published_prefix"}; fi
+  fi
+fi
+if [[ -n $digest ]]; then
+  [[ $digest =~ ^sha256:[0-9a-f]{64}$ ]] || die 'Use the exact digest from a portal publication receipt.'
+  export TEMPDESK_PORTAL_DIGEST="$digest"
+  files+=(-f compose.published.yaml)
+  pull_args=(--pull never)
+fi
+files+=(-f compose.kiosk.yaml)
 if (( $# == 2 )); then
   check_file "$2"
   [[ $1 != "$2" && ! "$1" -ef "$2" ]] || die 'Select a separate CA bundle.'
@@ -43,4 +60,4 @@ if (( $# == 2 )); then
   files+=(-f compose.kiosk-ca.yaml)
 fi
 docker compose "${files[@]}" config --quiet
-exec docker compose "${files[@]}" up --no-build --no-deps --force-recreate -d tempdesk-guest
+exec docker compose "${files[@]}" up --no-build --no-deps --force-recreate "${pull_args[@]}" -d tempdesk-guest

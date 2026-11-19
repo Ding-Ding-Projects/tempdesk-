@@ -5,6 +5,7 @@
 - [x] Verify Server Core promotion through domain-controller DNS records and synchronized directory status, and verify the native TempDesk agent health endpoint.
 - [x] Verify Samba-backed kiosk account creation, credential validation, one-time confirmation and self-deletion. See the [guest sign-in walkthrough](README.md#guest-sign-in-walkthrough).
 - [x] Observe automatic removal of a separate one-hour account after its configured expiry.
+- [x] Roll out v1.0.102 to both lab portals. Verify their live source revision, health, volume identities and published port mappings.
 - [x] Verify that the kiosk language search label and its regex controls fit at 360 px and 1440 px.
 - [x] Verify both connection files and guest account checks against an isolated Samba directory. [Checkout receipt](docs/evidence/virtual-commons-checkout.json)
 - [x] Verify scoped confirmations, both attachment destinations, retry and temporary account removal against a real isolated directory. [Attachment receipt](docs/evidence/virtual-commons-attachments.json)
@@ -24,6 +25,7 @@
 
 ## Documentation and delivery
 
+- [ ] Publish and read back the source-bound container digest, then verify a Compose pull and startup from that exact digest.
 - [x] Inventory the required features across the Deployer, management portal, guest portal, kiosk, public documentation, offline reader, and project delivery. [Verification inventory](docs/FEATURE-INVENTORY.md)
 - [x] Record how to select, apply, reload and clear personal wording in the built management portal. [Illustrated steps](README.md#personal-wording-walkthrough)
 - [ ] Verify local wording and outcome cues across the Deployer notification drawer, its search, and the remaining dynamic surfaces.

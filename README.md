@@ -520,6 +520,8 @@ The [hosted capture inventory](docs/evidence/workstation-guide-17f80f7.json) rec
 
 The picker captures came from the kiosk build at `caddfb9c4e672ad59e3a8af8e7b7fd9386d5d2f0`. The confirmation and retry came from build `32128b6a4731ace51ae9e26e031ce8d96bbb99b9`. The browser used an isolated Samba directory and test destinations for both editions. See [Lab verification](#lab-verification) for native session sign-in and expiry.
 
+For a dedicated single-seat desktop, choose **Kiosk Windows 11** when the operator has enrolled one. Its temporary sign-in and connection file use the same checkout flow. See [the workstation setup and checkout](docs/VIRTUAL-COMMONS.md#add-a-kiosk-windows-11-workstation).
+
 1. In **Virtual Commons**, choose a finite duration and an available edition. The wide capture selects Desktop Experience. The 360 px capture selects Server Core and shows the wrapped checkout label.
 
    ![Virtual Commons on a wide screen with Desktop Experience and one hour selected](docs/evidence/virtual-commons-picker-caddfb9/choose-desktop-experience.png)
@@ -527,8 +529,6 @@ The picker captures came from the kiosk build at `caddfb9c4e672ad59e3a8af8e7b7fd
    ![Virtual Commons at 360 pixels with Server Core selected and the complete checkout button label](docs/evidence/virtual-commons-picker-caddfb9/choose-server-core.png)
 
 2. Activate `Virtual Commons: Check out a computer`. When **Your sign-in is ready** appears, look for `Virtual-Commons.rdp` in the browser downloads.
-
-For a dedicated single-seat desktop, choose **Kiosk Windows 11** when the operator has enrolled one. Its temporary sign-in and connection file use the same checkout flow. See [the workstation setup and checkout](docs/VIRTUAL-COMMONS.md#add-a-kiosk-windows-11-workstation).
 
    ![The guest kiosk confirms that the sign-in is ready after checkout](docs/evidence/virtual-commons-browser-32128b6/02-checkout-confirmation.png)
 

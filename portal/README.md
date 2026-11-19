@@ -7,9 +7,23 @@ One Docker image, two modes:
 | `PORTAL_MODE=guest` | Anyone on the LAN: create, check or delete a temporary sign-in | 8080 | guest key |
 | `PORTAL_MODE=admin` | Members of the TempDesk admin group: the Admin console | 8081 | admin key |
 
-Both are Python 3.12, FastAPI and server-rendered Jinja2 pages. The only contact with the domain is the TempDesk Agent API in `docs/API.md`. There is no JavaScript build step and nothing is loaded from the internet at runtime: fonts are system fonts and every script and style sheet is served from the image.
+Both services use Python 3.12, FastAPI and server-rendered Jinja2. Directory requests go through the TempDesk Agent API described in `docs/API.md`. The image supplies the scripts, styles and interface assets. The optional Virtual Commons dim sum result looks up a photo in the public dish catalogue and keeps the retry available if the image cannot load.
 
-## Run
+## Run a published image
+
+Download the `tempdesk-portal-publication.json` receipt from the **Publish TempDesk portal image** workflow for the source revision you intend to deploy. Use a receipt whose state is `published` or `already-published`. Read its `revision` and `digest` together. Obtain registry read access through your normal protected sign-in when the package requires authentication.
+
+In this folder, prepare `.env.guest` and `.env.admin` from their examples. Supply the bound portal digest as the Compose interpolation variable `TEMPDESK_PORTAL_DIGEST`. In PowerShell, use `$env:TEMPDESK_PORTAL_DIGEST`. On a shell with `export`, use `export TEMPDESK_PORTAL_DIGEST`. The value is the receipt's complete `sha256:` digest.
+
+```sh
+docker compose -f compose.yaml -f compose.published.yaml pull
+docker compose -f compose.yaml -f compose.published.yaml up -d --no-build --pull never --wait --wait-timeout 90
+docker compose -f compose.yaml -f compose.published.yaml ps
+```
+
+Include your existing broker and CA overlays on both Compose commands when those protected mounts are already in use. The published mode uses the same named data volumes and LAN ports as the source mode. From an intended LAN client, open the host's guest page on port 8080 and the management sign-in page on port 8081 at `/login`. Confirm both pages report the revision from the receipt. Keep the earlier digest available for a rollback.
+
+## Run from source
 
 ```sh
 cd portal
@@ -34,7 +48,7 @@ bash compose-kiosk.sh /etc/tempdesk/kiosk/broker.key
 bash compose-kiosk.sh /etc/tempdesk/kiosk/broker.key /etc/tempdesk/kiosk/ca.pem
 ```
 
-The helper checks file types, paths and access modes, validates the combined Compose model silently, and recreates only the guest service, briefly interrupting it. Compose mounts the files read-only. With no CA argument the guest uses its normal TLS trust store. Re-run with the same paths after rotation so the guest receives the replacement files. Run subsequent guest updates with the same overlay selection. To remove the mounts, reconcile only the guest service with the base file using `docker compose -f compose.yaml up --no-build --no-deps -d tempdesk-guest`. A running container is not proof of broker connectivity or RDP admission. Check the guest seat availability and the end-to-end assignment and expiry procedure in [Virtual Commons](../docs/VIRTUAL-COMMONS.md).
+The helper checks file types, paths and access modes, validates the combined Compose model silently, and recreates only the guest service, briefly interrupting it. Compose mounts the files read-only. With no CA argument the guest uses its normal TLS trust store. The helper retains a running published digest or accepts an explicit `TEMPDESK_PORTAL_DIGEST` that was already pulled. Re-run with the same paths after rotation so the guest receives the replacement files. To remove the mounts, reconcile only the guest service with the base Compose file and the same published overlay when applicable. Check the guest seat availability and the end-to-end assignment and expiry procedure in [Virtual Commons](../docs/VIRTUAL-COMMONS.md).
 
 ### Enable the broker on Windows with Docker Desktop
 

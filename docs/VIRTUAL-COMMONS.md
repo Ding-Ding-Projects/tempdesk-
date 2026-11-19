@@ -44,7 +44,7 @@ A new sign-in needs a successful directory lookup to establish its deadline and 
 
 ## Apply the settings
 
-- **Docker Compose:** edit `portal/.env.guest` in the deployment directory. For workstation checkout, use the [guest-only broker file mounts](../portal/README.md#optional-virtual-commons-workstation-broker) each time you recreate the guest service. For server-edition checkout only, use `docker compose up -d --force-recreate tempdesk-guest` from the `portal` directory. Recreating the service makes it read the updated environment. The Deployer retains the checkout destinations and broker settings when it regenerates the guest environment.
+- **Docker Compose:** edit `portal/.env.guest` in the deployment directory. For workstation checkout, use the [guest-only broker file mounts](../portal/README.md#optional-virtual-commons-workstation-broker) each time you recreate the guest service. Use the active deployment's Compose files, including the [published digest overlay](../portal/README.md#run-a-published-image) when applicable, and recreate `tempdesk-guest` so it reads the updated environment. The Deployer retains the checkout destinations and broker settings when it regenerates the guest environment.
 - **Native Windows portal:** edit `%ProgramData%/TempDesk/portal-data/guest.env` on the portal host and restart the **TempDesk Guest Portal** scheduled task so it reads the file again. The native installer retains these destination settings when it regenerates the file.
 
 Open the guest portal after applying the settings. Confirm that the expected editions are available before checking out a computer.

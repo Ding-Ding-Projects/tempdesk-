@@ -51,11 +51,18 @@ function buildPortalImage(image) {
     for (const asset of assets) {
       fs.copyFileSync(path.join(context, 'site', 'assets', asset), path.join(app, 'static', 'js', asset));
     }
-    if (!writePortalProvenance(repository, app, { expectedRevision: revision })) {
+    const provenance = writePortalProvenance(repository, app, { expectedRevision: revision });
+    if (!provenance) {
       throw new Error('Cannot record the source version. Use a clean checkout with available Git metadata.');
     }
-    execFileSync('docker', ['build', '--file', path.join(context, 'portal', 'Dockerfile'), '--tag', image, context],
-      { cwd: repository, stdio: 'inherit' });
+    const { version } = JSON.parse(provenance);
+    const labels = [
+      '--label', 'org.opencontainers.image.source=https://github.com/Ding-Ding-Projects/tempdesk-',
+      '--label', 'org.opencontainers.image.revision=' + revision,
+      '--label', 'org.opencontainers.image.version=' + version,
+    ];
+    execFileSync('docker', ['build', '--file', path.join(context, 'portal', 'Dockerfile'),
+      ...labels, '--tag', image, context], { cwd: repository, stdio: 'inherit' });
   } finally {
     fs.rmSync(temporary, { recursive: true, force: true });
   }

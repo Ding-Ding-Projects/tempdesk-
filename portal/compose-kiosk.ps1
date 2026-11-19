@@ -58,12 +58,12 @@ function Get-ProtectedFile([string]$Candidate, [bool]$Confidential) {
 }
 
 $key = Get-ProtectedFile $CredentialFile $true
-$files = @('-f','compose.yaml','-f','compose.kiosk.yaml')
+$brokerFiles = @('-f','compose.kiosk.yaml')
 $ca = $null
 if ($CaFile) {
     $ca = Get-ProtectedFile $CaFile $false
     if ($ca -ieq $key) { throw 'Select a separate CA bundle.' }
-    $files += @('-f','compose.kiosk-ca.yaml')
+    $brokerFiles += @('-f','compose.kiosk-ca.yaml')
 }
 
 # Pin all engine calls to the same local endpoint, independent of the selected context.
@@ -74,16 +74,40 @@ if ($LASTEXITCODE -ne 0 -or $engine -ne 'linux|Docker Desktop') {
 }
 $priorKey = $env:TEMPDESK_KIOSK_KEY_SOURCE
 $priorCa = $env:TEMPDESK_KIOSK_CA_SOURCE
+$priorDigest = $env:TEMPDESK_PORTAL_DIGEST
 Push-Location -LiteralPath $PSScriptRoot
 try {
     $env:TEMPDESK_KIOSK_KEY_SOURCE = $key
     $env:TEMPDESK_KIOSK_CA_SOURCE = $ca
+    $files = @('-f','compose.yaml')
+    $pullArgs = @()
+    $digest = $priorDigest
+    $prefix = 'ghcr.io/ding-ding-projects/tempdesk-portal@'
+    if (!$digest) {
+        $current = @(& docker.exe --host $endpoint compose @files ps -q tempdesk-guest)
+        if ($LASTEXITCODE -ne 0 -or $current.Count -gt 1) { throw 'Cannot determine the current guest image.' }
+        if ($current.Count -eq 1) {
+            $image = & docker.exe --host $endpoint inspect --format '{{.Config.Image}}' $current[0]
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot determine the current guest image.' }
+            if ($image.StartsWith($prefix, [StringComparison]::Ordinal)) { $digest = $image.Substring($prefix.Length) }
+        }
+    }
+    if ($digest) {
+        if ($digest -cnotmatch '^sha256:[0-9a-f]{64}$' -or $digest -cne $digest.Trim()) {
+            throw 'Use the exact digest from a portal publication receipt.'
+        }
+        $env:TEMPDESK_PORTAL_DIGEST = $digest
+        $files += @('-f','compose.published.yaml')
+        $pullArgs = @('--pull','never')
+    }
+    $files += $brokerFiles
     & docker.exe --host $endpoint compose @files config --quiet *> $null
     if ($LASTEXITCODE -ne 0) { throw 'Guest Compose configuration is invalid.' }
-    & docker.exe --host $endpoint compose @files up --no-build --no-deps --force-recreate -d tempdesk-guest
+    & docker.exe --host $endpoint compose @files up --no-build --no-deps --force-recreate @pullArgs -d tempdesk-guest
     if ($LASTEXITCODE -ne 0) { throw 'Guest service recreation did not complete.' }
 } finally {
     $env:TEMPDESK_KIOSK_KEY_SOURCE = $priorKey
     $env:TEMPDESK_KIOSK_CA_SOURCE = $priorCa
+    $env:TEMPDESK_PORTAL_DIGEST = $priorDigest
     Pop-Location
 }

@@ -1,0 +1,161 @@
+name: Publish TempDesk portal image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: tempdesk-portal-image-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'Ding-Ding-Projects/tempdesk-' && github.event.repository.private == false && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      IMAGE: ghcr.io/ding-ding-projects/tempdesk-portal
+      SOURCE_URL: https://github.com/Ding-Ding-Projects/tempdesk-
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify publisher dependencies and source
+        shell: bash
+        run: |
+          for dependency in docker git jq node tar timeout; do
+            command -v "$dependency" >/dev/null || { echo "Missing publisher dependency: $dependency"; exit 1; }
+          done
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main
+
+      - name: Build, publish, and verify the portal image
+        id: publish
+        shell: bash
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_SHA" =~ ^[a-f0-9]{40}$ ]]
+          tag="sha-$GITHUB_SHA"
+          ref="$IMAGE:$tag"
+          registry_config="$(mktemp -d "$RUNNER_TEMP/tempdesk-registry.XXXXXX")"
+          trap 'rm -r -- "$registry_config"' EXIT
+          printf '%s' "$REGISTRY_TOKEN" |
+            docker --config "$registry_config" login ghcr.io --username "$GITHUB_ACTOR" --password-stdin >/dev/null 2>&1 ||
+            { echo 'Registry authentication failed.'; exit 1; }
+          unset REGISTRY_TOKEN
+
+          probe() {
+            local output result
+            if output="$(timeout 120 docker --config "$registry_config" pull "$ref" 2>&1)"; then
+              return 0
+            else
+              result=$?
+              if [[ "$result" != 124 && "$output" =~ (manifest[[:space:]]unknown|name[[:space:]]unknown|manifest.*not[[:space:]]found) ]] ||
+                 [[ "$output" == *"failed to resolve reference"* && "$output" == *"$ref"* && "$output" == *"not found"* ]]; then
+                return 1
+              fi
+              return 2
+            fi
+          }
+
+          verify() {
+            local labels
+            digest="$(docker image inspect "$ref" --format '{{json .RepoDigests}}' |
+              jq -er --arg prefix "$IMAGE@" 'map(select(startswith($prefix))) | if length == 1 then .[0] | split("@")[1] else empty end')" || return 1
+            [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]] || return 1
+            labels="$(docker image inspect "$IMAGE@$digest" --format '{{json .Config.Labels}}')" || return 1
+            jq -e --arg source "$SOURCE_URL" --arg revision "$GITHUB_SHA" \
+              '.["org.opencontainers.image.source"] == $source and .["org.opencontainers.image.revision"] == $revision' \
+              <<< "$labels" >/dev/null || return 1
+            version="$(jq -er '.["org.opencontainers.image.version"] | select(type == "string")' <<< "$labels")" || return 1
+            [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)([-+][0-9A-Za-z.-]+)?$ && "${#version}" -le 64 ]] || return 1
+            docker --config "$registry_config" run --rm --network none --read-only \
+              --entrypoint python "$IMAGE@$digest" \
+              -c 'import json, sys; from pathlib import Path; stamp = json.loads(Path("/app/app/build-provenance.json").read_text()); sys.exit((stamp["revision"], stamp["version"]) != tuple(sys.argv[1:]))' \
+              "$GITHUB_SHA" "$version"
+          }
+
+          state=
+          built_id=
+          push_confirmed=false
+          for attempt in 1 2 3 4; do
+            if probe; then
+              verify || { echo 'The source tag failed provenance verification.'; exit 1; }
+              published_id="$(docker image inspect "$IMAGE@$digest" --format '{{.Id}}')"
+              if [[ -n "$built_id" && "$published_id" == "$built_id" ]]; then
+                state=published
+              elif [[ "$push_confirmed" == true ]]; then
+                echo 'The digest does not match the locally built image.'
+                exit 1
+              else
+                state=already-published
+              fi
+              break
+            else
+              result=$?
+            fi
+            if [[ "$result" == 1 && "$push_confirmed" == false && "$attempt" -lt 4 ]]; then
+              if [[ -z "$built_id" ]]; then
+                local_ref="tempdesk-portal-build:$tag"
+                node scripts/build-portal-image.cjs "$local_ref"
+                built_id="$(docker image inspect "$local_ref" --format '{{.Id}}')"
+                # Recheck the tag after the build and before the first upload.
+                continue
+              fi
+              docker tag "$local_ref" "$ref"
+              if timeout 300 docker --config "$registry_config" push "$ref" >/dev/null 2>&1; then
+                push_confirmed=true
+              fi
+            fi
+            sleep "$((attempt * 2))"
+          done
+          [[ -n "$state" ]] || { echo 'The registry did not confirm publication within the retry limit.'; exit 1; }
+          {
+            printf 'digest=%s\n' "$digest"
+            printf 'version=%s\n' "$version"
+            printf 'state=%s\n' "$state"
+          } >> "$GITHUB_OUTPUT"
+          printf 'Verified %s@%s (%s).\n' "$IMAGE" "$digest" "$state"
+
+      - name: Write the publication receipt
+        if: ${{ always() }}
+        continue-on-error: true
+        shell: bash
+        env:
+          PUBLISH_OUTCOME: ${{ job.status }}
+          PUBLISH_STATE: ${{ steps.publish.outputs.state }}
+          PUBLISH_VERSION: ${{ steps.publish.outputs.version }}
+          PUBLISH_DIGEST: ${{ steps.publish.outputs.digest }}
+        run: |
+          jq -n --arg image "$IMAGE" --arg source "$SOURCE_URL" --arg revision "$GITHUB_SHA" \
+            --arg state "$PUBLISH_STATE" --arg version "$PUBLISH_VERSION" --arg digest "$PUBLISH_DIGEST" \
+            --arg outcome "$PUBLISH_OUTCOME" --arg run "$GITHUB_RUN_ID" --arg attempt "$GITHUB_RUN_ATTEMPT" \
+            '{schemaVersion: 1, image: $image, source: $source, revision: $revision, tag: ("sha-" + $revision),
+              state: (if $state == "" then $outcome else $state end), runId: $run, runAttempt: $attempt,
+              version: (if $version == "" then null else $version end),
+              digest: (if $digest == "" then null else $digest end),
+              immutableReference: (if $digest == "" then null else $image + "@" + $digest end)}' \
+            > "$RUNNER_TEMP/tempdesk-portal-publication.json"
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        continue-on-error: true
+        with:
+          name: tempdesk-portal-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/tempdesk-portal-publication.json
+          if-no-files-found: warn
+          retention-days: 7

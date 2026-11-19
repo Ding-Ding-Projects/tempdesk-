@@ -1,0 +1,7 @@
+# Use after compose.yaml to run both services from the same published digest.
+services:
+  tempdesk-guest:
+    build: !reset null
+    image: "ghcr.io/ding-ding-projects/tempdesk-portal@${TEMPDESK_PORTAL_DIGEST:?Set the digest from a verified portal publication receipt}"
+  tempdesk-admin:
+    image: "ghcr.io/ding-ding-projects/tempdesk-portal@${TEMPDESK_PORTAL_DIGEST:?Set the digest from a verified portal publication receipt}"
