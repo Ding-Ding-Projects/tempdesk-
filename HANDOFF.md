@@ -60,9 +60,17 @@ receipt covers its earlier direct kernel and OpenRC boot in board emulation.
 The x86_64 build enables Alpine's ACPI service with a power-button event rule
 for normal guest shutdown. Verify that shutdown stops the portal pair and
 that the persisted configuration works on the next boot.
-The build receipt records package names as JSON strings on both Windows
-PowerShell 5.1 and PowerShell 7. The local inventory stays independent of
-the builder's filesystem path.
+The rebuilt v1.0.117 x86_64 appliance at `a3b6dc2` completed both ACPI
+power-offs through the guest, including the portal stop hooks. A separate
+client verified both portals and finite sign-in creation on each boot. The
+second boot used the same disk with the configuration medium detached.
+
+Both v1.0.118 appliance jobs assembled their disks and stopped while removing
+the intermediate checksum file. Assembly at `ebb985d` consumed the checksum
+and unlinked the exact intermediate file. The unprivileged Linux PowerShell
+build generated an x86_64 image whose hash was read back with its source-bound
+receipt and 94 plain package entries. Verify both native worker uploads on the
+next release. [v1.0.118 workflow](https://github.com/Ding-Ding-Projects/tempdesk-/actions/runs/44512940742)
 Physical LAN, configured Pi 4 startup, and appliance release acceptance are
 open. [x86 receipt](docs/evidence/appliance-x86-1583b87.json) ·
 [Pi 4 receipt](docs/evidence/appliance-rpi4-a613c4c.json)

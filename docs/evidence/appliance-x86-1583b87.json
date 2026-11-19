@@ -77,5 +77,60 @@
     "emulatorExit": "QMP quit after the bounded ACPI shutdown wait",
     "fixtureRetiredUtc": "2026-11-19T11:11:35.810804Z"
   },
-  "limitations": "Verification covers the two exact x86_64 artifacts, their embedded images, and configuration persistence across an emulated stop and boot. Physical LAN delivery, production shutdown, Raspberry Pi 4 startup, Remote Desktop sign-in, and credential expiry remain separate acceptance items."
+  "orderlyShutdownVerification": {
+    "applianceSource": "a3b6dc2692d8ed757bfddb009f6ff5b7a93fe966",
+    "portalSource": "90b455dd3a8a060f5c859055b84d87ebdaeb11f4",
+    "portalVersion": "1.0.117",
+    "portalChildDigest": "sha256:64ccaa7f0360d806eaf1d581159432ca51d4318a72836f0346e365fc593f71ff",
+    "embeddedArchiveSha256": "693bb6e1b280b32a3a1ee6d6485eb268172f44bdbc297b574ae711b134984dd8",
+    "filename": "TempDesk-Appliance-1.0.117-x86_64.img.gz",
+    "bytes": 315966816,
+    "sha256": "a4a3ac7a57d1e335aae4704c80373843e90afc319c8ffa0f63498c70c123c725",
+    "buildEntrypoint": "build.bat --appliance /s --skip-tests",
+    "environment": "Isolated QEMU q35 with KVM, an internal network, a separate client, and a disposable Samba directory",
+    "shutdownSignal": "QMP system_powerdown",
+    "openRcService": "busybox acpid",
+    "firstBoot": {
+      "startedUtc": "2026-11-19T11:44:10.659786Z",
+      "verifiedUtc": "2026-11-19T11:44:36.629798Z",
+      "configurationDiskAttachedReadOnly": true,
+      "bothPortalsHealthy": true,
+      "finiteGuestSignInConfirmed": true,
+      "portalStopHookObserved": true,
+      "kernelPowerOffObserved": true,
+      "guestExitedWithCodeZero": true,
+      "stoppedUtc": "2026-11-19T11:44:41.766291Z"
+    },
+    "secondBoot": {
+      "startedUtc": "2026-11-19T11:44:41.798334Z",
+      "verifiedUtc": "2026-11-19T11:44:59.729880Z",
+      "configurationDiskAttached": false,
+      "sameApplianceDisk": true,
+      "bothPortalsHealthy": true,
+      "finiteGuestSignInConfirmed": true,
+      "portalStopHookObserved": true,
+      "kernelPowerOffObserved": true,
+      "guestExitedWithCodeZero": true,
+      "stoppedUtc": "2026-11-19T11:45:05.098561Z"
+    },
+    "fixtureRetiredUtc": "2026-11-19T11:47:42.666147Z"
+  },
+  "linuxBuildReceiptVerification": {
+    "applianceSource": "ebb985db9122185a8307beca064b36655e4f704c",
+    "portalSource": "813a0fec36464fa5803dc8db45e52d3cbfdf275d",
+    "portalVersion": "1.0.118",
+    "portalChildDigest": "sha256:71e024a41b6e7a219003f14e4730f7b649f50b13f84f428a595367d587527a64",
+    "embeddedArchiveSha256": "dbd3adeb23f81930cbea199939793d2a80ead74f96dfa8c1fd18afb75304d097",
+    "filename": "TempDesk-Appliance-1.0.118-x86_64.img.gz",
+    "bytes": 315963968,
+    "sha256": "f2f03754feca00e90ad71bf008329cbaa2f23ee1856dafea1efc249d93a1e903",
+    "builtUtc": "2026-11-19T11:47:31.4922038Z",
+    "environment": "Ubuntu under WSL, PowerShell 7.6.9 with an unprivileged user, Docker 29.9.2",
+    "builderOwnedArtifact": true,
+    "runnerOwnedOutputDirectory": true,
+    "intermediateFingerprintRemoved": true,
+    "packageEntries": 94,
+    "plainStringPackageInventory": true
+  },
+  "limitations": "Runtime observations apply to the recorded emulated x86_64 images. The latest Linux record covers assembly and receipt verification. Physical LAN delivery, production shutdown, configured Raspberry Pi 4 startup, Remote Desktop sign-in, and credential expiry remain separate acceptance items."
 }
