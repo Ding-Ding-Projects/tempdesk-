@@ -233,7 +233,8 @@ button.status-pill, a.status-pill { cursor: pointer; }
 @keyframes ripple { to { transform: scale(2.6); opacity: 0; } }
 .btn.block { width: 100%; }
 
-#virtual-commons > button[type="submit"] {
+#virtual-commons > button[type="submit"],
+#picker-wording > button[data-wording-clear] {
   padding-block: .5em;
   overflow-wrap: anywhere;
   text-align: center;
