@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # TempDesk portal: one image, two modes (PORTAL_MODE=guest or admin).
 # Build from the repository root so the bundled docs can be copied:
 #   docker build -f portal/Dockerfile -t tempdesk-portal .
@@ -23,12 +24,8 @@ COPY portal/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY portal/app ./app
-# Offline docs browser and changelog viewer.
-# The wildcard keeps the build working before a CHANGELOG.md exists.
-COPY docs CHANGEL[O]G.m[d] ./bundled-docs/
-# Base64 codec, zip writer and regex builder shared with the website: the image always takes
-# the site copies (the files in app/static/js are kept in step for local runs and tests).
-COPY site/assets/base64.js site/assets/zip.js site/assets/regex-builder.js ./app/static/js/
+# Copy optional docs and assets from the source checkout, or use an already stamped packaged app.
+RUN --mount=type=bind,source=.,target=/source python -m app.provenance /source /app/bundled-docs
 
 RUN mkdir -p /data /state && chown tempdesk:tempdesk /data /state && chmod 700 /data /state
 USER tempdesk

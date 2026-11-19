@@ -244,6 +244,7 @@ async def base_context(request: Request) -> dict:
     extra = getattr(request.state, "palette_extra", None) or []
     palette += extra
     ctx = {
+        "build_provenance": getattr(request.app.state, "build_provenance", None),
         "request": request,
         "mode": settings.mode,
         "t": partial(tr.html, mark_wording=True) if wording_session else tr.html,

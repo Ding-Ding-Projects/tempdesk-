@@ -344,3 +344,13 @@ article.content :is(p, li, blockquote) { max-inline-size: var(--reader-measure, 
   .reader-settings label { grid-template-columns: minmax(0, 1fr) auto; }
   .reader-settings label > span { grid-column: 1 / -1; }
 }
+
+.build-provenance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem 1.25rem;
+  padding: .5rem clamp(1rem, 4vw, 3rem);
+  font-size: .875rem;
+  color: var(--ink);
+}
+.build-provenance span { min-width: 0; overflow-wrap: anywhere; }

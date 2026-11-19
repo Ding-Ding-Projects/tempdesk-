@@ -98,6 +98,7 @@
     </div>
     {% endif %}
     <main id="main" class="content" tabindex="-1" {% if tab_title %}data-tab-title="{{ tab_title }}"{% endif %}>
+      {% include "layouts/build_provenance.html" %}
       {{ flash_block(flash) }}
       {% block content %}{% endblock %}
     </main>

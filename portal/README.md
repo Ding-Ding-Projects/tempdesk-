@@ -15,10 +15,11 @@ Both are Python 3.12, FastAPI and server-rendered Jinja2 pages. The only contact
 cd portal
 cp .env.guest.example .env.guest   # fill in AGENT_URL and the guest key
 cp .env.admin.example .env.admin   # fill in AGENT_URL, the admin key and SESSION_SECRET
-docker compose up -d --build
+node ../scripts/build-portal-image.cjs
+docker compose up -d --no-build
 ```
 
-The build context is the repository root, so the image also bundles `docs/*.md` (offline docs page) and `CHANGELOG.md` when present.
+The source command requires Node.js, Git, tar and Docker Compose. It stages the approved portal, docs, changelog and shared browser assets from the checked-out revision. It stamps the application bytes before building the Compose image and removes its temporary staging directory afterward. The staging command builds the image without starting a service and excludes all Git metadata and credentials from the context. Installed Deployer and published portal payloads already carry their own build receipts. A direct `docker compose up -d --build` from a loose checkout still works and reports unavailable build provenance.
 
 ## Optional Virtual Commons workstation broker
 

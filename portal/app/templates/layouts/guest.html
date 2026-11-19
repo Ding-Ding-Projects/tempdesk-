@@ -23,6 +23,7 @@
   </div>
 </header>
 <main id="main" class="guest-main" tabindex="-1">
+  {% include "layouts/build_provenance.html" %}
   {{ flash_block(flash) }}
   {% block content %}{% endblock %}
 </main>

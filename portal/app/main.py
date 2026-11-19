@@ -29,6 +29,7 @@ from .security import (
     is_https,
 )
 from .history import History
+from .provenance import load_build_provenance
 from .undo import Journal
 from .web import install_error_handlers
 
@@ -72,6 +73,7 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
 
     app = FastAPI(title="TempDesk portal", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.settings = settings
+    app.state.build_provenance = load_build_provenance()
     app.state.agent = AgentClient(settings, transport=transport)
     app.state.csrf = Csrf(settings.session_secret)
     app.state.flash = Flash(settings.session_secret)

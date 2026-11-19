@@ -51,6 +51,9 @@ if (-not (Test-Path $python)) {
 }
 
 # --- Portal code and virtual environment ----------------------------------------------------
+# Clear the previous package's receipt before copying a package that may not include one.
+$priorProvenance = Join-Path $installDir 'app\build-provenance.json'
+if (Test-Path -LiteralPath $priorProvenance -PathType Leaf) { Remove-Item -LiteralPath $priorProvenance -Force }
 Copy-Item -Path (Join-Path $PortalSource '*') -Destination $installDir -Recurse -Force
 $venv = Join-Path $installDir '.venv'
 if (-not (Test-Path (Join-Path $venv 'Scripts\python.exe'))) { & $python -m venv $venv }

@@ -1,0 +1,9 @@
+{% set provenance = build_provenance | default({}, true) %}
+<dl class="build-provenance" aria-label="{{ ta('Running portal build') }}">
+  <div><dt>{{ t('Running version') }}</dt><dd>{{ provenance.version or ta('Unavailable') }}</dd></div>
+  <div><dt>{{ t('Build updated') }}</dt><dd>
+    {% if provenance.updated_utc %}<time datetime="{{ provenance.updated_utc }}" data-build-updated data-unavailable="{{ ta('Unavailable') }}">{{ provenance.updated_utc }} (UTC)</time>
+    {% else %}{{ t('Unavailable') }}{% endif %}
+  </dd></div>
+  <div><dt>{{ t('Source revision') }}</dt><dd><code>{{ provenance.revision or ta('Unavailable') }}</code></dd></div>
+</dl>

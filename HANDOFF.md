@@ -54,6 +54,8 @@ The next source wave integrated contributions in all twelve applicable feature c
 
 ## Workstation preparation and feature browsing
 
+The normal release v1.0.98 matches source revision 1ea8d8c6ee4c52acb212420746e3712573220cb9. The release manifest and Squirrel feed were downloaded, and all seven listed assets matched the published size and hash records. [Release inventory](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.98)
+
 The local build at 89ea855f4ba746c430efb0140c5897eac2b1d8fb produced an unsigned Squirrel installer and a matching full package feed. Hosted checks passed at that revision. The hosted release still needed a verified previous-package input for delta generation. Local unit tests and native installation acceptance remain deferred.
 
 The VMware Workstation provisioner created a separate powered-off Windows 11 checkout workstation using source revision 1372e533de832346eb9abc74a4dce950ade5b49b. The verified initial configuration included a host-only adapter, a pinned Microsoft evaluation installer and its credential-free setup DVD. The lab subsequently moved the powered-off workstation to the private VMware NAT segment shared with the directory controller. The Deployer preview now names the selected network and retains the resolved hypervisor through creation. Guest configuration regeneration retains the workstation and broker file settings. The workstation still needs encryption, a virtual TPM, installation, domain join, trusted broker enrollment and an actual checkout. [Workstation preparation](server/kiosk/README.md)

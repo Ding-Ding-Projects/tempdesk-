@@ -702,58 +702,58 @@
         },
         "management": {
           "applicable": true,
-          "implementation": null,
+          "implementation": "portal/app/templates/layouts/build_provenance.html",
           "documentation": "docs/features/completeness-evidence/front-screen-provenance.md",
-          "localization": null,
+          "localization": "portal/app/i18n/en.json",
           "persistence": null,
           "focusedCheck": null,
           "interaction": null,
           "captures": null,
-          "remaining": "Verify source-bound version, timestamp with seconds and timezone on the initial screen."
+          "remaining": "Verify the installed build record and the pre-sign-in version and timestamp in both languages and narrow layouts."
         },
         "guest": {
           "applicable": true,
-          "implementation": null,
+          "implementation": "portal/app/templates/layouts/build_provenance.html",
           "documentation": "docs/features/completeness-evidence/front-screen-provenance.md",
-          "localization": null,
+          "localization": "portal/app/i18n/en.json",
           "persistence": null,
           "focusedCheck": null,
           "interaction": null,
           "captures": null,
-          "remaining": "Verify source-bound version, timestamp with seconds and timezone on the initial screen."
+          "remaining": "Verify the installed build record and the pre-sign-in version and timestamp in both languages and narrow layouts."
         },
         "kiosk": {
           "applicable": true,
-          "implementation": null,
+          "implementation": "portal/app/templates/layouts/build_provenance.html",
           "documentation": "docs/features/completeness-evidence/front-screen-provenance.md",
-          "localization": null,
+          "localization": "portal/app/i18n/en.json",
           "persistence": null,
           "focusedCheck": null,
           "interaction": null,
           "captures": null,
-          "remaining": "Verify source-bound version, timestamp with seconds and timezone on the initial screen."
+          "remaining": "Verify the installed build record and the pre-sign-in version and timestamp in both languages and narrow layouts."
         },
         "hosted": {
           "applicable": true,
-          "implementation": "site/assets/release.js",
+          "implementation": "site/templates/provenance.mjs",
           "documentation": "docs/features/completeness-evidence/front-screen-provenance.md",
-          "localization": null,
+          "localization": "site/i18n/en.json",
           "persistence": null,
           "focusedCheck": null,
           "interaction": null,
           "captures": null,
-          "remaining": "The release offer exists. Establish and verify the front-screen provenance of the version of the site itself."
+          "remaining": "Verify the exact deployed revision and viewer-local time with seconds and timezone at the start of the hosted guide."
         },
         "offline": {
           "applicable": true,
           "implementation": "deployer/app/scripts/build-docs-companion.js",
           "documentation": "docs/features/completeness-evidence/front-screen-provenance.md",
-          "localization": null,
+          "localization": "site/i18n/en.json",
           "persistence": null,
           "focusedCheck": null,
           "interaction": null,
           "captures": null,
-          "remaining": "The portable reader embeds build metadata. Observe its displayed date, local time with seconds, and timezone before navigation."
+          "remaining": "Verify the packaged initial display and its date, local time with seconds, and timezone."
         },
         "delivery": {
           "applicable": false,

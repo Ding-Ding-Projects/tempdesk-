@@ -1,9 +1,9 @@
 # TempDesk portals. Run from this folder: docker compose up -d --build
-# The build context is the repository root so docs and the changelog are bundled.
+# Source builds can use the isolated context staged by scripts/build-portal-image.cjs.
 services:
   tempdesk-guest:
     build:
-      context: ..
+      context: ${TEMPDESK_PORTAL_CONTEXT:-..}
       dockerfile: portal/Dockerfile
     image: tempdesk-portal:latest
     env_file: .env.guest

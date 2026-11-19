@@ -14,6 +14,8 @@ import { fileURLToPath } from 'node:url';
 import { relatedDocumentationWorkflows, renderDocumentationWorkflows } from './docs-workflows.mjs';
 import { inventoryPath, inventorySummary, readInventory } from './feature-inventory.mjs';
 
+import portalProvenance from '../scripts/portal-provenance.cjs';
+import { hostedProvenance, renderProvenance } from './templates/provenance.mjs';
 import { capabilityReader } from './templates/capability-reader.mjs';
 
 const SITE = path.dirname(fileURLToPath(import.meta.url));
@@ -170,6 +172,7 @@ export function payloadAllowed(rel, isDir) {
   if (parts.some((p) => ['tests', 'test', '__pycache__', 'node_modules', '.pytest_cache', '.git', 'bin', 'obj', '.venv', 'venv'].includes(p))) return false;
   if (/^\.env(\..*)?$/i.test(name) || name === '.env') return false;
   if (!isDir && (/\.(pyc|pyo|log|iso|pfx|key|pem|sqlite3(?:-journal|-wal|-shm)?)$/i.test(name) || /^test_.*\.py$/.test(name) || /\.test\.(m?js|ps1)$/i.test(name) || /\.Tests\.ps1$/i.test(name))) return false;
+  if (rel === 'portal/app/' + portalProvenance.filename) return false;
   if (name === '.DS_Store' || name === 'Thumbs.db') return false;
   return true;
 }
@@ -206,7 +209,7 @@ async function docSources() {
   return list;
 }
 
-async function build({ outputDirectory, referenceRevision = 'main' } = {}) {
+async function build({ outputDirectory, referenceRevision = 'main', provenance } = {}) {
   const OUT = outputDirectory ?? DEFAULT_OUT;
   const address = new URL(process.env.TEMPDESK_PUBLIC_URL || DEFAULT_PUBLIC_URL);
   if (address.protocol !== 'https:' || address.username || address.password || address.search || address.hash) {
@@ -214,7 +217,11 @@ async function build({ outputDirectory, referenceRevision = 'main' } = {}) {
   }
   if (!address.pathname.endsWith('/')) address.pathname += '/';
   const publicUrl = address.href;
-  const publicationHtml = html => html.replaceAll(DEFAULT_PUBLIC_URL, () => escapeHtml(publicUrl));
+  const buildInfo = provenance ?? (outputDirectory === undefined ? hostedProvenance(REPO) : {});
+  const stamp = renderProvenance(buildInfo, escapeHtml);
+  if (referenceRevision === 'main' && /^[a-f0-9]{40}$/.test(buildInfo.revision || '')) referenceRevision = buildInfo.revision;
+  const publicationHtml = html => html.replaceAll(DEFAULT_PUBLIC_URL, () => escapeHtml(publicUrl))
+    .replace('<!-- documentation build identity -->', () => stamp);
   if (!/^(main|[a-f0-9]{40})$/.test(referenceRevision)) throw new Error('Invalid documentation source reference');
   const sourceBase = 'https://github.com/Ding-Ding-Projects/tempdesk-/blob/' + referenceRevision + '/';
   // 0. CodeMirror bundle: rebuilt with esbuild when the dev dependencies are installed; otherwise the
@@ -410,6 +417,8 @@ ${docsGuides}
       manifest.files.push({ path: repoRel, size: buf.length, sha256: sha256(buf) });
     }
   }
+  const portalStamp = portalProvenance.writePortalProvenance(REPO, path.join(OUT, 'payload', 'portal', 'app'), { updatedUtc: manifest.generated });
+  if (portalStamp) manifest.files.push({ path: 'portal/app/' + portalProvenance.filename, size: portalStamp.length, sha256: sha256(portalStamp) });
   await fs.writeFile(path.join(OUT, 'payload', 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 
   // 6. answer file catalog and generator (owned by answerfile/)

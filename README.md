@@ -40,7 +40,7 @@ Use the [guided documentation](https://ding-ding-projects.github.io/tempdesk-/do
 
 Prefer Linux? Use **TempDesk Lite**: see `samba/README.md`.
 
-For a separate Windows 11 Remote Desktop checkout, follow [Kiosk Windows 11 workstation setup](docs/VIRTUAL-COMMONS.md#add-a-kiosk-windows-11-workstation). The dedicated workstation can hold one guest reservation at a time. A trusted broker confirms the guest's exact Windows account grant before the portal serves its connection file.
+For a separate Windows 11 Remote Desktop checkout, open the [guided workstation checklist](https://ding-ding-projects.github.io/tempdesk-/docs/?task=commons&variant=workstation#guided-workflows) and follow [Kiosk Windows 11 workstation setup](docs/VIRTUAL-COMMONS.md#add-a-kiosk-windows-11-workstation). The dedicated workstation can hold one guest reservation at a time. A trusted broker confirms the guest's exact Windows account grant before the portal serves its connection file.
 
 ## Deployment flow
 

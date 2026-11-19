@@ -1480,5 +1480,9 @@
  "docs.guide.commons.workstation.session": "Use the confirmation credential to sign in through the trusted gateway. Check that clipboard, drives and printers are unavailable and that a second guest cannot reserve the occupied seat.",
  "docs.guide.commons.workstation.release": "Stay connected through expiry. Verify the original session ends, the expired account cannot sign in again and the broker revokes its grant before another booking. Record missing results as pending.",
  "docs.guide.link.workstation": "Workstation preparation and enrollment",
- "docs.guide.link.configureSeat": "Configure the single-seat destination"
+ "docs.guide.link.configureSeat": "Configure the single-seat destination",
+ "provenance.version": "Running version",
+ "provenance.updated": "Build updated",
+ "provenance.revision": "Source revision",
+ "provenance.unavailable": "Unavailable"
 }

@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const crypto = require('crypto');
+const { filename: portalProvenance, writePortalProvenance } = require('../../../scripts/portal-provenance.cjs');
 
 const APP = path.resolve(__dirname, '..');
 const REPO = path.resolve(APP, '..', '..');
@@ -27,7 +28,7 @@ function copyTree(src, dst) {
   for (const e of fs.readdirSync(src, { withFileTypes: true })) {
     if (SKIP_DIR.has(e.name)) continue;
     if (/^\.env(\.|$)/.test(e.name) && e.name !== '.env.example') continue;
-    if (e.name.endsWith('.pyc')) continue;
+    if (e.name.endsWith('.pyc') || e.name === portalProvenance) continue;
     const s = path.join(src, e.name), d = path.join(dst, e.name);
     if (e.isDirectory()) n += copyTree(s, d);
     else { fs.mkdirSync(path.dirname(d), { recursive: true }); fs.copyFileSync(s, d); n++; }
@@ -97,6 +98,7 @@ function main() {
   fs.rmSync(BUNDLE, { recursive: true, force: true });
   let n = 0;
   for (const f of ['server', 'agent', 'client', 'samba', 'portal', 'streaming']) n += copyTree(path.join(REPO, f), path.join(BUNDLE, 'payload', f));
+  if (writePortalProvenance(REPO, path.join(BUNDLE, 'payload', 'portal', 'app'), { version: info.version, updatedUtc: info.builtUtc })) n++;
   for (const f of ['README.md', 'CHANGELOG.md', 'LICENSE']) if (fs.existsSync(path.join(REPO, f))) { fs.mkdirSync(path.join(BUNDLE, 'docs'), { recursive: true }); fs.copyFileSync(path.join(REPO, f), path.join(BUNDLE, 'docs', f)); }
   copyTree(path.join(REPO, 'docs'), path.join(BUNDLE, 'docs', 'docs'));
   for (const f of ['agent/README.md', 'samba/README.md', 'portal/README.md', 'streaming/README.md', 'server/apphost/README.md', 'deployer/FEATURES.md']) {

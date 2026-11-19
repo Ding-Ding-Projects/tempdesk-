@@ -70,13 +70,17 @@ async function main() {
     const input = await snapshotSource(root, staging, source);
     const { build } = await import(pathToFileURL(path.join(input, 'site', 'build.mjs')).href);
     const website = path.join(staging, 'website');
-    await build({ outputDirectory: website, referenceRevision: source.modified === false ? source.commit : 'main' });
+    const info = { version, ...source, builtUtc: new Date().toISOString() };
+    await build({
+      outputDirectory: website,
+      referenceRevision: source.modified === false ? source.commit : 'main',
+      provenance: { version, updatedUtc: info.builtUtc, revision: source.modified ? null : source.commit },
+    });
     const index = JSON.parse(await fs.readFile(path.join(website, 'search-index.json'), 'utf8'));
     const pages = new Set(index.pages.map(page => page.url));
     for (const url of ['docs/index.html', 'docs/virtual-commons.html', 'docs/wiki-pending-home.html']) {
       if (!pages.has(url)) throw new Error('The bundled document index is missing ' + url);
     }
-    const info = { version, ...source, builtUtc: new Date().toISOString() };
     await fs.writeFile(path.join(website, 'build-info.json'), JSON.stringify(info) + '\n');
     await fs.copyFile(path.join(input, 'deployer', 'docs-companion', 'main.cjs'), path.join(staging, 'main.cjs'));
     await fs.writeFile(path.join(staging, 'package.json'), JSON.stringify({
