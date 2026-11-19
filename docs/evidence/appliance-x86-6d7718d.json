@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "applianceSource": "6d7718d4f19e648d73f7e4dd27d676e0b81ca962",
+  "portalSource": "66d3ff2b2f87ef3552f4eb4f5ed378036174aaff",
+  "portalVersion": "1.0.107",
+  "portalIndexDigest": "sha256:94ac0f1e768a80d7f96492b6ca6791486058b97a0cc390f8b9e30c70b48f0b41",
+  "portalAmd64Digest": "sha256:0e4bc7273f1b3fbf97a5f248b645d949b86156acd55a3d7ab7a2c9d4866e7b1b",
+  "artifact": {
+    "name": "TempDesk-Appliance-1.0.107-x86_64.img.gz",
+    "bytes": 218897561,
+    "sha256": "bb8a6a85af26945b1cf5674350d73306dd1a67384bef4fe33b4fbaa594d9692e",
+    "builtAtUtc": "2026-11-19T05:06:27.7934575Z"
+  },
+  "boot": {
+    "observedAtUtc": "2026-11-19T05:10:15Z",
+    "machine": "QEMU 10.1.5 q35 x86_64, OVMF UEFI, TCG",
+    "kernel": "6.18.64-0-virt",
+    "configurationVolumeAttached": false,
+    "mountedLocalFilesystems": true,
+    "dockerDaemonStarted": true,
+    "configurationWaitReached": true,
+    "guestHealthResponded": false,
+    "managementHealthResponded": false,
+    "evidenceScope": "Isolated boot with no deployment configuration. Configured startup, actual LAN reachability, restart persistence and hardware boot remain unverified."
+  }
+}

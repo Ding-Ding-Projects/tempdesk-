@@ -73,9 +73,11 @@ $env:TEMPDESK_APPLIANCE_ARCH = 'amd64' # Use arm64 on a builder that supports it
 .\build.bat --appliance /s --skip-tests
 ```
 
-Set `TEMPDESK_APPLIANCE_BUILDER` to an existing Buildx builder name when
-using a separate native ARM builder or an emulated BuildKit worker. The
-builder must be able to run instructions for the selected architecture.
+An existing native ARM Buildx worker can be selected with
+`TEMPDESK_APPLIANCE_BUILDER`. The builder must run the target platform's
+Alpine package installation scripts inside the image filesystem.
+The GitHub release workflow assembles both images on native builders
+and retains disk candidates for boot verification.
 
 The builder uses files from the current Git commit. It prints the new
 `.img.gz` path, SHA-256, and build receipt. The receipt identifies the image

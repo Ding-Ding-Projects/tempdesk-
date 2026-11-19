@@ -7,6 +7,12 @@ Raspberry Pi 4 arm64 layout from a verified multi-platform portal publication
 receipt. Both layouts use the existing Compose definition, bind to a selected
 private LAN and wait for credentials provisioned through a separate protected
 volume. The producer writes regular image files and never writes a host drive.
+The release workflow assembles candidates on native x86_64 and arm64 runners.
+Local arm64 emulation ran command-line binaries but could not execute Alpine
+package scripts inside the image filesystem.
+The local x86_64 image built from `6d7718d` booted in QEMU, mounted its
+persistent partition and started Docker. With no configuration volume
+attached, both portal health endpoints stayed closed. [Boot receipt](docs/evidence/appliance-x86-6d7718d.json)
 Track each boot, configured portal start, LAN check and release separately in
 the [delivery checklist](ROADMAP.md). [Appliance guide](portal/README.md#build-a-bootable-appliance)
 

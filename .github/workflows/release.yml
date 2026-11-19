@@ -151,3 +151,63 @@ jobs:
     uses: ./.github/workflows/portal-image.yml
     with:
       release_tag: ${{ needs.release.outputs.release_tag }}
+
+  appliance-images:
+    name: Assemble appliance (${{ matrix.architecture }})
+    needs: [release, portal-image]
+    permissions:
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: amd64
+            runner: ubuntu-24.04
+          - architecture: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Get the matching portal publication receipt
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $scratch = Join-Path $env:RUNNER_TEMP 'portal-publication'
+          $available = gh api "repos/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID/artifacts?per_page=100" `
+            --paginate --jq '.artifacts[] | select(.expired == false) | .name'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $pattern = "^tempdesk-portal-publication-$($env:GITHUB_RUN_ID)-(?<attempt>[0-9]+)$"
+          $receipt = @($available | Where-Object { $_ -match $pattern } |
+            Sort-Object { [int]([regex]::Match($_, $pattern).Groups['attempt'].Value) } -Descending)[0]
+          if (!$receipt) { throw 'No portal publication receipt is available for this run.' }
+          gh run download $env:GITHUB_RUN_ID --repo $env:GITHUB_REPOSITORY `
+            --name $receipt --dir $scratch
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Assemble the native disk image
+        shell: pwsh
+        env:
+          APPLIANCE_ARCHITECTURE: ${{ matrix.architecture }}
+          RELEASE_TAG: ${{ needs.release.outputs.release_tag }}
+        run: |
+          $path = Join-Path $env:RUNNER_TEMP 'portal-publication/tempdesk-portal-publication.json'
+          $publication = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
+          if ($publication.revision -cne $env:GITHUB_SHA -or $publication.releaseTag -cne $env:RELEASE_TAG) {
+            throw 'The portal publication receipt belongs to a different release.'
+          }
+          ./appliance/Build-Appliance.ps1 -Receipt $path -Architecture $env:APPLIANCE_ARCHITECTURE
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: tempdesk-appliance-candidate-${{ matrix.architecture }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .tools/appliance/*/output/
+          if-no-files-found: error
+          include-hidden-files: true
+          compression-level: 0
+          retention-days: 7

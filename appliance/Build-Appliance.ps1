@@ -35,7 +35,7 @@ if ($manifest.schemaVersion -ne 1 -or $manifest.image -cne $imageName -or
 }
 $docker = (Get-Command docker -CommandType Application | Select-Object -First 1).Source
 $git = (Get-Command git -CommandType Application | Select-Object -First 1).Source
-$tar = (Get-Command tar.exe -CommandType Application | Select-Object -First 1).Source
+$tar = (Get-Command tar -CommandType Application | Select-Object -First 1).Source
 $index = (Invoke-Required $docker @('buildx','imagetools','inspect','--raw',$manifest.immutableReference)) |
     ConvertFrom-Json
 if ($index.mediaType -ne 'application/vnd.oci.image.index.v1+json') {

@@ -28,6 +28,7 @@
 - [x] Publish and read back the source-bound container digest at `99d580a`. Verify an isolated Compose pull, startup and health against the lab directory.
 - [x] Verify a registry-backed LAN deployment whose image version matches v1.0.104. Exercise the corrected Windows launcher with detached startup, the keyboard menu and live log controls.
 - [x] Verify the published amd64 and arm64 portal image entries by immutable digest.
+- [x] Boot the x86_64 image through UEFI and check that it waits for credentials with both portal endpoints closed. [Boot receipt](docs/evidence/appliance-x86-6d7718d.json)
 - [ ] Verify the x86_64 UEFI appliance image and Raspberry Pi 4 arm64 image, including configured startup, separate LAN checks, and restart persistence. [Appliance build and configuration](portal/README.md#build-a-bootable-appliance)
 - [ ] Release both verified appliance images and connect them to the virtual machine and physical-media deployment workflows.
 - [ ] Verify the standalone Portal Host wizard on the supported Windows host, including both endpoint results, health-only recheck and safe cancellation.
