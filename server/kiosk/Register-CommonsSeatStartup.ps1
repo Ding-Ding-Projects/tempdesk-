@@ -109,6 +109,11 @@ function Assert-TaskMatches($Task) {
         throw 'The existing startup task differs from this configuration. It was preserved.'
     }
 }
+function Assert-InitialEnrollmentSessions {
+    if ([TempDesk.SeatSessions]::OccupiedDuringInitialConsoleSetup()) {
+        throw 'Another user session exists. First enrollment permits only the current elevated operator at the active local console.'
+    }
+}
 $statePath=Join-Path $script:SeatDirectory 'state.json'
 $existing=Get-ExistingTask
 $hasState=Test-Path -LiteralPath $statePath -PathType Leaf
@@ -120,19 +125,26 @@ if ($existing) {
     return
 }
 if (-not $hasState -and -not $InitializeEmptySeat) { throw 'No state exists. Explicitly choose -InitializeEmptySeat for the first enrollment.' }
-if (-not $hasState) { Initialize-SeatSessionReader; Assert-SeatEmptySessions; if (@(Get-SeatMembers).Count) { throw 'An existing RDP grant prevents first enrollment.' } }
+if (-not $hasState) { Initialize-SeatSessionReader; Assert-InitialEnrollmentSessions; if (@(Get-SeatMembers).Count) { throw 'An existing RDP grant prevents first enrollment.' } }
 if (-not $PSCmdlet.ShouldProcess($script:SeatTarget,'Register the verified startup task and initialize the first empty seat only if explicitly requested')) {
     [pscustomobject]@{ Task=$taskName; State='PreviewOnly'; WouldInitialize=(-not $hasState); Target=$script:SeatTarget; PortalAddress=$PortalAddress.ToString(); Port=$Port; PortalCheckRequired=$true }
     return
 }
-$lock=[IO.File]::Open((Join-Path $script:SeatDirectory 'broker.lock'),[IO.FileMode]::OpenOrCreate,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
+$lockPath=Join-Path $script:SeatDirectory 'broker.lock'
+if (Test-Path -LiteralPath $lockPath -PathType Leaf) {
+    # Preserve the existing lock's owner and ACL. Assert-SeatStorage checked both.
+    $lock=[IO.File]::Open($lockPath,[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
+} else {
+    # CreateNew fails closed if another writer won the race.
+    $lock=New-PrivateSeatFile $lockPath
+}
 try {
     if (Get-ExistingTask) { throw 'A task appeared during setup. Retry to inspect it.' }
     if (Test-Path -LiteralPath $statePath -PathType Leaf) { $null=Get-SeatState }
     elseif ($hasState -or -not $InitializeEmptySeat) { throw 'Seat state changed during setup.' }
     else {
         Assert-SeatHost
-        Assert-SeatEmptySessions
+        Assert-InitialEnrollmentSessions
         if (@(Get-SeatMembers).Count) { throw 'A grant appeared during setup.' }
         Save-SeatState (New-SeatState) -Initialize
         $null=Get-SeatState
