@@ -4,14 +4,20 @@
 (function () {
   'use strict';
   var ROOT = (document.querySelector('meta[name="td-root"]') || { content: './' }).content || './';
+  var offlineReader = window.location.protocol === 'tempdesk-docs:' && window.location.hostname === 'guide';
   var LS = {
     get: function (k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
     set: function (k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
-    del: function (k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } }
+    del: function (k) { try { localStorage.removeItem(k); return true; } catch (e) { return false; } }
   };
   var prefs = {
     lang: LS.get('td.lang', 'en'), motion: LS.get('td.motion', 'full'), theme: LS.get('td.theme', 'system'), size: LS.get('td.size', '1')
   };
+  if (offlineReader) {
+    var storedVolume = Number(LS.get('td.soundVolume', '60'));
+    prefs.actionSounds = LS.get('td.actionSounds', 'on') === 'on';
+    prefs.soundVolume = Number.isFinite(storedVolume) && storedVolume >= 0 && storedVolume <= 100 ? storedVolume : 60;
+  }
   var html = document.documentElement;
   function applyPrefs() {
     if (prefs.theme === 'system') html.removeAttribute('data-theme'); else html.setAttribute('data-theme', prefs.theme);
@@ -44,9 +50,11 @@
     if (!el.hasAttribute('data-i18n-orig')) el.setAttribute('data-i18n-orig', el.textContent);
     var args = el.getAttribute('data-i18n-args');
     args = args ? args.split('|') : null;
+    var argumentKey = el.getAttribute('data-i18n-arg-key');
+    if (argumentKey) args = [t(argumentKey)];
     var fallback = el.getAttribute('data-i18n-orig');
     if (prefs.lang === 'bi') {
-      var en = t(key, args, fallback), zh = tz(key, args);
+      var en = t(key, args, fallback), zh = tz(key, argumentKey ? [tz(argumentKey) || args[0]] : args);
       el.textContent = en;
       if (zh && zh !== en) {
         var sub = document.createElement('span');
@@ -78,14 +86,20 @@
     prefs.lang = l; LS.set('td.lang', l); applyPrefs();
     return Promise.all([load('en'), l === 'en' ? null : load('zh-HK')]).then(function () { translateAll(); fire(); });
   }
-  function fire() { ready.forEach(function (f) { try { f(); } catch (e) { console.error(e); } }); }
+  function fire() { ready.forEach(function (f) { try { f(); } catch (e) { console.error('A local interface update failed.'); } }); }
 
   // ---------- personal wording ----------
   var WORDING_KEY = 'td.wording';
+  var wordingCount = 0, wordingOperation = 0;
   function loadWording() {
     var raw = LS.get(WORDING_KEY, null);
     if (!raw || !window.TempDeskWording) { translator = function (s) { return s; }; return 'none'; }
-    try { translator = window.TempDeskWording.buildTranslator(window.TempDeskWording.validate(raw)); return 'loaded'; }
+    try {
+      var entries = window.TempDeskWording.validate(raw);
+      translator = window.TempDeskWording.buildTranslator(entries);
+      wordingCount = entries.size;
+      return 'loaded';
+    }
     catch (e) { translator = function (s) { return s; }; return 'invalid'; }
   }
   var wordingState = loadWording();
@@ -140,18 +154,161 @@
     sheet.addEventListener('click', function (e) { if (e.target === sheet) closeSheet(sheet); });
   }
 
-  var settingsSheet, wordingStateEl;
-  function wordingMessage(state, extra) {
-    var map = { none: 'wording.state.none', loaded: 'wording.state.loaded', invalid: 'wording.state.invalid', replaced: 'wording.state.replaced', cleared: 'wording.state.cleared' };
-    wordingStateEl.setAttribute('data-state', state === 'replaced' ? 'loaded' : state === 'cleared' ? 'none' : state);
+  var settingsSheet, wordingStateEl, wordingClearButton, readerFeedback;
+  function wordingMessage(state, extra, reasonKey) {
+    var map = { none: 'wording.state.none', loaded: 'wording.state.loaded', invalid: 'wording.state.invalid',
+      replaced: 'wording.state.replaced', cleared: 'wording.state.cleared', clearFailed: 'wording.state.clearFailed' };
+    wordingStateEl.setAttribute('data-state', state === 'replaced' ? 'loaded' : state === 'cleared' ? 'none' :
+      state === 'clearFailed' ? 'invalid' : state);
     wordingStateEl.setAttribute('data-i18n', map[state]);
     if (extra) wordingStateEl.setAttribute('data-i18n-args', extra); else wordingStateEl.removeAttribute('data-i18n-args');
+    if (state === 'invalid') wordingStateEl.setAttribute('data-i18n-arg-key', reasonKey || 'wording.err.json');
+    else wordingStateEl.removeAttribute('data-i18n-arg-key');
     render(wordingStateEl);
   }
-  function wordingError(err) {
-    var code = err && err.code ? err.code : 'json';
-    var msg = t('wording.err.' + code, [err && err.entry ? err.entry : ''], code);
-    return msg;
+  function stopReaderCue() {
+    if (!readerFeedback.audio) return;
+    readerFeedback.audio.pause();
+    readerFeedback.audio = null;
+  }
+  function playReaderCue(accepted) {
+    if (!prefs.actionSounds || !prefs.soundVolume || document.hidden) return;
+    try {
+      var audio = new Audio('tempdesk-docs-audio://local/' + (accepted ? 'tada.wav' : 'invalid.wav'));
+      readerFeedback.audio = audio;
+      audio.volume = prefs.soundVolume / 100;
+      var done = function () { if (readerFeedback.audio === audio) readerFeedback.audio = null; };
+      audio.addEventListener('ended', done, { once: true });
+      audio.play().catch(done);
+    } catch (e) { /* The visible import result is independent of sound. */ }
+  }
+  function dismissReaderRejection() {
+    var noticeHadFocus = readerFeedback.rejection.contains(document.activeElement);
+    readerFeedback.rejection.hidden = true;
+    if (!noticeHadFocus) return;
+    var target = readerFeedback.returnFocus;
+    if (!target || !target.isConnected || !target.getClientRects().length) target = document.getElementById('td-open-settings');
+    if (target) target.focus();
+  }
+  function resetReaderFeedback(keepRejection) {
+    if (!readerFeedback) return;
+    clearTimeout(readerFeedback.timer);
+    cancelAnimationFrame(readerFeedback.announcementFrame);
+    readerFeedback.celebration.hidden = true;
+    readerFeedback.headline.textContent = '';
+    readerFeedback.live.textContent = '';
+    if (!keepRejection) dismissReaderRejection();
+    stopReaderCue();
+  }
+  function showReaderOutcome(accepted, headline) {
+    if (!readerFeedback) return;
+    resetReaderFeedback(!accepted && settingsSheet.hidden);
+    var message = headline || wordingStateEl.textContent.trim();
+    if (settingsSheet.hidden) {
+      readerFeedback.announcementFrame = requestAnimationFrame(function () { readerFeedback.live.textContent = message; });
+    }
+    if (accepted) {
+      var reduced = prefs.motion !== 'full' || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      readerFeedback.headline.textContent = headline;
+      readerFeedback.celebration.toggleAttribute('data-static', reduced);
+      readerFeedback.celebration.hidden = false;
+      readerFeedback.timer = setTimeout(function () {
+        readerFeedback.celebration.hidden = true;
+        readerFeedback.headline.textContent = '';
+        readerFeedback.live.textContent = '';
+      }, reduced ? 3000 : 3360);
+    } else if (settingsSheet.hidden) {
+      var focused = document.activeElement;
+      if (focused && focused !== document.body && !readerFeedback.rejection.contains(focused)) {
+        readerFeedback.returnFocus = focused;
+      }
+      readerFeedback.message.textContent = message;
+      readerFeedback.rejection.hidden = false;
+    }
+    playReaderCue(accepted);
+  }
+  function rejectWording(code) {
+    var key = 'wording.err.' + code;
+    wordingMessage('invalid', null, dict.en && Object.hasOwn(dict.en, key) ? key : 'wording.err.json');
+    showReaderOutcome(false);
+  }
+  async function importWordingFile(file) {
+    var operation = ++wordingOperation;
+    if (!file) { rejectWording('fileCount'); return; }
+    if (!/\.json$/i.test(file.name) && file.type !== 'application/json') { rejectWording('fileType'); return; }
+    if (file.size > window.TempDeskWording.MAX_BYTES) { rejectWording('size'); return; }
+    var bytes;
+    try { bytes = new Uint8Array(await file.arrayBuffer()); }
+    catch (e) { if (operation === wordingOperation) rejectWording('read'); return; }
+    if (operation !== wordingOperation) return;
+    var entries;
+    try { entries = window.TempDeskWording.validate(bytes); }
+    catch (e) { rejectWording(e.code || 'json'); return; }
+    var nextTranslator = window.TempDeskWording.buildTranslator(entries);
+    if (!LS.set(WORDING_KEY, new TextDecoder().decode(bytes))) { rejectWording('storage'); return; }
+    var wasLoaded = wordingState === 'loaded';
+    translator = nextTranslator;
+    wordingState = 'loaded';
+    wordingCount = entries.size;
+    translateAll(); fire();
+    wordingMessage(wasLoaded ? 'replaced' : 'loaded', String(wordingCount));
+    wordingClearButton.disabled = false;
+    showReaderOutcome(true, entries.get('private vocabulary') || t('wording.applied'));
+  }
+  function buildReaderFeedback() {
+    var live = h('div', { class: 'sr-only', 'aria-live': 'polite', 'aria-atomic': 'true', role: 'status' });
+    var headline = h('p', { class: 'reader-wording-headline' });
+    var celebration = h('div', { class: 'reader-wording-celebration', 'aria-hidden': 'true', hidden: true }, [headline]);
+    var message = h('p');
+    var dismiss = h('button', { type: 'button', class: 'btn btn-ghost btn-sm',
+      'data-i18n': 'wording.dismiss', onclick: dismissReaderRejection }, ['Dismiss']);
+    var rejection = h('div', { class: 'notice warn reader-wording-rejection', hidden: true }, [message, dismiss]);
+    readerFeedback = { live: live, celebration: celebration, headline: headline, message: message, rejection: rejection };
+    document.body.append(live, celebration, rejection);
+    ready.push(function () {
+      if (!rejection.hidden) message.textContent = wordingStateEl.textContent.trim();
+    });
+    window.addEventListener('dragover', function (event) {
+      if (!event.defaultPrevented && Array.from(event.dataTransfer?.types || []).includes('Files')) event.preventDefault();
+    });
+    window.addEventListener('drop', function (event) {
+      var files = event.dataTransfer?.files;
+      // The Base64 file area and other dedicated targets own any drop they consume.
+      if (event.defaultPrevented || !files || !files.length) return;
+      event.preventDefault();
+      void importWordingFile(files.length === 1 ? files[0] : null);
+    });
+  }
+  function readerSoundSettings() {
+    var level = h('input', { type: 'range', id: 'td-reader-sound-volume', min: 0, max: 100, step: 5,
+      value: prefs.soundVolume, disabled: prefs.actionSounds ? null : true, oninput: function () {
+        var next = Number(level.value);
+        if (!LS.set('td.soundVolume', String(next))) { level.value = prefs.soundVolume; toast(t('settings.soundSaveFailed')); return; }
+        prefs.soundVolume = next;
+        percentage.value = String(next) + '%';
+        if (!next) stopReaderCue();
+        else if (readerFeedback.audio) readerFeedback.audio.volume = next / 100;
+      }
+    });
+    var percentage = h('output', { for: 'td-reader-sound-volume' }, [String(prefs.soundVolume) + '%']);
+    var enabled = h('input', { type: 'checkbox', checked: prefs.actionSounds, onchange: function () {
+      if (!LS.set('td.actionSounds', enabled.checked ? 'on' : 'off')) {
+        enabled.checked = prefs.actionSounds;
+        toast(t('settings.soundSaveFailed'));
+        return;
+      }
+      prefs.actionSounds = enabled.checked;
+      level.disabled = !enabled.checked;
+      if (!enabled.checked) stopReaderCue();
+    } });
+    return h('div', { class: 'set-group reader-sound-settings', id: 'set-reader-sounds' }, [
+      h('label', { class: 'reader-sound-switch' }, [enabled, h('span', { 'data-i18n': 'settings.actionSounds' }, ['Action sounds'])]),
+      h('div', { class: 'reader-sound-label' }, [
+        h('label', { for: 'td-reader-sound-volume', 'data-i18n': 'settings.soundVolume' }, ['Sound volume']),
+        percentage
+      ]),
+      level,
+    ]);
   }
   function buildSettings() {
     settingsSheet = h('div', { class: 'sheet', id: 'td-settings', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'td-settings-title', hidden: true });
@@ -170,45 +327,40 @@
     panel.appendChild(h('div', { class: 'set-group', id: 'set-size' }, [h('b', { 'data-i18n': 'settings.size' }, ['Text size']),
       seg('Text size', [['0.9', 'settings.size.s', 'Small'], ['1', 'settings.size.m', 'Default'], ['1.15', 'settings.size.l', 'Large'], ['1.3', 'settings.size.xl', 'Extra large']], prefs.size, function (v) { prefs.size = v; LS.set('td.size', v); applyPrefs(); })]));
     // personal wording
-    var file = h('input', { type: 'file', accept: 'application/json,.json', id: 'td-wording-file', class: 'sr-only' });
+    var file = h('input', { type: 'file', accept: 'application/json,.json', id: 'td-wording-file', hidden: true });
     wordingStateEl = h('div', { class: 'wording-state', role: 'status', 'aria-live': 'polite' });
-    var clearBtn = h('button', { type: 'button', class: 'btn btn-ghost btn-sm', 'data-i18n': 'wording.clear', onclick: function () {
-      LS.del(WORDING_KEY); wordingState = loadWording(); translateAll(); fire(); wordingMessage('cleared'); clearBtn.disabled = true;
+    wordingClearButton = h('button', { type: 'button', class: 'btn btn-ghost btn-sm', 'data-i18n': 'wording.clear', onclick: function () {
+      wordingOperation++;
+      if (!LS.del(WORDING_KEY)) { wordingMessage('clearFailed'); return; }
+      resetReaderFeedback();
+      wordingCount = 0;
+      wordingState = loadWording(); translateAll(); fire(); wordingMessage('cleared'); wordingClearButton.disabled = true;
     } }, ['Clear']);
-    var pick = h('label', { for: 'td-wording-file', class: 'btn btn-primary btn-sm', tabindex: '0', role: 'button', 'data-i18n': 'wording.choose', onkeydown: function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); file.click(); } } }, ['Choose JSON file']);
+    var pick = h('button', { type: 'button', class: 'btn btn-primary btn-sm', 'data-i18n': 'wording.choose',
+      onclick: function () { file.click(); } }, ['Choose JSON file']);
     file.addEventListener('change', function () {
       var f = file.files && file.files[0];
       file.value = '';
-      if (!f) return;
-      if (f.size > window.TempDeskWording.MAX_BYTES) { wordingMessage('invalid', wordingError({ code: 'size' })); return; }
-      f.arrayBuffer().then(function (buf) {
-        var had = !!LS.get(WORDING_KEY, null);
-        try {
-          var entries = window.TempDeskWording.validate(new Uint8Array(buf));
-          var text = new TextDecoder().decode(buf);
-          if (!LS.set(WORDING_KEY, text)) throw { code: 'storage' };
-          wordingState = loadWording(); translateAll(); fire();
-          wordingMessage(had ? 'replaced' : 'loaded', String(entries.size));
-          clearBtn.disabled = false;
-        } catch (err) {
-          wordingMessage('invalid', wordingError(err));
-        }
-      });
+      if (f) void importWordingFile(f);
     });
     panel.appendChild(h('div', { class: 'set-group', id: 'set-wording' }, [
       h('b', { 'data-i18n': 'wording.title' }, ['Personal wording']),
       h('span', { style: 'color:var(--muted);font-size:.88rem', 'data-i18n': 'wording.help' }, ['Upload a JSON file with your own words for the interface text. It stays in this browser only and never changes generated files or code.']),
       h('code', { style: 'font-size:.8rem;color:var(--muted);overflow-wrap:anywhere' }, ['{"schemaVersion":1,"entries":{"Guest":"Visitor"}}']),
       wordingStateEl,
-      h('div', { class: 'cta' }, [pick, file, clearBtn])
+      h('div', { class: 'cta' }, [pick, file, wordingClearButton])
     ]));
-    clearBtn.disabled = wordingState === 'none';
+    wordingClearButton.disabled = wordingState === 'none';
+    if (offlineReader) {
+      panel.appendChild(h('p', { class: 'help', 'data-i18n': 'wording.dropHelp' }, ['Drop one JSON wording file anywhere in the reader.']));
+      panel.appendChild(readerSoundSettings());
+    }
     panel.appendChild(h('div', { class: 'set-group' }, [h('b', { 'data-i18n': 'settings.palette' }, ['Command palette']),
       h('span', { style: 'color:var(--muted);font-size:.88rem', 'data-i18n': 'settings.palette.help' }, ['Press Ctrl+Shift+F anywhere to jump to a page, section, field or setting.'])]));
     settingsSheet.appendChild(panel);
     trap(settingsSheet);
     document.body.appendChild(settingsSheet);
-    wordingMessage(wordingState === 'loaded' ? 'loaded' : wordingState, wordingState === 'loaded' ? String(window.TempDeskWording.validate(LS.get(WORDING_KEY, '')).size) : '');
+    wordingMessage(wordingState, wordingState === 'loaded' ? String(wordingCount) : '');
   }
 
   // ---------- command palette ----------
@@ -234,6 +386,7 @@
     [['set-language', 'settings.language'], ['set-motion', 'settings.motion'], ['set-theme', 'settings.theme'], ['set-size', 'settings.size'], ['set-wording', 'wording.title']].forEach(function (s) {
       out.push({ kind: 'setting', label: t(s[1]), setting: s[0] });
     });
+    if (offlineReader) out.push({ kind: 'setting', label: t('settings.actionSounds'), setting: 'set-reader-sounds' });
     return out;
   }
   function makeMatcher(q, useRegex, st) {
@@ -387,6 +540,7 @@
   function init() {
     decorateTopbar();
     buildSettings();
+    if (offlineReader) buildReaderFeedback();
     buildPalette();
     Promise.all([load('en'), prefs.lang === 'en' ? null : load('zh-HK')]).then(function () {
       translateAll(); fire(); wireSearchSurfaces();

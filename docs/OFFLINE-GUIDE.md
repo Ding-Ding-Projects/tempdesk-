@@ -20,6 +20,12 @@ Open `TempDeskDocs-<version>-phone.pdf` from the [release assets](https://github
 
 The reader keeps language, theme and other browsing preferences in its own local profile. Settings and files you open in the bundled tools are processed locally. A selected HTTPS reference or release link opens in your browser, where that destination's network requirements apply.
 
+### Apply personal wording
+
+Drop one wording JSON file on the reader or choose **Settings**, then **Choose JSON file**. The Base64 toolkit's own file area accepts files for that tool. The reader applies a valid wording file after saving it locally. The confirmation fades on its own. A rejected file keeps the current wording and displays a dismissible notice. Choose **Clear** in Settings to restore the original wording.
+
+Use **Action sounds** and **Sound volume** in Settings to control the two import cues. With sound off, the reader still shows the result. The reader keeps these preferences in its local profile. System or reader reduced-motion settings make the success confirmation static.
+
 Release builds bundle the tracked source from the release revision. The generated article source links open that revision.
 
 The source archive preserves the committed bytes of the evidence JSON. Its receipt hashes can be compared across the portable reader and hosted documentation.

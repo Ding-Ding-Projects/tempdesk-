@@ -1,0 +1,53 @@
+{
+  "v": 3,
+  "title": "Offline reader wording feedback",
+  "launch": {
+    "view": "canvas",
+    "page": "wording"
+  },
+  "pages": [
+    {
+      "id": "wording",
+      "title": "Offline reader"
+    }
+  ],
+  "boards": {
+    "Wide-Wording.dc.html": {
+      "page": "wording",
+      "x": 0,
+      "y": 40,
+      "w": 1120,
+      "h": 820,
+      "title": "Wide offline reader wording"
+    },
+    "Narrow-Wording.dc.html": {
+      "page": "wording",
+      "x": 1510,
+      "y": 40,
+      "w": 360,
+      "h": 800,
+      "title": "Narrow offline reader wording"
+    }
+  },
+  "order": [
+    "Wide-Wording.dc.html",
+    "Narrow-Wording.dc.html"
+  ],
+  "notes": {
+    "Wide": {
+      "page": "wording",
+      "x": 1132,
+      "y": 60,
+      "maxW": 320,
+      "text": "Try both example outcomes, keep focus in the article and change the language. Adjust Accent colour and Motion. The notice stays until dismissal; the success overlay lets clicks through. This is a design preview, without native audio or production persistence."
+    },
+    "Narrow": {
+      "page": "wording",
+      "x": 1882,
+      "y": 60,
+      "maxW": 320,
+      "text": "Try both example outcomes, keep focus in the article and change the language. Adjust Accent colour and Motion. The notice stays until dismissal; the success overlay lets clicks through. This is a design preview, without native audio or production persistence."
+    }
+  },
+  "designSystems": []
+}

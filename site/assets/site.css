@@ -293,6 +293,50 @@ label { font-weight: 600; font-size: .92rem; }
 .wording-state { font-size: .9rem; padding: 10px 12px; border-radius: 12px; background: var(--s3); }
 .wording-state[data-state="loaded"] { background: var(--primary-soft); color: var(--primary); }
 .wording-state[data-state="invalid"] { background: var(--coral-soft); color: var(--coral); }
+.reader-wording-celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: var(--gutter);
+  pointer-events: none;
+  background: color-mix(in srgb, var(--ground) 82%, var(--primary) 18%);
+  animation: reader-wording-celebrate 3360ms ease both;
+}
+.reader-wording-headline {
+  max-inline-size: min(100%, 28ch);
+  margin: 0;
+  color: var(--text);
+  text-align: center;
+  overflow-wrap: anywhere;
+  font-size: clamp(1.5rem, 6vw, 3.25rem);
+  font-weight: 800;
+  line-height: 1.15;
+}
+.reader-wording-celebration[data-static] { animation: none; }
+@keyframes reader-wording-celebrate {
+  0%, 100% { opacity: 0; }
+  5.36%, 94.64% { opacity: 1; }
+}
+.reader-wording-rejection {
+  position: fixed;
+  z-index: 59;
+  inset-block-end: var(--gutter);
+  inset-inline-end: var(--gutter);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-inline-size: min(32rem, calc(100% - 2 * var(--gutter)));
+  box-shadow: var(--shadow-sm);
+}
+.reader-wording-rejection p { flex: 1 1 15rem; margin: 0; overflow-wrap: anywhere; }
+.reader-wording-rejection .btn, .reader-sound-settings input[type="range"],
+.reader-sound-settings .reader-sound-switch { min-height: 48px; }
+.reader-sound-label { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.reader-wording-celebration[hidden], .reader-wording-rejection[hidden] { display: none; }
+.reader-sound-settings input[type="range"] { width: 100%; }
 .palette-list { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; overflow: auto; }
 .palette-list li { display: flex; flex-direction: column; padding: 10px 12px; border-radius: 12px; cursor: pointer; min-height: var(--tap); justify-content: center; }
 .palette-list li[aria-selected="true"] { background: var(--primary-soft); }
