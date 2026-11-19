@@ -33,6 +33,17 @@ bash compose-kiosk.sh /etc/tempdesk/kiosk/broker.key /etc/tempdesk/kiosk/ca.pem
 
 The helper checks file types, paths and access modes, validates the combined Compose model silently, and recreates only the guest service, briefly interrupting it. Compose mounts the files read-only. With no CA argument the guest uses its normal TLS trust store. Re-run with the same paths after rotation so the guest receives the replacement files. Run subsequent guest updates with the same overlay selection. To remove the mounts, reconcile only the guest service with the base file using `docker compose -f compose.yaml up --no-build --no-deps -d tempdesk-guest`. A running container is not proof of broker connectivity or RDP admission. Check the guest seat availability and the end-to-end assignment and expiry procedure in [Virtual Commons](../docs/VIRTUAL-COMMONS.md).
 
+### Enable the broker on Windows with Docker Desktop
+
+Use the same guest settings and prebuilt portal image as above. Run PowerShell on the machine running Docker Desktop in Linux containers mode, in the existing portal Compose project. Supply an existing credential file and, if needed, a separate PEM CA bundle. Both must be regular files on a fixed NTFS volume, outside the source tree, with trusted ownership and protected parent directories. Keep credential read access restricted to the operator and trusted system principals. The script inspects ACLs, link counts and the local Docker Desktop Linux engine without modifying permissions. Invoking it without a credential argument does nothing.
+
+```powershell
+.\compose-kiosk.ps1 -CredentialFile 'C:\ProtectedFiles\TempDesk\broker.key'
+.\compose-kiosk.ps1 -CredentialFile 'C:\ProtectedFiles\TempDesk\broker.key' -CaFile 'C:\ProtectedFiles\TempDesk\ca.pem'
+```
+
+Use your own protected paths. Run with the existing Compose project name. Each enabled run recreates the guest service and briefly interrupts it. Confirm Docker Desktop can share those files and the guest can contact the broker using its configured TLS name. Host ACL checks alone cannot establish either fact.
+
 ## Configuration
 
 | Variable | Meaning |
