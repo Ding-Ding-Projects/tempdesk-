@@ -415,7 +415,12 @@ ${r.html}
 ${relatedDocumentationWorkflows(d.file, guideCatalogs[0], escapeHtml)}
 <p class="meter-label" style="margin-top:40px">Source: <a href="${escapeHtml(sourceBase + d.file)}">${escapeHtml(d.file)}</a></p>
 </article></div></div>`;
-    await fs.writeFile(path.join(OUT, 'docs', d.name + '.html'), page({ title: d.title + ' | TempDesk docs', desc: plainText(md).slice(0, 180), root: '../', url: 'docs/' + d.name + '.html', body }));
+    const extraHead = r.html.includes('<details class="markdown-disclosure"')
+      ? '<link rel="stylesheet" href="../assets/guided-docs.css">' : '';
+    await fs.writeFile(path.join(OUT, 'docs', d.name + '.html'), page({
+      title: d.title + ' | TempDesk docs', desc: plainText(md).slice(0, 180),
+      root: '../', url: 'docs/' + d.name + '.html', body, extraHead,
+    }));
     index.pages.push({ url: 'docs/' + d.name + '.html', title: d.title, summary: 'Docs: ' + d.file, kind: 'doc', sections: r.headings.filter((x) => x.level <= 3 && x.level > 1).map((x) => ({ id: x.id, title: x.text })), text: plainText(md) });
     edition?.articles.push({
       url: 'docs/' + d.name + '.html',
