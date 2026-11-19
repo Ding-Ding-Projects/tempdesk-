@@ -13,6 +13,16 @@ package scripts inside the image filesystem.
 The local x86_64 image built from `6d7718d` booted in QEMU, mounted its
 persistent partition and started Docker. With no configuration volume
 attached, both portal health endpoints stayed closed. [Boot receipt](docs/evidence/appliance-x86-6d7718d.json)
+The first configured run stopped before applying the firewall rules. The
+readiness correction at `f658833` waits for Docker and its firewall chain.
+The rebuilt x86_64 image accepted the protected configuration and reached
+the immutable portal image pull. The pull was still in progress at the
+observation deadline. The surrounding fixture could reach the registry.
+Guest registry access and both configured portal endpoints need further
+verification. The disposable directory used for this run was removed.
+The first native arm64 worker installed the platform packages and then
+reported a full boot partition while copying the firmware tree. Preserve its
+log separately from the x86_64 UEFI boot receipt.
 Track each boot, configured portal start, LAN check and release separately in
 the [delivery checklist](ROADMAP.md). [Appliance guide](portal/README.md#build-a-bootable-appliance)
 
