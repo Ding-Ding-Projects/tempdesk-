@@ -6,5 +6,15 @@
   <p>{{ t(dish) }}</p>
   <p>{{ t('No session was checked out. You can try again.') }}</p>
   <a class="btn filled" href="/?edition={{ edition|urlencode }}&amp;duration={{ duration|urlencode }}#virtual-commons">{{ t('Try again') }}</a>
+  <div data-commons-dish="{{ dish_id|default('', true) }}" data-mode="{{ tr.mode }}" data-photo-alt="{{ ta(dish) }}">
+    <p class="hint" data-photo-unavailable>{{ t('Dish photo unavailable.') }}</p>
+  </div>
 </section>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+{% if dish_id %}
+<script src="/static/js/dim-sum-catalog.js" defer></script>
+<script src="/static/js/commons-dim-sum.js" defer></script>
+{% endif %}
 {% endblock %}

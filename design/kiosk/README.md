@@ -19,3 +19,7 @@ Use the existing Deployer card, field, row, button, and log styles. Place the ti
 Field labels, button names, status, prompts and errors use the English and Hong Kong Cantonese catalogs. The status is announced to assistive technology; the output is keyboard-focusable. This reference describes the interaction. It contains no live VM, credentials, captured screen, or acceptance evidence.
 
 The ISO picker has an adjacent optional publisher-digest field. Preview reports the selected media byte count and measured SHA-256. Any edit invalidates the preview. Creation consumes the approved digest and mounts a read-only copy in the VM directory. The successful receipt includes the separate guest-media verification record; its folder button is available only when the engine supplied a real receipt path.
+
+## Guest checkout result
+
+Use the existing guest confirmation card. Label the workstation **Computer edition** and leave the connection-file action in place. The dim sum result uses the existing stacked guest card. Place the dish, outcome and retry before the photo so the retry stays in the same position while the photo resolves. Display the photo up to 480 pixels wide, limited by the card width, with a localized dish description. If the photo is unavailable, use the existing hint style below the retry.

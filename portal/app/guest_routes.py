@@ -14,8 +14,8 @@ from itsdangerous import BadSignature, URLSafeTimedSerializer
 from .agent_client import AgentError, AgentUnavailable
 from . import commons_handoff
 from .kiosk_seat import KioskSeatBroker, KioskSeatUnavailable, parse_expiry
-from .security import ONCE_COOKIE, client_ip
-from .web import agent_message, csrf_protect, redirect, render, set_cookie, translator_for
+from .security import CSP_COMMONS_DIM_SUM, ONCE_COOKIE, client_ip
+from .web import PREF_SCHOOL, agent_message, csrf_protect, redirect, render, set_cookie, translator_for
 
 router = APIRouter()
 USERNAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,20}$")
@@ -24,6 +24,11 @@ RDP_USER = re.compile(r"[A-Za-z0-9._@\\-]{1,320}")
 COMMONS_EDITION_LABELS = {"gui": "Windows Server with GUI", "core": "Windows Server without GUI"}
 KIOSK_LABEL = "Kiosk Windows 11"
 KIOSK_UNAVAILABLE = "The kiosk seat is busy or unavailable."
+COMMONS_DIM_SUM_DISHES = (
+    ("Har gow", "hk-dish-0001"),
+    ("Siu mai", "hk-dish-0011"),
+    ("Char siu bao", "hk-dish-0051"),
+)
 NO_STORE = {"Cache-Control": "no-store, max-age=0", "Pragma": "no-cache", "Expires": "0"}
 WORDING_COOKIE = "td_guest_wording"
 WORDING_MAX_AGE = 15 * 60
@@ -178,7 +183,8 @@ async def create(request: Request):
     if commons and (not target or edition not in pub["commonsEditions"]):
         if edition == "kiosk" and target:
             return await _render_home(request, pub, values, status=409, error_key=KIOSK_UNAVAILABLE)
-        error = "Choose an available server edition."
+        error = ("Choose an available computer edition." if pub["commonsHasKiosk"]
+                 else "Choose an available server edition.")
     elif expiry not in ids:
         error = "Choose how long you need the sign-in for."
     elif not isinstance(raw_display, str) or len(display) > 64 or any(ord(c) < 32 or c in '"/\\[]:;|=,+*?<>@' for c in display):
@@ -186,10 +192,11 @@ async def create(request: Request):
     if error:
         return await _render_home(request, pub, values, status=400, error_key=error)
     _limit(request, request.app.state.create_limiter)
-    if commons and secrets.randbelow(100) == 0:
-        dish = secrets.choice(("Har gow", "Siu mai", "Char siu bao"))
+    if commons and request.cookies.get(PREF_SCHOOL) != "1" and secrets.randbelow(100) == 0:
+        dish, dish_id = secrets.choice(COMMONS_DIM_SUM_DISHES)
         return await render(request, "guest/dim-sum.html",
-                            {"pub": pub, "dish": dish, "edition": edition, "duration": expiry}, headers=NO_STORE)
+                            {"pub": pub, "dish": dish, "dish_id": dish_id, "edition": edition, "duration": expiry},
+                            headers={**NO_STORE, "Content-Security-Policy": CSP_COMMONS_DIM_SUM})
     body = {"expiryId": expiry}
     if display:
         body["displayName"] = display
@@ -251,6 +258,7 @@ async def _render_created(request: Request, key: str | None, cookie_name: str, p
                         {"pub": pub, "c": creds, "netbios": netbios, "rdp_url": rdp_url,
                          "rdp_edition_label": (KIOSK_LABEL if edition == "kiosk" else COMMONS_EDITION_LABELS.get(edition))
                          if rdp_url else None,
+                         "rdp_is_kiosk": edition == "kiosk",
                          "rdp_unavailable": commons_checkout and not rdp_url}, headers=NO_STORE)
     resp.delete_cookie(cookie_name, path=path)
     if download:

@@ -14,10 +14,11 @@ Start here to deploy shared computers, set up temporary sign-ins, and verify rem
 
 ## Verify Virtual Commons
 
-Read [Use Virtual Commons](../../VIRTUAL-COMMONS.md) to choose a server edition, configure reachable destinations, and check expiry. Before sharing the portal URL, verify that both expected editions are available from the client network. Open a downloaded file for each edition and confirm that the temporary sign-in reaches the correct session host.
+Read [Use Virtual Commons](../../VIRTUAL-COMMONS.md) to choose a computer, configure reachable destinations, and check expiry. Before sharing the portal URL, verify each destination expected to be available from the client network. Open a downloaded file for each destination and confirm that the temporary sign-in reaches the correct session host.
 
 The project README includes a guest sign-in walkthrough for verifying account creation and deletion at a kiosk. A Remote Desktop checkout additionally requires a reachable session host and a desktop sign-in test.
 
 - [Configure the destinations](../../VIRTUAL-COMMONS.md#configure-the-destinations) to make each edition available.
+- [Add a Kiosk Windows 11 workstation](../../VIRTUAL-COMMONS.md#add-a-kiosk-windows-11-workstation) for a single-seat Remote Desktop checkout.
 - [Apply the settings](../../VIRTUAL-COMMONS.md#apply-the-settings) using the instructions for the portal host.
 - [Verify a checkout](../../VIRTUAL-COMMONS.md#verify-a-checkout) from the client network.

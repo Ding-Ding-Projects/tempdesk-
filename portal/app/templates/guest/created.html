@@ -22,7 +22,7 @@
         </div>
       </div>
       {% if rdp_url %}
-      {% if rdp_edition_label %}<p>{{ t('Server edition') }}: <strong>{{ t(rdp_edition_label) }}</strong></p>{% endif %}
+      {% if rdp_edition_label %}<p>{{ t('Computer edition' if rdp_is_kiosk else 'Server edition') }}: <strong>{{ t(rdp_edition_label) }}</strong></p>{% endif %}
       <a class="btn filled lg" href="{{ rdp_url }}" download="Virtual-Commons.rdp" id="commons-rdp">{{ t('Download Remote Desktop file') }}</a>
       <script src="/static/js/virtual-commons.js" defer></script>
       {% elif rdp_unavailable %}

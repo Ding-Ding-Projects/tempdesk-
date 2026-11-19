@@ -133,6 +133,8 @@
   "Default session host": "預設工作階段主機",
   "Kiosk Windows 11": "Windows 11 自助服務站",
   "The kiosk seat is busy or unavailable.": "自助服務站目前有人使用，或者暫時未開放。",
+  "Dish photo unavailable.": "暫時未能顯示點心相片。",
+  "Choose an available computer edition.": "請選擇可用嘅電腦版本。",
   "Choose an available server edition.": "請選擇可用嘅伺服器版本。",
   "Windows Server with GUI": "有圖形介面嘅 Windows Server",
   "Windows Server without GUI": "冇圖形介面嘅 Windows Server",

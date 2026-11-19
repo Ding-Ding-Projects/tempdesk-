@@ -1,12 +1,12 @@
 # Use Virtual Commons
 
-Choose an available server edition and a finite checkout duration on the guest portal. The portal downloads a connection file for the destination configured by the operator. An edition is unavailable until its destination is configured.
+Choose an available computer and a finite checkout duration on the guest portal. The portal downloads a connection file for the destination configured by the operator. Choose **Kiosk Windows 11** for a dedicated workstation when it is available. Each kiosk workstation has one seat.
 
 Open the downloaded Virtual-Commons.rdp file and enter the password shown on the one-time confirmation page. Use the download button on that page if your browser suppresses the automatic download. Save your work outside the temporary account before it expires.
 
 The download is an attachment from the guest portal. The browser that opened the confirmation can download it again for up to ten minutes, capped by the account's expiry. Each confirmation has its own download, so switching tabs keeps the selected destination with its checkout. The connection file carries the destination and username. Use the one-time confirmation to read the password.
 
-One in a hundred valid checkout attempts shows a dim sum dish and offers a retry. That outcome creates no account.
+With School mode off, one in a hundred valid checkout attempts shows a dim sum dish and offers a retry. That outcome creates no account and reserves no seat. The result shows a published catalogue photo when available. The dish name and retry link stay available if the photo cannot load.
 
 To use personal wording for the edition labels, verify an active guest sign-in under **Check my sign-in**, then return to **Virtual Commons**. Upload a wording JSON file or use **Clear personal wording** to restore the shipped labels. The file is processed in the current page and is never uploaded to the server. Wording clears when you leave the page or when the temporary wording access expires, whichever comes first.
 
@@ -28,6 +28,7 @@ Use a dedicated, supported Windows 11 virtual machine on the lab network with th
 - Set COMMONS_KIOSK_BROKER_URL to the private HTTPS origin of the workstation's seat broker. Set COMMONS_KIOSK_BROKER_KEY_FILE to a protected file containing that broker's credential. Optionally set COMMONS_KIOSK_BROKER_CA_FILE to the applicable trust bundle.
 - Follow the [Windows 11 preparation and broker instructions](../server/kiosk/README.md). The portal displays availability only while the configured broker identifies the workstation and reports an empty, eligible seat. The portal reserves first, creates a finite directory account and waits for the broker's exact account grant before returning the connection file.
 - The connection file requires server authentication and disables clipboard, printer and drive redirection. After account expiry or removal, verify that the watcher ends the original session and the broker confirms release before a second guest can claim the seat.
+- At the guest portal, choose **Kiosk Windows 11**, select a duration, and check out the computer. Confirm **Computer edition** identifies the workstation, open `Virtual-Commons.rdp`, and sign in with the temporary account shown on the confirmation.
 
 ## Prepare the Desktop Experience host
 

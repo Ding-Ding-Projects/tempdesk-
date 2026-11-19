@@ -133,6 +133,8 @@
   "Default session host": "Default session host",
   "Kiosk Windows 11": "Kiosk Windows 11",
   "The kiosk seat is busy or unavailable.": "The kiosk seat is busy or unavailable.",
+  "Dish photo unavailable.": "Dish photo unavailable.",
+  "Choose an available computer edition.": "Choose an available computer edition.",
   "Choose an available server edition.": "Choose an available server edition.",
   "Windows Server with GUI": "Windows Server with GUI",
   "Windows Server without GUI": "Windows Server without GUI",

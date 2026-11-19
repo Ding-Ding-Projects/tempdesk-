@@ -177,11 +177,23 @@ def safe_next(value: str | None, default: str = "/") -> str:
     return value
 
 
-CSP_DEFAULT = (
-    # style-src-attr allows style="" attributes only (layout hints); no inline <style> or script.
-    "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; "
-    "font-src 'self'; connect-src 'self'; form-action 'self'; frame-src 'self'; "
-    "frame-ancestors 'none'; base-uri 'none'; object-src 'none'"
+def _portal_csp(*, images: tuple[str, ...] = (), connections: tuple[str, ...] = ()) -> str:
+    # Inline style attributes allow layout hints without permitting inline stylesheets or scripts.
+    image_sources = " ".join(("'self'", "data:", "blob:", *images))
+    connect_sources = " ".join(("'self'", *connections))
+    return (
+        "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; "
+        f"img-src {image_sources}; font-src 'self'; connect-src {connect_sources}; "
+        "form-action 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'"
+    )
+
+
+CSP_DEFAULT = _portal_csp()
+CSP_COMMONS_DIM_SUM = _portal_csp(
+    images=("https://github.com/Ding-Ding-Projects/dim-sum-photos/releases/download/",
+            "https://release-assets.githubusercontent.com/github-production-release-asset-2e65be/"),
+    connections=("https://raw.githubusercontent.com/Ding-Ding-Projects/dim-sum-photos/main/catalog/index.json",
+                 "https://api.github.com/repos/Ding-Ding-Projects/dim-sum-photos/releases"),
 )
 
 SECURITY_HEADERS = {

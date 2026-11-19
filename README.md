@@ -528,6 +528,8 @@ The picker captures came from the kiosk build at `caddfb9c4e672ad59e3a8af8e7b7fd
 
 2. Activate `Virtual Commons: Check out a computer`. When **Your sign-in is ready** appears, look for `Virtual-Commons.rdp` in the browser downloads.
 
+For a dedicated single-seat desktop, choose **Kiosk Windows 11** when the operator has enrolled one. Its temporary sign-in and connection file use the same checkout flow. See [the workstation setup and checkout](docs/VIRTUAL-COMMONS.md#add-a-kiosk-windows-11-workstation).
+
    ![The guest kiosk confirms that the sign-in is ready after checkout](docs/evidence/virtual-commons-browser-32128b6/02-checkout-confirmation.png)
 
 3. To save another copy, focus **Download Remote Desktop file** and press Enter. Both tested editions returned exactly the same file on retry.
