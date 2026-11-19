@@ -376,16 +376,18 @@ function Save-TdPortalEnv {
     if (Test-Path -LiteralPath $guestPath -PathType Leaf) {
         $priorTargets = @{}
         foreach ($line in Get-Content -LiteralPath $guestPath) {
-            if ($line -cmatch '^\s*(COMMONS_RDP_(?:GUI|CORE|TARGET))\s*=\s*(.*?)\s*$') {
+            if ($line -cmatch '^\s*(COMMONS_RDP_(?:GUI|CORE|TARGET|KIOSK)|COMMONS_KIOSK_BROKER_(?:URL|KEY_FILE|CA_FILE))\s*=\s*(.*?)\s*$') {
                 $priorTargets[$Matches[1]] = $Matches[2]
             }
         }
-        foreach ($key in 'COMMONS_RDP_GUI', 'COMMONS_RDP_CORE', 'COMMONS_RDP_TARGET') {
+        foreach ($key in 'COMMONS_RDP_GUI', 'COMMONS_RDP_CORE', 'COMMONS_RDP_TARGET', 'COMMONS_RDP_KIOSK',
+                         'COMMONS_KIOSK_BROKER_URL', 'COMMONS_KIOSK_BROKER_KEY_FILE', 'COMMONS_KIOSK_BROKER_CA_FILE') {
             if (-not $priorTargets.ContainsKey($key) -or $guestText -match "(?m)^$key=") { continue }
             $target = $priorTargets[$key]
-            if ($target -cmatch '^[A-Za-z0-9][A-Za-z0-9.-]{0,252}(?::[0-9]{1,5})?$') {
-                $guestText = $guestText.TrimEnd() + "`n$key=$target`n"
-            }
+            # Broker settings are single dotenv lines owned by the deployment. Keep their
+            # quoting and literal paths intact. The portal validates these values on use.
+            if ($key.StartsWith('COMMONS_RDP_') -and $target -cnotmatch '^[A-Za-z0-9][A-Za-z0-9.-]{0,252}(?::[0-9]{1,5})?$') { continue }
+            $guestText = $guestText.TrimEnd() + "`n$key=$target`n"
         }
     }
     Write-TdUtf8File -Path $guestPath -Text $guestText

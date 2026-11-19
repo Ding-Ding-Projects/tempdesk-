@@ -13,6 +13,7 @@ param(
     [Parameter(Mandatory)][string]$StorageParent,
     [ValidatePattern('^(?:[a-fA-F0-9]{64})?$')][string]$ExpectedWindowsIsoSha256='',
     [ValidateSet('Auto','VMware','VirtualBox')][string]$Hypervisor = 'Auto',
+    [ValidateSet('hostonly','nat')][string]$VMwareNetwork = 'hostonly',
     [ValidatePattern('^[A-Za-z0-9_-]{1,48}$')][string]$PrivateNetwork = 'CommonsLab'
 )
 $ErrorActionPreference = 'Stop'
@@ -56,11 +57,13 @@ if ($Hypervisor -ne 'VirtualBox') {
 }
 if ($vmware) {
     $provider = 'VMware'
+    $network = $VMwareNetwork.ToLowerInvariant()
     $config = Join-Path $folder "$Name.vmx"
     $disk = Join-Path $folder "$Name.vmdk"
-    $vmx = New-TdVmwareVmx -Name $Name -DiskFile "$Name.vmdk" -WindowsIso 'windows11-installer.iso' -Network hostonly -KioskWorkstation
+    $vmx = New-TdVmwareVmx -Name $Name -DiskFile "$Name.vmdk" -WindowsIso 'windows11-installer.iso' -Network $network -KioskWorkstation
 } else {
     $provider = 'VirtualBox'
+    $network = $PrivateNetwork
     $box = Join-Path $env:ProgramFiles 'Oracle/VirtualBox/VBoxManage.exe'
     if (-not (Test-Path -LiteralPath $box -PathType Leaf)) { throw 'Install VMware Workstation or VirtualBox 7 or later.' }
     function Invoke-Box([string[]]$Options) {
@@ -78,7 +81,7 @@ if ($vmware) {
 if ($WhatIfPreference) {
     $measured = (Get-FileHash -LiteralPath $iso.FullName -Algorithm SHA256).Hash
     if ($ExpectedWindowsIsoSha256 -and $measured -ine $ExpectedWindowsIsoSha256) { throw 'The installer ISO does not match the supplied SHA-256.' }
-    [pscustomobject]@{ Name=$Name; Hypervisor=$provider; WindowsIsoSha256=$measured; WindowsIsoBytes=$iso.Length; Enrolled=$false; State='PreviewOnly' }
+    [pscustomobject]@{ Name=$Name; Hypervisor=$provider; Network=$network; WindowsIsoSha256=$measured; WindowsIsoBytes=$iso.Length; Enrolled=$false; State='PreviewOnly' }
     return
 }
 if (-not $ExpectedWindowsIsoSha256) { throw 'Preview first and supply the approved installer SHA-256 before creation.' }
@@ -125,4 +128,4 @@ if ($vmware) {
     $state = 'RequiresSecureBootVerification'
 }
 Write-Host ("Guest setup DVD and independent verification values: {0}" -f $media.ReceiptPath)
-[pscustomobject]@{ GuestMediaReceipt = $media.ReceiptPath; Configuration = $config; Hypervisor = $provider; Name = $Name; State = $state; Enrolled = $false }
+[pscustomobject]@{ GuestMediaReceipt = $media.ReceiptPath; Configuration = $config; Hypervisor = $provider; Network = $network; Name = $Name; State = $state; Enrolled = $false }

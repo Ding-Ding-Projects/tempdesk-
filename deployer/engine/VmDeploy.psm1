@@ -76,7 +76,7 @@ function New-TdVmwareVmx {
         & $add 'tempdesk.managed' 'TRUE'
     }
     if ($KioskWorkstation) {
-        if ($Firmware -ne 'uefi' -or $Network -ne 'hostonly' -or $KitIso) { throw 'The workstation requires isolated networking and EFI, without server media.' }
+        if ($Firmware -ne 'uefi' -or $Network -notin @('hostonly','nat') -or $KitIso) { throw 'The workstation requires isolated networking and EFI, without server media.' }
         & $add 'guestOS' 'windows11-64'
         & $add 'uefi.secureBoot.enabled' 'TRUE'
     } else {

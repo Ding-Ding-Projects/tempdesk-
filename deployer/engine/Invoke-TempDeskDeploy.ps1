@@ -101,19 +101,20 @@ try {
                 WindowsIso = [string]$kiosk.windowsIso
                 ExpectedWindowsIsoSha256 = [string](Get-Prop $kiosk 'windowsIsoSha256' '')
                 Hypervisor = [string](Get-Prop $kiosk 'hypervisor' 'Auto')
+                VMwareNetwork = [string](Get-Prop $kiosk 'vmwareNetwork' 'hostonly')
                 PrivateNetwork = [string](Get-Prop $kiosk 'privateNetwork' 'CommonsLab')
                 StorageParent = [string]$kiosk.storageParent
             }
             $entrypoint = Join-Path $PayloadRoot 'server/kiosk/New-CommonsKioskVm.ps1'
             if ($Phase -eq 'KioskVmPreview') {
                 $readback = & $entrypoint @arguments -WhatIf 6>$null
-                Write-TdResult $true ([ordered]@{ name = $readback.Name; hypervisor = $readback.Hypervisor; windowsIsoSha256 = $readback.WindowsIsoSha256; windowsIsoBytes = $readback.WindowsIsoBytes; state = 'PreviewOnly'; enrolled = $false })
+                Write-TdResult $true ([ordered]@{ name = $readback.Name; hypervisor = $readback.Hypervisor; network = $readback.Network; windowsIsoSha256 = $readback.WindowsIsoSha256; windowsIsoBytes = $readback.WindowsIsoBytes; state = 'PreviewOnly'; enrolled = $false })
             } else {
                 if (-not $arguments.Name -or $kiosk.confirmCreate -cne $arguments.Name) {
                     throw 'To create this separate workstation, set kioskVm.confirmCreate to its exact name.'
                 }
                 $made = & $entrypoint @arguments -Confirm:$false
-                Write-TdResult $true ([ordered]@{ guestMediaReceipt = $made.GuestMediaReceipt; configuration = $made.Configuration; hypervisor = $made.Hypervisor; name = $made.Name; state = $made.State; enrolled = $false })
+                Write-TdResult $true ([ordered]@{ guestMediaReceipt = $made.GuestMediaReceipt; configuration = $made.Configuration; hypervisor = $made.Hypervisor; network = $made.Network; name = $made.Name; state = $made.State; enrolled = $false })
             }
         }
         'Trust' {

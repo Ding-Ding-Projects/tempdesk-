@@ -1,6 +1,6 @@
 # Windows 11 remote workstation
 
-Create one Windows 11 desktop for one Virtual Commons booking on a dedicated VMware Workstation host, with VirtualBox 7 or later as fallback. The host needs firmware and virtual TPM support, capacity for two virtual CPUs and 4 GB of memory per running workstation, and approved Windows installation media and licensing. Put the domain controller and the authorized remote desktop gateway on the same isolated lab network, or provide a separately managed private route. VMware uses its host-only network. VirtualBox uses the specified internal network. Attach the gateway to that isolated network.
+Create one Windows 11 desktop for one Virtual Commons booking on a dedicated VMware Workstation host, with VirtualBox 7 or later as fallback. The host needs firmware and virtual TPM support, capacity for two virtual CPUs and 4 GB of memory per running workstation, and approved Windows installation media and licensing. Put the domain controller and the authorized remote desktop gateway on the same isolated lab network, or provide a separately managed private route. VMware uses host-only networking by default. Choose `-VMwareNetwork nat` when the directory and the permitted gateway are reachable from the VMware NAT network. Creation adds no port mapping. VirtualBox uses the specified internal network. Verify the selected network and the client route separately.
 
 1. On the hypervisor, run the command below with the operator's chosen name and paths. Review with `-WhatIf`, then compare the reported SHA-256 against the genuine publisher value for your exact installation image. To create, remove `-WhatIf` and supply that digest with `-ExpectedWindowsIsoSha256`. Creation uses extra local storage equal to the installer ISO in addition to the virtual disk. On partial provisioning failure, inspect the exact VM and storage path. A retry never replaces existing resources.
 2. The VM is created powered off. In Workstation, open its VMX, enable encryption with an operator-controlled password and add a TPM 2.0 device. For VirtualBox, the creation path configures a virtual TPM, initializes the new VM firmware, enrolls the Microsoft signatures and Oracle platform key, and enables Secure Boot. Check those settings in the newly created VM before boot. Verify Secure Boot and TPM 2.0, boot the VM and complete the installation on its console. Choose Windows 11 Pro, Enterprise or Education, assign a unique machine name, join the lab domain and apply the existing TempDesk watcher policy. Keep emergency administrative credentials separate from guest credentials. Do not use automatic sign-in.
@@ -28,6 +28,7 @@ answer files are never attached to this VM.
     "name": "LAB-KIOSK01",
     "windowsIso": "D:\\Media\\Windows11.iso",
     "hypervisor": "Auto",
+    "vmwareNetwork": "hostonly",
     "storageParent": "D:\\VMs"
   }
 }

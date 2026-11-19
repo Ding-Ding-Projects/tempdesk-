@@ -4,14 +4,14 @@ The Virtual Commons workstation card belongs on the normal Deploy page beside th
 
 ## Layout
 
-Use the existing Deployer card, field, row, button, and log styles. Place the title and one explanatory sentence above a two-column form. Machine identity and hypervisor appear first. Installation ISO and storage parent each carry a native picker. Show the internal network for Automatic and VirtualBox; VMware always uses host-only networking. At narrow widths, stack fields in reading order. The preview and create buttons remain adjacent or wrap together. Place live status immediately below them, followed by the actual configuration path and bounded engine output.
+Use the existing Deployer card, field, row, button, and log styles. Place the title and one explanatory sentence above a two-column form. Machine identity and hypervisor appear first. Installation ISO and storage parent each carry a native picker. Show the VirtualBox internal network for Automatic and VirtualBox. Show the VMware private network selector for Automatic and VMware. Host-only is the default. Place its directory-reachability guidance with the selector. At narrow widths, stack fields in reading order. The preview and create buttons remain adjacent or wrap together. Place live status immediately below them, followed by the actual configuration path and bounded engine output.
 
 ## Interaction
 
 | Stage | User action or engine result | Visible state |
 | --- | --- | --- |
 | Draft | Supply a unique machine name, platform, licensed Windows ISO and storage parent | Preview is available once the inputs meet the engine constraints. |
-| Preview | Run the read-only preview phase | Inputs lock while the engine is running. A successful preview enables creation for precisely that configuration. |
+| Preview | Run the read-only preview phase | Inputs lock while the engine is running. A successful preview names the resolved platform and network and enables creation for precisely that configuration. |
 | Confirmation | Choose creation and type the exact displayed machine name | Cancel returns to the preview. A changed draft requires a new preview. The confirmation never persists. |
 | Creation | The engine writes the selected powered-off machine | Show the actual configuration path, hypervisor-specific hardware-security step, OS installation, domain join and outstanding seat enrollment. |
 | Failure | The engine or IPC returns an error or inconsistent receipt | Display the returned diagnostic and ask the operator to inspect the destination before retrying. Preserve partial output. |

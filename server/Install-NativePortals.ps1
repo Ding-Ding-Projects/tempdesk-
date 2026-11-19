@@ -76,7 +76,7 @@ $sessionSecret = [Convert]::ToBase64String($secretBytes)
 
 function Write-Env([string] $Path, [hashtable] $Values) {
     ($Values.GetEnumerator() | Sort-Object Name | ForEach-Object { '{0}={1}' -f $_.Name, $_.Value }) -join "`r`n" |
-        Set-Content -LiteralPath $Path -Encoding ascii
+        Set-Content -LiteralPath $Path -Encoding utf8
     # SYSTEM and Administrators full control, NETWORK SERVICE (the portals' account) read only.
     & icacls.exe $Path /inheritance:r /grant:r '*S-1-5-18:F' '*S-1-5-32-544:F' '*S-1-5-20:R' | Out-Null
 }
@@ -89,16 +89,15 @@ if ($agentPin) {
 $guestEnvPath = Join-Path $dataDir 'guest.env'
 $priorTargets = @{}
 if (Test-Path -LiteralPath $guestEnvPath -PathType Leaf) {
-    foreach ($line in Get-Content -LiteralPath $guestEnvPath) {
+    foreach ($line in Get-Content -LiteralPath $guestEnvPath -Encoding utf8) {
         if ($line -cmatch '^\s*(COMMONS_RDP_(?:GUI|CORE|TARGET|KIOSK)|COMMONS_KIOSK_BROKER_(?:URL|KEY_FILE|CA_FILE))\s*=\s*(.*?)\s*$') {
             $priorTargets[$Matches[1]] = $Matches[2]
         }
     }
 }
 foreach ($key in $priorTargets.Keys) {
-    if ($priorTargets[$key] -cmatch '^[A-Za-z0-9][A-Za-z0-9.-]{0,252}(?::[0-9]{1,5})?$') {
-        $guestEnv[$key] = $priorTargets[$key]
-    }
+    if ($key.StartsWith('COMMONS_RDP_') -and $priorTargets[$key] -cnotmatch '^[A-Za-z0-9][A-Za-z0-9.-]{0,252}(?::[0-9]{1,5})?$') { continue }
+    $guestEnv[$key] = $priorTargets[$key]
 }
 Write-Env $guestEnvPath $guestEnv
 Write-Env (Join-Path $dataDir 'admin.env') $adminEnv
@@ -107,8 +106,8 @@ Write-Env (Join-Path $dataDir 'admin.env') $adminEnv
 $runner = Join-Path $installDir 'Start-Portal.ps1'
 @'
 param([Parameter(Mandatory)] [string] $EnvFile)
-Get-Content -LiteralPath $EnvFile | ForEach-Object {
-    if ($_ -match '^([A-Z_]+)=(.*)$') { [Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], 'Process') }
+Get-Content -LiteralPath $EnvFile -Encoding utf8 | ForEach-Object {
+    if ($_ -match '^([A-Z_][A-Z0-9_]*)=(.*)$') { [Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], 'Process') }
 }
 Set-Location -LiteralPath $PSScriptRoot
 while ($true) {
