@@ -101,15 +101,23 @@ function setEnabled(dir, pin, name) {
 }
 
 function enable(dir, pin, name) {
-  const result = setEnabled(dir, pin, String(name || DEFAULT_NAME).slice(0, 40));
-  return result.ok ? status(dir) : statusAfterFailure(dir, result);
+  const state = enableWithStatus(dir, pin, name);
+  if (state.operationError === 'invalid') throw new Error('The PIN must be 4 to 12 digits.');
+  if (state.operationError) throw new Error('Unable to enable School mode.');
+  return publicView(state);
 }
 
-function statusAfterFailure(dir, result) {
-  return { ...status(dir), operationError: result.reason };
+function enableWithStatus(dir, pin, name) {
+  const result = setEnabled(dir, pin, String(name || DEFAULT_NAME).slice(0, 40));
+  const state = status(dir);
+  return result.ok ? state : { ...state, operationError: result.reason };
 }
 
 function disable(dir, pin) {
+  return { ok: unlock(dir, pin).ok };
+}
+
+function unlock(dir, pin) {
   return update(dir, rec => {
     if (!rec.enabled) return { ok: true };
     if (!verifyPin(pin, rec.pin)) return { ok: false, reason: 'wrongPin' };
@@ -154,4 +162,7 @@ function watch(dir, notify) {
   }
 }
 
-module.exports = { hashPin, verifyPin, load, save, enable, setEnabled, disable, rename, publicView, status, unavailable, watch, sharedRoot, ITERATIONS };
+module.exports = {
+  hashPin, verifyPin, load, save, enable, enableWithStatus, setEnabled, disable, unlock, rename,
+  publicView, status, unavailable, watch, sharedRoot, ITERATIONS,
+};

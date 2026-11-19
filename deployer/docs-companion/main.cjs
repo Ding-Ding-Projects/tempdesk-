@@ -100,7 +100,7 @@ function connectSchoolMode(window) {
     let result = { ok: false, reason: 'invalid' };
     if (typeof pin === 'string' && /^\d{4,12}$/.test(pin)) {
       if (action === 'enable') result = school.setEnabled(directory, pin, name);
-      else if (action === 'unlock') result = school.disable(directory, pin);
+      else if (action === 'unlock') result = school.unlock(directory, pin);
       else if (action === 'rename') result = school.rename(directory, pin, name);
     }
     return { ...result, state: current() };

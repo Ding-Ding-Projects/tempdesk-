@@ -179,9 +179,9 @@ function registerIpc() {
   // School mode (convenience lock, not security)
   handle('school:get', sharedSchoolStatus);
   handle('school:enable', (pin, name) => sharedSchoolStatus().available
-    ? school.enable(store.root, pin, name) : { ...school.unavailable(), operationError: 'unavailable' });
+    ? school.enableWithStatus(store.root, pin, name) : { ...school.unavailable(), operationError: 'unavailable' });
   handle('school:disable', (pin) => sharedSchoolStatus().available
-    ? school.disable(store.root, pin) : { ok: false, reason: 'unavailable' });
+    ? school.unlock(store.root, pin) : { ok: false, reason: 'unavailable' });
 
   // Personal wording: validated in full here before anything is stored; never logged.
   handle('wording:get', () => store.vocabulary());

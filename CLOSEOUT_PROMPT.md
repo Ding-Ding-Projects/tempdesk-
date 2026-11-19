@@ -9,5 +9,7 @@ The normal v1.0.134 release from 23d5222dad11ef7a1232191aa2df113d8851c6a8 contai
 
 The local reader and Deployer share the School mode setting. Its preference scope pauses language, personal wording, and action sounds while retaining neutral appearance controls and saved preferences. The local v1.0.135 reader showed the shared mode off and the Enable control at desktop and narrow widths. See docs/evidence/offline-school-e13efa0/inventory.json. Verify mode transitions across both applications and complete article, wiki, search, and direct-route filtering before closing that requirement.
 
+Hosted jobs at 0b32e06ef7f4781c569983305968794828db0817 found a legacy School mode return-value regression. The repair restores both original result shapes and keeps detailed native mode feedback. Verify the new source build and hosted jobs before accepting the next normal release.
+
 The Core directory is promoted and still needs approved agent trust. The separate Desktop Experience host needs initial setup and a private directory route. Complete native Windows Server and workstation checkout and expiry verification, the remaining capability inventory, and separate wiki publication. Local product suites remain deferred.
 ```
