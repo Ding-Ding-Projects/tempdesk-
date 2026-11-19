@@ -7,6 +7,7 @@ Start here to deploy shared computers, set up temporary sign-ins, and verify rem
 - [TempDesk overview and setup](../../../README.md) explains the main components and deployment choices.
 - [Server management](../../SERVER.md) explains the server console, supported routes, and operational limits.
 - [Run a published portal image](../../../portal/README.md#run-a-published-image) covers the release receipt, configuration, startup and verification.
+- [Host on Windows](../../../portal/README.md#host-on-windows) covers background startup and the keyboard controls for portal logs.
 - [Security](../../SECURITY.md) describes the permissions and credential boundaries.
 - [Operator guide index](../../features/README.md) organizes common tasks.
 - [API diagnostics with Postman](../../features/http-api/README.md) shows how to check service health and authorized reads.

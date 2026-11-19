@@ -25,7 +25,8 @@
 
 ## Documentation and delivery
 
-- [ ] Publish and read back the source-bound container digest, then verify a Compose pull and startup from that exact digest.
+- [x] Publish and read back the source-bound container digest at `99d580a`. Verify an isolated Compose pull, startup and health against the lab directory.
+- [ ] Verify a registry-backed LAN deployment whose image version matches the accepted release. Exercise both Windows hosting modes and the keyboard selector.
 - [x] Inventory the required features across the Deployer, management portal, guest portal, kiosk, public documentation, offline reader, and project delivery. [Verification inventory](docs/FEATURE-INVENTORY.md)
 - [x] Record how to select, apply, reload and clear personal wording in the built management portal. [Illustrated steps](README.md#personal-wording-walkthrough)
 - [ ] Verify local wording and outcome cues across the Deployer notification drawer, its search, and the remaining dynamic surfaces.

@@ -11,7 +11,7 @@ Both services use Python 3.12, FastAPI and server-rendered Jinja2. Directory req
 
 ## Run a published image
 
-Download the `tempdesk-portal-publication.json` receipt from the **Publish TempDesk portal image** workflow for the source revision you intend to deploy. Use a receipt whose state is `published` or `already-published`. Read its `revision` and `digest` together. Obtain registry read access through your normal protected sign-in when the package requires authentication.
+Download the `tempdesk-portal-publication.json` artifact from the portal publication job in the **Release TempDesk Deployer** run for the version you intend to deploy. Choose a receipt with state `published` or `already-published`, and read its `releaseTag`, `revision`, and `digest` together. The publisher verifies the normal release and its tag before building the image. Obtain registry read access through your normal protected sign-in when the package requires authentication.
 
 In this folder, prepare `.env.guest` and `.env.admin` from their examples. Supply the bound portal digest as the Compose interpolation variable `TEMPDESK_PORTAL_DIGEST`. In PowerShell, use `$env:TEMPDESK_PORTAL_DIGEST`. On a shell with `export`, use `export TEMPDESK_PORTAL_DIGEST`. The value is the receipt's complete `sha256:` digest.
 
@@ -22,6 +22,14 @@ docker compose -f compose.yaml -f compose.published.yaml ps
 ```
 
 Include your existing broker and CA overlays on both Compose commands when those protected mounts are already in use. The published mode uses the same named data volumes and LAN ports as the source mode. From an intended LAN client, open the host's guest page on port 8080 and the management sign-in page on port 8081 at `/login`. Confirm both pages report the revision from the receipt. Keep the earlier digest available for a rollback.
+
+### Host on Windows
+
+Start Docker Desktop in Linux containers mode. Save the accepted publication receipt as `tempdesk-portal-publication.json` beside the configured `.env.guest` and `.env.admin` files. The default configuration directory is `portal/`. To keep operator configuration outside the checkout, set `TEMPDESK_PORTAL_CONFIG_DIR` to that directory. `TEMPDESK_PORTAL_RECEIPT` points to a receipt stored separately.
+
+Run `host.bat --detached` from the repository root to pull, start and verify both services. The launcher reports each LAN URL, running version, start time, and health readback time. Double-click `host.bat` and press **D** for the same background startup or **L** for live logs. `host.bat --logs` also opens the log view after healthy startup. Press **G** for the guest service, **M** for management, **P** to pause or resume following, and **Q** or **Escape** to leave. The services keep running when the log view closes.
+
+Use the original configuration directory, Compose project name and overlays when updating an existing deployment. Set `TEMPDESK_PORTAL_COMPOSE_OVERRIDES` to the existing override file paths separated by semicolons and supply the protected mount configuration those overlays require. When several network adapters are available, set `TEMPDESK_LAN_ADDRESS` to the intended local IPv4 address. The launcher checks the published port, pulled image identity, container health and visible source revision before reporting success.
 
 ## Run from source
 

@@ -51,7 +51,10 @@ function buildPortalImage(image) {
     for (const asset of assets) {
       fs.copyFileSync(path.join(context, 'site', 'assets', asset), path.join(app, 'static', 'js', asset));
     }
-    const provenance = writePortalProvenance(repository, app, { expectedRevision: revision });
+    const provenance = writePortalProvenance(repository, app, {
+      expectedRevision: revision,
+      version: process.env.TEMPDESK_PORTAL_VERSION,
+    });
     if (!provenance) {
       throw new Error('Cannot record the source version. Use a clean checkout with available Git metadata.');
     }
