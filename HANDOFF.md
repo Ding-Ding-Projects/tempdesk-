@@ -53,7 +53,9 @@ The embedded x86_64 candidate at `1583b8718eaeda093ede791c6774c6922ed3524b`
 booted through UEFI with KVM enabled. On an isolated network, a separate
 client verified both v1.0.109 portals and a finite guest sign-in. The same
 disk booted again with its configuration disk detached and passed the same
-checks. That run used the verified local image during both boots. The Pi 4
+checks. The integrated x86_64 build for v1.0.117 repeated both checks with
+the current published image and a separate disposable directory. Both
+runs used the verified local image during both boots. The Pi 4
 receipt covers its earlier direct kernel and OpenRC boot in board emulation.
 Physical LAN, configured Pi 4 startup, and appliance release acceptance are
 open. [x86 receipt](docs/evidence/appliance-x86-1583b87.json) ·

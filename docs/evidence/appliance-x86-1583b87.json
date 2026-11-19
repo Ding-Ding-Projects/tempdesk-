@@ -45,5 +45,37 @@
     "emulatorExit": "QMP quit after the bounded ACPI shutdown wait",
     "fixtureRetiredUtc": "2026-11-19T11:01:02.294375Z"
   },
-  "limitations": "Verification covers this x86_64 artifact, the embedded image, and configuration persistence across an emulated stop and boot. Physical LAN delivery, production shutdown, Raspberry Pi 4 startup, Remote Desktop sign-in, and credential expiry remain separate acceptance items."
+  "rebuiltVerification": {
+    "applianceSource": "9486b6e7b2680b7f3860671e8b901cad9e84e906",
+    "portalSource": "90b455dd3a8a060f5c859055b84d87ebdaeb11f4",
+    "portalVersion": "1.0.117",
+    "portalIndexDigest": "sha256:27836a89248dbc244ce7fc3d6d0f85dc9dc7f52808ef668a355bc684e116dff1",
+    "portalChildDigest": "sha256:64ccaa7f0360d806eaf1d581159432ca51d4318a72836f0346e365fc593f71ff",
+    "embeddedArchiveSha256": "5824356deae1317b14bba552eb6502d3265f9a080fbf887c7e9080d23a302df3",
+    "filename": "TempDesk-Appliance-1.0.117-x86_64.img.gz",
+    "bytes": 315930655,
+    "sha256": "f31ba442f64e99dae67ea65de472e1a10212191fd11aabe0b829c32378271ab6",
+    "buildEntrypoint": "build.bat --appliance /s --skip-tests",
+    "environment": "QEMU 11.0.3 q35 with KVM, 1280 MiB, two virtual CPUs, and the separate isolated client",
+    "firstBoot": {
+      "startedUtc": "2026-11-19T11:09:54.030370Z",
+      "verifiedUtc": "2026-11-19T11:10:28.956823Z",
+      "configurationDiskAttachedReadOnly": true,
+      "matchingEmbeddedImageLoaded": true,
+      "bothPortalsHealthy": true,
+      "finiteGuestSignInConfirmed": true
+    },
+    "secondBoot": {
+      "startedUtc": "2026-11-19T11:10:36.347383Z",
+      "verifiedUtc": "2026-11-19T11:10:55.365669Z",
+      "configurationDiskAttached": false,
+      "sameApplianceDisk": true,
+      "bothPortalsHealthy": true,
+      "finiteGuestSignInConfirmed": true
+    },
+    "registryRouteAvailableToGuest": false,
+    "emulatorExit": "QMP quit after the bounded ACPI shutdown wait",
+    "fixtureRetiredUtc": "2026-11-19T11:11:35.810804Z"
+  },
+  "limitations": "Verification covers the two exact x86_64 artifacts, their embedded images, and configuration persistence across an emulated stop and boot. Physical LAN delivery, production shutdown, Raspberry Pi 4 startup, Remote Desktop sign-in, and credential expiry remain separate acceptance items."
 }
