@@ -128,6 +128,7 @@ try {
     }
     $receipt = Read-Publication $receiptPath
     $address = Get-LanAddress
+    $env:TEMPDESK_LAN_ADDRESS = $address
     $env:TEMPDESK_PORTAL_DIGEST = $receipt.digest
     $files = @((Join-Path $source 'compose.yaml'))
     if ($env:TEMPDESK_PORTAL_COMPOSE_OVERRIDES) {
@@ -163,6 +164,28 @@ try {
             throw ('Check the published image and LAN port mapping for '+$services[$name].label+'.')
         }
         $services[$name].publishedPort = [int]$binding[0].published
+        $tlsCert = ([string]$service.environment.TLS_CERT_FILE).Trim()
+        $tlsKey = ([string]$service.environment.TLS_KEY_FILE).Trim()
+        if ([bool]$tlsCert -ne [bool]$tlsKey) {
+            throw ('Configure both TLS files for '+$services[$name].label+'.')
+        }
+        $endpointHost = $address
+        $scheme = 'http'
+        if ($tlsCert) {
+            $scheme = 'https'
+            $certificateName = ([string]$service.environment.TLS_HEALTHCHECK_NAME).Trim()
+            if ($certificateName) { $endpointHost = $certificateName }
+            if ([uri]::CheckHostName($endpointHost) -notin [UriHostNameType]::Dns,[UriHostNameType]::IPv4) {
+                throw ('Use an IPv4 address or DNS name from the certificate for '+$services[$name].label+'.')
+            }
+            try { $resolved = @([Net.Dns]::GetHostAddresses($endpointHost) | ForEach-Object { $_.IPAddressToString }) }
+            catch { throw ('The certificate name could not be resolved for '+$services[$name].label+'.') }
+            if ($address -notin $resolved -or $binding[0].host_ip -ne $address -or @($service.ports).Count -ne 1) {
+                throw ('Use the selected LAN address and one HTTPS port mapping for '+$services[$name].label+'.')
+            }
+        }
+        $services[$name].origin = '{0}://{1}:{2}' -f $scheme,$endpointHost,$services[$name].publishedPort
+        $services[$name].https = [bool]$tlsCert
         foreach ($property in $service.environment.PSObject.Properties) {
             if ($property.Name -match '(KEY|SECRET|PASSWORD|TOKEN)$' -and $property.Value) { $protectedValues += [string]$property.Value }
         }
@@ -225,18 +248,23 @@ try {
             $_.HostPort -eq [string]$service.publishedPort -and $_.HostIp -in '0.0.0.0',$address
         })
         if ($published.Count -ne 1) { throw ('The running port mapping differs for '+$service.label+'.') }
-        $origin = 'http://{0}:{1}' -f $address,$service.publishedPort
+        $origin = $service.origin
         $url = $origin+$service.path
+        $request = @{ UseBasicParsing=$true; TimeoutSec=10 }
+        if ($service.https) { $request.MaximumRedirection = 0 }
         try {
-            $page = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 10
-            $health = Invoke-WebRequest -Uri ($origin+'/healthz') -UseBasicParsing -TimeoutSec 10
-        } catch { throw ('The LAN endpoint did not respond for '+$service.label+'.') }
+            $page = Invoke-WebRequest -Uri $url @request
+            $health = Invoke-WebRequest -Uri ($origin+'/healthz') @request
+        } catch {
+            if ($service.https) { throw ('Trusted HTTPS verification did not succeed for '+$service.label+' at '+$url+'.') }
+            throw ('The LAN endpoint did not respond for '+$service.label+'.')
+        }
         if ($page.StatusCode -ne 200 -or $health.StatusCode -ne 200 -or
             !$page.Content.Contains('<code>'+$receipt.revision+'</code>') -or !$page.Content.Contains('<dd>'+$receipt.version+'</dd>')) {
             throw ('The LAN endpoint did not confirm the expected running build for '+$service.label+'.')
         }
         $startedAt = [DateTimeOffset]::Parse($fields[2]).UtcDateTime.ToString('yyyy-MM-dd HH:mm:ss')
-        Write-Host ('{0} {1} | {2} | Started {3} UTC | Verified {4} UTC' -f $service.label,$receipt.version,$url,$startedAt,[DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm:ss'))
+        Write-Host ('{0} {1} | {2} | LAN {3} | Started {4} UTC | Verified {5} UTC' -f $service.label,$receipt.version,$url,$address,$startedAt,[DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm:ss'))
       } catch {
         $operationPassed = $false
         [Console]::Error.WriteLine($_.Exception.Message)

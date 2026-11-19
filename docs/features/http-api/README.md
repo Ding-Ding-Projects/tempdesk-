@@ -14,6 +14,8 @@ Set `GUEST_PORTAL_URL` and `MANAGEMENT_PORTAL_URL` to the matching installation 
 
 For portal startup with a separate role file, see [Read the agent key from a protected file](portal-agent-key-file.md).
 
+For browser-to-portal transport, see [Serve the portals on your LAN over HTTPS](portal-https.md).
+
 Keep keys, session credentials and target details in local protected Postman values. Use HTTPS with normal certificate verification where deployed, and import your approved certificate for a private CA. Avoid running the requests against an unintended host, exporting populated environments or sharing raw responses, which can contain directory information.
 
 The collections cover read-only service and operator diagnostics. The API reference documents the remaining endpoints, including writes. Remote Desktop and Guacamole connections use their normal clients and do not belong to this HTTP diagnostics collection. Collection requests were mapped from the route source. Live Postman execution remains pending.

@@ -6,6 +6,7 @@ import ipaddress
 import os
 import secrets
 import stat
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -48,7 +49,7 @@ def _agent_key(env: dict) -> str:
     return key.decode("ascii")
 
 
-def _int(env: dict, name: str, default: int) -> int:
+def _int(env: Mapping[str, str], name: str, default: int) -> int:
     raw = env.get(name)
     if raw is None or raw == "":
         return default
@@ -56,6 +57,19 @@ def _int(env: dict, name: str, default: int) -> int:
         return int(raw)
     except ValueError as exc:
         raise ConfigError(f"{name} must be a whole number") from exc
+
+
+def portal_port(env: Mapping[str, str]) -> int:
+    mode = (env.get("PORTAL_MODE") or "guest").strip().lower()
+    return _int(env, "PORT", 8081 if mode == "admin" else 8080)
+
+
+def portal_tls_files(env: Mapping[str, str]) -> tuple[str | None, str | None]:
+    cert = (env.get("TLS_CERT_FILE") or "").strip() or None
+    key = (env.get("TLS_KEY_FILE") or "").strip() or None
+    if bool(cert) != bool(key):
+        raise ConfigError("Set TLS_CERT_FILE and TLS_KEY_FILE together")
+    return cert, key
 
 
 def _parse_proxies(raw: str) -> list:
@@ -142,6 +156,7 @@ class Settings:
         cookie_secure = (env.get("COOKIE_SECURE") or "auto").lower()
         if cookie_secure not in ("auto", "true", "false"):
             raise ConfigError("COOKIE_SECURE must be auto, true or false")
+        tls_cert, tls_key = portal_tls_files(env)
         return cls(
             mode=mode,
             agent_url=agent_url,
@@ -150,7 +165,7 @@ class Settings:
             agent_cert_sha256=pin,
             agent_timeout=float(env.get("AGENT_TIMEOUT") or 20),
             session_secret=secret,
-            port=_int(env, "PORT", 8081 if mode == "admin" else 8080),
+            port=portal_port(env),
             trusted_proxies=_parse_proxies(env.get("TRUSTED_PROXY") or ""),
             cookie_secure=cookie_secure,
             create_limit=_int(env, "GUEST_CREATE_LIMIT", 10),
@@ -160,8 +175,8 @@ class Settings:
             login_limit=_int(env, "ADMIN_LOGIN_LIMIT", 10),
             login_window_seconds=_int(env, "ADMIN_LOGIN_WINDOW_SECONDS", 600),
             health_cache_seconds=_int(env, "HEALTH_CACHE_SECONDS", 30),
-            tls_cert_file=(env.get("TLS_CERT_FILE") or "").strip() or None,
-            tls_key_file=(env.get("TLS_KEY_FILE") or "").strip() or None,
+            tls_cert_file=tls_cert,
+            tls_key_file=tls_key,
             commons_rdp_gui=(env.get("COMMONS_RDP_GUI") or "").strip(),
             commons_rdp_core=(env.get("COMMONS_RDP_CORE") or "").strip(),
             commons_rdp_target=(env.get("COMMONS_RDP_TARGET") or "").strip(),

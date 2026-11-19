@@ -1,13 +1,14 @@
 @echo off
 rem Builds TempDesk Deployer (the desktop app) into deployer\bin\ as an unpacked app and a
 rem portable .exe, plus the standalone reader and phone PDF in deployer\bin\docs\.
-rem Usage: build.bat [/docs or --portal-host or --appliance] [/s]   /s = silent.
+rem Usage: build.bat [/docs or --portal-host or --portal-image or --appliance] [/s]   /s = silent.
 setlocal EnableExtensions
 set "ROOT=%~dp0"
 set "QUIET="
 set "DOCSONLY="
 set "BUILDCOMPANION="
 set "PORTALHOST="
+set "PORTALIMAGE="
 set "APPLIANCE="
 set "RUNAPP="
 set "SKIPTESTS="
@@ -17,6 +18,7 @@ if "%~1"=="" goto :parsed
 if /I "%~1"=="/docs" (set "DOCSONLY=1"& goto :nextarg)
 if /I "%~1"=="--build-companion" (set "BUILDCOMPANION=1"& goto :nextarg)
 if /I "%~1"=="--portal-host" (set "PORTALHOST=1"& goto :nextarg)
+if /I "%~1"=="--portal-image" (set "PORTALIMAGE=1"& goto :nextarg)
 if /I "%~1"=="--appliance" (set "APPLIANCE=1"& goto :nextarg)
 if /I "%~1"=="--run" (set "RUNAPP=1"& goto :nextarg)
 if /I "%~1"=="--skip-tests" (set "SKIPTESTS=1"& goto :nextarg)
@@ -28,6 +30,11 @@ exit /b 2
 shift
 goto :args
 :parsed
+if defined PORTALIMAGE if defined BUILDCOMPANION (echo Choose one build action.& exit /b 2)
+if defined PORTALIMAGE if defined DOCSONLY (echo Choose one build action.& exit /b 2)
+if defined PORTALIMAGE if defined PORTALHOST (echo Choose one build action.& exit /b 2)
+if defined PORTALIMAGE if defined APPLIANCE (echo Choose one build action.& exit /b 2)
+if defined PORTALIMAGE if defined RUNAPP (echo Choose one build action.& exit /b 2)
 if defined BUILDCOMPANION if defined RUNAPP (echo Choose one build action.& exit /b 2)
 if defined BUILDCOMPANION if defined DOCSONLY (echo Choose one companion.& exit /b 2)
 if defined RUNAPP if defined DOCSONLY (echo --run requires a desktop build.& exit /b 2)
@@ -55,6 +62,7 @@ call :step "Downloading build tools" || goto :fail
 if exist "%ROOT%.tools\git\cmd\git.exe" set "PATH=%ROOT%.tools\git\cmd;%PATH%"
 if exist "%ROOT%.tools\node\node.exe" set "PATH=%ROOT%.tools\node;%PATH%"
 where node >nul 2>&1 || (echo ERROR: Node.js was not found after download.& exit /b 3)
+if defined PORTALIMAGE goto :build-portal-image
 
 set "CMD="%PSEXE%" -NoProfile -ExecutionPolicy Bypass -File "%ROOT%scripts\make-icon.ps1" -Ico "%ROOT%deployer\assets\tempdesk.ico" -Png "%ROOT%deployer\app\src\renderer\img\tempdesk.png""
 call :step "Generating the app icon" || goto :fail
@@ -104,6 +112,11 @@ exit /b 0
 :build-appliance
 "%PSEXE%" -NoProfile -File "%ROOT%appliance\Build-Appliance.ps1"
 exit /b %ERRORLEVEL%
+
+:build-portal-image
+set "CMD=cmd /c node "%ROOT%scripts\build-portal-image.cjs""
+call :step "Building the portal image" || goto :fail
+exit /b 0
 
 :step
 rem Runs %CMD%; in silent mode its output goes to the log file instead of the console.

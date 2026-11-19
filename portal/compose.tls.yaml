@@ -1,0 +1,50 @@
+# Apply after compose.yaml to enable direct HTTPS on only the selected address.
+services:
+  tempdesk-guest:
+    ports: !override
+      - target: 8080
+        published: "${TEMPDESK_GUEST_TLS_PORT:-8080}"
+        host_ip: "${TEMPDESK_LAN_ADDRESS:?Set the intended bind address}"
+        protocol: tcp
+    environment:
+      TLS_CERT_FILE: /run/tempdesk-tls/server.pem
+      TLS_KEY_FILE: /run/tempdesk-tls/server.key
+      TLS_HEALTHCHECK_NAME: "${TEMPDESK_PORTAL_TLS_NAME:?Set the client-facing certificate name}"
+      COOKIE_SECURE: "true"
+    volumes:
+      - type: bind
+        source: "${TEMPDESK_GUEST_TLS_CERT_FILE:?Set the guest certificate file}"
+        target: /run/tempdesk-tls/server.pem
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: "${TEMPDESK_GUEST_TLS_KEY_FILE:?Set the guest private key file}"
+        target: /run/tempdesk-tls/server.key
+        read_only: true
+        bind:
+          create_host_path: false
+  tempdesk-admin:
+    ports: !override
+      - target: 8081
+        published: "${TEMPDESK_MANAGEMENT_TLS_PORT:-8081}"
+        host_ip: "${TEMPDESK_LAN_ADDRESS:?Set the intended bind address}"
+        protocol: tcp
+    environment:
+      TLS_CERT_FILE: /run/tempdesk-tls/server.pem
+      TLS_KEY_FILE: /run/tempdesk-tls/server.key
+      TLS_HEALTHCHECK_NAME: "${TEMPDESK_PORTAL_TLS_NAME:?Set the client-facing certificate name}"
+      COOKIE_SECURE: "true"
+    volumes:
+      - type: bind
+        source: "${TEMPDESK_MANAGEMENT_TLS_CERT_FILE:?Set the management certificate file}"
+        target: /run/tempdesk-tls/server.pem
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: "${TEMPDESK_MANAGEMENT_TLS_KEY_FILE:?Set the management private key file}"
+        target: /run/tempdesk-tls/server.key
+        read_only: true
+        bind:
+          create_host_path: false

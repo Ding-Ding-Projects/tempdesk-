@@ -77,7 +77,7 @@ function buildPortalImage(image) {
 }
 
 try {
-  const image = process.argv[2] ?? 'tempdesk-portal:latest';
+  const image = process.argv[2] ?? process.env.TEMPDESK_PORTAL_BUILD_IMAGE ?? 'tempdesk-portal:latest';
   if (process.argv.length > 3 || !image || image.startsWith('-')) {
     throw new Error('Usage: node scripts/build-portal-image.cjs [image:tag]');
   }

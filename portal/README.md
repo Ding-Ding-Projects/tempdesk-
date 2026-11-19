@@ -181,6 +181,8 @@ Use your own protected paths. Run with the existing Compose project name. Each e
 
 The agent speaks plain HTTP by default. In that case keys, admin sign-ins, guest passwords and Wi-Fi keys cross the network unencrypted. The Admin console shows a coral "HTTP, not encrypted" status pill (with an explanation popover that can be hidden for the session) whenever the agent URL or the console itself is plain HTTP. Keep the server and portals on a trusted network segment, or turn on TLS on the agent and put the portals behind an HTTPS reverse proxy.
 
+For direct browser HTTPS on a selected LAN interface, follow [Serve the portals on your LAN over HTTPS](../docs/features/http-api/portal-https.md). The front-end certificate is separate from the agent trust settings.
+
 ## Security design
 
 - Guest credentials are never put in a URL or a log. After a create, the browser is redirected (POST, redirect, GET) and the credentials wait in a server-side one-time store keyed by a random id in an HttpOnly cookie. The first view consumes them; the page is sent with `Cache-Control: no-store`.

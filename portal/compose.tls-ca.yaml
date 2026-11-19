@@ -1,0 +1,22 @@
+# Optional public CA bundle for the loopback probes. Apply with compose.tls.yaml.
+services:
+  tempdesk-guest:
+    environment:
+      TLS_HEALTHCHECK_CA_FILE: /run/tempdesk-tls/issuer.pem
+    volumes:
+      - type: bind
+        source: "${TEMPDESK_PORTAL_TLS_CA_FILE:?Set the issuer CA bundle}"
+        target: /run/tempdesk-tls/issuer.pem
+        read_only: true
+        bind:
+          create_host_path: false
+  tempdesk-admin:
+    environment:
+      TLS_HEALTHCHECK_CA_FILE: /run/tempdesk-tls/issuer.pem
+    volumes:
+      - type: bind
+        source: "${TEMPDESK_PORTAL_TLS_CA_FILE:?Set the issuer CA bundle}"
+        target: /run/tempdesk-tls/issuer.pem
+        read_only: true
+        bind:
+          create_host_path: false
