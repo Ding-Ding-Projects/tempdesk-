@@ -30,6 +30,12 @@ arm64 output before using it.
 Track each boot, configured portal start, LAN check and release separately in
 the [delivery checklist](ROADMAP.md). [Appliance guide](portal/README.md#build-a-bootable-appliance)
 
+## Virtual Commons dim sum verification
+
+The published v1.0.110 portal rendered the actual har gow photo in a 1440 px browser and the catalogue-unavailable result at 360 px. A controlled draw exercised both paths. Tab and Enter retried the same kiosk edition and duration. The isolated Samba directory stayed at zero guest accounts and the readiness fixture recorded no reservation requests. School mode took the ordinary checkout path, created one guest and downloaded the connection file. The fixture and its account data were removed. [Illustrated walkthrough](README.md#virtual-commons-dim-sum-walkthrough)
+
+Native Remote Desktop session acceptance remains open. The Server Core directory is synchronized. The separate Desktop Experience guest answers its management endpoint on the host-only network. Its RDP port did not answer from the verification host. The dedicated Windows 11 workstation still requires encryption, a virtual TPM, installation and broker enrollment.
+
 ## Documentation source handoff
 
 The README now has a quick entry point, a deployment workflow diagram and collapsible walkthroughs. The [operator guides](docs/features/README.md) index the existing articles, and the prepared wiki links to [Postman diagnostics](docs/features/http-api/README.md). The README count comes from the published v1.0.89 release. A classified count, human estimate and current product recording remain open. Postman execution, site rebuild and updated offline-reader verification were deferred.

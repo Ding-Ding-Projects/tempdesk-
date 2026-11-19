@@ -15,7 +15,7 @@
 - [x] Prepare a separate powered-off VMware workstation and verify the installer and credential-free setup DVD hashes.
 - [x] Verify the dedicated powered-off workstation is configured on the private lab directory segment.
 - [ ] Install and enroll the dedicated Kiosk Windows 11 workstation. Verify its reservation, exact guest grant, connection file, sign-in, expiry, and release before another guest can reserve it.
-- [ ] Verify the Virtual Commons dim sum result with a published photo and with the catalogue unavailable, including retry without a seat or account and suppression in School mode.
+- [x] Verify the Virtual Commons dim sum result with a published photo and with the catalogue unavailable, including retry without a seat or account and suppression in School mode. [Browser and directory receipt](docs/evidence/virtual-commons-dim-sum-6f6cb7f/receipt.json)
 - [ ] Connect a kiosk to the native Windows agent through an authenticated configuration and prove temporary account creation there.
 - [ ] Join the Windows 11 test client to the intended domain and prove desktop sign-in with a temporary account.
 - [x] Verify the Session Watcher's outage, deadline, and account-identity decisions in isolated fixtures. Compile the bundled watcher and read current-session metadata on Windows PowerShell.

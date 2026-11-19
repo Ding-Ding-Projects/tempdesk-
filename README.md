@@ -470,6 +470,26 @@ The checklist also covers two ways to verify that an open session ends. Leave th
 
 </details>
 
+## Virtual Commons dim sum walkthrough
+
+<details>
+<summary>See the dish result and its retry</summary>
+
+1. In **Virtual Commons**, pick **Kiosk Windows 11** and a checkout duration.
+2. When the one-in-a-hundred result shows a dim sum dish, use **Try again** to return to your selected workstation and duration. The result leaves the seat free and creates no guest account.
+
+   ![Virtual Commons dim sum result with the published har gow photo and keyboard focus on Try again](docs/evidence/virtual-commons-dim-sum-6f6cb7f/published-dish.png)
+
+3. If the photo catalogue is unavailable, the dish name and **Try again** stay available. Press Tab to reach **Try again** and Enter to select it.
+
+   ![Narrow Virtual Commons result with the dish photo unavailable message and keyboard focus on Try again](docs/evidence/virtual-commons-dim-sum-6f6cb7f/catalogue-unavailable.png)
+
+4. With School mode enabled, the same checkout proceeds to the ordinary temporary account and Remote Desktop download.
+
+The [browser and directory receipt](docs/evidence/virtual-commons-dim-sum-6f6cb7f/receipt.json) records the published v1.0.110 build, both screenshots, and the controlled draw used to exercise the result. The isolated Samba directory stayed at zero guest accounts through both dim sum checkouts, and the readiness fixture recorded zero reservation requests. The School mode checkout created one guest and downloaded `Virtual-Commons.rdp`.
+
+</details>
+
 ## Guided checkout walkthrough
 
 <details>

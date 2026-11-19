@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "id": "virtual-commons-dim-sum-6f6cb7f",
+  "source": {
+    "revision": "6f6cb7f0cf1ed56d0c2b7a04bcf13723692e13af",
+    "version": "1.0.110",
+    "platform": "linux/amd64",
+    "indexDigest": "sha256:02cd4375c1bfe230dd67366b885e6d760b7e5a4753c922054298413b4a561af3",
+    "platformManifestDigest": "sha256:38100ebff14c1f7c74e14423ea5ea9e72792bde566f924eaeb6024b5b326f971",
+    "publicationRun": 44471362227
+  },
+  "environment": {
+    "route": "Headless Chromium in an isolated Linux container using portal loopback",
+    "playwright": "1.56.0",
+    "browserImageId": "sha256:a7f6cf3ae520c9d670ad956572c13747ed5abdbba5123a01526f873ed1662528",
+    "isolatedPageCount": 1,
+    "targetChecks": [
+      "before navigation actions",
+      "before interaction",
+      "before capture",
+      "after retry"
+    ],
+    "language": "en",
+    "renderedTheme": "dark",
+    "reducedMotionEmulated": true,
+    "directory": "Temporary Samba Active Directory using the real account service",
+    "broker": "Authenticated TLS readiness fixture that recorded any reservation or assignment request",
+    "controlledDraw": {
+      "value": 0,
+      "upperExclusive": 100,
+      "dishId": "hk-dish-0001"
+    }
+  },
+  "cases": [
+    {
+      "id": "published-dish",
+      "path": "docs/evidence/virtual-commons-dim-sum-6f6cb7f/published-dish.png",
+      "alt": "Virtual Commons dim sum result with the published har gow photo and keyboard focus on Try again",
+      "sha256": "ca0b0d4dc54a4ff9ef444b2a263c135c8a9188187b921ebac06f4df0b497904e",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1,
+      "mobileEmulated": false,
+      "photo": "https://github.com/Ding-Ding-Projects/dim-sum-photos/releases/download/catalog-v1/hk-dish-0001-classic-har-gow.png",
+      "loadedPhotoWidth": 1254,
+      "loadedPhotoHeight": 1254,
+      "keyboardRetry": true,
+      "keptEditionAndDuration": true,
+      "unnamedInteractiveControls": 0,
+      "horizontalOverflow": false,
+      "downloadPresented": false,
+      "unexpectedBrowserErrors": 0
+    },
+    {
+      "id": "catalogue-unavailable",
+      "path": "docs/evidence/virtual-commons-dim-sum-6f6cb7f/catalogue-unavailable.png",
+      "alt": "Narrow Virtual Commons result with the dish photo unavailable message and keyboard focus on Try again",
+      "sha256": "c1f135d3201f5483a02635863680bca94cedb7b1c48cc5d6221b7cdb58b24b93",
+      "width": 360,
+      "height": 844,
+      "scale": 1,
+      "mobileEmulated": true,
+      "deliberatelyBlockedCatalogueRequests": 2,
+      "keyboardRetry": true,
+      "keptEditionAndDuration": true,
+      "unnamedInteractiveControls": 0,
+      "horizontalOverflow": false,
+      "downloadPresented": false,
+      "unexpectedBrowserErrors": 0
+    }
+  ],
+  "backend": {
+    "accountsBefore": 0,
+    "accountsAfterBothDimSumCheckouts": 0,
+    "seatMutationRequestsAfterBothDimSumCheckouts": 0,
+    "countsVerifiedAfterBothCapturesUtc": "2026-11-19T07:07:08.1428464+00:00",
+    "schoolMode": {
+      "preferenceSeeded": true,
+      "accountsAfter": 1,
+      "seatMutationRequests": 0,
+      "standardConfirmation": true,
+      "attachment": "Virtual-Commons.rdp",
+      "targetBindingVerified": true,
+      "passwordDirectiveAbsent": true,
+      "countsVerifiedUtc": "2026-11-19T07:07:22.8790591+00:00"
+    }
+  },
+  "privacy": {
+    "capturesInspectedBeforeAndAfterPromotion": true,
+    "rawBytesPreserved": true,
+    "noTextOrExifChunks": true,
+    "credentialsAndPrivateAddressesAbsent": true,
+    "hostDesktopUndisturbed": true
+  },
+  "teardown": {
+    "containersRemoved": 3,
+    "networksRemoved": 2,
+    "volumesRemoved": 6,
+    "matchingResourcesRemaining": 0,
+    "verifiedUtc": "2026-11-19T07:09:20.8345350+00:00"
+  },
+  "limitations": "The draw was controlled to exercise the existing result. The School mode preference was seeded for that scenario. The fixture verified the browser, directory and seat-request behavior. Native Remote Desktop access and physical mobile hardware remain unverified."
+}
