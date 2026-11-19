@@ -87,10 +87,10 @@ EOF
         "boot/tempdesk/kernel=$boot/kernel" "boot/tempdesk/initramfs=$boot/initramfs"
     rm -f "$boot/kernel" "$boot/initramfs"
 else
-    # Pi firmware and board device trees are installed from signed Alpine packages.
-    cp -a "$root/boot/." "$boot/"
-    test -s "$boot/start4.elf"
-    test -s "$boot/bcm2711-rpi-4-b.dtb"
+    # The firmware and model-specific device tree come from signed Alpine packages.
+    # Keep the single generated kernel and initramfs already staged above.
+    install -m 0644 "$root/boot/start4.elf" "$root/boot/fixup4.dat" \
+        "$root/boot/bcm2711-rpi-4-b.dtb" "$boot/"
     tee "$boot/config.txt" >/dev/null <<'EOF'
 [all]
 arm_64bit=1
