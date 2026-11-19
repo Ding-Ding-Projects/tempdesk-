@@ -11,7 +11,7 @@
 - [x] Verify scoped confirmations, both attachment destinations, retry and temporary account removal against a real isolated directory. [Attachment receipt](docs/evidence/virtual-commons-attachments.json)
 - [x] Verify automatic downloads and keyboard retries for both editions. Check the checkout label across 48 layout combinations. Capture edition selection, confirmation, and retry from the built kiosk. [Browser walkthrough](README.md#browser-attachment-walkthrough)
 - [x] Verify local edition wording, invalid file handling, clear and validation recovery in a built guest portal. [Picker receipt](docs/evidence/virtual-commons-picker-wording.json)
-- [ ] Verify picker controls, unavailable choices, application validation and upload results while replacing or clearing the local wording file. [Picker guide](docs/VIRTUAL-COMMONS.md#use-virtual-commons)
+- [x] Verify the built English picker at desktop and 360 px widths. Exercise controls, unavailable labels, validation, replacement, and keyboard clear. [Browser and image receipt](docs/evidence/virtual-commons-picker-outcomes-c2aec2e/receipt.json)
 - [ ] Exercise edition wording on the configured live kiosk alongside a verified checkout session.
 - [x] Prepare a separate powered-off VMware workstation and verify the installer and credential-free setup DVD hashes.
 - [x] Verify the dedicated powered-off workstation is configured on the private lab directory segment.
@@ -37,6 +37,7 @@
 - [x] Boot the x86_64 image through UEFI and check that it waits for credentials with both portal endpoints closed. [Boot receipt](docs/evidence/appliance-x86-6d7718d.json)
 - [x] Start both x86_64 portals from the embedded image in isolated KVM. Verify a finite guest sign-in from a separate client before and after booting the same disk with its configuration medium detached. [Configured boot receipt](docs/evidence/appliance-x86-1583b87.json)
 - [x] Verify an emulated x86_64 ACPI guest shutdown runs the portal stop hooks and preserves configuration on the next boot. [Two-boot shutdown receipt](docs/evidence/appliance-x86-1583b87.json)
+- [x] Download and verify both native v1.0.119 disk candidates. Start the Pi 4 candidate in board emulation and verify both portals and a finite sign-in before and after detaching the setup volume. [Candidate and boot receipt](docs/evidence/appliance-candidates-v119.json)
 - [ ] Verify the x86_64 UEFI appliance image and Raspberry Pi 4 arm64 image, including configured startup, separate LAN checks, and restart persistence. [Appliance build and configuration](portal/README.md#build-a-bootable-appliance)
 - [ ] Release both verified appliance images and connect them to the virtual machine and physical-media deployment workflows.
 - [x] Use the published Portal Host wizard on the supported Windows host to cancel before startup, start both portals, and recheck health with the same container identities and start times. [Verification receipt](docs/evidence/guest-sign-in-v111/receipt.json)

@@ -22,6 +22,8 @@ To use personal wording for the edition labels, verify an active guest sign-in u
 
 The active file also applies to the picker controls, unavailable labels, built-in validation messages, and the wording upload result. If a replacement is rejected, the picker and the message continue to use the last valid file. Account data, operator-defined duration labels, and agent diagnostics retain their original text.
 
+See the [illustrated wording walkthrough](../README.md#virtual-commons-wording-walkthrough) for applying a file, replacing it, clearing it with the keyboard, and reading a validation message.
+
 In the edition picker, a file entry for `Microsoft Windows` also supplies wording for the `Windows` product name in the shipped labels. Explicit entries for `Windows` or a complete edition label take precedence. You can reopen the upload control after a checkout validation message while your original wording access is still active.
 
 ## Configure the destinations

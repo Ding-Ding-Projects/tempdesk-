@@ -69,11 +69,16 @@ Both v1.0.118 appliance jobs assembled their disks and stopped while removing
 the intermediate checksum file. Assembly at `ebb985d` consumed the checksum
 and unlinked the exact intermediate file. The unprivileged Linux PowerShell
 build generated an x86_64 image whose hash was read back with its source-bound
-receipt and 94 plain package entries. Verify both native worker uploads on the
-next release. [v1.0.118 workflow](https://github.com/Ding-Ding-Projects/tempdesk-/actions/runs/44512940742)
-Physical LAN, configured Pi 4 startup, and appliance release acceptance are
-open. [x86 receipt](docs/evidence/appliance-x86-1583b87.json) ·
-[Pi 4 receipt](docs/evidence/appliance-rpi4-a613c4c.json)
+receipt and 94 plain package entries. [v1.0.118 workflow](https://github.com/Ding-Ding-Projects/tempdesk-/actions/runs/44512940742)
+
+The v1.0.119 workflow completed both native assembly jobs. Both downloaded
+disk candidates matched their source, embedded image and compressed-file
+receipts. The Pi 4 candidate also started its two portals in board emulation.
+A separate client created a finite sign-in on each boot. The second boot
+used the same disk and the saved configuration with the setup volume detached.
+The emulator used a separate device-tree copy for its serial console and USB2
+host. Physical firmware boot, LAN operation, and appliance release acceptance
+remain open. [Candidate and boot receipt](docs/evidence/appliance-candidates-v119.json)
 
 Track each boot, configured portal start, LAN check and release separately in
 the [delivery checklist](ROADMAP.md). [Appliance guide](portal/README.md#build-a-bootable-appliance)
@@ -81,6 +86,16 @@ the [delivery checklist](ROADMAP.md). [Appliance guide](portal/README.md#build-a
 ## Virtual Commons dim sum verification
 
 The published v1.0.110 portal rendered the actual har gow photo in a 1440 px browser and the catalogue-unavailable result at 360 px. A controlled draw exercised both paths. Tab and Enter retried the same kiosk edition and duration. The isolated Samba directory stayed at zero guest accounts and the readiness fixture recorded no reservation requests. School mode took the ordinary checkout path, created one guest and downloaded the connection file. The fixture and its account data were removed. [Illustrated walkthrough](README.md#virtual-commons-dim-sum-walkthrough)
+
+## Virtual Commons wording outcomes
+
+The guest image from `c2aec2e` kept the picker, its built-in validation, and
+the upload status on the active wording file. A rejected replacement preserved
+the previous wording. Keyboard clear restored the original text and the
+complete clear label fit at 360 px. The isolated directory issued a temporary
+sign-in, and the upload, rejection, and replacement generated no browser
+requests. [Illustrated walkthrough](README.md#virtual-commons-wording-walkthrough) ·
+[Browser and image receipt](docs/evidence/virtual-commons-picker-outcomes-c2aec2e/receipt.json)
 
 Native Remote Desktop session acceptance remains open. The Server Core directory is synchronized. The separate Desktop Experience guest answers its management endpoint on the host-only network. Its RDP port did not answer from the verification host. The dedicated Windows 11 workstation still requires encryption, a virtual TPM, installation and broker enrollment.
 

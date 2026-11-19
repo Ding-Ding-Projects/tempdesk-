@@ -223,10 +223,10 @@
         "guest": {
           "state": "partial",
           "method": "runtime",
-          "revision": "101eada160c0efc2757f957f93853301be4ca611",
-          "reference": "docs/evidence/virtual-commons-picker-wording.json",
-          "observation": "A real guest verified its sign-in, applied both edition labels and cleared the local file. The wording actions generated zero write requests.",
-          "remaining": "Verify remaining guest wording surfaces and repeat on the configured kiosk."
+          "revision": "c2aec2ea7a0cc60dd7eaddaf9f3ef62f0b11654f",
+          "reference": "docs/evidence/virtual-commons-picker-outcomes-c2aec2e/receipt.json",
+          "observation": "An isolated guest verified a temporary sign-in and exercised apply, rejection, replacement, keyboard clear and built-in validation wording. File actions generated no browser requests.",
+          "remaining": "Verify remaining guest wording surfaces and repeat in the other language and theme modes and on the configured kiosk."
         },
         "kiosk": {
           "state": "partial",
@@ -1286,9 +1286,9 @@
         "guest": {
           "state": "partial",
           "method": "runtime",
-          "revision": "101eada160c0efc2757f957f93853301be4ca611",
-          "reference": "docs/evidence/virtual-commons-picker-wording.json",
-          "observation": "The actual guest picker exposed the uploader after verification and kept access on a validation response. The anonymous picker retained the shipped wording.",
+          "revision": "c2aec2ea7a0cc60dd7eaddaf9f3ef62f0b11654f",
+          "reference": "docs/evidence/virtual-commons-picker-outcomes-c2aec2e/receipt.json",
+          "observation": "The anonymous picker rendered the shipped wording. The authenticated picker exposed the file control and allowed a local file on the validation response.",
           "remaining": "Verify the wording boundary across all guest routes, languages and modes."
         }
       }

@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "release": "v1.0.119",
+  "sourceRevision": "bf7e5e61da86be421f4e7836629dcb9542952af3",
+  "normalReleaseManifestSha256": "0fa6647e5d12f18ebbbebc9abc832c977473316aca3783ae22e87fb4d9da8aca",
+  "releaseAttachmentsMatched": 9,
+  "workflow": "https://github.com/Ding-Ding-Projects/tempdesk-/actions/runs/44518728907",
+  "workflowResult": "success",
+  "portalIndexDigest": "sha256:8bde9d2ecdbb6a63f3f665613f7f757e6955d9f50b420a8ad92379273a4b8b59",
+  "candidates": [
+    {
+      "architecture": "amd64",
+      "filename": "TempDesk-Appliance-1.0.119-x86_64.img.gz",
+      "bytes": 315963021,
+      "sha256": "e6a6d2d8c2de6a1e722804572a0463502202899a6a38e41a09a153e658fef27e",
+      "portalChildDigest": "sha256:e70e0e681a3400314e16aa1d1c967ed7976a9fa261b9ec4d58170984b4742290",
+      "embeddedArchiveSha256": "69cf34d91295dc9bbc6e0e2a034a6307f49f0728621238b9ae329cfd71c019cc",
+      "builtUtc": "2026-11-19T12:15:59.261468Z",
+      "plainPackageEntries": 94
+    },
+    {
+      "architecture": "arm64",
+      "filename": "TempDesk-Appliance-1.0.119-rpi4-arm64.img.gz",
+      "bytes": 301832490,
+      "sha256": "73ede8aa8444e7a35e5fa719a83ed1e1c13d657bf860004b89ab573d4929b457",
+      "portalChildDigest": "sha256:5efff7b91fd2cb55c9d1bc8804499d09bf2b0b8971b496f6916a984bfd586998",
+      "embeddedArchiveSha256": "2e6a981e26df9bd3ca5473117143e9b70aa69942484deff50e8adff29443742b",
+      "builtUtc": "2026-11-19T12:16:00.718170Z",
+      "plainPackageEntries": 97
+    }
+  ],
+  "pi4BoardEmulation": {
+    "emulator": "QEMU 11.1.90 from the signed 11.2.0-rc0 source archive",
+    "emulatorSourceSha256": "1055588c7acb8b083ca69c3f8625ca240de823e6a34b02b16fa8cabeb1be49be",
+    "machine": "raspi4b",
+    "accelerator": "tcg",
+    "network": "Emulated GENET Ethernet on an isolated network with a separate client container",
+    "bootRoute": "Direct launch of the packaged kernel and initramfs, with a separate device-tree copy for the serial console and DWC2 USB2 host",
+    "firstAttempt": "The shipped device tree left the emulated USB2 controller disabled. The guest mounted its root filesystem, obtained a network lease, started Docker, and waited for configuration.",
+    "firstBoot": {
+      "startedUtc": "2026-11-19T12:33:53.409189Z",
+      "configurationVolumeAttached": true,
+      "bothPortalsVerifiedUtc": "2026-11-19T12:40:24.304225Z",
+      "finiteGuestSignInConfirmed": true,
+      "stopRoute": "qmp-quit"
+    },
+    "restart": {
+      "startedUtc": "2026-11-19T12:40:24.862259Z",
+      "sameImageCopy": true,
+      "configurationVolumeAttached": false,
+      "bothPortalsVerifiedUtc": "2026-11-19T12:43:59.137326Z",
+      "finiteGuestSignInConfirmed": true,
+      "stopRoute": "qmp-quit"
+    },
+    "fixtureRetiredUtc": "2026-11-19T12:45:06.994020Z"
+  },
+  "limits": "These images are build candidates. The Pi checks exercise board emulation and an isolated client. Physical Pi firmware boot, intended LAN access, clean Pi shutdown, native Remote Desktop, and release publication of the disk images require separate acceptance."
+}

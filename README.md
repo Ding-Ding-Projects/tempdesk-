@@ -558,6 +558,31 @@ The [attachment and layout receipt](docs/evidence/virtual-commons-attachments.js
 
 </details>
 
+## Virtual Commons wording walkthrough
+
+<details>
+<summary>Apply, replace, and clear personal wording in Virtual Commons</summary>
+
+The built guest portal was exercised in English at desktop and emulated 360 px viewports. The example file contains synthetic wording. [Browser and image receipt](docs/evidence/virtual-commons-picker-outcomes-c2aec2e/receipt.json)
+
+1. Verify an active guest sign-in under **Check my sign-in**, then return to **Virtual Commons** and choose your local wording file. The edition labels, unavailable marker, and checkout action reflect the active file.
+
+   ![Virtual Commons applies sample wording to both editions and the checkout action](docs/evidence/virtual-commons-picker-outcomes-c2aec2e/01-applied-picker.png)
+
+2. Choose a replacement file. If the file is invalid, the last valid wording stays active. The status describes the outcome, and the full clear action remains visible.
+
+   ![The narrow picker keeps the previous wording and shows the complete clear button after a rejected file](docs/evidence/virtual-commons-picker-outcomes-c2aec2e/02-rejected-replacement.png)
+
+3. Focus **Clear personal wording** and press Space to restore the shipped wording.
+
+   ![Clearing the file restores the original picker labels and empty status](docs/evidence/virtual-commons-picker-outcomes-c2aec2e/03-cleared.png)
+
+4. If checkout returns an application validation message, the upload control remains available while your wording access is active. Applying the file on that page also updates the message.
+
+   ![The Virtual Commons validation message uses the active sample wording](docs/evidence/virtual-commons-picker-outcomes-c2aec2e/04-validation-wording.png)
+
+</details>
+
 ## Personal wording walkthrough
 
 <details>
