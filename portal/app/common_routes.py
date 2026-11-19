@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Request
 
 from .i18n import MODES
 from .security import safe_next
-from .web import PREF_FUN, PREF_LANG, csrf_protect, redirect, set_cookie
+from .web import PREF_FUN, PREF_LANG, PREF_SCHOOL, csrf_protect, redirect, set_cookie
 
 router = APIRouter()
 YEAR = 365 * 24 * 3600
@@ -17,6 +17,8 @@ async def prefs(request: Request):
     form = await request.form()
     nxt = safe_next(form.get("next"), "/")
     resp = redirect(request, nxt)
+    if request.cookies.get(PREF_SCHOOL) == "1":
+        return resp
     lang = form.get("lang")
     if lang in MODES:
         set_cookie(request, resp, PREF_LANG, lang, max_age=YEAR, httponly=False)

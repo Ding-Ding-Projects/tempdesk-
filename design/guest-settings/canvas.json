@@ -1,0 +1,53 @@
+{
+  "v": 3,
+  "title": "Guest Settings",
+  "launch": {
+    "view": "canvas",
+    "page": "guest-settings"
+  },
+  "pages": [
+    {
+      "id": "guest-settings",
+      "title": "Guest Settings"
+    }
+  ],
+  "boards": {
+    "Guest-Settings-Desktop.dc.html": {
+      "page": "guest-settings",
+      "x": 0,
+      "y": 40,
+      "w": 1060,
+      "h": 820,
+      "title": "Guest Settings Desktop"
+    },
+    "Guest-Settings-Narrow.dc.html": {
+      "page": "guest-settings",
+      "x": 1450,
+      "y": 40,
+      "w": 360,
+      "h": 800,
+      "title": "Guest Settings Narrow"
+    }
+  },
+  "order": [
+    "Guest-Settings-Desktop.dc.html",
+    "Guest-Settings-Narrow.dc.html"
+  ],
+  "notes": {
+    "desktop": {
+      "page": "guest-settings",
+      "x": 1076,
+      "y": 48,
+      "maxW": 280,
+      "text": "1060 px guest Settings. Search for sound and try its adjacent regex builder. Toggle contrast and reopen the draft. Add ?school=1 to preview suppressed sound with the stored choice retained. Production wiring and rendered verification are pending."
+    },
+    "narrow": {
+      "page": "guest-settings",
+      "x": 1826,
+      "y": 48,
+      "maxW": 280,
+      "text": "360 px guest Settings. Search for sound and try its adjacent regex builder. Toggle contrast and reopen the draft. Add ?school=1 to preview suppressed sound with the stored choice retained. Production wiring and rendered verification are pending."
+    }
+  },
+  "designSystems": []
+}

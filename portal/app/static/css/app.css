@@ -284,6 +284,7 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
 legend { font-weight: 600; margin-bottom: 10px; padding: 0; }
 .form-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+#guest-settings-controls .form-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
 .form-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
 .choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }

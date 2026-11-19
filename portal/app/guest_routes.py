@@ -122,6 +122,11 @@ async def home(request: Request):
     return await _render_home(request, pub, values)
 
 
+@router.get("/settings")
+async def guest_settings(request: Request):
+    return await render(request, "guest/settings.html", {})
+
+
 async def _cancel_unclaimed_kiosk(request: Request, broker: KioskSeatBroker, target: str, lease: str,
                                   created: dict | None) -> None:
     await broker.cancel(target, lease)

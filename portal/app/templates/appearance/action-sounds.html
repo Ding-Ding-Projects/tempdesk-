@@ -1,0 +1,9 @@
+<div class="field" data-setting="{{ action_sounds_group|default('') }} {{ ta('Action sounds') }} {{ ta('Play a short sound when personal wording is applied or a file cannot be used.') }}">
+  <label class="check action-sounds-check">
+    <input type="checkbox" data-action-sounds aria-describedby="action-sounds-help{% if school %} action-sounds-school{% endif %}" disabled>
+    {{ t('Action sounds') }}
+  </label>
+  <span class="hint" id="action-sounds-help">{{ t('Play a short sound when personal wording is applied or a file cannot be used.') }}</span>
+  <span class="hint" id="action-sounds-school" data-action-sounds-school{% if not school %} hidden{% endif %}>{{ t('School mode silences these sounds.') }}</span>
+  <span class="hint" data-action-sounds-status role="status"></span>
+</div>

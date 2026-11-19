@@ -5,7 +5,7 @@
   <a class="brand" href="/">{% if has_logo %}<img src="/logo" alt="">{% else %}{{ logo(28, 'var(--ground)') }}{% endif %}<span>{{ org_name }}</span></a>
   <nav class="guest-nav" aria-label="{{ ta('Pages') }}">
     {% for item in nav_items %}<a href="{{ item.href }}" {% if path == item.href or (item.href == '/' and path in ('/', '/created')) %}aria-current="page"{% endif %}>{{ t(item.label) }}</a>{% endfor %}
-    <a href="/tools/base64" {% if path.startswith('/tools') %}aria-current="page"{% endif %} class="small">{{ t('Tools') }}</a>
+    <a href="/tools/base64" {% if path.startswith('/tools') or path == '/settings' %}aria-current="page"{% endif %} class="small">{{ t('Tools') }}</a>
   </nav>
   <div class="cluster actions no-print">
     <form method="post" action="/prefs" style="display:contents">

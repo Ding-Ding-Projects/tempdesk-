@@ -2,7 +2,10 @@
 {% from "macros.html" import info with context %}
 {% block title %}{{ ta('Base64 tools') }}{% endblock %}
 {% block content %}
-<div class="page-head"><h1>{{ t('Base64 tools') }}</h1></div>
+<div class="page-head">
+  <h1>{{ t('Base64 tools') }}</h1>
+  {% if mode != 'admin' %}<a class="btn" href="/settings">{{ t('Settings') }}</a>{% endif %}
+</div>
 <p class="muted">{{ t('Everything runs in this browser. Nothing you enter or open here is sent to the server.') }}</p>
 <div class="row" data-b64-app>
 <section class="grow card stack" style="flex-basis:520px">

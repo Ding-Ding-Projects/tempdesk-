@@ -60,12 +60,7 @@
     <div class="field" data-advanced data-setting="{{ ta('Density') }}"><label for="p-density">{{ t('Density') }} {{ info('Compact uses less padding so more rows fit on screen.') }}</label><select data-search-exempt="two fixed densities" id="p-density" data-pref="density"><option value="comfortable">{{ t('Comfortable') }}</option><option value="compact">{{ t('Compact') }}</option></select><span class="hint">{{ t('Compact fits more rows on screen.') }}</span></div>
     <div class="field" data-advanced data-setting="{{ ta('High contrast') }}"><label class="check"><input type="checkbox" data-pref="contrast" value="high"> {{ t('High contrast') }}</label> {{ info('Makes outlines and secondary text stronger for better legibility.') }}<span class="hint">{{ t('Stronger outlines and text.') }}</span></div>
     <div class="field" data-advanced data-setting="{{ ta('Focus ring') }}"><label class="check"><input type="checkbox" data-pref="focus" value="always"> {{ t('Always show the focus ring') }}</label> {{ info('Shows the keyboard focus ring after mouse clicks too, not only when using the keyboard.') }}<span class="hint">{{ t('Also shows it after mouse clicks.') }}</span></div>
-    <div class="field" data-setting="{{ ta('Action sounds') }} {{ ta('Play a short sound when personal wording is applied or a file cannot be used.') }}">
-      <label class="check action-sounds-check"><input type="checkbox" data-action-sounds aria-describedby="action-sounds-help{% if school %} action-sounds-school{% endif %}" disabled> {{ t('Action sounds') }}</label>
-      <span class="hint" id="action-sounds-help">{{ t('Play a short sound when personal wording is applied or a file cannot be used.') }}</span>
-      <span class="hint" id="action-sounds-school" data-action-sounds-school{% if not school %} hidden{% endif %}>{{ t('School mode silences these sounds.') }}</span>
-      <span class="hint" data-action-sounds-status role="status"></span>
-    </div>
+    {% include "appearance/action-sounds.html" %}
     <div class="field" data-setting="{{ ta('Accent color') }} {{ ta('Color picker') }} {{ ta('Hue') }}" data-advanced style="grid-column:1/-1"><span style="font-weight:600">{{ t('Accent color') }}</span> {{ info('Drag on the ring to pick a hue and in the square for saturation and brightness, or type a hex or RGB value. Arrow keys adjust the focused control; hold Shift for bigger steps. The check below compares the color with the page background.') }}
       <input type="hidden" id="p-accent" data-pref="accent" value="#7cf3e6">
       <div data-colorpicker data-target="#p-accent" role="group" {{ wording_attr('aria-label', ta('Color picker')) }}></div>

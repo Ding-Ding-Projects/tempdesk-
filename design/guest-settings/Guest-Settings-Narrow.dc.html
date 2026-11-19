@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Guest Settings</title>
+<link rel="stylesheet" href="../../portal/app/static/css/tokens.css">
+<link rel="stylesheet" href="../../portal/app/static/css/app.css">
+<style>
+body{margin:0} .board{max-width:360px; margin:auto;container-type:inline-size}
+.preview-shell{padding:clamp(12px,3vw,32px); min-width:0}.guest-head{display:flex;align-items:center;gap:1rem;padding:12px 16px;background:var(--surface-2);border-bottom:1px solid var(--outline)}.guest-head strong{margin-inline-end:auto}.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.settings-grid label,.search-line{display:grid;gap:6px;min-width:0}.settings-grid input,.settings-grid select{max-width:100%}.rxb-pop{max-width:min(100%,calc(100vw - 24px))}@container(max-width:540px){.settings-grid{grid-template-columns:1fr}.guest-head{flex-wrap:wrap}.card{padding:16px}}[hidden]{display:none!important}
+</style></head>
+<body><x-dc><div class="board" style="--primary:{{accentColor}}" data-preview-motion="{{motionMode}}">
+<header class="guest-head"><strong>TempDesk</strong><span>Tools</span><span aria-current="page">Settings</span></header>
+<main class="preview-shell stack"><h1>Settings</h1>
+<div class="search-line"><label for="find">Search settings</label><div><input type="search" id="find" placeholder="Find a setting"></div></div>
+<section class="card rise"><h2>Display and accessibility</h2><div class="settings-grid" id="display"></div></section>
+<section class="card rise"><h2>Feedback</h2><div data-row><label class="check"><input type="checkbox" id="sound" aria-describedby="sound-help school-help"> Action sounds</label>
+<p class="hint" id="sound-help">Play a short sound when personal wording is applied or a file cannot be used.</p>
+<p class="hint" id="school-help" hidden>School mode silences these sounds.</p></div></section>
+<p role="status" id="result"></p></main></div></x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":360,"height":800},"accentColor":{"type":"color","editor":"color","default":"#7CF3E6","label":"Accent colour"},"motion":{"type":"boolean","editor":"toggle","default":true,"label":"Motion"}}'>
+class Component extends DCLogic { renderVals() { return {accentColor:this.props?.accentColor??"#7CF3E6",motionMode:this.props?.motion===false?"off":"full"}; } }
+</script><script src="guest-settings.js"></script></body></html>

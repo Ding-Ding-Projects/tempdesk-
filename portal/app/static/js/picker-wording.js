@@ -29,6 +29,8 @@
     while (walker.nextNode()) labels.push([walker.currentNode, walker.currentNode.data]);
   }
   let translate = null;
+  let operation = 0;
+  const schoolMode = () => document.cookie.split(";").some(part => part.trim() === "td_school=1");
   const render = (kind, next = translate) => {
     const message = next ? next(outcomes[kind]) : outcomes[kind];
     const text = labels.map(([, original]) => next ? next(original) : original);
@@ -38,26 +40,48 @@
     clear.disabled = next === null;
   };
   const reset = () => {
+    operation++;
+    window.TD?.actionSounds?.cancel();
     file.value = "";
     render("empty", null);
   };
-  file.addEventListener("change", async () => {
+  const reconcileAccess = () => {
+    const unavailable = schoolMode() || Date.now() >= expires;
+    if (unavailable && !panel.hidden) reset();
+    panel.hidden = unavailable;
+  };
+  file.addEventListener("change", async (event) => {
+    const sounds = window.TD?.actionSounds;
+    sounds?.cancel();
+    const id = ++operation;
     const selected = file.files[0];
     if (!selected) return;
+    const current = () => id === operation && file.files[0] === selected && panel.isConnected &&
+      !panel.hidden && !schoolMode() && Date.now() < expires;
+    if (!current()) return;
+    const cue = sounds?.prepare(event);
     try {
       if (selected.size > wording.MAX_BYTES) throw new Error("File size");
       const entries = wording.validate(new Uint8Array(await selected.arrayBuffer()));
-      if (file.files[0] !== selected || Date.now() >= expires) return;
+      if (!current()) return;
       render("applied", wording.buildTranslator(withEditionProductName(entries)));
     } catch {
-      if (file.files[0] === selected && Date.now() < expires) render("invalid");
+      if (current()) {
+        render("invalid");
+        void sounds?.play(cue, "rejected", current);
+      }
+      return;
     }
+    void sounds?.play(cue, "applied", current);
   });
   clear.addEventListener("click", reset);
   window.addEventListener("pagehide", reset);
-  setTimeout(() => {
-    reset();
-    panel.hidden = true;
-  }, Math.max(0, expires - Date.now()));
+  window.addEventListener("td:school", reconcileAccess);
+  document.addEventListener("visibilitychange", reconcileAccess);
+  window.addEventListener("storage", event => {
+    if (event.key === "td.schoolPin" || event.key === null) reconcileAccess();
+  });
+  setTimeout(reconcileAccess, Math.max(0, expires - Date.now()));
   reset();
+  reconcileAccess();
 })();

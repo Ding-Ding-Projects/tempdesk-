@@ -27,7 +27,7 @@
 <script src="/static/js/appearance-editor.js" defer></script>
 <script src="/static/js/panel-appearance.js" defer></script>
 <script src="/static/js/notifications.js" defer></script>
-{% if mode == 'admin' and session %}<script src="/static/js/action-sounds.js" defer></script>{% endif %}
+{% if mode == 'guest' or (mode == 'admin' and session) %}<script src="/static/js/action-sounds.js" defer></script>{% endif %}
 {% if wording_session %}<script src="/static/js/wording.js" defer></script>{% endif %}
 {% if wording_session or (mode == 'admin' and (not session or path == '/login')) %}
 <script src="/static/js/admin-wording.js" defer></script>

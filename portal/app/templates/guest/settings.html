@@ -1,0 +1,81 @@
+{% extends "layouts/guest.html" %}
+{% from "macros.html" import csrf with context %}
+{% block title %}{{ ta('Settings') }}{% endblock %}
+{% block content %}
+<div class="stack">
+  <div class="page-head"><h1>{{ t('Settings') }}</h1></div>
+  <div class="ss-host" data-search-surface="guest-settings" data-search-kind="list"
+       data-search-target="#guest-settings-controls" data-search-items="[data-setting]"
+       data-search-group="[data-setting-section]" data-search-text="data-setting"
+       data-search-label="{{ ta('Search settings') }}"></div>
+  <p class="hint">{{ t('These choices are saved in this browser only.') }}</p>
+  <div id="guest-settings-controls" class="stack">
+    {% set display_group = ta('Display and accessibility') %}
+    <section class="card rise" data-setting-section>
+      <h2>{{ t('Display and accessibility') }}</h2>
+      <div class="form-grid">
+        {% if not school %}
+        <form method="post" action="/prefs" class="field" data-setting="{{ display_group }} {{ ta('Language') }}">
+          {{ csrf() }}<input type="hidden" name="next" value="/settings">
+          <label for="guest-settings-lang">{{ t('Language') }}</label>
+          <select id="guest-settings-lang" name="lang" data-autosubmit data-search-exempt="three fixed languages; the header has the searchable language picker">
+            {% for key, label in lang_modes.items() %}<option value="{{ key }}" {% if tr.mode == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+          <span class="hint">{{ t('English, Cantonese (Traditional Chinese) or both lines together.') }}</span>
+        </form>
+        {% endif %}
+        <div class="field" data-setting="{{ display_group }} {{ ta('Theme') }}">
+          <label for="guest-settings-theme">{{ t('Theme') }}</label>
+          <select id="guest-settings-theme" data-pref="theme" data-search-exempt="three fixed themes">
+            <option value="system">{{ t('System') }}</option>
+            <option value="dark">{{ t('Dark') }}</option>
+            <option value="light">{{ t('Light') }}</option>
+          </select>
+        </div>
+        <div class="field" data-setting="{{ display_group }} {{ ta('Motion') }}">
+          <label for="guest-settings-motion">{{ t('Motion') }}</label>
+          <select id="guest-settings-motion" data-pref="motion" data-search-exempt="four fixed motion levels">
+            <option value="system">{{ t('Follow the system') }}</option>
+            <option value="full">{{ t('Full') }}</option>
+            <option value="reduced">{{ t('Reduced (fades only)') }}</option>
+            <option value="off">{{ t('Off') }}</option>
+          </select>
+          <span class="hint">{{ t('Controls page transitions and other animation.') }}</span>
+        </div>
+        <div class="field" data-setting="{{ display_group }} {{ ta('Density') }}">
+          <label for="guest-settings-density">{{ t('Density') }}</label>
+          <select id="guest-settings-density" data-pref="density" data-search-exempt="two fixed densities">
+            <option value="comfortable">{{ t('Comfortable') }}</option>
+            <option value="compact">{{ t('Compact') }}</option>
+          </select>
+          <span class="hint">{{ t('Compact fits more rows on screen.') }}</span>
+        </div>
+        <div class="field" data-setting="{{ display_group }} {{ ta('Text size') }}">
+          <label for="guest-settings-text">{{ t('Text size') }} <output data-out-for="guest-settings-text"></output></label>
+          <input id="guest-settings-text" type="range" min="90" max="160" step="5" data-pref="text" value="100">
+          <span class="hint">{{ t('From 90 to 160 percent.') }}</span>
+        </div>
+        <div class="field" data-setting="{{ display_group }} {{ ta('High contrast') }}">
+          <label class="check"><input type="checkbox" data-pref="contrast" value="high"> {{ t('High contrast') }}</label>
+          <span class="hint">{{ t('Stronger outlines and text.') }}</span>
+        </div>
+        <div class="field" data-setting="{{ display_group }} {{ ta('Focus ring') }}">
+          <label class="check"><input type="checkbox" data-pref="focus" value="always"> {{ t('Always show the focus ring') }}</label>
+          <span class="hint">{{ t('Also shows it after mouse clicks.') }}</span>
+        </div>
+        <div class="field" data-setting="{{ display_group }} {{ ta('Corner roundness') }}">
+          <label for="guest-settings-radius">{{ t('Corner roundness') }} <output data-out-for="guest-settings-radius"></output></label>
+          <input id="guest-settings-radius" type="range" min="0" max="150" step="10" data-pref="radius" value="100">
+          <span class="hint">{{ t('0 is square corners, 100 is the default.') }}</span>
+        </div>
+      </div>
+    </section>
+    <section class="card rise" data-setting-section>
+      <h2>{{ t('Feedback') }}</h2>
+      {% with action_sounds_group = ta('Feedback') %}
+        {% include "appearance/action-sounds.html" %}
+      {% endwith %}
+    </section>
+  </div>
+</div>
+{% endblock %}

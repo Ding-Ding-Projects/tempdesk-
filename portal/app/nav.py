@@ -54,6 +54,7 @@ GUEST_NAV: list[dict] = [
 ]
 
 GUEST_ACTIONS: list[dict] = [
+    {"id": "guest-settings", "label": "Settings", "href": "/settings", "icon": "settings", "capability": None, "group": "Guest"},
     {"id": "act-theme", "label": "Switch light or dark theme", "href": "#theme", "capability": None, "group": "Actions", "action": "theme"},
     {"id": "act-print", "label": "Print this page", "href": "#print", "capability": None, "group": "Actions", "action": "print"},
 ]
