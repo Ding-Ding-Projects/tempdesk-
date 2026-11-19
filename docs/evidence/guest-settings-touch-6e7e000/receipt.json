@@ -1,0 +1,676 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "6e7e0001a1eb0db3d04bb0d5a035362bd653bd11",
+  "image": "sha256:4c9fa1104ecbedb09d76e17206c628b99e64d3179cd1ac0009fb5e51e719b910",
+  "imageArchiveSha256": "10b62eb074faf6a16d7ed5fc2e185b871779cc086ce1438fae876c2340732fe2",
+  "browser": "Microsoft Edge 157.0.4341.46",
+  "captureRoute": "cheap-lowlevel-headless",
+  "baselineSource": "6985c92531079abb28fab1424528261cea417289",
+  "verifiedCases": [
+    {
+      "language": "en",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.0000000298023224,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.2499999701976776,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.5,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "scale": 2.0000000596046448,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "dark",
+      "width": 360,
+      "height": 960,
+      "scale": 1.0000000298023224,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "dark",
+      "width": 360,
+      "height": 960,
+      "scale": 1.2499999701976776,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "dark",
+      "width": 360,
+      "height": 960,
+      "scale": 1.5,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "dark",
+      "width": 360,
+      "height": 960,
+      "scale": 2.0000000596046448,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.0000000298023224,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.2499999701976776,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.5,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "scale": 2.0000000596046448,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "light",
+      "width": 360,
+      "height": 960,
+      "scale": 1.0000000298023224,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "light",
+      "width": 360,
+      "height": 960,
+      "scale": 1.2499999701976776,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "light",
+      "width": 360,
+      "height": 960,
+      "scale": 1.5,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "en",
+      "theme": "light",
+      "width": 360,
+      "height": 960,
+      "scale": 2.0000000596046448,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.0000000298023224,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.2499999701976776,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.5,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "scale": 2.0000000596046448,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "dark",
+      "width": 360,
+      "height": 960,
+      "scale": 1.0000000298023224,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "dark",
+      "width": 360,
+      "height": 960,
+      "scale": 1.2499999701976776,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "dark",
+      "width": 360,
+      "height": 960,
+      "scale": 1.5,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "dark",
+      "width": 360,
+      "height": 960,
+      "scale": 2.0000000596046448,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.0000000298023224,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.2499999701976776,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.5,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "scale": 2.0000000596046448,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "light",
+      "width": 360,
+      "height": 960,
+      "scale": 1.0000000298023224,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "light",
+      "width": 360,
+      "height": 960,
+      "scale": 1.2499999701976776,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "light",
+      "width": 360,
+      "height": 960,
+      "scale": 1.5,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "zh-HK",
+      "theme": "light",
+      "width": 360,
+      "height": 960,
+      "scale": 2.0000000596046448,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.0000000298023224,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.2499999701976776,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.5,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "dark",
+      "width": 1440,
+      "height": 1000,
+      "scale": 2.0000000596046448,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "dark",
+      "width": 360,
+      "height": 960,
+      "scale": 1.0000000298023224,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "dark",
+      "width": 360,
+      "height": 960,
+      "scale": 1.2499999701976776,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "dark",
+      "width": 360,
+      "height": 960,
+      "scale": 1.5,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "dark",
+      "width": 360,
+      "height": 960,
+      "scale": 2.0000000596046448,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.0000000298023224,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.2499999701976776,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "scale": 1.5,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "light",
+      "width": 1440,
+      "height": 1000,
+      "scale": 2.0000000596046448,
+      "columns": 2,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "light",
+      "width": 360,
+      "height": 960,
+      "scale": 1.0000000298023224,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "light",
+      "width": 360,
+      "height": 960,
+      "scale": 1.2499999701976776,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "light",
+      "width": 360,
+      "height": 960,
+      "scale": 1.5,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    },
+    {
+      "language": "bi",
+      "theme": "light",
+      "width": 360,
+      "height": 960,
+      "scale": 2.0000000596046448,
+      "columns": 1,
+      "bodyOverflow": false,
+      "visibleKeyboardFocus": true,
+      "unnamedInteractiveControls": 0
+    }
+  ],
+  "checks": {
+    "exceptions": 0,
+    "consoleErrors": 0,
+    "otherOrigins": 0,
+    "unexpectedHttp": 0,
+    "logErrors": 0,
+    "resourceFailures": 0
+  },
+  "observations": {
+    "toolsNavigation": true,
+    "keyboardBuilder": true,
+    "muteAndLanguageRetained": true,
+    "isolatedSchoolCookie": true,
+    "pointerTargets": [
+      {
+        "selector": "[data-search-input=\"guest-settings\"]",
+        "hit": true
+      },
+      {
+        "selector": "[data-search-surface=\"guest-settings\"] .rxb-tog",
+        "hit": true
+      },
+      {
+        "selector": "[data-search-surface=\"guest-settings\"] .rxb-open",
+        "hit": true
+      },
+      {
+        "selector": "#guest-settings-text",
+        "hit": true
+      },
+      {
+        "selector": "#guest-settings-radius",
+        "hit": true
+      },
+      {
+        "selector": "#guest-settings-controls label:has([data-pref=contrast])",
+        "hit": true
+      },
+      {
+        "selector": "#guest-settings-controls label:has([data-pref=focus])",
+        "hit": true
+      }
+    ]
+  },
+  "narrowTargetsMinimumCssPx": {
+    "language": {
+      "width": 282.66668701171875,
+      "height": 52
+    },
+    "theme": {
+      "width": 282.66668701171875,
+      "height": 52
+    },
+    "motion": {
+      "width": 282.66668701171875,
+      "height": 52
+    },
+    "density": {
+      "width": 282.66668701171875,
+      "height": 52
+    },
+    "contrast": {
+      "width": 282.66668701171875,
+      "height": 48
+    },
+    "focus": {
+      "width": 282.66668701171875,
+      "height": 48
+    },
+    "text": {
+      "width": 278.66668701171875,
+      "height": 48
+    },
+    "radius": {
+      "width": 278.66668701171875,
+      "height": 48
+    },
+    "sounds": {
+      "width": 282.66668701171875,
+      "height": 48
+    },
+    "settings-search": {
+      "width": 180.6666717529297,
+      "height": 48
+    },
+    "regex-toggle": {
+      "width": 48,
+      "height": 48
+    },
+    "regex-builder": {
+      "width": 48,
+      "height": 48
+    }
+  },
+  "desktopClosed": true,
+  "profileRemoved": true,
+  "records": [
+    {
+      "id": "narrow-bilingual-search",
+      "active": true,
+      "path": "docs/evidence/guest-settings-touch-6e7e000/01-narrow-bilingual-search.png",
+      "sourceCommit": "6e7e0001a1eb0db3d04bb0d5a035362bd653bd11",
+      "artifactSha256": "10b62eb074faf6a16d7ed5fc2e185b871779cc086ce1438fae876c2340732fe2",
+      "captureSha256": "1a91d84f5198d80510ea1b05d3dbb2d47197759d040bac5e1fd03a7a65462328",
+      "screen": "Guest Settings",
+      "state": "narrow-bilingual-search",
+      "theme": "light",
+      "language": "bi",
+      "viewportWidth": 360,
+      "viewportHeight": 960,
+      "scale": 2.0000000596046448,
+      "interactionProofId": "narrow-bilingual-search",
+      "interactionReceiptSha256": "600a66a1a213cbb0cc6bf8fd2daf1bb30d12f00008c7bd0fa1be05c4b39174cc",
+      "inspectionStatus": "inspected",
+      "capturedAt": "2026-11-19T15:12:54.153Z"
+    },
+    {
+      "id": "desktop-display-controls",
+      "active": true,
+      "path": "docs/evidence/guest-settings-touch-6e7e000/02-desktop-display-controls.png",
+      "sourceCommit": "6e7e0001a1eb0db3d04bb0d5a035362bd653bd11",
+      "artifactSha256": "10b62eb074faf6a16d7ed5fc2e185b871779cc086ce1438fae876c2340732fe2",
+      "captureSha256": "05dc91d5e607b8d61e5328c6ad6cd7c0f2c74153cde440789ac5bc1c0795263b",
+      "screen": "Guest Settings",
+      "state": "desktop-display-controls",
+      "theme": "dark",
+      "language": "en",
+      "viewportWidth": 1440,
+      "viewportHeight": 1000,
+      "scale": 1.0000000298023224,
+      "interactionProofId": "desktop-display-controls",
+      "interactionReceiptSha256": "600a66a1a213cbb0cc6bf8fd2daf1bb30d12f00008c7bd0fa1be05c4b39174cc",
+      "inspectionStatus": "inspected",
+      "capturedAt": "2026-11-19T15:12:29.141Z"
+    }
+  ],
+  "scope": "The candidate portal ran from its versioned image in an isolated browser. Widths, touch input, and display scales were emulated. Live deployment, physical touch input, and the full interface inventory have separate acceptance."
+}

@@ -355,6 +355,7 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}`;
     'docs/evidence/appliance-rpi4-a613c4c.json',
     'docs/evidence/appliance-x86-1583b87.json',
     'docs/evidence/guest-settings-3407f84/receipt.json',
+    'docs/evidence/guest-settings-touch-6e7e000/receipt.json',
     'docs/evidence/guest-sign-in-v111/receipt.json',
     'docs/evidence/management-notifications.json',
     'docs/evidence/management-sounds.json',

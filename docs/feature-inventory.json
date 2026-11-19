@@ -344,7 +344,17 @@
     },
     {
       "id": "accessibility-sizing",
-      "scope": "interfaces"
+      "scope": "interfaces",
+      "progress": {
+        "guest": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "6e7e0001a1eb0db3d04bb0d5a035362bd653bd11",
+          "reference": "docs/evidence/guest-settings-touch-6e7e000/receipt.json",
+          "observation": "The built guest Settings page recorded 48 layout combinations with visible keyboard focus. Its measured narrow search, adjacent regex actions, sliders, and checkbox labels met the 48 CSS px target.",
+          "remaining": "Verify the updated live kiosk, physical touch input, dialog and header controls, and remaining guest pages."
+        }
+      }
     },
     {
       "id": "functional-ui",

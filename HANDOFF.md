@@ -1,5 +1,13 @@
 # TempDesk verification handoff
 
+## Narrow guest Settings controls
+
+The isolated image from `6e7e0001a1eb0db3d04bb0d5a035362bd653bd11` increased the seven measured undersized controls to at least 48 CSS px and added a visible localized label associated with the Settings search input. All 48 viewport, language, theme, and emulated scale combinations retained the expected column count, named controls, visible keyboard focus, and zero horizontal page overflow. The measured narrow controls owned their outer pointer areas in the bilingual check. The synthetic School mode cookie hid the language control and preserved the previous choice and mute state. Both inspected views are linked from the [walkthrough](README.md#use-settings-on-a-narrow-screen).
+
+The live v1.0.123 baseline still showed the smaller targets. The browser repeated a diagnostic about ignoring the cross-origin opener header on the live HTTP origin. The locally built candidate ran on isolated loopback. Live rollout and trusted HTTPS delivery remain open.
+
+The downloaded v1.0.125 reader from `ebfd7af1b3d95594cc4d6789a510de8111f3d03a` opened the workstation checklist, guest Settings guidance, and prepared wiki. Twelve bundled files matched their source bytes, including the v1.0.123 rollout receipt. The reader closed and its isolated profile was removed. [Release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.125)
+
 ## Guest Settings and wording feedback
 
 The hosted portal check at `6985c92531079abb28fab1424528261cea417289` recorded 252 passes and one failure. Its guest-route assertion still expected `GET /settings` to return 404. The updated assertion requires the guest Settings page and checks that management Settings mutations and export remain unavailable on the guest listener. [Original run](https://github.com/Ding-Ding-Projects/tempdesk-/actions/runs/44542289026)

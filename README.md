@@ -595,6 +595,18 @@ The built guest portal was exercised in English at desktop and emulated 360 px v
 
 The [browser receipt](docs/evidence/guest-settings-3407f84/receipt.json) covers an isolated portal build in English. The cues were observed in the browser with its audio output muted. The [v1.0.123 deployment receipt](docs/evidence/portal-rollout-v123.json) records the live guest Settings response and its management export boundary. Live cue playback and additional language and layout checks remain open.
 
+### Use Settings on a narrow screen
+
+1. At narrow widths, look for the full localized label above the Settings search field. Tab from the field through the regex toggle to the adjacent builder. The rebuilt controls each have a 48 CSS px touch area in the measured narrow layout.
+
+   ![Bilingual guest Settings at 360 CSS pixels with the full search label and focus on the regex builder](docs/evidence/guest-settings-touch-6e7e000/01-narrow-bilingual-search.png)
+
+2. At desktop width, the display controls fit in two columns. Escape closes the opened regex builder and restores focus to its opener.
+
+   ![Guest Settings at desktop width with two display columns and visible keyboard focus on the regex builder](docs/evidence/guest-settings-touch-6e7e000/02-desktop-display-controls.png)
+
+The [layout and interaction receipt](docs/evidence/guest-settings-touch-6e7e000/receipt.json) records 48 combinations of language, theme, viewport width, and emulated display scale from the isolated build at `6e7e0001a1eb0db3d04bb0d5a035362bd653bd11`. The updated live deployment and physical touch input remain open.
+
 ## Personal wording walkthrough
 
 <details>

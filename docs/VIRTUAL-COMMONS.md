@@ -30,7 +30,7 @@ In the edition picker, a file entry for `Microsoft Windows` also supplies wordin
 
 From the guest portal, choose **Tools**, then **Settings**. Use the Settings search or its adjacent regex builder to find a display control or **Action sounds**. Turn the checkbox off under **Feedback** to mute the cues for applied and rejected wording files. The browser keeps the choice after a reload and still displays each outcome. School mode pauses cues while retaining the saved choice.
 
-Follow the [illustrated Settings walkthrough](../README.md#guest-settings-and-action-sounds) for the keyboard controls and the [isolated browser receipt](evidence/guest-settings-3407f84/receipt.json) for the verified scope.
+Follow the [illustrated Settings walkthrough](../README.md#guest-settings-and-action-sounds) for the keyboard controls and the [isolated browser receipt](evidence/guest-settings-3407f84/receipt.json) for the verified scope. The [narrow Settings walkthrough](../README.md#use-settings-on-a-narrow-screen) shows the full localized search label and enlarged touch targets in the rebuilt layout.
 
 ## Configure the destinations
 
