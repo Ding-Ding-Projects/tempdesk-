@@ -1480,5 +1480,9 @@
  "docs.guide.commons.workstation.session": "用確認頁提供嘅憑證經受信閘道登入。確認剪貼簿、磁碟同印表機均不可重新導向，而且第二位訪客無法預約已佔用嘅座位。",
  "docs.guide.commons.workstation.release": "保持連線直到到期。確認原有工作階段已結束、到期帳戶無法再次登入、預約服務已撤銷授權，之後先接受另一個預約。未取得嘅結果要標示為待驗證。",
  "docs.guide.link.workstation": "工作站準備同登記",
- "docs.guide.link.configureSeat": "設定單座目的地"
+ "docs.guide.link.configureSeat": "設定單座目的地",
+ "provenance.version": "目前版本",
+ "provenance.updated": "建置更新時間",
+ "provenance.revision": "原始碼修訂版本",
+ "provenance.unavailable": "未有資料"
 }

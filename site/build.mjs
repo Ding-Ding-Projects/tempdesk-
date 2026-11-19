@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { relatedDocumentationWorkflows, renderDocumentationWorkflows } from './docs-workflows.mjs';
 import { inventoryPath, inventorySummary, readInventory } from './feature-inventory.mjs';
 
+import { hostedProvenance, renderProvenance } from './templates/provenance.mjs';
 import { capabilityReader } from './templates/capability-reader.mjs';
 
 const SITE = path.dirname(fileURLToPath(import.meta.url));
@@ -206,7 +207,7 @@ async function docSources() {
   return list;
 }
 
-async function build({ outputDirectory, referenceRevision = 'main' } = {}) {
+async function build({ outputDirectory, referenceRevision = 'main', provenance } = {}) {
   const OUT = outputDirectory ?? DEFAULT_OUT;
   const address = new URL(process.env.TEMPDESK_PUBLIC_URL || DEFAULT_PUBLIC_URL);
   if (address.protocol !== 'https:' || address.username || address.password || address.search || address.hash) {
@@ -214,7 +215,10 @@ async function build({ outputDirectory, referenceRevision = 'main' } = {}) {
   }
   if (!address.pathname.endsWith('/')) address.pathname += '/';
   const publicUrl = address.href;
-  const publicationHtml = html => html.replaceAll(DEFAULT_PUBLIC_URL, () => escapeHtml(publicUrl));
+  const buildInfo = provenance ?? (outputDirectory === undefined ? hostedProvenance(REPO) : {});
+  const stamp = renderProvenance(buildInfo, escapeHtml);
+  const publicationHtml = html => html.replaceAll(DEFAULT_PUBLIC_URL, () => escapeHtml(publicUrl))
+    .replace('<!-- documentation build identity -->', () => stamp);
   if (!/^(main|[a-f0-9]{40})$/.test(referenceRevision)) throw new Error('Invalid documentation source reference');
   const sourceBase = 'https://github.com/Ding-Ding-Projects/tempdesk-/blob/' + referenceRevision + '/';
   // 0. CodeMirror bundle: rebuilt with esbuild when the dev dependencies are installed; otherwise the
