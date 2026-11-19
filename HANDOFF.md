@@ -57,6 +57,9 @@ checks. The integrated x86_64 build for v1.0.117 repeated both checks with
 the current published image and a separate disposable directory. Both
 runs used the verified local image during both boots. The Pi 4
 receipt covers its earlier direct kernel and OpenRC boot in board emulation.
+The x86_64 build enables Alpine's ACPI service with a power-button event rule
+for normal guest shutdown. Verify that shutdown stops the portal pair and
+that the persisted configuration works on the next boot.
 Physical LAN, configured Pi 4 startup, and appliance release acceptance are
 open. [x86 receipt](docs/evidence/appliance-x86-1583b87.json) ·
 [Pi 4 receipt](docs/evidence/appliance-rpi4-a613c4c.json)

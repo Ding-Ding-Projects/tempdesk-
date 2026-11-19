@@ -35,6 +35,7 @@
 - [x] Verify the published amd64 and arm64 portal image entries by immutable digest.
 - [x] Boot the x86_64 image through UEFI and check that it waits for credentials with both portal endpoints closed. [Boot receipt](docs/evidence/appliance-x86-6d7718d.json)
 - [x] Start both x86_64 portals from the embedded image in isolated KVM. Verify a finite guest sign-in from a separate client before and after booting the same disk with its configuration medium detached. [Configured boot receipt](docs/evidence/appliance-x86-1583b87.json)
+- [ ] Verify an x86_64 ACPI guest shutdown runs the portal stop hooks and preserves configuration on the next boot.
 - [ ] Verify the x86_64 UEFI appliance image and Raspberry Pi 4 arm64 image, including configured startup, separate LAN checks, and restart persistence. [Appliance build and configuration](portal/README.md#build-a-bootable-appliance)
 - [ ] Release both verified appliance images and connect them to the virtual machine and physical-media deployment workflows.
 - [x] Use the published Portal Host wizard on the supported Windows host to cancel before startup, start both portals, and recheck health with the same container identities and start times. [Verification receipt](docs/evidence/guest-sign-in-v111/receipt.json)

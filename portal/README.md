@@ -124,6 +124,8 @@ The console prints the guest and management links when both services are
 healthy. On a separate client in the selected subnet, open the guest
 link on port 8080 and the management sign-in on port 8081. Verify the
 visible release, sign-in and data persistence across an appliance reboot.
+On x86_64, the hypervisor's ACPI power button requests an orderly guest
+shutdown. Wait for the guest to finish shutting down before detaching the disk.
 The image builder creates files only. It has no physical-media write,
 hypervisor import or in-place appliance upgrade action.
 

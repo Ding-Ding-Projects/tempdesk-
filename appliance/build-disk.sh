@@ -4,8 +4,20 @@ set -eu
 platform="$1"
 version="$2"
 case "$platform:$(apk --print-arch)" in
-    x86_64:x86_64) kernel=virt; firmware=; boot_tools=grub-efi ;;
-    rpi4-arm64:aarch64) kernel=rpi; firmware=raspberrypi-bootloader; boot_tools= ;;
+    x86_64:x86_64)
+        kernel=virt
+        firmware=
+        boot_tools=grub-efi
+        power_packages='acpid acpid-openrc'
+        power_service=default/acpid
+        ;;
+    rpi4-arm64:aarch64)
+        kernel=rpi
+        firmware=raspberrypi-bootloader
+        boot_tools=
+        power_packages=
+        power_service=
+        ;;
     *) echo "The builder architecture does not match $platform." >&2; exit 1 ;;
 esac
 
@@ -20,7 +32,7 @@ cp /etc/apk/repositories "$root/etc/apk/repositories"
 cp /etc/apk/keys/* "$root/etc/apk/keys/"
 apk --root "$root" --initdb --no-cache add alpine-base "linux-$kernel" $firmware \
     ca-certificates docker docker-cli-compose docker-openrc e2fsprogs blkid \
-    iproute2 iptables python3
+    iproute2 iptables python3 $power_packages
 
 serial='console=ttyS0,115200n8'
 root_uuid="$(uuidgen)"
@@ -68,11 +80,19 @@ printf '%s\n' "$portal_child" > "$root/opt/tempdesk/portal-child"
 printf '%s  /opt/tempdesk/portal-image.tar\n' "$archive_hash" > "$root/opt/tempdesk/portal-image.sha256"
 install -m 0755 /inputs/appliance/tempdesk-appliance.rc "$root/etc/init.d/tempdesk-appliance"
 
+# Route the guest power-button event through init and the portal stop hooks.
+if [ -n "$power_service" ]; then
+    tee "$root/etc/acpi/events/anything" >/dev/null <<'EOF'
+event=^button/power[[:space:]]
+action=/sbin/poweroff
+EOF
+fi
+
 # Credentials arrive only on a separately prepared configuration volume.
 sed -i 's/^root:[^:]*:/root:!:/' "$root/etc/shadow"
 for entry in sysinit/devfs sysinit/dmesg sysinit/mdev sysinit/hwdrivers \
     boot/modules boot/sysctl boot/hostname boot/bootmisc boot/syslog boot/localmount \
-    default/networking default/tempdesk-appliance shutdown/mount-ro shutdown/killprocs; do
+    default/networking default/tempdesk-appliance $power_service shutdown/mount-ro shutdown/killprocs; do
     service="${entry#*/}"
     test -x "$root/etc/init.d/$service"
     ln -snf "/etc/init.d/$service" "$root/etc/runlevels/$entry"
