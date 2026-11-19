@@ -53,12 +53,13 @@
     }
   }
   const input=$('find');
+  const searchLabel=input.labels[0]?.textContent.trim() || input.placeholder;
   const runtime=document.createElement('script');
   runtime.src='../../portal/app/static/js/regex-builder.js';
   runtime.onerror=()=>{
     $('result').textContent='Regex builder unavailable in this preview.';
     input.addEventListener('input',()=>filter(text=>text.toLowerCase().includes(input.value.toLowerCase())));
   };
-  runtime.onload=()=>window.TempDeskRegex.attachRegexBuilder(input,{label:'Search settings',workerUrl:runtime.src,onChange:(_,compiled)=>{if(compiled.ok)filter(text=>compiled.test(text));}});
+  runtime.onload=()=>window.TempDeskRegex.attachRegexBuilder(input,{label:searchLabel,workerUrl:runtime.src,onChange:(_,compiled)=>{if(compiled.ok)filter(text=>compiled.test(text));}});
   document.head.append(runtime);
 })();

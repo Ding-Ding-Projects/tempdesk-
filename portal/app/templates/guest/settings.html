@@ -4,10 +4,13 @@
 {% block content %}
 <div class="stack">
   <div class="page-head"><h1>{{ t('Settings') }}</h1></div>
-  <div class="ss-host" data-search-surface="guest-settings" data-search-kind="list"
-       data-search-target="#guest-settings-controls" data-search-items="[data-setting]"
-       data-search-group="[data-setting-section]" data-search-text="data-setting"
-       data-search-label="{{ ta('Search settings') }}"></div>
+  <div class="guest-settings-search">
+    <label class="guest-settings-search-label" for="guest-settings-query">{{ ta('Search settings') }}</label>
+    <div class="ss-host" data-search-surface="guest-settings" data-search-input-id="guest-settings-query"
+         data-search-kind="list" data-search-target="#guest-settings-controls" data-search-items="[data-setting]"
+         data-search-group="[data-setting-section]" data-search-text="data-setting"
+         data-search-label="{{ ta('Search settings') }}"></div>
+  </div>
   <p class="hint">{{ t('These choices are saved in this browser only.') }}</p>
   <div id="guest-settings-controls" class="stack">
     {% set display_group = ta('Display and accessibility') %}

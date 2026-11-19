@@ -7,3 +7,9 @@ The desktop board places display controls in two columns. At 360 px they form on
 Use the existing display preference handlers and POST /prefs language flow. School mode omits the language control and its search terms while retaining the previous preference. Keep the action-sound preference in td.actionSounds, retain the saved switch position under School mode and explain why playback is suppressed. Reuse the existing local playback and mute checks. Register this page's search independently from management Settings and index both group headings and localized control labels.
 
 The boards use an isolated browser storage prefix and the existing regex builder. The language selector records an example selection. Production uses the English, Cantonese and bilingual catalogs. Open either board with ?school=1 to preview the hidden language control and suppressed feedback. Verify production navigation, preference flow, localization, sound outcomes, keyboard interaction and rendering separately.
+
+## Narrow-screen touch targets
+
+The published 1.0.123 build at revision 6985c92531079abb28fab1424528261cea417289 measured a 40 px search input, two 32 × 32 px regex buttons, 16 px sliders, and 44 px contrast and focus labels at 360 CSS px. The narrow board keeps the one-column order and adds an associated, wrapping label above the search row.
+
+Give the search input and both range inputs at least 48 CSS px of height. Give each regex button its own 48 × 48 CSS px area, and use the full checkbox label as a touch target. The field, toggle, and builder keep their keyboard order. The field label remains visible when a query is present. Localize the accessible names of both buttons using that field label. Verify the actual native input rectangles, pointer targets, focus return, and horizontal containment in the built surface.

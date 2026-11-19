@@ -624,6 +624,16 @@ dialog h2 { margin-top: 0; }
 ::highlight(td-search) { background-color: color-mix(in srgb, var(--primary) 38%, transparent); color: inherit; }
 html[data-motion="reduced"] .rxb-pop, html[data-motion="off"] .rxb-pop { animation: none !important; }
 @media (max-width: 600px) { .ss .rxb-open { padding: 0 8px; } }
+.guest-settings-search-label { display: none; }
+@media (max-width: 600px) {
+  #guest-settings-controls, .guest-settings-search { --touch: 48px; }
+  #guest-settings-controls input[type=range] { min-height: var(--touch); }
+  .guest-settings-search-label { display: block; margin-bottom: 6px; overflow-wrap: anywhere; }
+  .guest-settings-search .ss > input { height: var(--touch); }
+  .guest-settings-search .ss > input::placeholder { color: transparent; }
+  .guest-settings-search .rxb-ib { width: var(--touch); height: var(--touch); margin: 0; }
+  .guest-settings-search .rxb-ib::before { inset: 0; }
+}
 .doc-tabs-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .doc-tabs-row .doc-tabs { flex: 1 1 auto; min-width: 0; }
 .doc-tabs-search { flex: 0 1 340px; display: flex; flex-wrap: wrap; gap: 4px; margin-top: -6px; }

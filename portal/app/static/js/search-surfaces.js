@@ -75,7 +75,7 @@
       var ic = doc.createElementNS('http://www.w3.org/2000/svg', 'svg'); ic.setAttribute('viewBox', '0 0 24 24'); ic.setAttribute('aria-hidden', 'true'); ic.setAttribute('class', 'ss-ic');
       var p = doc.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', 'M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14zM20 20l-3.5-3.5'); ic.appendChild(p); pill.appendChild(ic);
       input = doc.createElement('input'); input.type = 'search';
-      input.id = 'ss-' + this.id.replace(/[^\w-]/g, '_') + '-' + all.length;
+      input.id = host.getAttribute('data-search-input-id') || 'ss-' + this.id.replace(/[^\w-]/g, '_') + '-' + all.length;
       input.placeholder = label; input.setAttribute('aria-label', label);
       pill.appendChild(input); host.appendChild(pill);
     }
