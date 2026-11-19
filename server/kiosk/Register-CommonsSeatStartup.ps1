@@ -64,14 +64,15 @@ Assert-SeatStorage
 $null=Get-Command Get-ADUser,Get-ADAccountAuthorizationGroup -ErrorAction Stop
 if (-not (Test-Path -LiteralPath (Join-Path $script:SeatDirectory 'broker.key') -PathType Leaf)) { throw 'Provision the protected broker credential first.' }
 $certificate=Get-Item -LiteralPath ("Cert:/LocalMachine/My/$CertificateThumbprint")
-if (-not $certificate.HasPrivateKey -or -not (Test-Certificate -Cert $certificate -Policy SSL -DNSName $script:SeatTarget)) { throw 'A trusted server certificate and private key for the workstation FQDN are required.' }
+if (-not $certificate.HasPrivateKey -or -not (Test-Certificate -Cert $certificate -Policy SSL -DNSName ("dns="+$script:SeatTarget))) { throw 'A trusted server certificate and private key for the workstation FQDN are required.' }
 # Require a pre-existing SNI binding for this exact name and port. The public
 # certificate fingerprint is language-independent; never parse or log private keys.
-$binding=& "$env:SystemRoot/System32/netsh.exe" http show sslcert "hostnameport=${script:SeatTarget}:$Port"
+$systemDirectory=[Environment]::SystemDirectory
+$binding=& (Join-Path $systemDirectory 'netsh.exe') http show sslcert "hostnameport=${script:SeatTarget}:$Port"
 if ($LASTEXITCODE -ne 0 -or -not ($binding -match ':\s*MY\s*$') -or -not ($binding -match (':\s*'+$CertificateThumbprint+'\s*$'))) { throw 'The existing HTTP.sys hostname binding does not match the expected certificate.' }
 
 $taskName='TempDesk Virtual Commons Seat Broker'
-$exe=Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'
+$exe=Join-Path $systemDirectory 'WindowsPowerShell/v1.0/powershell.exe'
 $entry=Join-Path $PSScriptRoot 'Start-CommonsSeatBroker.ps1'
 $arguments='-NoProfile -NonInteractive -File "{0}" -DomainDns "{1}" -PortalAddress "{2}" -Port {3}' -f $entry,$DomainDns,$PortalAddress,$Port
 function Get-ExistingTask {
