@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "c65b4075bbec3c5043e6b281620211d0d43b8035",
+  "build": {
+    "entrypoint": "build.bat /s --skip-tests",
+    "sourceBound": true,
+    "packagedPortalApplicationSha256": "5f75336273df5d26f713be506e94d0358909475efe58e800cd875269edb6a4c9"
+  },
+  "runtime": {
+    "mode": "The packaged portal application ran with the dependencies from the published Linux amd64 image.",
+    "dependencyImage": "ghcr.io/ding-ding-projects/tempdesk-portal@sha256:4b26fd170767f049f83a68f046646b0f37f14e5f5ce401a46d839e4c58806be5",
+    "directory": "Isolated Samba Active Directory using newly generated credentials",
+    "trustedTls": true,
+    "mountedGuestKeyAccepted": true,
+    "inlineAgentKeyAbsentFromProcessEnvironment": true,
+    "guestKeyRejectedByProtectedDirectoryRoute": true,
+    "legacyInlineSettingAccepted": true,
+    "invalidSettingsRejected": [
+      "both sources",
+      "relative file path",
+      "missing file",
+      "directory",
+      "empty key",
+      "multiline key",
+      "oversized file",
+      "non-ASCII key",
+      "named pipe"
+    ]
+  },
+  "guestWorkflow": {
+    "oneHourAccountCreated": true,
+    "activeStatus": true,
+    "selfDeletion": true,
+    "directoryGuestsBefore": 0,
+    "directoryGuestsAfter": 0,
+    "verifiedAtUtc": "2026-11-19T08:40:30.764708+00:00"
+  },
+  "composeModel": {
+    "guestFileMountedByGuestServiceOnly": true,
+    "managementFileNotAdded": true,
+    "sourceVariableContainsPath": true
+  },
+  "nativeConfiguration": {
+    "platform": "Windows",
+    "builtInstallerScriptParsed": true,
+    "explicitRoleFileReferencePreserved": true,
+    "legacyWithoutFilePreserved": true,
+    "verification": "The packaged configuration helper was executed with synthetic settings in isolation."
+  },
+  "cleanup": {
+    "matchingResourcesRemaining": 0,
+    "verifiedAtUtc": "2026-11-19T08:40:38.1670312+00:00"
+  },
+  "limitations": "No installed native Windows agent or Remote Desktop session host was used. The tested artifact is the packaged application code, with published runtime dependencies."
+}

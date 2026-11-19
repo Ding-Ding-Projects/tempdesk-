@@ -17,6 +17,7 @@
 - [ ] Install and enroll the dedicated Kiosk Windows 11 workstation. Verify its reservation, exact guest grant, connection file, sign-in, expiry, and release before another guest can reserve it.
 - [x] Verify the Virtual Commons dim sum result with a published photo and with the catalogue unavailable, including retry without a seat or account and suppression in School mode. [Browser and directory receipt](docs/evidence/virtual-commons-dim-sum-6f6cb7f/receipt.json)
 - [ ] Connect a kiosk to the native Windows agent through an authenticated configuration and prove temporary account creation there.
+- [x] Verify the packaged portal with a protected guest key file, trusted TLS, directory-backed guest creation and removal, legacy compatibility and startup refusal for unusable settings. [Build and runtime receipt](docs/evidence/protected-agent-key-file-c65b407.json)
 - [ ] Verify the released guest portal with a mounted role key over trusted TLS and confirm normal account creation and legacy key configuration. [Protected agent key file](docs/features/http-api/portal-agent-key-file.md)
 - [ ] Join the Windows 11 test client to the intended domain and prove desktop sign-in with a temporary account.
 - [x] Verify the Session Watcher's outage, deadline, and account-identity decisions in isolated fixtures. Compile the bundled watcher and read current-session metadata on Windows PowerShell.

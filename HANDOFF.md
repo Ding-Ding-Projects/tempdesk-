@@ -2,7 +2,7 @@
 
 ## Protected portal agent key files
 
-The portal accepts one agent key from an explicit `AGENT_KEY_FILE` path or its legacy setting. The guest Compose overlay mounts the operator's protected role file for the guest service. The native installer retains a selected key-file path per role. Verify the built portal with the local configuration guide before switching a deployment. Native directory and Remote Desktop acceptance remain open. [Configuration guide](docs/features/http-api/portal-agent-key-file.md)
+The portal accepts one agent key from an explicit `AGENT_KEY_FILE` path or its legacy setting. The guest Compose overlay mounts the operator's protected role file for the guest service. The packaged portal used a mounted guest key and trusted TLS with an isolated Samba directory. It created and removed a one-hour account. The guest key was rejected by the protected directory route. The packaged native configuration helper retained a selected role file path. Native directory and Remote Desktop acceptance remain open. [Configuration guide](docs/features/http-api/portal-agent-key-file.md) · [Build and runtime receipt](docs/evidence/protected-agent-key-file-c65b407.json)
 
 ## v1.0.111 portal delivery
 
