@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "source": "328bb972125714368dcb055a0f3f9ff936c5902b",
+  "version": "1.0.128",
+  "artifactSha256": "add85500a7e82d98cfca6bd09a04b0aedc18e619f7657587e644b9a5e1987d22",
+  "artifactBuiltAt": "2026-11-19T16:15:13.964Z",
+  "method": "Portable executable on an isolated hidden Windows desktop with an exact DevTools page.",
+  "checks": [
+    "Native debugger accepts a bounded file-list drop",
+    "Reader feedback mounted",
+    "Portable source and version match",
+    "Requested viewport measured",
+    "Opening and closing Settings retained focus",
+    "Valid window drop applied saved wording",
+    "Capture remained on the reader",
+    "Celebration is pointer-transparent",
+    "Full content viewport covered with its scrollbar usable",
+    "Original control retained keyboard focus while feedback was visible",
+    "Celebration expired automatically",
+    "Rejected drop left saved wording active",
+    "Rejection persisted until dismissal",
+    "Requested viewport measured",
+    "Narrow reader has no horizontal page overflow",
+    "Capture remained on the reader",
+    "Keyboard dismissal restored prior focus",
+    "Both drops were trusted browser events with one local file",
+    "Settings reopened",
+    "Mute saved and disabled volume control",
+    "Capture remained on the reader",
+    "Settings includes its independent file chooser",
+    "Settings chooser replaced wording with static reduced-motion feedback",
+    "Muted replacement made no cue request",
+    "Replacement and mute survived reloading the reader",
+    "Keyboard Clear restored the shipped wording and removed the local copy",
+    "Reader requested no external resources",
+    "No uncaught reader exceptions"
+  ],
+  "media": {
+    "localWaveResponses": [
+      {
+        "name": "/tada.wav",
+        "status": 200
+      },
+      {
+        "name": "/invalid.wav",
+        "status": 200
+      }
+    ],
+    "playerStarts": 2,
+    "outputMutedDuringVerification": true
+  },
+  "cleanup": {
+    "ownedProcessClosed": true,
+    "isolatedDesktopReleased": true,
+    "disposableProfileRemoved": true
+  },
+  "scope": "English, dark interface, and two emulated widths. The runtime observed the local playback events with output muted. Guest checkout and Remote Desktop were outside this run.",
+  "records": [
+    {
+      "id": "01-wording-applied",
+      "active": true,
+      "path": "docs/evidence/offline-wording-328bb97/01-wording-applied.png",
+      "sourceCommit": "328bb972125714368dcb055a0f3f9ff936c5902b",
+      "artifactSha256": "add85500a7e82d98cfca6bd09a04b0aedc18e619f7657587e644b9a5e1987d22",
+      "captureSha256": "c51b6b8231e54e2e61b6faeac4f3e427ff084eba081b4114d01c50da59a51d4a",
+      "screen": "Reader home",
+      "state": "01-wording-applied",
+      "theme": "dark",
+      "language": "en",
+      "viewportWidth": 1440,
+      "viewportHeight": 900,
+      "scale": 1,
+      "interactionProofId": "01-wording-applied",
+      "interactionReceiptSha256": "43e5945a3848aeca11b1cfa32814028b0d17e6133c78ab64d5fc792e91c49161",
+      "inspectionStatus": "inspected",
+      "capturedAt": "2026-11-19T16:29:08.105Z"
+    },
+    {
+      "id": "02-rejected-wording-narrow",
+      "active": true,
+      "path": "docs/evidence/offline-wording-328bb97/02-rejected-wording-narrow.png",
+      "sourceCommit": "328bb972125714368dcb055a0f3f9ff936c5902b",
+      "artifactSha256": "add85500a7e82d98cfca6bd09a04b0aedc18e619f7657587e644b9a5e1987d22",
+      "captureSha256": "60e459634093d042fbde3a45ba736067a1b221825517ab6dd76c6d5edd4d5ee7",
+      "screen": "Reader home",
+      "state": "02-rejected-wording-narrow",
+      "theme": "dark",
+      "language": "en",
+      "viewportWidth": 360,
+      "viewportHeight": 800,
+      "scale": 1,
+      "interactionProofId": "02-rejected-wording-narrow",
+      "interactionReceiptSha256": "43e5945a3848aeca11b1cfa32814028b0d17e6133c78ab64d5fc792e91c49161",
+      "inspectionStatus": "inspected",
+      "capturedAt": "2026-11-19T16:29:14.326Z"
+    }
+  ]
+}

@@ -1,5 +1,9 @@
 # TempDesk verification handoff
 
+## Offline reader personal wording
+
+The portable reader built from `328bb972125714368dcb055a0f3f9ff936c5902b` saved and applied a trusted file drop, preserved the previous wording after a rejected file, and replaced it through Settings. Keyboard dismissal restored focus. Wording and mute survived a reload, and keyboard Clear removed the saved wording. Reduced motion showed a static confirmation. The two local audio files returned 200 and each started playback with output muted. The reader made no external requests during the run and its isolated profile was removed. The wide and narrow screenshots and exact build hashes are in the [reader receipt](docs/evidence/offline-wording-328bb97/receipt.json). Product test suites, physical audio output, full language and theme coverage, and publication of this reader build remain unverified.
+
 ## Narrow guest Settings controls
 
 The isolated image from `6e7e0001a1eb0db3d04bb0d5a035362bd653bd11` increased the seven measured undersized controls to at least 48 CSS px and added a visible localized label associated with the Settings search input. All 48 viewport, language, theme, and emulated scale combinations retained the expected column count, named controls, visible keyboard focus, and zero horizontal page overflow. The measured narrow controls owned their outer pointer areas in the bilingual check. The synthetic School mode cookie hid the language control and preserved the previous choice and mute state. Both inspected views are linked from the [walkthrough](README.md#use-settings-on-a-narrow-screen).

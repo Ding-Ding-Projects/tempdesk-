@@ -218,7 +218,15 @@
           "revision": "fbb81cea5b769603bddb76cde13182f922c862f1",
           "reference": "docs/evidence/workstation-guide-fbb81ce/receipt.json",
           "observation": "The published workstation guide applied sample wording, held it after an invalid replacement, and restored the shipped label on clear. The file actions generated zero browser requests.",
-          "remaining": "Verify file drop, cross-route persistence, and the remaining text and outcome surfaces."
+          "remaining": "Verify cross-route persistence and the remaining text and outcome surfaces."
+        },
+        "offline": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "328bb972125714368dcb055a0f3f9ff936c5902b",
+          "reference": "docs/evidence/offline-wording-328bb97/receipt.json",
+          "observation": "The packaged reader saved a trusted drop, applied a replacement through Settings, kept the active wording on rejection, retained the replacement on reload, and restored shipped wording on keyboard clear.",
+          "remaining": "Verify persistent wording after a process restart and every dynamic wording surface in all supported language modes."
         },
         "management": {
           "state": "partial",
@@ -257,6 +265,14 @@
           "reference": "docs/evidence/management-sounds.json",
           "observation": "The signed-in test browser applied a trusted file drop and Settings import, preserved wording on rejection and save failure, and made no non-read requests during import.",
           "remaining": "Verify the complete dynamic wording coverage and physical audio output in the management portal."
+        },
+        "offline": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "328bb972125714368dcb055a0f3f9ff936c5902b",
+          "reference": "docs/evidence/offline-wording-328bb97/receipt.json",
+          "observation": "The packaged reader accepted a trusted window drop, kept focus through confirmation, and restored the prior control after a rejected drop was dismissed. Reduced motion used a static confirmation.",
+          "remaining": "Verify blocked storage, repeated drops, remaining reader pages and the full language, theme and scale matrix."
         }
       }
     },
@@ -287,6 +303,14 @@
           "reference": "docs/evidence/guest-settings-3407f84/receipt.json",
           "observation": "Guest Settings is reachable from Tools. An isolated browser recorded applied and rejected wording cues, and persisted mute across reload while keeping the visible result.",
           "remaining": "Verify audible output, School mode, and the same workflow on the deployed guest portal and kiosk."
+        },
+        "offline": {
+          "state": "partial",
+          "method": "runtime",
+          "revision": "328bb972125714368dcb055a0f3f9ff936c5902b",
+          "reference": "docs/evidence/offline-wording-328bb97/receipt.json",
+          "observation": "The packaged reader served each local cue and started playback once per import outcome. Mute survived reload and a muted replacement requested no audio. Output was muted during verification.",
+          "remaining": "Verify physical output, unavailable audio, volume, quiet hours, and School mode behavior."
         }
       }
     },

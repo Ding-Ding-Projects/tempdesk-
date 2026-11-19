@@ -722,6 +722,20 @@ The [evidence inventory](docs/evidence/standalone-docs-inventory.json) records t
 
 </details>
 
+### Use personal wording in the offline reader
+
+1. Drop a valid wording JSON file into TempDesk Docs. The reader saves the new wording locally and shows a confirmation while the previous control keeps focus.
+
+   ![Offline reader showing the personal wording applied confirmation](docs/evidence/offline-wording-328bb97/01-wording-applied.png)
+
+2. Drop an invalid file. The previous wording stays active. Focus **Dismiss** and press Enter to close the notice and return to the prior control.
+
+   ![Narrow offline reader showing the invalid JSON notice and Dismiss button](docs/evidence/offline-wording-328bb97/02-rejected-wording-narrow.png)
+
+3. Open **Settings** to choose a replacement, turn off **Action sounds**, or select **Clear** to restore the original wording.
+
+The [offline reader receipt](docs/evidence/offline-wording-328bb97/receipt.json) binds these views to the local portable build and records the file chooser, reload, reduced-motion and audio checks.
+
 ## Offline checkout guide
 
 <details>
