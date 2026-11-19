@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "records": [
+    {
+      "id": "offline-school-off-wide",
+      "active": true,
+      "path": "docs/evidence/offline-school-e13efa0/school-settings-wide.png",
+      "sourceCommit": "e13efa097ae5e95e0004d0d0c41c356a8e0ea466",
+      "artifactSha256": "15c7fbf0d1d306055c5c0d980a535f5de9122c12385029c147321519defbecbc",
+      "captureSha256": "e6efac08c48d3b11de90b2bdf28afdb2bf849c6ed2f0ba6ddaa39bf760008011",
+      "screen": "school-mode-settings",
+      "state": "off",
+      "theme": "dark",
+      "language": "en",
+      "viewportWidth": 1440,
+      "viewportHeight": 900,
+      "scale": 1,
+      "interactionProofId": "open-native-reader-settings",
+      "interactionReceiptSha256": "f7ebacf7c2ad4f3cf085a36ea12f644ad2c235e2c80cf935a97132a5026b2b7e",
+      "inspectionStatus": "inspected",
+      "capturedAt": "2026-11-19T20:35:43.504Z",
+      "version": "1.0.135",
+      "limits": "Mode remained off. PIN changes, restart persistence, and cross-application transitions are pending."
+    },
+    {
+      "id": "offline-school-off-narrow",
+      "active": true,
+      "path": "docs/evidence/offline-school-e13efa0/school-settings-narrow.png",
+      "sourceCommit": "e13efa097ae5e95e0004d0d0c41c356a8e0ea466",
+      "artifactSha256": "15c7fbf0d1d306055c5c0d980a535f5de9122c12385029c147321519defbecbc",
+      "captureSha256": "88ed5ff93bc5ff1c110172d6b5b4295baa6b914855b4c19a0f6407fc89134b7c",
+      "screen": "school-mode-settings",
+      "state": "off",
+      "theme": "dark",
+      "language": "en",
+      "viewportWidth": 360,
+      "viewportHeight": 760,
+      "scale": 1,
+      "interactionProofId": "open-native-reader-settings",
+      "interactionReceiptSha256": "f7ebacf7c2ad4f3cf085a36ea12f644ad2c235e2c80cf935a97132a5026b2b7e",
+      "inspectionStatus": "inspected",
+      "capturedAt": "2026-11-19T20:35:50.381Z",
+      "version": "1.0.135",
+      "limits": "Mode remained off. PIN changes, restart persistence, and cross-application transitions are pending."
+    }
+  ]
+}

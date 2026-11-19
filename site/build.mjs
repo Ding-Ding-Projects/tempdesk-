@@ -360,6 +360,7 @@ ${links ? `<div class="cta" style="margin-top:28px">${links}</div>` : ''}`;
     'docs/evidence/management-notifications.json',
     'docs/evidence/management-sounds.json',
     'docs/evidence/management-wording-walkthrough.json',
+    'docs/evidence/offline-school-e13efa0/inventory.json',
     'docs/evidence/offline-wording-328bb97/01-wording-applied.png',
     'docs/evidence/offline-wording-328bb97/02-rejected-wording-narrow.png',
     'docs/evidence/offline-wording-328bb97/receipt.json',

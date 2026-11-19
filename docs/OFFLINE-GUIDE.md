@@ -42,6 +42,14 @@ Release builds bundle the tracked source from the release revision. The generate
 
 The source archive preserves the committed bytes of the evidence JSON. Its receipt hashes can be compared across the portable reader and hosted documentation.
 
+The local reader displayed this control at both widths.
+
+![Offline reader Settings showing School mode off and the Enable button](evidence/offline-school-e13efa0/school-settings-wide.png)
+
+![School mode and Enable in offline reader Settings at 360 pixels](evidence/offline-school-e13efa0/school-settings-narrow.png)
+
+The run used an isolated profile and left the mode off. PIN changes and cross-application transitions remain pending. [Visual evidence inventory](evidence/offline-school-e13efa0/inventory.json)
+
 ## Build and verify
 
 Run `build.bat /docs` from the root of a Git checkout. The executable and phone PDF appear under `deployer/bin/docs/`. The default `build.bat` and `build-installer.bat` produce both files from the same site composition.

@@ -736,6 +736,16 @@ The [evidence inventory](docs/evidence/standalone-docs-inventory.json) records t
 
 </details>
 
+### Open School mode in the offline reader
+
+Open **TempDesk Docs**, open the offline guide, then choose **Settings**. Scroll to **School mode**. The local v1.0.135 reader read the shared setting and displayed **Off** and **Enable** at 1440 and 360 pixels.
+
+![Offline reader Settings showing School mode off and the Enable button](docs/evidence/offline-school-e13efa0/school-settings-wide.png)
+
+![School mode and Enable in offline reader Settings at 360 pixels](docs/evidence/offline-school-e13efa0/school-settings-narrow.png)
+
+The run used an isolated profile and left the mode off. PIN changes and cross-application transitions remain pending. [Visual evidence inventory](docs/evidence/offline-school-e13efa0/inventory.json)
+
 ### Use personal wording in the offline reader
 
 1. Choose **Bilingual** in Settings, then drop a valid wording JSON file into TempDesk Docs. The reader saves the new wording locally and shows English and Cantonese while the previous control keeps focus.
