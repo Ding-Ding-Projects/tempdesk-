@@ -58,4 +58,6 @@ Virtual Commons dim sum acceptance is recorded in docs/evidence/virtual-commons-
 The appliance recovery revision 4e5cdbfccbb150c5e38d30b52d018476a746c074 records the embedded image startup and Raspberry Pi board emulation. Continue configured startup and restart evidence from that revision before integrating the recovery.
 
 Both lab portals are now verified on v1.0.111 from source 76ccdfaa72058065c07a4f58d8cf714c4f0b2dc0, including a separate LAN readback. A one-hour kiosk account was created, verified active and self-deleted. The directory again had zero guest accounts. The published Portal Host wizard cancelled before startup, started both endpoints and verified them again without changing the running container identities or start times. See docs/evidence/guest-sign-in-v111/receipt.json. The isolated wizard fixture's teardown remains pending. Continue native Remote Desktop checkout on the actual Windows targets.
+
+The protected agent key file option is implemented for both portal modes. The guest-only Compose overlay and native configuration retention are documented in docs/features/http-api/portal-agent-key-file.md. Verify the released portal with a mounted guest-only key over trusted TLS. Continue with the authorized native agent credential and actual RDP sign-in once the target guest is enrolled.
 ```

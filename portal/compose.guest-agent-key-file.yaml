@@ -1,0 +1,11 @@
+# Mount the operator's protected guest-agent key only in the guest service.
+services:
+  tempdesk-guest:
+    environment:
+      AGENT_KEY_FILE: /run/secrets/tempdesk_guest_agent_key
+    secrets:
+      - tempdesk_guest_agent_key
+
+secrets:
+  tempdesk_guest_agent_key:
+    file: ${TEMPDESK_GUEST_AGENT_KEY_SOURCE:?Supply the protected guest agent key file on the Docker host}

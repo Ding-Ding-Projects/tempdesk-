@@ -5,11 +5,47 @@ from __future__ import annotations
 import ipaddress
 import os
 import secrets
+import stat
 from dataclasses import dataclass, field
+from pathlib import Path
+
+
+MAX_KEY_FILE_BYTES = 4096
 
 
 class ConfigError(RuntimeError):
     """Raised when the environment does not describe a usable portal."""
+
+
+def _agent_key(env: dict) -> str:
+    inline = (env.get("AGENT_KEY") or "").strip()
+    path = (env.get("AGENT_KEY_FILE") or "").strip()
+    if not path:
+        if not inline:
+            raise ConfigError("AGENT_KEY or AGENT_KEY_FILE is required")
+        return inline
+    if inline:
+        raise ConfigError("Configure exactly one of AGENT_KEY and AGENT_KEY_FILE")
+    if not Path(path).is_absolute():
+        raise ConfigError("AGENT_KEY_FILE must be an absolute path")
+
+    # Check the opened file. Nonblocking open prevents a named pipe from
+    # waiting for a writer before the regular-file check on POSIX.
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NONBLOCK", 0)
+    try:
+        with os.fdopen(os.open(path, flags), "rb") as source:
+            if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
+                raise ConfigError("AGENT_KEY_FILE must be a regular file")
+            data = source.read(MAX_KEY_FILE_BYTES + 1)
+    except (OSError, ValueError):
+        raise ConfigError("AGENT_KEY_FILE could not be read") from None
+
+    if len(data) > MAX_KEY_FILE_BYTES:
+        raise ConfigError("AGENT_KEY_FILE exceeds its input limit")
+    key = data.strip(b" \t\r\n")
+    if not key or any(byte < 33 or byte > 126 for byte in key):
+        raise ConfigError("AGENT_KEY_FILE must contain one nonempty ASCII key")
+    return key.decode("ascii")
 
 
 def _int(env: dict, name: str, default: int) -> int:
@@ -39,7 +75,7 @@ def _parse_proxies(raw: str) -> list:
 class Settings:
     mode: str = "guest"
     agent_url: str = "http://localhost:8080/api/v1"
-    agent_key: str = ""
+    agent_key: str = field(default="", repr=False)
     agent_ca_file: str | None = None
     agent_cert_sha256: str | None = None
     agent_timeout: float = 20.0
@@ -87,9 +123,7 @@ class Settings:
             raise ConfigError("AGENT_URL must start with http:// or https://")
         if not agent_url.endswith("/api/v1"):
             agent_url += "/api/v1"
-        key = (env.get("AGENT_KEY") or "").strip()
-        if not key:
-            raise ConfigError("AGENT_KEY is required")
+        key = _agent_key(env)
         ca_file = (env.get("AGENT_CA_FILE") or "").strip() or None
         pin = (env.get("AGENT_CERT_SHA256") or "").strip().replace(":", "").lower() or None
         if pin is not None and (len(pin) != 64 or any(c not in "0123456789abcdef" for c in pin)):

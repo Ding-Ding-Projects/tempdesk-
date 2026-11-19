@@ -24,6 +24,8 @@ In the edition picker, a file entry for `Microsoft Windows` also supplies wordin
 
 ## Configure the destinations
 
+For a kiosk using a remote native agent, use the agent's approved HTTPS trust settings and configure its guest key. See [Read the agent key from a protected file](features/http-api/portal-agent-key-file.md) for the read-only guest mount.
+
 Set `COMMONS_RDP_GUI` to a verified Desktop Experience session host. Use a name reachable from the Remote Desktop client, optionally followed by its port. Keep session hosts separate from the domain controller. Follow [the dedicated App Host setup](../server/apphost/README.md#prepare-a-virtual-commons-session-host), then verify a short checkout before publishing the destination.
 
 Windows Server Core supports Remote Desktop for administration. Microsoft does not include the RD Session Host role in Server Core, and the TempDesk App Host installer requires Desktop Experience. Leave `COMMONS_RDP_CORE` unset unless you have validated a supported configuration that provides the intended temporary guest sessions. An open RDP port or an administrator sign-in does not verify guest checkout. See [Microsoft's Server Core role list](https://learn.microsoft.com/en-us/windows-server/administration/server-core/server-core-roles-and-services).

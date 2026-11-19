@@ -90,6 +90,20 @@ if ($agentPin) {
     $adminEnv.AGENT_CERT_SHA256 = $agentPin
 }
 $guestEnvPath = Join-Path $dataDir 'guest.env'
+$adminEnvPath = Join-Path $dataDir 'admin.env'
+function Preserve-RoleKeyFile([string] $Path, [hashtable] $Values) {
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return }
+    $file = ''
+    foreach ($line in Get-Content -LiteralPath $Path -Encoding utf8) {
+        if ($line -match '^AGENT_KEY_FILE=(.*)$') { $file = $Matches[1].Trim() }
+    }
+    if ($file) {
+        $Values.Remove('AGENT_KEY')
+        $Values.AGENT_KEY_FILE = $file
+    }
+}
+Preserve-RoleKeyFile $guestEnvPath $guestEnv
+Preserve-RoleKeyFile $adminEnvPath $adminEnv
 $priorTargets = @{}
 if (Test-Path -LiteralPath $guestEnvPath -PathType Leaf) {
     foreach ($line in Get-Content -LiteralPath $guestEnvPath -Encoding utf8) {
@@ -103,12 +117,15 @@ foreach ($key in $priorTargets.Keys) {
     $guestEnv[$key] = $priorTargets[$key]
 }
 Write-Env $guestEnvPath $guestEnv
-Write-Env (Join-Path $dataDir 'admin.env') $adminEnv
+Write-Env $adminEnvPath $adminEnv
 
 # --- Runner script and startup tasks --------------------------------------------------------
 $runner = Join-Path $installDir 'Start-Portal.ps1'
 @'
 param([Parameter(Mandatory)] [string] $EnvFile)
+foreach ($name in 'AGENT_KEY', 'AGENT_KEY_FILE') {
+    [Environment]::SetEnvironmentVariable($name, $null, 'Process')
+}
 Get-Content -LiteralPath $EnvFile -Encoding utf8 | ForEach-Object {
     if ($_ -match '^([A-Z_][A-Z0-9_]*)=(.*)$') { [Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], 'Process') }
 }

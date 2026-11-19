@@ -152,6 +152,7 @@ Use your own protected paths. Run with the existing Compose project name. Each e
 | `PORTAL_MODE` | `guest` or `admin` |
 | `AGENT_URL` | For example `http://dc01.corp.example:8080`. `/api/v1` is added when missing. |
 | `AGENT_KEY` | The guest key or the admin key from `C:\ProgramData\TempDesk\agent.json` |
+| `AGENT_KEY_FILE` | Absolute path inside the portal to a protected file containing its role key. Set one of `AGENT_KEY` and `AGENT_KEY_FILE`. See [Read the agent key from a protected file](../docs/features/http-api/portal-agent-key-file.md). |
 | `AGENT_CA_FILE` | Only for `https` agent URLs: the agent certificate, PEM or DER (DER is converted at startup) |
 | `AGENT_CERT_SHA256` | Only for `https` agent URLs: SHA-256 fingerprint pin, checked right after the TLS handshake, before the key is sent |
 | `SESSION_SECRET` | Required in admin mode, at least 32 characters |

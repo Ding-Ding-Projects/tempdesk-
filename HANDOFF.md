@@ -1,5 +1,9 @@
 # TempDesk verification handoff
 
+## Protected portal agent key files
+
+The portal accepts one agent key from an explicit `AGENT_KEY_FILE` path or its legacy setting. The guest Compose overlay mounts the operator's protected role file for the guest service. The native installer retains a selected key-file path per role. Verify the built portal with the local configuration guide before switching a deployment. Native directory and Remote Desktop acceptance remain open. [Configuration guide](docs/features/http-api/portal-agent-key-file.md)
+
 ## v1.0.111 portal delivery
 
 Both lab portals run the immutable v1.0.111 image from `76ccdfa`. A separate LAN client verified the expected version and source, and the rollout retained the existing storage and ports. The guest kiosk created and checked a one-hour account against the running Samba directory, then removed it through self-service. The directory returned to zero guest accounts. [Illustrated walkthrough](README.md#guest-sign-in-walkthrough)
