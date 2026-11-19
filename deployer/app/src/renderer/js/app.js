@@ -594,6 +594,12 @@ async function init() {
   setupDrop();
   td.on['update:state']((s) => { app.update = s; if (s.state === 'ready') { toast([notice('update.ready', [s.version]), ' ', notice('update.unsigned')], 'success'); renderBanner(); } });
   td.on['theme:system']((s) => { app.info.highContrast = s.highContrast; applyAppearance(); });
+  td.on['school:changed']((shared) => {
+    if (state.school.enabled === shared.enabled && state.school.name === shared.name
+        && state.school.available === shared.available) return;
+    state.school = shared;
+    void applySettings();
+  });
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyAppearance);
   window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', applyAppearance);
   window.addEventListener('resize', moveIndicator);

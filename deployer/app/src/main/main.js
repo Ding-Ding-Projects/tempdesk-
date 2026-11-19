@@ -71,6 +71,7 @@ const DOCS = app.isPackaged ? path.join(RES, 'docs') : path.resolve(__dirname, '
 let win = null;
 let store = null;
 let workspace = null;
+let schoolWatch = null;
 const runs = new Map();
 const jobs = new Map();
 const updater = new Updater();
@@ -79,6 +80,10 @@ if (!process.squirrelEvent && !app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 
 function send(channel, payload) { if (win && !win.isDestroyed()) win.webContents.send(channel, payload); }
+function sharedSchoolStatus() {
+  if (!schoolWatch?.available) schoolWatch = school.watch(store.root, state => send('school:changed', state));
+  return schoolWatch.available ? school.status(store.root) : school.unavailable();
+}
 
 function createWindow() {
   const s = store.settings();
@@ -97,6 +102,8 @@ function createWindow() {
   if (process.env.TEMPDESK_SMOKE) smokeTest();
   win.on('maximize', () => send('win:state', { maximized: true }));
   win.on('unmaximize', () => send('win:state', { maximized: false }));
+  sharedSchoolStatus();
+  win.once('closed', () => { schoolWatch?.stop(); schoolWatch = null; });
   // Never navigate away or open new windows from the renderer.
   win.webContents.on('will-navigate', (e) => e.preventDefault());
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -170,13 +177,16 @@ function registerIpc() {
   });
 
   // School mode (convenience lock, not security)
-  handle('school:get', () => school.publicView(school.load(store.root)));
-  handle('school:enable', (pin, name) => school.enable(store.root, pin, name));
-  handle('school:disable', (pin) => school.disable(store.root, pin));
+  handle('school:get', sharedSchoolStatus);
+  handle('school:enable', (pin, name) => sharedSchoolStatus().available
+    ? school.enable(store.root, pin, name) : { ...school.unavailable(), operationError: 'unavailable' });
+  handle('school:disable', (pin) => sharedSchoolStatus().available
+    ? school.disable(store.root, pin) : { ok: false, reason: 'unavailable' });
 
   // Personal wording: validated in full here before anything is stored; never logged.
   handle('wording:get', () => store.vocabulary());
   handle('wording:apply', (bytes) => {
+    if (sharedSchoolStatus().enabled) return { ok: false, code: 'school' };
     let buf;
     try { buf = Buffer.from(bytes); } catch { return { ok: false, code: 'json' }; }
     try { Wording.validate(new Uint8Array(buf)); } catch (e) { return { ok: false, code: e.code || 'json', entry: e.entry || null }; }
@@ -184,8 +194,9 @@ function registerIpc() {
     return { ok: true };
   });
   handle('wording:pick', async () => {
+    if (sharedSchoolStatus().enabled) return { cancelled: true };
     const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: 'JSON', extensions: ['json'] }] });
-    if (r.canceled) return { cancelled: true };
+    if (r.canceled || sharedSchoolStatus().enabled) return { cancelled: true };
     try {
       const st = fs.statSync(r.filePaths[0]);
       if (st.size > Wording.MAX_BYTES) return { bytes: null, tooLarge: true };
@@ -193,6 +204,7 @@ function registerIpc() {
     } catch { return { error: 'read' }; }
   });
   handle('wording:clear', () => {
+    if (sharedSchoolStatus().enabled) return { ok: false, code: 'school' };
     try { store.clearVocabulary(); } catch { return { ok: false, code: 'storage' }; }
     return { ok: true };
   });

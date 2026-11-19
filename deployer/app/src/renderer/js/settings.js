@@ -132,12 +132,16 @@ export async function settingsPage(root, app) {
 
   // School mode (convenience lock)
   sec('school', [h('p', { class: 'notice warn', text: t('school.notSecurity') }),
-    row('schoolMode', school.enabled ? school.name : t('set.school'), t('set.schoolHelp'), h('div', { class: 'row' }, school.enabled
+    row('schoolMode', school.available === false ? t('school.sharedSetting') : school.name, t('set.schoolHelp'), h('div', { class: 'row' }, school.available === false
+      ? [h('p', { class: 'notice warn', text: t('school.sourceUnavailable') }), btn(t('school.retry'), async () => {
+        state.school = await td.invoke['school:get'](); await app.applySettings();
+      }, 'btn-ghost btn-sm')]
+      : school.enabled
       ? [h('span', { class: 'chip ok', text: t('school.on', [school.name]) }), btn(t('school.unlock'), async () => {
         const pin = await promptDialog(t('school.unlock'), t('school.pin'), '', { password: true, numeric: true });
         if (!pin) return;
         const r = await td.invoke['school:disable'](pin);
-        if (!r.ok) { play('invalid'); toast(notice('school.wrongPin'), 'error'); return; }
+        if (!r.ok) { play('invalid'); toast(notice(r.reason === 'wrongPin' ? 'school.wrongPin' : 'school.changeUnavailable'), 'error'); return; }
         state.school = await td.invoke['school:get'](); toast(notice('school.off'), 'success'); app.applySettings();
       }, 'btn-primary btn-sm')]
       : [btn(t('school.enable'), async () => {
@@ -147,7 +151,10 @@ export async function settingsPage(root, app) {
         if (!pin) return;
         const pin2 = await promptDialog(t('school.enable'), t('school.repeatPin'), '', { password: true, numeric: true });
         if (pin !== pin2) { toast(notice('school.pinMismatch'), 'error'); return; }
-        state.school = await td.invoke['school:enable'](pin, name.trim()); await app.applySettings({ schoolName: name.trim() }, originalText('hist.setField', [originalText('set.school'), 'on']));
+        const next = await td.invoke['school:enable'](pin, name.trim());
+        state.school = next;
+        if (next.operationError) { await app.applySettings(); toast(notice('school.changeUnavailable'), 'error'); return; }
+        await app.applySettings({ schoolName: name.trim() }, originalText('hist.setField', [originalText('set.school'), 'on']));
         toast(notice('school.on', [name.trim()]), 'success');
       }, 'btn-ghost btn-sm')]), 'classroom lock pin')]);
 

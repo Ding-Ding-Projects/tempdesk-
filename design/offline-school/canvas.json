@@ -1,0 +1,53 @@
+{
+  "v": 3,
+  "title": "Offline reader School mode",
+  "launch": {
+    "view": "canvas",
+    "page": "school"
+  },
+  "pages": [
+    {
+      "id": "school",
+      "title": "Reader Settings"
+    }
+  ],
+  "boards": {
+    "Wide-School.dc.html": {
+      "page": "school",
+      "x": 0,
+      "y": 40,
+      "w": 1120,
+      "h": 820,
+      "title": "Wide reader Settings"
+    },
+    "Narrow-School.dc.html": {
+      "page": "school",
+      "x": 1460,
+      "y": 40,
+      "w": 360,
+      "h": 800,
+      "title": "Narrow reader Settings"
+    }
+  },
+  "order": [
+    "Wide-School.dc.html",
+    "Narrow-School.dc.html"
+  ],
+  "notes": {
+    "Wide": {
+      "page": "school",
+      "x": 1132,
+      "y": 60,
+      "maxW": 280,
+      "text": "Use Design state to inspect Off, On, unavailable and the three editing forms. Try Accent colour and Motion. PIN fields remain empty and never accept input. Native verification and state persistence require production evidence."
+    },
+    "Narrow": {
+      "page": "school",
+      "x": 1832,
+      "y": 60,
+      "maxW": 280,
+      "text": "Use Design state to inspect Off, On, unavailable and the three editing forms. Try Accent colour and Motion. PIN fields remain empty and never accept input. Native verification and state persistence require production evidence."
+    }
+  },
+  "designSystems": []
+}

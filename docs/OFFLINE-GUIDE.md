@@ -30,6 +30,14 @@ In bilingual mode, the standard confirmation and rejection show English and Cant
 
 Use **Action sounds** and **Sound volume** in Settings to control the two import cues. With sound off, the reader still shows the result. The reader keeps these preferences in its local profile. System or reader reduced-motion settings make the success confirmation static.
 
+### Use the shared focus setting
+
+Open the shared focus control in **Settings**. Choose **Enable**, enter a display name, and confirm a PIN of 4 to 12 digits. The reader and Deployer share that local setting on the current computer. The reader uses English while it is active. Settings search and the command palette inherit the mode for its language, personal wording, and action sound controls. Theme, Motion, and Text size stay available.
+
+Use **Unlock** with the current PIN to restore the saved reader preferences. **Rename** changes the displayed name and keeps the mode active. A rejected Rename preserves the proposed name for another attempt. If the shared setting is unavailable, choose **Retry**. The focus setting is a local convenience control. Removing its local record resets it.
+
+The article, wiki, and search index filtering work is tracked in the [roadmap](../ROADMAP.md#documentation-and-delivery).
+
 Release builds bundle the tracked source from the release revision. The generated article source links open that revision.
 
 The source archive preserves the committed bytes of the evidence JSON. Its receipt hashes can be compared across the portable reader and hosted documentation.

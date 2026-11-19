@@ -20,7 +20,7 @@ const INVOKE = [
   'b64:pick', 'b64:stat', 'b64:start', 'b64:pause', 'b64:resume', 'b64:cancel',
   'update:check', 'update:restart'
 ];
-const EVENTS = ['studio:changed', 'engine:event', 'b64:event', 'update:state', 'win:state', 'theme:system'];
+const EVENTS = ['studio:changed', 'engine:event', 'b64:event', 'update:state', 'win:state', 'theme:system', 'school:changed'];
 
 const api = { invoke: {}, on: {} };
 for (const ch of INVOKE) api.invoke[ch] = (...args) => ipcRenderer.invoke(ch, ...args);

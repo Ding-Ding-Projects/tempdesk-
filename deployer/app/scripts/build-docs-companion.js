@@ -106,6 +106,8 @@ async function main() {
     });
     await fs.writeFile(path.join(website, 'build-info.json'), JSON.stringify(info) + '\n');
     await fs.copyFile(path.join(input, 'deployer', 'docs-companion', 'main.cjs'), path.join(staging, 'main.cjs'));
+    await fs.copyFile(path.join(input, 'deployer', 'docs-companion', 'preload.cjs'), path.join(staging, 'preload.cjs'));
+    await fs.copyFile(path.join(input, 'deployer', 'app', 'src', 'main', 'school.js'), path.join(staging, 'school.cjs'));
     await fs.writeFile(path.join(staging, 'package.json'), JSON.stringify({
       name: 'tempdesk-docs', productName: 'TempDesk Docs', version, main: 'main.cjs',
       description: 'Offline documentation for TempDesk', author: appPackage.author, license: appPackage.license,
@@ -122,7 +124,7 @@ async function main() {
         electronVersion: appPackage.devDependencies.electron,
         npmRebuild: false,
         directories: { output },
-        files: ['main.cjs', 'package.json'],
+        files: ['main.cjs', 'preload.cjs', 'school.cjs', 'package.json'],
         extraResources: [{ from: website, to: 'website' }],
         win: { icon: path.join(root, 'deployer', 'assets', 'tempdesk.ico'), forceCodeSigning: false },
         portable: { artifactName: 'TempDeskDocs-${version}-portable.exe' },

@@ -5,13 +5,18 @@
   'use strict';
   var ROOT = (document.querySelector('meta[name="td-root"]') || { content: './' }).content || './';
   var offlineReader = window.location.protocol === 'tempdesk-docs:' && window.location.hostname === 'guide';
+  var readerSchool = { available: !offlineReader, enabled: false };
+  var readerSchoolArea, schoolControlledNodes = [];
+  function readerSchoolActive() { return offlineReader && (!readerSchool.available || readerSchool.enabled); }
   var LS = {
     get: function (k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
     set: function (k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
     del: function (k) { try { localStorage.removeItem(k); return true; } catch (e) { return false; } }
   };
+  var savedLanguage = LS.get('td.lang', 'en');
   var prefs = {
-    lang: LS.get('td.lang', 'en'), motion: LS.get('td.motion', 'full'), theme: LS.get('td.theme', 'system'), size: LS.get('td.size', '1')
+    get lang() { return readerSchoolActive() ? 'en' : savedLanguage; },
+    motion: LS.get('td.motion', 'full'), theme: LS.get('td.theme', 'system'), size: LS.get('td.size', '1')
   };
   if (offlineReader) {
     var storedVolume = Number(LS.get('td.soundVolume', '60'));
@@ -83,7 +88,8 @@
     if (tk) document.title = t(tk.content, null, document.title.split(' | ')[0]) + ' | TempDesk';
   }
   function setLang(l) {
-    prefs.lang = l; LS.set('td.lang', l); applyPrefs();
+    if (readerSchoolActive()) return Promise.resolve();
+    savedLanguage = l; LS.set('td.lang', l); applyPrefs();
     return Promise.all([load('en'), l === 'en' ? null : load('zh-HK')]).then(function () { translateAll(); fire(); });
   }
   function fire() { ready.forEach(function (f) { try { f(); } catch (e) { console.error('A local interface update failed.'); } }); }
@@ -92,6 +98,8 @@
   var WORDING_KEY = 'td.wording';
   var wordingCount = 0, wordingOperation = 0;
   function loadWording() {
+    wordingCount = 0;
+    if (readerSchoolActive()) { translator = function (s) { return s; }; return 'none'; }
     var raw = LS.get(WORDING_KEY, null);
     if (!raw || !window.TempDeskWording) { translator = function (s) { return s; }; return 'none'; }
     try {
@@ -177,7 +185,7 @@
     readerFeedback.audio = null;
   }
   function playReaderCue(accepted) {
-    if (!prefs.actionSounds || !prefs.soundVolume || document.hidden) return;
+    if (readerSchoolActive() || !prefs.actionSounds || !prefs.soundVolume || document.hidden) return;
     try {
       var audio = new Audio('tempdesk-docs-audio://local/' + (accepted ? 'tada.wav' : 'invalid.wav'));
       readerFeedback.audio = audio;
@@ -260,6 +268,7 @@
     showReaderOutcome(false);
   }
   async function importWordingFile(file) {
+    if (readerSchoolActive()) return;
     var operation = ++wordingOperation;
     if (!file) { rejectWording('fileCount'); return; }
     if (!/\.json$/i.test(file.name) && file.type !== 'application/json') { rejectWording('fileType'); return; }
@@ -292,7 +301,7 @@
     var rejection = h('div', { class: 'notice warn reader-wording-rejection', hidden: true }, [message, dismiss]);
     readerFeedback = { live: live, celebration: celebration, headline: headline, message: message,
       rejection: rejection, pendingRejection: false };
-    document.body.append(live, celebration, rejection);
+    [live, celebration, rejection].forEach(function (node) { appendSchoolControlled(document.body, node); });
     ready.push(function () {
       if (!rejection.hidden) copyReaderFeedback(message, wordingStateEl);
     });
@@ -338,6 +347,64 @@
       level,
     ]);
   }
+  function appendSchoolControlled(parent, element) {
+    if (!offlineReader) { parent.appendChild(element); return; }
+    var position = document.createComment('local setting');
+    parent.appendChild(position);
+    schoolControlledNodes.push({ position: position, element: element });
+    if (!readerSchoolActive()) position.after(element);
+  }
+  function applyReaderSchool(next) {
+    var before = readerSchoolActive();
+    readerSchool = next;
+    var active = readerSchoolActive();
+    if (before === active) {
+      if (palette && !palette.hidden) renderPalette();
+      return;
+    }
+    var previousFocus = document.activeElement;
+    var focusRemoved = schoolControlledNodes.some(function (item) { return item.element.contains(previousFocus); });
+    wordingOperation++;
+    if (active) {
+      resetReaderFeedback();
+      document.querySelectorAll('.toast').forEach(function (element) { element.remove(); });
+    }
+    schoolControlledNodes.forEach(function (item) {
+      if (active) item.element.remove();
+      else item.position.after(item.element);
+    });
+    wordingState = loadWording();
+    wordingClearButton.disabled = wordingState === 'none';
+    wordingMessage(wordingState, wordingState === 'loaded' ? String(wordingCount) : '');
+    applyPrefs();
+    if (active) {
+      translateAll();
+      if (palette && !palette.hidden) renderPalette();
+    }
+    Promise.all([load('en'), prefs.lang === 'en' ? null : load('zh-HK')]).then(function () {
+      translateAll();
+      fire();
+      if (palette && !palette.hidden) renderPalette();
+    });
+    if (focusRemoved && !settingsSheet.hidden) {
+      requestAnimationFrame(function () {
+        var target = readerSchoolArea?.querySelector('button');
+        if (target) target.focus();
+      });
+    }
+  }
+  function openReaderSchoolControls() {
+    var script = h('script', { src: ROOT + 'assets/reader-school-settings.js' });
+    script.addEventListener('load', function () {
+      window.TempDeskReaderSchoolSettings.mount(readerSchoolArea, window.TempDeskReaderSchool, h, t, applyReaderSchool);
+    }, { once: true });
+    script.addEventListener('error', function () {
+      script.remove();
+      readerSchoolArea.replaceChildren(h('p', { text: t('readerSchool.unavailable'), role: 'status' }),
+        h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: openReaderSchoolControls }, [t('readerSchool.retry')]));
+    }, { once: true });
+    document.head.appendChild(script);
+  }
   function buildSettings() {
     settingsSheet = h('div', { class: 'sheet', id: 'td-settings', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'td-settings-title', hidden: true });
     var panel = h('div', { class: 'sheet-panel', 'data-search-surface': 'site-settings', 'data-search-items': '.set-group', 'data-search-mount': '.sheet-head', 'data-search-label': 'settings.title' });
@@ -345,7 +412,7 @@
       h('h2', { id: 'td-settings-title', 'data-i18n': 'settings.title' }, ['Settings']),
       h('button', { class: 'iconbtn', type: 'button', html: CLOSE, 'data-i18n-attr': 'aria-label:common.close', 'aria-label': 'Close', onclick: function () { closeSheet(settingsSheet); } })
     ]));
-    panel.appendChild(h('div', { class: 'set-group', id: 'set-language' }, [h('b', { 'data-i18n': 'settings.language' }, ['Language']),
+    appendSchoolControlled(panel, h('div', { class: 'set-group', id: 'set-language' }, [h('b', { 'data-i18n': 'settings.language' }, ['Language']),
       seg('Language', [['en', 'settings.lang.en', 'English'], ['zh-HK', 'settings.lang.zh', 'Cantonese (Traditional Chinese, Hong Kong)'], ['bi', 'settings.lang.bi', 'Bilingual']], prefs.lang, setLang)]));
     panel.appendChild(h('div', { class: 'set-group', id: 'set-motion' }, [h('b', { 'data-i18n': 'settings.motion' }, ['Motion']),
       seg('Motion', [['full', 'settings.motion.full', 'Full'], ['reduced', 'settings.motion.reduced', 'Reduced'], ['off', 'settings.motion.off', 'Off']], prefs.motion, function (v) { prefs.motion = v; LS.set('td.motion', v); applyPrefs(); }),
@@ -371,7 +438,7 @@
       file.value = '';
       if (f) void importWordingFile(f);
     });
-    panel.appendChild(h('div', { class: 'set-group', id: 'set-wording' }, [
+    appendSchoolControlled(panel, h('div', { class: 'set-group', id: 'set-wording' }, [
       h('b', { 'data-i18n': 'wording.title' }, ['Personal wording']),
       h('span', { style: 'color:var(--muted);font-size:.88rem', 'data-i18n': 'wording.help' }, ['Upload a JSON file with your own words for the interface text. It stays in this browser only and never changes generated files or code.']),
       h('code', { style: 'font-size:.8rem;color:var(--muted);overflow-wrap:anywhere' }, ['{"schemaVersion":1,"entries":{"Guest":"Visitor"}}']),
@@ -380,8 +447,14 @@
     ]));
     wordingClearButton.disabled = wordingState === 'none';
     if (offlineReader) {
-      panel.appendChild(h('p', { class: 'help', 'data-i18n': 'wording.dropHelp' }, ['Drop one JSON wording file anywhere in the reader.']));
-      panel.appendChild(readerSoundSettings());
+      appendSchoolControlled(panel, h('p', { class: 'help', 'data-i18n': 'wording.dropHelp' }, ['Drop one JSON wording file anywhere in the reader.']));
+      appendSchoolControlled(panel, readerSoundSettings());
+      readerSchoolArea = h('div', { class: 'set-group reader-school-settings', id: 'set-reader-school', role: 'group',
+        'aria-labelledby': 'reader-school-setting-title' }, [
+        h('b', { id: 'reader-school-setting-title', 'data-i18n': 'readerSchool.sharedSetting' }, ['Shared focus setting']),
+        h('p', { role: 'status', 'data-i18n': 'readerSchool.checking' }, ['Checking the shared setting…'])
+      ]);
+      panel.appendChild(readerSchoolArea);
     }
     panel.appendChild(h('div', { class: 'set-group' }, [h('b', { 'data-i18n': 'settings.palette' }, ['Command palette']),
       h('span', { style: 'color:var(--muted);font-size:.88rem', 'data-i18n': 'settings.palette.help' }, ['Press Ctrl+Shift+F anywhere to jump to a page, section, field or setting.'])]));
@@ -412,9 +485,11 @@
       out.push({ kind: 'field', label: e.getAttribute('data-palette-field'), sub: e.getAttribute('data-palette-group') || '', target: e });
     });
     [['set-language', 'settings.language'], ['set-motion', 'settings.motion'], ['set-theme', 'settings.theme'], ['set-size', 'settings.size'], ['set-wording', 'wording.title']].forEach(function (s) {
-      out.push({ kind: 'setting', label: t(s[1]), setting: s[0] });
+      if (document.getElementById(s[0])) out.push({ kind: 'setting', label: t(s[1]), setting: s[0] });
     });
-    if (offlineReader) out.push({ kind: 'setting', label: t('settings.actionSounds'), setting: 'set-reader-sounds' });
+    if (document.getElementById('set-reader-sounds')) out.push({ kind: 'setting', label: t('settings.actionSounds'), setting: 'set-reader-sounds' });
+    if (offlineReader) out.push({ kind: 'setting', label: readerSchool.available ? readerSchool.name : t('readerSchool.sharedSetting'),
+      sub: t('readerSchool.sharedSetting'), setting: 'set-reader-school' });
     return out;
   }
   function makeMatcher(q, useRegex, st) {
@@ -572,6 +647,7 @@
     buildPalette();
     Promise.all([load('en'), prefs.lang === 'en' ? null : load('zh-HK')]).then(function () {
       translateAll(); fire(); wireSearchSurfaces();
+      if (offlineReader) openReaderSchoolControls();
       var p = LS.get('td.pulse', '');
       if (p) { LS.del('td.pulse'); var el = document.getElementById(p); if (el) setTimeout(function () { focusTarget(el); }, 60); }
     });

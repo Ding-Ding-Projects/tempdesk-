@@ -337,6 +337,24 @@ label { font-weight: 600; font-size: .92rem; }
 .reader-sound-label { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .reader-wording-celebration[hidden], .reader-wording-rejection[hidden] { display: none; }
 .reader-sound-settings input[type="range"] { width: 100%; }
+.reader-school-settings { min-width: 0; overflow-wrap: anywhere; }
+.reader-school-settings .cta { display: flex; flex-wrap: wrap; gap: .625rem; }
+.reader-school-settings button { min-height: 48px; max-width: 100%; }
+.reader-school-form, .reader-school-field { display: grid; min-width: 0; gap: .625rem; }
+.reader-school-field { gap: .25rem; }
+.reader-school-field input {
+  min-height: 48px;
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  padding: .5rem;
+  color: var(--text);
+  background: var(--s1);
+  border: 1px solid var(--outline2);
+  border-radius: 12px;
+}
+.reader-school-note { color: var(--muted); margin: 0; }
+.reader-school-note:empty { display: none; }
 .palette-list { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; overflow: auto; }
 .palette-list li { display: flex; flex-direction: column; padding: 10px 12px; border-radius: 12px; cursor: pointer; min-height: var(--tap); justify-content: center; }
 .palette-list li[aria-selected="true"] { background: var(--primary-soft); }

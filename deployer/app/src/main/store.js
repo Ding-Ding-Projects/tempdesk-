@@ -6,11 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const Core = require('../shared/core.js');
-
-function dataRoot() {
-  const base = process.env.LOCALAPPDATA || (process.platform === 'win32' ? path.join(require('os').homedir(), 'AppData', 'Local') : path.join(require('os').homedir(), '.local', 'share'));
-  return path.join(base, 'TempDesk');
-}
+const { sharedRoot: dataRoot } = require('./school.js');
 
 const DEFAULT_SETTINGS = {
   schema: 'tempdesk-deployer-settings', version: 1,

@@ -8,6 +8,8 @@ The local v1.0.133 Portal Host from `a8fce8554a4a17955c6de843fd1207442f6bdfc2` d
 
 ## Published phone PDF
 
+The released v1.0.134 phone PDF from `23d5222dad11ef7a1232191aa2df113d8851c6a8` matched its published digest. It carries 335 phone-sized pages and 46 articles including the prepared wiki. All 203 measured tap targets resolve. [v1.0.134 release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.134)
+
 The normal v1.0.129 release supplied a 327-page phone PDF bound to `19f4d61cf5b633754bab40db278eb4d9ff4241af`. Its downloaded bytes matched the release manifest and published digest. The PDF contains 45 articles, including the prepared operator wiki. All 193 internal links have usable tap rectangles and resolved destinations. Inspection covered the contents, the overview, and the wiki opening page. [Phone PDF receipt](docs/evidence/phone-edition-v129.json)
 
 The normal v1.0.130 PDF from `fedc5b4a3f7b4015b2de3fdc65c0a53b74294691` matched its own digest, the same 45-article inventory and all 193 tap rectangles. Its prepared wiki opening page rendered identically to the inspected v1.0.129 page. [v1.0.130 release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.130)
@@ -15,6 +17,10 @@ The normal v1.0.130 PDF from `fedc5b4a3f7b4015b2de3fdc65c0a53b74294691` matched 
 The downloaded v1.0.132 phone PDF matched the release digest and embedded revision `e86d1c8ac25534e9fd17bfbc98da101b03b7973b`. Its 331 phone-sized pages contain 46 articles including the prepared wiki. All 202 internal link rectangles resolved. The inspected HTTPS chapter begins on page 169. [v1.0.132 release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.132) · [PDF structure receipt](docs/evidence/portal-host-https-a8fce85/receipt.json)
 
 The downloaded v1.0.133 phone PDF matched the release digest and embedded revision `cb8e00a64e45f3674a090bbc134a1d08bfb9eb6c`. All 46 table-of-contents entries and 203 link rectangles resolved across 334 pages. The HTTPS chapter begins on page 171 and the prepared wiki begins on page 332. The released v1.0.133 reader and website served both HTTPS setup images. The runtime receipt and view inventory were missing from both outputs. The shared documentation builder now lists those two reviewed files for local delivery. [v1.0.133 release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.133)
+
+## Shared reader focus setting
+
+The reader Settings control uses the existing shared local record and PIN verifier from the Deployer. The reader switches its interface to English while the shared mode is active and suspends the language, personal wording, and action sound controls. Neutral appearance controls stay available. The reader retains its stored preferences for verified unlock. The shared watcher refreshes both native applications. The implemented preference scope and the remaining reader article and index filtering are recorded separately. [Setting guide](docs/OFFLINE-GUIDE.md#use-the-shared-focus-setting) · [Design handoff](design/offline-school/HANDOFF.md)
 
 ## Bilingual offline reader feedback
 

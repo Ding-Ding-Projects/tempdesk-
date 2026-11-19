@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline reader Settings</title>
+<link rel="stylesheet" href="../../site/assets/site.css" onerror="this.onerror=null;this.href='../../site/assets/site.css'">
+<link rel="stylesheet" href="school.css"></head><body><x-dc><div class="board wide" data-motion="{{motion}}" data-accent="{{accentColor}}" style="--board-accent:{{accentColor}}">
+<header><strong>TempDesk Offline Guide</strong><button id="open-settings">Settings</button></header>
+<main><article><small>Operator guide</small><h1>Prepare a shared workspace</h1><p>Review the setup steps before opening the workspace.</p><label><input type="checkbox"> Check the available workspace</label></article>
+<section class="settings" aria-labelledby="heading"><h2 id="heading">Settings</h2><button id="close-settings">Close settings</button><label id="searchlabel" for="query">Search settings</label><input type="search" id="query" autocomplete="off">
+<div id="card" class="set-group" tabindex="-1"></div><div id="result" role="status" aria-live="polite"></div><div id="others"></div></section></main>
+<footer><label>Design state <select id="scene"><option>off</option><option>enable</option><option>on</option><option>unlock</option><option value="incorrect">Unlock: incorrect PIN</option><option value="rename-incorrect">Rename: incorrect PIN</option><option value="rename-success">Rename: accepted example</option><option>rename</option><option>unavailable</option></select></label><small>Design preview. Credential fields stay empty.</small></footer></div></x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1120, "height": 820}, "accentColor": {"type": "color", "default": "#006A61", "editor": "color", "label": "Accent colour"}, "motion": {"type": "boolean", "default": true, "editor": "toggle", "label": "Motion"}}'>class Component extends DCLogic {renderVals(){return {accentColor:this.props?.accentColor??"#006A61",motion:this.props?.motion??true};}}</script><script src="school.js"></script></body></html>
