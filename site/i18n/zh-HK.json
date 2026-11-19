@@ -1468,5 +1468,17 @@
   "reader.kiosk": "自助服務站",
   "reader.hosted": "公開網站同工具",
   "reader.offline": "離線文件閱讀器",
-  "reader.delivery": "項目交付"
+  "reader.delivery": "項目交付",
+ "docs.guide.commons.workstation.title": "準備單座 Windows 11 工作站",
+ "docs.guide.commons.workstation.summary": "用呢張清單驗證一個受限制嘅遠端桌面。剔選只會記低你自己嘅進度；實際座位驗證通過前，請保持目的地停用。",
+ "docs.guide.commons.workstation.network": "透過隔離嘅實驗室網絡連接閘道同目錄。登記前，請檢查 DNS、實際防火牆規則同獲准嘅閘道路線。",
+ "docs.guide.commons.workstation.media": "選用已授權並受支援嘅安裝媒體。建立關機狀態嘅虛擬機器前，請將映像嘅 SHA-256 同發行商提供嘅相同版本數值核對。",
+ "docs.guide.commons.workstation.firmware": "喺 VMware Workstation 啟用由操作員掌管密碼嘅加密，再新增 TPM 2.0。無論用邊個虛擬化平台，安裝前都要確認安全開機同 TPM 2.0。",
+ "docs.guide.commons.workstation.domain": "安裝專業版、企業版或教育版，指定獨一嘅電腦名稱，加入實驗室網域並套用監察原則。確認 NLA、受信任嘅伺服器身分同實際重新導向限制。",
+ "docs.guide.commons.workstation.broker": "為呢部工作站登記私人 HTTPS 預約服務。服務確認座位可用而且只向獲預約嘅標準帳戶授權之前，狀態都係待驗證。",
+ "docs.guide.commons.workstation.download": "建立有期限嘅測試預約，喺確認預約嘅瀏覽器下載 RDP 附件；時限係十分鐘或帳戶到期，以較早者為準。核對目的地同使用者名稱。",
+ "docs.guide.commons.workstation.session": "用確認頁提供嘅憑證經受信閘道登入。確認剪貼簿、磁碟同印表機均不可重新導向，而且第二位訪客無法預約已佔用嘅座位。",
+ "docs.guide.commons.workstation.release": "保持連線直到到期。確認原有工作階段已結束、到期帳戶無法再次登入、預約服務已撤銷授權，之後先接受另一個預約。未取得嘅結果要標示為待驗證。",
+ "docs.guide.link.workstation": "工作站準備同登記",
+ "docs.guide.link.configureSeat": "設定單座目的地"
 }
