@@ -65,7 +65,8 @@
 - [x] Generate a phone-sized PDF from the documentation and prepared wiki, verify its contents and internal links, and attach it to the normal release. [Release readback](docs/evidence/documentation-disclosures-v114.json)
 - [x] Build and launch the standalone documentation reader locally. Verify offline search, the Virtual Commons guide, and the prepared operator wiki.
 - [x] Verify the packaged offline reader's file drop, Settings replacement, rejection and keyboard recovery, reduced motion, mute, reload, and both local audio starts. [Reader receipt](docs/evidence/offline-wording-328bb97/receipt.json)
-- [ ] Verify reader wording across all language and theme modes, complete sound and School mode behavior, and verify the matching public release.
+- [x] Verify localized reader feedback in English, Cantonese, and bilingual modes across the two themes, widths, and four emulated scales. Verify keyboard dismissal, a rejected Settings selection after close, and the skip link. [Language and layout receipt](docs/evidence/offline-wording-locales-117d962/receipt.json)
+- [ ] Complete reader wording acceptance after process restart and blocked storage. Complete sound and School mode behavior, and verify the matching release for the bilingual changes.
 - [x] Verify the standalone documentation executable from a normal release. [Offline documentation walkthrough](README.md#standalone-offline-documentation)
 - [x] Verify the published v1.0.122 documentation reader preserves the exact bytes of its bundled evidence and feature inventory. [Release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.122)
 - [x] Open the released v1.0.123 reader, exercise the dedicated workstation checklist, and verify the bundled guest Settings image and receipt. [Release and reader evidence](docs/evidence/portal-rollout-v123.json)

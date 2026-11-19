@@ -223,10 +223,10 @@
         "offline": {
           "state": "partial",
           "method": "runtime",
-          "revision": "328bb972125714368dcb055a0f3f9ff936c5902b",
-          "reference": "docs/evidence/offline-wording-328bb97/receipt.json",
-          "observation": "The packaged reader saved a trusted drop, applied a replacement through Settings, kept the active wording on rejection, retained the replacement on reload, and restored shipped wording on keyboard clear.",
-          "remaining": "Verify persistent wording after a process restart and every dynamic wording surface in all supported language modes."
+          "revision": "117d962e0ca0962d08039b338f7aac0f3ec66cf5",
+          "reference": "docs/evidence/offline-wording-locales-117d962/receipt.json",
+          "observation": "The packaged reader localized standard import outcomes in English, Cantonese, and bilingual modes. The named sample appeared verbatim, and a rejected Settings selection remained dismissible after the sheet closed.",
+          "remaining": "Verify persistence after a process restart, blocked storage, and the remaining dynamic wording surfaces."
         },
         "management": {
           "state": "partial",
@@ -269,10 +269,10 @@
         "offline": {
           "state": "partial",
           "method": "runtime",
-          "revision": "328bb972125714368dcb055a0f3f9ff936c5902b",
-          "reference": "docs/evidence/offline-wording-328bb97/receipt.json",
-          "observation": "The packaged reader accepted a trusted window drop, kept focus through confirmation, and restored the prior control after a rejected drop was dismissed. Reduced motion used a static confirmation.",
-          "remaining": "Verify blocked storage, repeated drops, remaining reader pages and the full language, theme and scale matrix."
+          "revision": "117d962e0ca0962d08039b338f7aac0f3ec66cf5",
+          "reference": "docs/evidence/offline-wording-locales-117d962/receipt.json",
+          "observation": "Trusted valid and rejected drops retained their localized feedback and layout in 48 language, theme, width, and emulated-scale combinations. The confirmation was static in reduced motion, and Dismiss returned keyboard focus.",
+          "remaining": "Verify blocked storage, process restart, concurrent file reads, and remaining reader pages."
         }
       }
     },

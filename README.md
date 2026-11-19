@@ -724,17 +724,17 @@ The [evidence inventory](docs/evidence/standalone-docs-inventory.json) records t
 
 ### Use personal wording in the offline reader
 
-1. Drop a valid wording JSON file into TempDesk Docs. The reader saves the new wording locally and shows a confirmation while the previous control keeps focus.
+1. Choose **Bilingual** in Settings, then drop a valid wording JSON file into TempDesk Docs. The reader saves the new wording locally and shows English and Cantonese while the previous control keeps focus.
 
-   ![Offline reader showing the personal wording applied confirmation](docs/evidence/offline-wording-328bb97/01-wording-applied.png)
+   ![Offline reader showing the applied confirmation in English and Cantonese](docs/evidence/offline-wording-locales-117d962/01-bilingual-wording-applied.png)
 
 2. Drop an invalid file. The previous wording stays active. Focus **Dismiss** and press Enter to close the notice and return to the prior control.
 
-   ![Narrow offline reader showing the invalid JSON notice and Dismiss button](docs/evidence/offline-wording-328bb97/02-rejected-wording-narrow.png)
+   ![Narrow offline reader showing the bilingual invalid-file notice and Dismiss button](docs/evidence/offline-wording-locales-117d962/02-bilingual-rejection-narrow.png)
 
-3. Open **Settings** to choose a replacement, turn off **Action sounds**, or select **Clear** to restore the original wording.
+3. Open **Settings** to choose a replacement, turn off **Action sounds**, or select **Clear** to restore the original wording. After a rejected selection, close Settings to return to the dismissible notice.
 
-The [offline reader receipt](docs/evidence/offline-wording-328bb97/receipt.json) binds these views to the local portable build and records the file chooser, reload, reduced-motion and audio checks.
+The [language and layout receipt](docs/evidence/offline-wording-locales-117d962/receipt.json) binds the views to the local portable build and records all 48 combinations. The [earlier reader receipt](docs/evidence/offline-wording-328bb97/receipt.json) records the English workflow, reload, clear, and audio checks from its own build.
 
 ## Offline checkout guide
 

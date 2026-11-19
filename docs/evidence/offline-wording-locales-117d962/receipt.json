@@ -1,0 +1,564 @@
+{
+  "schemaVersion": 1,
+  "source": "117d962e0ca0962d08039b338f7aac0f3ec66cf5",
+  "version": "1.0.130",
+  "artifactSha256": "1184f1a9608c482eb412fefada71cfb9d493b2bc4a04dbaa011ec60faea49a88",
+  "artifactBuiltAt": "2026-11-19T16:57:39.176Z",
+  "method": "Portable executable on an isolated hidden Windows desktop with an exact DevTools page.",
+  "checks": [
+    "Reader viewport and scale applied",
+    "Named bilingual import displayed the approved label exactly once",
+    "Settings fallback reopened",
+    "Settings file input is present",
+    "Rejection appears in Settings while it is open",
+    "Settings rejection remains visible after closing the sheet",
+    "Settings handoff has the correct primary language",
+    "Settings handoff retains the Cantonese language boundary",
+    "Dismissal of Settings rejection restored focus",
+    "Reader reopened before keyboard check",
+    "Tab reveals the skip link and its original navigation target",
+    "No external reader requests",
+    "The muted matrix produced no audio requests or playback",
+    "No uncaught reader exceptions or console errors"
+  ],
+  "matrix": [
+    {
+      "locale": "en",
+      "theme": "light",
+      "width": 360,
+      "scale": 1,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "light",
+      "width": 360,
+      "scale": 1.25,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "light",
+      "width": 360,
+      "scale": 1.5,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "light",
+      "width": 360,
+      "scale": 2,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "light",
+      "width": 1440,
+      "scale": 1,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "light",
+      "width": 1440,
+      "scale": 1.25,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "light",
+      "width": 1440,
+      "scale": 1.5,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "light",
+      "width": 1440,
+      "scale": 2,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "dark",
+      "width": 360,
+      "scale": 1,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "dark",
+      "width": 360,
+      "scale": 1.25,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "dark",
+      "width": 360,
+      "scale": 1.5,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "dark",
+      "width": 360,
+      "scale": 2,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "dark",
+      "width": 1440,
+      "scale": 1,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "dark",
+      "width": 1440,
+      "scale": 1.25,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "dark",
+      "width": 1440,
+      "scale": 1.5,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "en",
+      "theme": "dark",
+      "width": 1440,
+      "scale": 2,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "light",
+      "width": 360,
+      "scale": 1,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "light",
+      "width": 360,
+      "scale": 1.25,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "light",
+      "width": 360,
+      "scale": 1.5,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "light",
+      "width": 360,
+      "scale": 2,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "light",
+      "width": 1440,
+      "scale": 1,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "light",
+      "width": 1440,
+      "scale": 1.25,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "light",
+      "width": 1440,
+      "scale": 1.5,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "light",
+      "width": 1440,
+      "scale": 2,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "dark",
+      "width": 360,
+      "scale": 1,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "dark",
+      "width": 360,
+      "scale": 1.25,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "dark",
+      "width": 360,
+      "scale": 1.5,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "dark",
+      "width": 360,
+      "scale": 2,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "dark",
+      "width": 1440,
+      "scale": 1,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "dark",
+      "width": 1440,
+      "scale": 1.25,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "dark",
+      "width": 1440,
+      "scale": 1.5,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "zh-HK",
+      "theme": "dark",
+      "width": 1440,
+      "scale": 2,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "light",
+      "width": 360,
+      "scale": 1,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "light",
+      "width": 360,
+      "scale": 1.25,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "light",
+      "width": 360,
+      "scale": 1.5,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "light",
+      "width": 360,
+      "scale": 2,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "light",
+      "width": 1440,
+      "scale": 1,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "light",
+      "width": 1440,
+      "scale": 1.25,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "light",
+      "width": 1440,
+      "scale": 1.5,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "light",
+      "width": 1440,
+      "scale": 2,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "dark",
+      "width": 360,
+      "scale": 1,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "dark",
+      "width": 360,
+      "scale": 1.25,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "dark",
+      "width": 360,
+      "scale": 1.5,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "dark",
+      "width": 360,
+      "scale": 2,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "dark",
+      "width": 1440,
+      "scale": 1,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "dark",
+      "width": 1440,
+      "scale": 1.25,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "dark",
+      "width": 1440,
+      "scale": 1.5,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    },
+    {
+      "locale": "bi",
+      "theme": "dark",
+      "width": 1440,
+      "scale": 2,
+      "celebrationFits": true,
+      "rejectionFits": true,
+      "languageMarkup": true,
+      "dismissHeight": 48
+    }
+  ],
+  "media": {
+    "outputMutedDuringVerification": true,
+    "requestsWhileMuted": 0
+  },
+  "publishedBaseline": {
+    "version": "1.0.128",
+    "source": "ea64e0598663869d772c1624789be7e9d99100ec",
+    "readerSha256": "6efe2d0f81852131f86e0172a73114937789dfcc621035c5a04ad77a57f8763c",
+    "documentationPdfSha256": "ba5e1f5f98d6b3ff6e6c86cf366675205f4a12bc2e7a72b9d94369ccbbcb92d7",
+    "bundledFilesMatched": 19,
+    "isolatedProfileRemoved": true
+  },
+  "cleanup": {
+    "ownedProcessClosed": true,
+    "isolatedDesktopReleased": true,
+    "disposableProfileRemoved": true
+  },
+  "scope": "Three language modes, two themes, two widths and four emulated scales in the isolated portable reader. The published baseline is verified separately. Native guest checkout has a separate acceptance route.",
+  "records": [
+    {
+      "id": "01-bilingual-wording-applied",
+      "active": true,
+      "path": "docs/evidence/offline-wording-locales-117d962/01-bilingual-wording-applied.png",
+      "sourceCommit": "117d962e0ca0962d08039b338f7aac0f3ec66cf5",
+      "artifactSha256": "1184f1a9608c482eb412fefada71cfb9d493b2bc4a04dbaa011ec60faea49a88",
+      "captureSha256": "710ac4b5f78caa6fcd7d6a67001937b2e4183faa1456d350ecc5171728b64bc5",
+      "screen": "Reader home",
+      "state": "01-bilingual-wording-applied",
+      "theme": "dark",
+      "language": "bi",
+      "viewportWidth": 1440,
+      "viewportHeight": 800,
+      "scale": 1,
+      "interactionProofId": "01-bilingual-wording-applied",
+      "interactionReceiptSha256": "9e05344c182214853513ac8df96404edec7bbdd09fa149302cb8f076840a69a6",
+      "inspectionStatus": "inspected",
+      "capturedAt": "2026-11-19T17:02:22.472Z"
+    },
+    {
+      "id": "02-bilingual-rejection-narrow",
+      "active": true,
+      "path": "docs/evidence/offline-wording-locales-117d962/02-bilingual-rejection-narrow.png",
+      "sourceCommit": "117d962e0ca0962d08039b338f7aac0f3ec66cf5",
+      "artifactSha256": "1184f1a9608c482eb412fefada71cfb9d493b2bc4a04dbaa011ec60faea49a88",
+      "captureSha256": "e56b70f37002a96aeba12134b68af56b2bb40d7d86135c0c51a2194696257acd",
+      "screen": "Reader home",
+      "state": "02-bilingual-rejection-narrow",
+      "theme": "light",
+      "language": "bi",
+      "viewportWidth": 360,
+      "viewportHeight": 800,
+      "scale": 1,
+      "interactionProofId": "02-bilingual-rejection-narrow",
+      "interactionReceiptSha256": "9e05344c182214853513ac8df96404edec7bbdd09fa149302cb8f076840a69a6",
+      "inspectionStatus": "inspected",
+      "capturedAt": "2026-11-19T17:02:20.720Z"
+    }
+  ]
+}

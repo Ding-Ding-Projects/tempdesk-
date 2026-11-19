@@ -1,5 +1,15 @@
 # TempDesk verification handoff
 
+## Bilingual offline reader feedback
+
+The local v1.0.130 reader built from `117d962e0ca0962d08039b338f7aac0f3ec66cf5` exercised accepted and rejected files in English, Cantonese, and bilingual modes across two themes, 360 px and 1440 px widths, and four emulated scales. Both outcomes fit in all 48 combinations. The rejection retained its Cantonese language tag, and Dismiss remained reachable at 48 px or larger and returned keyboard focus. An invalid Settings selection remained dismissible after the sheet closed. The skip link stayed entirely above the viewport while unfocused and appeared on Tab. The run used muted audio output and an isolated profile. [Visual and measured receipt](docs/evidence/offline-wording-locales-117d962/receipt.json)
+
+The normal v1.0.128 release matches source `ea64e0598663869d772c1624789be7e9d99100ec`. Both downloaded documentation files matched the release manifest and stored digests. The executable opened the site, workstation guide, search, prepared wiki, and feature inventory offline. Nineteen bundled files matched their source bytes. The isolated profile was removed. Verify the later release separately for the bilingual and skip-link changes. [v1.0.128 release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.128)
+
+## Current native lab readiness
+
+On 2026-11-19 at 16:49 UTC, the Core guest reported a synchronized directory and ready global catalog, and its directory-controller DNS record matched the reported host. The agent socket accepted TCP, while the client rejected the certificate before it could read the HTTPS health response. The separate Desktop Experience guest on its host-only segment answered its management listener. Its Remote Desktop port did not answer. The two guests occupied different virtual networks. The Desktop Experience guest still needs its initial credential setup and a private route to the directory. The dedicated Windows 11 workstation still needs its approved virtual TPM, setup, and enrollment. No native checkout or expiry was verified.
+
 ## Offline reader personal wording
 
 The portable reader built from `328bb972125714368dcb055a0f3f9ff936c5902b` saved and applied a trusted file drop, preserved the previous wording after a rejected file, and replaced it through Settings. Keyboard dismissal restored focus. Wording and mute survived a reload, and keyboard Clear removed the saved wording. Reduced motion showed a static confirmation. The two local audio files returned 200 and each started playback with output muted. The reader made no external requests during the run and its isolated profile was removed. The wide and narrow screenshots and exact build hashes are in the [reader receipt](docs/evidence/offline-wording-328bb97/receipt.json). Product test suites, physical audio output, full language and theme coverage, and publication of this reader build remain unverified.
