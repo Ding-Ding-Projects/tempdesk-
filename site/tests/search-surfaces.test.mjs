@@ -56,16 +56,13 @@ test('catalogue: every entry exists in its source file and is wired to the regex
 
 test('catalogue: every id used in the sources is catalogued (no unregistered surface ids)', () => {
   const ids = new Set(catalog.surfaces.map((s) => s.id));
-  const files = sourceFiles();
-  const used = [];
-  for (const f of files) {
-    const src = read(f);
-    // ids appear as data-search-surface="id", "search-surface: id" comments, { id: 'id' } options and
-    // withFilter(list, 'id', 'label.key') calls
-    for (const m of src.matchAll(/(?:data-search-surface[=:]\s*['"]|search-surface:\s*|(?:attachListFilter|attachTabCloser)\([^\n]*?\bid:\s*'|'(?=[a-z0-9]+(?:-[a-z0-9]+)+',\s*'[a-zA-Z]+\.[a-zA-Z.]+'\s*[,)]))([a-z0-9]+(?:-[a-z0-9]+)+)/g)) {
-      used.push([m[1], f]);
-    }
-  }
+  const patterns = [
+    /(?:data-search-surface[=:]\s*['"]|search-surface:\s*|(?:attachListFilter|attachTabCloser)\([^\n]*?\bid:\s*')([a-z0-9]+(?:-[a-z0-9]+)+)/g,
+    /\bwithFilter\([^\n]*?,\s*'([a-z0-9]+(?:-[a-z0-9]+)*)',\s*'[a-zA-Z]+\.[a-zA-Z.]+'\s*[,)]/g,
+  ];
+  const findSurfaceIds = source => patterns.flatMap(pattern => [...source.matchAll(pattern)].map(match => match[1]));
+  assert.deepEqual(findSurfaceIds("el.setAttribute('data-i18n', 'wording.applied'); withFilter(list, 'new-search', 'words.label');"), ['new-search']);
+  const used = sourceFiles().flatMap(file => findSurfaceIds(read(file)).map(id => [id, file]));
   assert.ok(used.length > 30);
   for (const [id, f] of used) assert.ok(ids.has(id), `${f}: search surface "${id}" is not in search-surfaces.json`);
 });
