@@ -264,7 +264,8 @@ try {
             throw ('The LAN endpoint did not confirm the expected running build for '+$service.label+'.')
         }
         $startedAt = [DateTimeOffset]::Parse($fields[2]).UtcDateTime.ToString('yyyy-MM-dd HH:mm:ss')
-        Write-Host ('{0} {1} | {2} | LAN {3} | Started {4} UTC | Verified {5} UTC' -f $service.label,$receipt.version,$url,$address,$startedAt,[DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm:ss'))
+        if ($service.https) { Write-Host ('{0} LAN address {1}' -f $service.label,$address) }
+        Write-Host ('{0} {1} | {2} | Started {3} UTC | Verified {4} UTC' -f $service.label,$receipt.version,$url,$startedAt,[DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm:ss'))
       } catch {
         $operationPassed = $false
         [Console]::Error.WriteLine($_.Exception.Message)

@@ -56,7 +56,9 @@
 - [x] Add guest Settings with independent search, display controls and a mute switch. Exercise the Tools route, cue outcomes and mute across a reload in an isolated build. [Guest walkthrough](README.md#guest-settings-and-action-sounds)
 - [x] Enlarge the measured narrow Settings targets and verify the rebuilt layout across 48 language, theme, width and emulated scale combinations. [Illustrated and measured evidence](README.md#use-settings-on-a-narrow-screen)
 - [x] Deploy the published Settings sizing update and verify the live interaction. [Live rollout receipt](docs/evidence/portal-rollout-v126.json)
-- [ ] Verify trusted HTTPS delivery on the lab portals.
+- [x] Verify both HTTPS roles in an isolated Compose project, including trusted certificates, secure cookies, blocked invalid settings, the default HTTP path, and a guest sign-in lifecycle. [Runtime receipt](docs/evidence/portal-tls-7ceecb3daf.json)
+- [ ] Verify trusted HTTPS delivery on the lab portals from a separate LAN client with the approved deployment certificates. Verify the one-click HTTPS startup path against the published image.
+- [x] Read back the published v1.0.129 phone PDF. Verify its page size, complete article and prepared wiki inventory, and tappable internal navigation. [Phone PDF receipt](docs/evidence/phone-edition-v129.json)
 - [ ] Verify the deployed guest and kiosk Settings flows, including the full language, theme, scale, accessibility and School mode coverage.
 - [ ] Complete management personal-wording verification across the remaining dynamic copy surfaces.
 - [x] Verify the rebuilt management notification centre with filtered bulk actions, guarded deletion, account-scoped history and reversible local wording. [Illustrated steps and receipt](README.md#management-notification-walkthrough)

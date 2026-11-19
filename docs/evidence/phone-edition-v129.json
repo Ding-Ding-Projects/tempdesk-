@@ -1,0 +1,309 @@
+{
+  "schemaVersion": 1,
+  "releaseUrl": "https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.129",
+  "release": "v1.0.129",
+  "revision": "19f4d61cf5b633754bab40db278eb4d9ff4241af",
+  "sha256": "92e5802f798c785aefdc2014bc3187b508adde9520c6883f88b57bf3ce38d72f",
+  "pages": 327,
+  "widthPt": 298.08,
+  "heightPt": 529.92,
+  "widthMm": 105.16,
+  "heightMm": 186.94,
+  "articleCount": 45,
+  "wikiCount": 1,
+  "contentsLinks": 45,
+  "namedDestinations": 71,
+  "contentsReturnLinks": 45,
+  "crossReferences": 103,
+  "allInternalDestinationsResolved": true,
+  "bookmarksMatched": 45,
+  "externalLinks": 130,
+  "missingSectionHeadings": [],
+  "articles": [
+    {
+      "url": "features/guest-sign-ins.html",
+      "title": "Guest sign-ins",
+      "opensAtPage": 297,
+      "lastPage": 299
+    },
+    {
+      "url": "features/expiry-cleanup.html",
+      "title": "Expiry and cleanup",
+      "opensAtPage": 300,
+      "lastPage": 301
+    },
+    {
+      "url": "features/allowlist.html",
+      "title": "App allowlist",
+      "opensAtPage": 302,
+      "lastPage": 303
+    },
+    {
+      "url": "features/preset-apps.html",
+      "title": "Preset apps",
+      "opensAtPage": 304,
+      "lastPage": 305
+    },
+    {
+      "url": "features/wifi-profiles.html",
+      "title": "Wi-Fi profiles",
+      "opensAtPage": 306,
+      "lastPage": 307
+    },
+    {
+      "url": "features/admin-console.html",
+      "title": "Admin console",
+      "opensAtPage": 308,
+      "lastPage": 310
+    },
+    {
+      "url": "features/app-streaming.html",
+      "title": "App streaming",
+      "opensAtPage": 311,
+      "lastPage": 312
+    },
+    {
+      "url": "features/tempdesk-lite.html",
+      "title": "TempDesk Lite",
+      "opensAtPage": 313,
+      "lastPage": 314
+    },
+    {
+      "url": "features/answer-file-builder.html",
+      "title": "Answer File Studio",
+      "opensAtPage": 315,
+      "lastPage": 319
+    },
+    {
+      "url": "features/deployer.html",
+      "title": "Deployer app",
+      "opensAtPage": 320,
+      "lastPage": 321
+    },
+    {
+      "url": "features/personal-wording.html",
+      "title": "Personal wording",
+      "opensAtPage": 322,
+      "lastPage": 323
+    },
+    {
+      "url": "features/language-modes.html",
+      "title": "Language modes",
+      "opensAtPage": 324,
+      "lastPage": 324
+    },
+    {
+      "url": "docs/overview.html",
+      "title": "Overview",
+      "opensAtPage": 6,
+      "lastPage": 95
+    },
+    {
+      "url": "docs/api.html",
+      "title": "TempDesk Agent API (v1)",
+      "opensAtPage": 96,
+      "lastPage": 116
+    },
+    {
+      "url": "docs/feature-inventory.html",
+      "title": "Feature verification inventory",
+      "opensAtPage": 117,
+      "lastPage": 119
+    },
+    {
+      "url": "docs/feature-inventory-zh-hk.html",
+      "title": "功能驗證清單",
+      "opensAtPage": 120,
+      "lastPage": 121
+    },
+    {
+      "url": "docs/offline-guide.html",
+      "title": "Read the documentation offline",
+      "opensAtPage": 122,
+      "lastPage": 125
+    },
+    {
+      "url": "docs/security.html",
+      "title": "Security model",
+      "opensAtPage": 126,
+      "lastPage": 129
+    },
+    {
+      "url": "docs/server.html",
+      "title": "TempDesk Server management",
+      "opensAtPage": 130,
+      "lastPage": 137
+    },
+    {
+      "url": "docs/virtual-commons.html",
+      "title": "Use Virtual Commons",
+      "opensAtPage": 138,
+      "lastPage": 147
+    },
+    {
+      "url": "docs/evidence-portal-history.html",
+      "title": "Prior portal captures",
+      "opensAtPage": 148,
+      "lastPage": 151
+    },
+    {
+      "url": "docs/features-readme.html",
+      "title": "TempDesk operator guides",
+      "opensAtPage": 152,
+      "lastPage": 152
+    },
+    {
+      "url": "docs/features-built-in-tools-virtual-disks.html",
+      "title": "Virtual disks in the desktop deployer",
+      "opensAtPage": 153,
+      "lastPage": 155
+    },
+    {
+      "url": "docs/features-completeness-evidence-readme.html",
+      "title": "Completeness and evidence",
+      "opensAtPage": 156,
+      "lastPage": 156
+    },
+    {
+      "url": "docs/features-completeness-evidence-capture-evidence.html",
+      "title": "Review captures and recordings",
+      "opensAtPage": 157,
+      "lastPage": 157
+    },
+    {
+      "url": "docs/features-completeness-evidence-coverage.html",
+      "title": "Read the coverage ledger",
+      "opensAtPage": 158,
+      "lastPage": 159
+    },
+    {
+      "url": "docs/features-completeness-evidence-design-and-layout.html",
+      "title": "Review reference and layout coverage",
+      "opensAtPage": 160,
+      "lastPage": 160
+    },
+    {
+      "url": "docs/features-completeness-evidence-front-screen-provenance.html",
+      "title": "Identify the running version",
+      "opensAtPage": 161,
+      "lastPage": 163
+    },
+    {
+      "url": "docs/features-http-api-readme.html",
+      "title": "Check TempDesk over HTTP",
+      "opensAtPage": 164,
+      "lastPage": 166
+    },
+    {
+      "url": "docs/features-http-api-portal-agent-key-file.html",
+      "title": "Read the agent key from a protected file",
+      "opensAtPage": 167,
+      "lastPage": 168
+    },
+    {
+      "url": "docs/features-release-pipeline-readme.html",
+      "title": "TempDesk release pipeline",
+      "opensAtPage": 169,
+      "lastPage": 170
+    },
+    {
+      "url": "docs/walkthrough-records-and-messages.html",
+      "title": "Review and export records",
+      "opensAtPage": 171,
+      "lastPage": 172
+    },
+    {
+      "url": "docs/wiki-pending-home.html",
+      "title": "TempDesk operator wiki",
+      "opensAtPage": 325,
+      "lastPage": 327
+    },
+    {
+      "url": "docs/portal-features.html",
+      "title": "Portal feature status",
+      "opensAtPage": 173,
+      "lastPage": 185
+    },
+    {
+      "url": "docs/agent.html",
+      "title": "TempDesk Agent",
+      "opensAtPage": 186,
+      "lastPage": 192
+    },
+    {
+      "url": "docs/answerfile.html",
+      "title": "TempDesk answer file catalog",
+      "opensAtPage": 193,
+      "lastPage": 220
+    },
+    {
+      "url": "docs/build-companion.html",
+      "title": "Portable build companion",
+      "opensAtPage": 221,
+      "lastPage": 222
+    },
+    {
+      "url": "docs/design.html",
+      "title": "TempDesk design",
+      "opensAtPage": 223,
+      "lastPage": 228
+    },
+    {
+      "url": "docs/kiosk.html",
+      "title": "Windows 11 RDP workstation setup",
+      "opensAtPage": 229,
+      "lastPage": 232
+    },
+    {
+      "url": "docs/portal.html",
+      "title": "TempDesk portals",
+      "opensAtPage": 233,
+      "lastPage": 254
+    },
+    {
+      "url": "docs/samba.html",
+      "title": "TempDesk Lite (Samba)",
+      "opensAtPage": 255,
+      "lastPage": 265
+    },
+    {
+      "url": "docs/apphost.html",
+      "title": "TempDesk app host",
+      "opensAtPage": 266,
+      "lastPage": 273
+    },
+    {
+      "url": "docs/kiosk-2.html",
+      "title": "Windows 11 remote workstation",
+      "opensAtPage": 274,
+      "lastPage": 286
+    },
+    {
+      "url": "docs/status-hub.html",
+      "title": "Desktop status reporting",
+      "opensAtPage": 287,
+      "lastPage": 288
+    },
+    {
+      "url": "docs/streaming.html",
+      "title": "TempDesk app streaming",
+      "opensAtPage": 289,
+      "lastPage": 296
+    }
+  ],
+  "tappableRectanglesVerified": 193,
+  "successor": {
+    "release": "v1.0.130",
+    "source": "fedc5b4a3f7b4015b2de3fdc65c0a53b74294691",
+    "sha256": "0f3e3deee60a9c757f9b39248c5aec5f6eb7430a56c7a53c623785be25bbea05",
+    "pages": 327,
+    "articleCount": 45,
+    "tappableRectangles": 193,
+    "wikiPage325MatchesInspectedEdition": true
+  },
+  "visuallyInspectedPages": [
+    1,
+    6,
+    325
+  ]
+}

@@ -16,6 +16,8 @@ The reader bundles the documentation, feature articles, Answer File Studio and B
 
 Open `TempDeskDocs-<version>-phone.pdf` from the [release assets](https://github.com/Ding-Ding-Projects/tempdesk-/releases). The PDF has 105 mm by 187 mm pages and contains the complete guides, feature articles and operator wiki from the release's documentation source. The table of contents opens each chapter directly. Use **Contents** at the start of a chapter to return to the index. Links between included articles stay inside the PDF. Links to public sources and browser tools open those sites when a connection is available.
 
+The [published v1.0.129 PDF receipt](evidence/phone-edition-v129.json) lists every article and opening page. It records the measured page sizes, linked contents, return links, cross-references, and inspected pages from that release.
+
 ## Local settings and reference links
 
 The reader keeps language, theme and other browsing preferences in its own local profile. Settings and files you open in the bundled tools are processed locally. A selected HTTPS reference or release link opens in your browser, where that destination's network requirements apply.

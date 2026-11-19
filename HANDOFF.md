@@ -1,5 +1,15 @@
 # TempDesk verification handoff
 
+## Direct portal HTTPS
+
+The locally built image from `7ceecb3daf043865a07a59fee7f21fa989242f5e` started both portal roles through the TLS Compose overlays. On the isolated loopback ports the client verified the two expected certificate chains and names, secure cookies, rejected issuer and name mismatches, and no plaintext response. A missing key stopped startup and the same image kept the default HTTP mode healthy. The isolated directory issued, checked, and removed a temporary guest account, then returned to zero. All owned fixtures were removed. The existing deployment's approved front-end certificates, a separate LAN client check, and the one-click launcher against a published HTTPS project remain open. [HTTPS verification receipt](docs/evidence/portal-tls-7ceecb3daf.json)
+
+## Published phone PDF
+
+The normal v1.0.129 release supplied a 327-page phone PDF bound to `19f4d61cf5b633754bab40db278eb4d9ff4241af`. Its downloaded bytes matched the release manifest and published digest. The PDF contains 45 articles, including the prepared operator wiki. All 193 internal links have usable tap rectangles and resolved destinations. Inspection covered the contents, the overview, and the wiki opening page. [Phone PDF receipt](docs/evidence/phone-edition-v129.json)
+
+The normal v1.0.130 PDF from `fedc5b4a3f7b4015b2de3fdc65c0a53b74294691` matched its own digest, the same 45-article inventory and all 193 tap rectangles. Its prepared wiki opening page rendered identically to the inspected v1.0.129 page. [v1.0.130 release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.130)
+
 ## Bilingual offline reader feedback
 
 The local v1.0.130 reader built from `117d962e0ca0962d08039b338f7aac0f3ec66cf5` exercised accepted and rejected files in English, Cantonese, and bilingual modes across two themes, 360 px and 1440 px widths, and four emulated scales. Both outcomes fit in all 48 combinations. The rejection retained its Cantonese language tag, and Dismiss remained reachable at 48 px or larger and returned keyboard focus. An invalid Settings selection remained dismissible after the sheet closed. The skip link stayed entirely above the viewport while unfocused and appeared on Tab. The run used muted audio output and an isolated profile. [Visual and measured receipt](docs/evidence/offline-wording-locales-117d962/receipt.json)

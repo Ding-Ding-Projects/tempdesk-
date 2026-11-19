@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "verificationStartedUtc": "2026-11-19T12:39:33.852523-05:00",
+  "revision": "7ceecb3daf043865a07a59fee7f21fa989242f5e",
+  "scope": "Isolated Docker Desktop project published to two loopback-only host ports.",
+  "imageId": "sha256:3a1dfe9adbbe283c10edcb0e8e341a58a11d959b1c867ec259afade1f385bc5d",
+  "directoryReady": true,
+  "loopbackBindingOnly": true,
+  "bothContainerHealthChecks": true,
+  "partialConfigurationRejected": true,
+  "plainHttpDefaultHealthy": true,
+  "client": {
+    "guest": {
+      "pageStatus": 200,
+      "healthStatus": 200,
+      "trustedNameAndIssuer": true,
+      "expectedLeaf": true,
+      "cookiesSecure": true,
+      "wrongNameRejected": true,
+      "unknownIssuerRejected": true,
+      "plaintextNotServed": true
+    },
+    "management": {
+      "pageStatus": 200,
+      "healthStatus": 200,
+      "trustedNameAndIssuer": true,
+      "expectedLeaf": true,
+      "cookiesSecure": true,
+      "wrongNameRejected": true,
+      "unknownIssuerRejected": true,
+      "plaintextNotServed": true
+    },
+    "temporaryGuest": {
+      "created": true,
+      "verifiedActive": true,
+      "removed": true,
+      "rejectedAfterRemoval": true
+    }
+  },
+  "emptyDirectoryAfterGuestRemoval": true,
+  "passed": true,
+  "ownedTeardown": true
+}
