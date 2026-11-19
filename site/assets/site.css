@@ -49,8 +49,8 @@ img, svg { max-width: 100%; }
 code, kbd, pre, .mono { font-family: var(--mono); }
 :focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; border-radius: 6px; }
 .sr-only { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.skip { position: absolute; left: 8px; top: -60px; z-index: 100; background: var(--inverse); color: var(--on-inverse); padding: 10px 16px; border-radius: 999px; font-weight: 700; }
-.skip:focus { top: 8px; }
+.skip { position: absolute; left: 8px; top: 8px; z-index: 100; background: var(--inverse); color: var(--on-inverse); padding: 10px 16px; border-radius: 999px; font-weight: 700; transform: translateY(calc(-100% - 16px)); }
+.skip:focus { transform: none; }
 [hidden] { display: none !important; }
 
 /* ---------- top bar ---------- */

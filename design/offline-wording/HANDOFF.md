@@ -8,6 +8,8 @@ After successful persistence, render a full-viewport, pointer-transparent, nonfo
 
 In bilingual mode, retain the Cantonese language tag and put each language on its own line. Keep a supplied display name verbatim. Show the rejected result in Settings while it is open, then give the reader its dismissible notice when Settings closes.
 
+The global skip link stays fully above the viewport while unfocused at any text height. Tab reveals it in the top gutter and preserves its keyboard navigation target.
+
 Provide localized English, Cantonese and bilingual labels for both native-sound controls, status announcements and the fallback file picker. The switch and volume use semantic keyboard-operable controls and save locally. Respect mute, volume, quiet hours, reduced sound and applicable School mode rules. Play the native success cue exactly once after committed import; play only the invalid-input cue once on rejection. Unavailable audio must not change the reported import outcome. No example alters device audio preferences.
 
 Keep an existing task checkbox or article link focused during drop and feedback. Verify tab order, focus after picker cancellation and dismissal, persistence across restart, blocked storage, repeated drops, pointer pass-through, reduced motion, native cue count and 360 px layout in the actual packaged reader. These boards provide no runtime or native-sound evidence.
