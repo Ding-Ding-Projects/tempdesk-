@@ -2,43 +2,50 @@
 (() => {
   const host = document.querySelector('[data-commons-dish]');
   const catalog = globalThis.TempDeskDimSumCatalog;
-  if (!host || !host.dataset.commonsDish || typeof catalog?.pick !== 'function') return;
+  if (!host?.dataset.commonsDish || typeof catalog?.pick !== 'function') return;
 
-  let pending;
-  let image;
-  function cancel() {
-    pending?.abort();
-    if (image && host.hidden) {
-      image.onload = image.onerror = null;
-      image.removeAttribute('src');
-    }
-  }
+  const fallback = host.querySelector('[data-photo-unavailable]');
+  const id = host.dataset.commonsDish;
+  let active;
+  let shown = false;
+  function cancel() { active?.abort(); }
+
   async function show() {
-    if (!host.hidden) return;
+    if (shown) return;
     cancel();
     const controller = new AbortController();
-    pending = controller;
+    active = controller;
+    fallback.hidden = true;
+    let image;
+    let deadline;
+    function finish(ok) {
+      clearTimeout(deadline);
+      if (image) {
+        image.onload = image.onerror = null;
+        if (!ok) image.removeAttribute('src');
+      }
+      if (active !== controller) return;
+      active = null;
+      fallback.hidden = ok;
+      if (ok) { host.append(image); shown = true; }
+    }
+    controller.signal.addEventListener('abort', () => finish(false), { once: true });
     try {
-      const id = host.dataset.commonsDish;
       const dish = await catalog.pick({ id, signal: controller.signal });
-      if (controller.signal.aborted || dish?.id !== id || !dish.photoUrl) return;
+      if (controller.signal.aborted) return;
+      if (dish?.id !== id || !dish.photoUrl) { finish(false); return; }
+      const names = host.dataset.mode === 'bi' ? [dish.english, dish.cantonese] :
+        [host.dataset.mode === 'zh-HK' ? dish.cantonese : dish.english];
       image = new Image();
-      image.alt = host.dataset.photoAlt;
+      image.alt = names.filter(name => typeof name === 'string' && name.trim()).join(' / ') || host.dataset.photoAlt;
+      image.width = 480;
       image.referrerPolicy = 'no-referrer';
       image.decoding = 'async';
-      image.style.cssText = 'display:block;max-width:100%;width:auto;height:auto;max-height:22rem;object-fit:contain';
-      image.onload = () => {
-        if (controller.signal.aborted) return;
-        image.onload = image.onerror = null;
-        host.replaceChildren(image);
-        host.hidden = false;
-      };
-      image.onerror = () => {
-        image.onload = image.onerror = null;
-        image = null;
-      };
+      image.onload = () => finish(true);
+      image.onerror = () => finish(false);
+      deadline = setTimeout(() => controller.abort(), 8000);
       image.src = dish.photoUrl;
-    } catch { /* Keep the original result available when the catalogue is offline. */ }
+    } catch { finish(false); }
   }
   window.addEventListener('pagehide', cancel);
   window.addEventListener('pageshow', event => { if (event.persisted) show(); });

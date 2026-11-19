@@ -4,9 +4,11 @@
 <section class="card lg stack">
   <h1>{{ t('Dim sum break') }}</h1>
   <p>{{ t(dish) }}</p>
-  {% if dish_id %}<div hidden data-commons-dish="{{ dish_id }}" data-photo-alt="{{ ta(dish) }}"></div>{% endif %}
   <p>{{ t('No session was checked out. You can try again.') }}</p>
   <a class="btn filled" href="/?edition={{ edition|urlencode }}&amp;duration={{ duration|urlencode }}#virtual-commons">{{ t('Try again') }}</a>
+  <div data-commons-dish="{{ dish_id|default('', true) }}" data-mode="{{ tr.mode }}" data-photo-alt="{{ ta(dish) }}">
+    <p class="hint" data-photo-unavailable>{{ t('Dish photo unavailable.') }}</p>
+  </div>
 </section>
 {% endblock %}
 {% block scripts %}
