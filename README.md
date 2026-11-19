@@ -456,7 +456,7 @@ The [v1.0.111 verification receipt](docs/evidence/guest-sign-in-v111/receipt.jso
 
 ### Lab verification
 
-Server Core responded as a synchronized Active Directory domain controller with a ready global catalog. Its native TempDesk agent returned a healthy response for the Windows backend. Both v1.0.120 portals answered from a separate LAN client with the published source revision. The guest kiosk created a one-hour account in the running Samba directory, confirmed it was active, and removed it through self-service. The directory returned to zero guest accounts. [Live rollout receipt](docs/evidence/portal-rollout-v120.json)
+Server Core responded as a synchronized Active Directory domain controller with a ready global catalog. Its native TempDesk agent returned a healthy response for the Windows backend. Both v1.0.123 portals answered from a separate LAN client with the published source revision. The guest kiosk created a one-hour account in the running Samba directory, confirmed it was active, and removed it through self-service. The directory returned to zero guest accounts. [Live rollout receipt](docs/evidence/portal-rollout-v123.json)
 
 A separate one-hour kiosk account had a configured expiry of 11:47:52 UTC on November 18, 2026. The lab directory confirmed the record was absent at 11:50:37 UTC.
 
@@ -593,7 +593,7 @@ The built guest portal was exercised in English at desktop and emulated 360 px v
 3. Focus the **Action sounds** checkbox and press Space to mute the cues. The browser saves the choice across reloads. School mode pauses cues and keeps the saved switch position.
 4. Return to **Virtual Commons** after verifying a temporary sign-in. Choosing a valid personal wording file shows the applied result. Choosing an invalid replacement preserves the active wording and shows the rejection message. The visible result works with sound muted.
 
-The [verification receipt](docs/evidence/guest-settings-3407f84/receipt.json) covers an isolated portal build in English. The cues were observed in the browser with its audio output muted. The live kiosk workflow and additional language and layout checks remain open.
+The [browser receipt](docs/evidence/guest-settings-3407f84/receipt.json) covers an isolated portal build in English. The cues were observed in the browser with its audio output muted. The [v1.0.123 deployment receipt](docs/evidence/portal-rollout-v123.json) records the live guest Settings response and its management export boundary. Live cue playback and additional language and layout checks remain open.
 
 ## Personal wording walkthrough
 

@@ -26,7 +26,9 @@ The portal accepts one agent key from an explicit `AGENT_KEY_FILE` path or its l
 
 ## Live portal delivery
 
-Both lab portals run the immutable v1.0.120 image from `9191029`. Each role used its existing Compose inputs and the verified image digest. A separate LAN client read back the healthy endpoints and the expected source. The new kiosk issued, verified, and removed a one-hour guest sign-in. The directory returned to zero guest accounts. [Live rollout receipt](docs/evidence/portal-rollout-v120.json)
+Both lab portals run the immutable v1.0.123 image from `6985c92531079abb28fab1424528261cea417289`. Each role retained its storage, port, and trust settings. A separate LAN client read back the healthy endpoints and the expected source. The guest Settings page returned 200 and management export returned 404 on the guest listener. The kiosk issued, verified, and removed a one-hour guest sign-in. The Samba directory returned to zero guest accounts. The matching portable reader opened the workstation checklist, restored its local mark after switching choices, and verified eleven attachments. [Current rollout and reader receipt](docs/evidence/portal-rollout-v123.json) · [Earlier v1.0.120 rollout](docs/evidence/portal-rollout-v120.json)
+
+The updated guest route assertion passed in the hosted run at `640295e857a257003d324bf97a301020ee23d2e1`, which recorded 253 passing portal checks. The live image uses the earlier source revision shown above. [Hosted run](https://github.com/Ding-Ding-Projects/tempdesk-/actions/runs/44544851672)
 
 The earlier v1.0.111 delivery from `76ccdfa` recorded the same guest lifecycle and supplied the original walkthrough images. [Illustrated walkthrough](README.md#guest-sign-in-walkthrough)
 

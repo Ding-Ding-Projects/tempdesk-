@@ -7,6 +7,7 @@
 - [x] Observe automatic removal of a separate one-hour account after its configured expiry.
 - [x] Roll out v1.0.102 to both lab portals. Verify their live source revision, health, volume identities and published port mappings.
 - [x] Roll out v1.0.120 to both lab portals. Read back both roles from a separate LAN client and verify creation, active status, and self-removal of a temporary sign-in. [Live rollout receipt](docs/evidence/portal-rollout-v120.json)
+- [x] Roll out v1.0.123 to both lab portals. Verify guest Settings and its management export boundary from a separate LAN client. Repeat the temporary sign-in lifecycle against the running release. [Live rollout receipt](docs/evidence/portal-rollout-v123.json)
 - [x] Verify that the kiosk language search label and its regex controls fit at 360 px and 1440 px.
 - [x] Verify both connection files and guest account checks against an isolated Samba directory. [Checkout receipt](docs/evidence/virtual-commons-checkout.json)
 - [x] Verify scoped confirmations, both attachment destinations, retry and temporary account removal against a real isolated directory. [Attachment receipt](docs/evidence/virtual-commons-attachments.json)
@@ -59,6 +60,7 @@
 - [x] Build and launch the standalone documentation reader locally. Verify offline search, the Virtual Commons guide, and the prepared operator wiki.
 - [x] Verify the standalone documentation executable from a normal release. [Offline documentation walkthrough](README.md#standalone-offline-documentation)
 - [x] Verify the published v1.0.122 documentation reader preserves the exact bytes of its bundled evidence and feature inventory. [Release](https://github.com/Ding-Ding-Projects/tempdesk-/releases/tag/v1.0.122)
+- [x] Open the released v1.0.123 reader, exercise the dedicated workstation checklist, and verify the bundled guest Settings image and receipt. [Release and reader evidence](docs/evidence/portal-rollout-v123.json)
 - [x] Verify the source-bound documentation executable downloaded from the v1.0.74 release.
 - [x] Record the guest checklist and both Virtual Commons guide paths from a source-bound local offline build. [Illustrated steps](README.md#guided-checkout-walkthrough)
 - [x] Verify the guided documentation on GitHub Pages and in the downloadable v1.0.75 offline reader.

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "release": "v1.0.123",
+  "sourceRevision": "6985c92531079abb28fab1424528261cea417289",
+  "imageIndex": "sha256:2a77a3d1a8aa22208546ab068622a4ebff83ddeaa4261a31462f49236ac0d120",
+  "imageChildAmd64": "sha256:b78ba84f65b1c6bf3db950397ce43a82a75f72a7da77b916315737f46788fdfd",
+  "imageChildArm64": "sha256:bd777364ce96bb8c39d075a0f633c16dffc0283a9f70996732a0ae8ed54bc58d",
+  "publishedUtc": "2026-11-19T14:31:41Z",
+  "releaseManifestAttachmentsMatched": 9,
+  "workflow": "https://github.com/Ding-Ding-Projects/tempdesk-/actions/runs/44542289109",
+  "roles": {
+    "guest": {
+      "startedUtc": "2026-11-19T14:38:29.063380409Z",
+      "verifiedUtc": "2026-11-19T14:38:37.1551488Z",
+      "status": 200,
+      "separateLanClient": true,
+      "storagePortsAndTrustVerified": true
+    },
+    "management": {
+      "startedUtc": "2026-11-19T14:39:23.937885751Z",
+      "verifiedUtc": "2026-11-19T14:39:31.8819474Z",
+      "status": 200,
+      "separateLanClient": true,
+      "storagePortsAndTrustVerified": true
+    }
+  },
+  "guestSettings": {
+    "status": 200,
+    "managementExportStatus": 404,
+    "separateLanClient": true,
+    "verifiedUtc": "2026-11-19T14:42:05.9203312Z"
+  },
+  "guestLifecycle": {
+    "method": "Ordinary guest forms over container loopback",
+    "verifiedUtc": "2026-11-19T14:40:58.012Z",
+    "durationMinutes": 60,
+    "created": true,
+    "activeConfirmed": true,
+    "selfRemovalConfirmed": true,
+    "directoryGuestCountBefore": 0,
+    "directoryGuestCountAfter": 0
+  },
+  "offlineReader": {
+    "executableSha256": "35cbe5755f38b31539f494a2e1f61d8724694bc56c105fe6a9b07c777a142af1",
+    "bundledBytesMatched": 11,
+    "sourceInventoryPathsMatched": 236,
+    "workstationVariantOpened": true,
+    "workstationChecklistMarkRestored": true,
+    "guestSettingsArticleOpened": true,
+    "preparedWikiOpened": true,
+    "ownedReaderClosed": true,
+    "isolatedProfileRemoved": true
+  },
+  "scope": "The live lab uses a Samba directory. Native Windows sign-in, Remote Desktop connectivity, and operating-system session expiry require separate acceptance."
+}
